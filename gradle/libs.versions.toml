@@ -3,6 +3,8 @@ activity = "1.11.0"
 appcompat = "1.7.1"
 desugar_jdk_libs_nio = "2.1.5"
 firebaseBom = "34.3.0"
+browser = "1.10.0"
+securityCrypto = "1.1.0"
 sora-editor = "0.23.5"
 bundletool = "1.18.2"
 cardview = "1.0.0"
@@ -51,6 +53,9 @@ androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version
 androidx-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "swiperefreshlayout" }
 androidx-viewpager = { module = "androidx.viewpager:viewpager", version.ref = "viewpager" }
+androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
+androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
+
 
 desugar_jdk_libs_nio = { module = "com.android.tools:desugar_jdk_libs_nio", version.ref = "desugar_jdk_libs_nio" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }

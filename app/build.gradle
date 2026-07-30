@@ -114,6 +114,8 @@ dependencies {
 
     implementation libs.libsu
     implementation libs.insetter
+    implementation libs.androidx.browser
+    implementation libs.androidx.security.crypto
 
     implementation(libs.javaparser.symbol.solver) {
         exclude group: "com.google.guava", module: "guava"

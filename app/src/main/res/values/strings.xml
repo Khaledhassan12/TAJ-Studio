@@ -2293,5 +2293,20 @@ Please try again later"</string>
     <string name="attr_already_exist">This attribute already exists</string>
     <string name="link_sw_assist">https://play.google.com/store/apps/details?id=com.w3wide.swassist</string>
 
+    <!-- GitHub Account -->
+    <string name="github_account">GitHub Account</string>
+    <string name="github_account_not_connected">Not connected</string>
+    <string name="github_account_connected_as">Connected as @%s</string>
+    <string name="github_account_sign_out">Sign out</string>
+    <string name="github_account_sign_out_confirm">Are you sure you want to sign out from GitHub?</string>
+    <string name="github_account_open_profile">Open profile</string>
+    <string name="github_account_connect_title">Connect GitHub</string>
+    <string name="github_account_connect_desc">Paste your GitHub Personal Access Token below. Your token stays encrypted on your device and is only sent to GitHub.</string>
+    <string name="github_account_create_token_link">How to create a token?</string>
+    <string name="github_account_token_hint">Personal Access Token</string>
+    <string name="github_account_connecting">Connecting…</string>
+    <string name="github_account_connect">Connect</string>
+    <string name="github_account_connected_success">Connected as @%s</string>
+    <string name="github_account_token_empty">Please enter a token</string>
 
 </resources>
