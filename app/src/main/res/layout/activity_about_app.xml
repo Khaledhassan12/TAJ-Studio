@@ -2,25 +2,48 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
     android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fitsSystemWindows="true">
+        android:background="?attr/colorSurface"
+        android:fitsSystemWindows="true"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingTop="4dp"
             app:navigationIcon="?attr/homeAsUpIndicator"
-            app:title="@string/about_title" />
+            app:navigationIconTint="?attr/colorOnSurface"
+            app:title="@string/about_title"
+            app:titleCentered="false"
+            app:titleTextAppearance="?attr/textAppearanceTitleLarge"
+            app:titleTextColor="?attr/colorOnSurface" />
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent">
+            android:layout_height="48dp"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginBottom="6dp"
+            android:background="@android:color/transparent"
+            app:tabGravity="fill"
+            app:tabIndicatorAnimationMode="elastic"
+            app:tabIndicatorColor="?attr/colorPrimary"
+            app:tabIndicatorFullWidth="false"
+            app:tabIndicatorGravity="bottom"
+            app:tabIndicatorHeight="3dp"
+            app:tabMode="fixed"
+            app:tabPaddingEnd="12dp"
+            app:tabPaddingStart="12dp"
+            app:tabRippleColor="@android:color/transparent"
+            app:tabSelectedTextColor="?attr/colorPrimary"
+            app:tabTextAppearance="?attr/textAppearanceTitleSmall"
+            app:tabTextColor="?attr/colorOnSurfaceVariant">
 
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
@@ -41,25 +64,35 @@
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:dividerColor="?attr/colorSurfaceContainerHighest" />
+            app:dividerColor="?attr/colorOutlineVariant"
+            app:dividerThickness="1dp" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:overScrollMode="never"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/discordButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center|bottom"
-        android:layout_margin="16dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="28dp"
+        android:letterSpacing="0.02"
         android:text="@string/about_joindiscord"
-        android:textColor="#FFF"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
         app:backgroundTint="#5865F2"
+        app:cornerRadius="28dp"
+        app:elevation="4dp"
         app:icon="@drawable/ic_discord"
-        app:iconTint="#FFF" />
+        app:iconPadding="10dp"
+        app:iconSize="20dp"
+        app:iconTint="#FFFFFF"
+        app:rippleColor="#805865F2" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

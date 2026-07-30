@@ -5,55 +5,58 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
-    app:cardBackgroundColor="?attr/colorSurfaceContainer"
-    app:shapeAppearanceOverlay="?attr/shapeAppearanceCornerLarge">
+    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+    app:cardCornerRadius="20dp"
+    app:strokeColor="?attr/colorPrimaryContainer"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:id="@+id/layout_quiz"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="16dp">
 
-        <com.google.android.material.card.MaterialCardView
-            style="?attr/materialCardViewFilledStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+        <!-- Animated Icon Container with Glow Effect -->
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="16dp">
 
-            <LinearLayout
+            <!-- Soft Glow Layer -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_height="match_parent"
+                android:alpha="0.15"
+                app:cardBackgroundColor="?attr/colorPrimary"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp" />
 
-                <RelativeLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_margin="12dp"
-                    android:background="@drawable/circle_bg_white"
-                    android:backgroundTint="?attr/colorSurfaceContainerLow">
+            <!-- Main Animation View -->
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/animation_view"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:scaleType="fitCenter"
+                app:lottie_autoPlay="true"
+                app:lottie_fileName="anim/guide_create.json"
+                app:lottie_imageAssetsFolder="lottie"
+                app:lottie_loop="true" />
+        </FrameLayout>
 
-                    <com.airbnb.lottie.LottieAnimationView
-                        android:id="@+id/animation_view"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_centerInParent="true"
-                        android:scaleType="centerCrop"
-                        app:lottie_autoPlay="true"
-                        app:lottie_fileName="anim/guide_create.json"
-                        app:lottie_imageAssetsFolder="lottie"
-                        app:lottie_loop="true" />
-                </RelativeLayout>
-
-                <TextView
-                    android:id="@+id/tv_progress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    tools:text="Signing APK" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        <!-- Text Content -->
+        <TextView
+            android:id="@+id/tv_progress"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold"
+            tools:text="Signing APK..." />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

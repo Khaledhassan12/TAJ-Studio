@@ -10,7 +10,8 @@
         android:id="@+id/app_bar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/colorSurfaceContainer">
+        android:background="?attr/colorSurfaceContainer"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
@@ -18,12 +19,15 @@
             android:layout_height="wrap_content"
             app:navigationIcon="?attr/homeAsUpIndicator"
             app:title="@string/code_viewer"
-            tools:subtitle="601" />
+            app:titleTextAppearance="?attr/textAppearanceTitleLarge"
+            app:subtitleTextAppearance="?attr/textAppearanceLabelMedium"
+            tools:subtitle="601 lines" />
 
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:dividerColor="?attr/colorSurfaceContainerHighest" />
+            app:dividerColor="?attr/colorSurfaceContainerHighest"
+            app:dividerThickness="1dp" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

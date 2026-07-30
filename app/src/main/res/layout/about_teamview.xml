@@ -6,97 +6,210 @@
     android:background="?android:colorBackground"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tv_title"
+    <!-- Section title with accent marker -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginRight="10dp"
-        android:padding="8dp"
-        android:text="@string/about_team_title"
-        android:textAppearance="?attr/textAppearanceLabelLarge"
-        android:textStyle="bold"
-        tools:text="Main contributors" />
-
-    <LinearLayout
-        android:id="@+id/member_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="5dp"
-        android:background="?selectableItemBackground"
-        android:clickable="true"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginBottom="2dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <LinearLayout
-            android:id="@+id/view_leftline"
-            android:layout_width="4dp"
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginEnd="6dp"
+            app:cardBackgroundColor="?attr/colorPrimary"
+            app:cardCornerRadius="4dp"
+            app:cardElevation="0dp" />
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:letterSpacing="0.14"
+            android:padding="4dp"
+            android:text="@string/about_team_title"
+            android:textAllCaps="true"
+            android:textAppearance="?attr/textAppearanceLabelLarge"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            tools:text="Main contributors" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="16dp">
+
+        <!-- Aurora depth layer (furthest) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_marginBottom="10dp"
-            android:background="?attr/colorPrimary"
-            android:orientation="horizontal" />
+            android:layout_marginStart="1dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="-1dp"
+            android:layout_marginBottom="-1dp"
+            android:alpha="0.10"
+            app:cardBackgroundColor="?attr/colorTertiary"
+            app:cardCornerRadius="50dp"
+            app:cardElevation="-1dp" />
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/img_user_icon"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_user"
-            app:shapeAppearance="?attr/shapeAppearanceCornerLarge" />
+        <!-- Aurora depth layer (near) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="-6dp"
+            android:layout_marginBottom="-6dp"
+            android:alpha="0.12"
+            app:cardBackgroundColor="?attr/colorPrimary"
+            app:cardCornerRadius="26dp"
+            app:cardElevation="0dp" />
 
-        <RelativeLayout
+        <!-- Main card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="vertical">
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:cardCornerRadius="26dp"
+            app:cardElevation="4dp"
+            app:strokeColor="?attr/colorPrimaryContainer"
+            app:strokeWidth="1dp">
 
-            <TextView
-                android:id="@+id/tv_user_name"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/member_layout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingLeft="8dp"
-                android:paddingTop="8dp"
-                android:paddingRight="8dp"
-                android:paddingBottom="2dp"
-                android:singleLine="true"
-                android:textAppearance="?attr/textAppearanceBodyLarge"
-                tools:text="A contributor" />
+                android:background="?selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
 
-            <TextView
-                android:id="@+id/tv_description"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/tv_user_name"
-                android:autoLink="all"
-                android:focusable="false"
-                android:maxLines="2"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:paddingBottom="8dp"
-                android:textAppearance="?attr/textAppearanceBodySmall"
-                tools:text="Their description" />
+                <!-- Duotone accent bar -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="58dp"
+                    android:layout_marginEnd="14dp"
+                    android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tv_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignBottom="@+id/tv_user_name"
-                android:layout_marginBottom="3dp"
-                android:layout_toEndOf="@+id/tv_user_name"
-                android:background="#676767"
-                android:focusable="false"
-                android:gravity="center"
-                android:paddingHorizontal="6dp"
-                android:paddingVertical="1dp"
-                android:textColor="#FFF"
-                android:textSize="11sp"
-                tools:text="status" />
-        </RelativeLayout>
-    </LinearLayout>
+                    <LinearLayout
+                        android:id="@+id/view_leftline"
+                        android:layout_width="5dp"
+                        android:layout_height="match_parent"
+                        android:background="?attr/colorPrimary"
+                        android:orientation="horizontal" />
+
+                    <LinearLayout
+                        android:layout_width="2dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="3dp"
+                        android:alpha="0.5"
+                        android:background="?attr/colorOutline"
+                        android:orientation="horizontal" />
+                </LinearLayout>
+
+                <!-- Avatar with layered glow -->
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="62dp"
+                        android:layout_height="62dp"
+                        android:layout_gravity="center"
+                        android:alpha="0.12"
+                        app:cardBackgroundColor="?attr/colorTertiary"
+                        app:cardCornerRadius="22dp"
+                        app:cardElevation="0dp" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
+                        android:layout_gravity="center"
+                        android:alpha="0.18"
+                        app:cardBackgroundColor="?attr/colorPrimary"
+                        app:cardCornerRadius="19dp"
+                        app:cardElevation="0dp" />
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/img_user_icon"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:layout_gravity="center"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_user"
+                        app:shapeAppearance="?attr/shapeAppearanceCornerLarge"
+                        app:strokeColor="?attr/colorPrimary"
+                        app:strokeWidth="1.5dp" />
+                </FrameLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_user_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="8dp"
+                        android:singleLine="true"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:textSize="17sp"
+                        android:textStyle="bold"
+                        tools:text="A contributor" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBottom="@+id/tv_user_name"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_toEndOf="@+id/tv_user_name"
+                        app:cardBackgroundColor="?attr/colorPrimary"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tv_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:gravity="center"
+                            android:letterSpacing="0.03"
+                            android:paddingHorizontal="9dp"
+                            android:paddingVertical="3dp"
+                            android:textColor="?attr/colorOnPrimary"
+                            android:textSize="10.5sp"
+                            tools:text="status" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <TextView
+                        android:id="@+id/tv_description"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/tv_user_name"
+                        android:layout_marginTop="3dp"
+                        android:alpha="0.72"
+                        android:autoLink="all"
+                        android:focusable="false"
+                        android:lineSpacingExtra="2dp"
+                        android:maxLines="2"
+                        android:paddingBottom="4dp"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        tools:text="Their description" />
+                </RelativeLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
 </LinearLayout>

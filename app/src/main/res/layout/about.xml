@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
+    android:background="#0E0E14"
     tools:ignore="ContentDescription">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -11,8 +12,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fitsSystemWindows="true"
+        android:background="#16161F"
         android:visibility="gone"
-        app:elevation="0dp"
+        app:elevation="6dp"
         app:liftOnScroll="false">
 
         <include layout="@layout/toolbar" />
@@ -20,7 +22,18 @@
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            app:tabIndicatorColor="#00E5A0"
+            app:tabIndicatorHeight="3dp"
+            app:tabIndicatorFullWidth="false"
+            app:tabIndicatorAnimationMode="elastic"
+            app:tabRippleColor="#3300E5A0"
+            app:tabSelectedTextColor="#FFFFFF"
+            app:tabTextColor="#8A8A99"
+            app:tabTextAppearance="?attr/textAppearanceTitleSmall"
+            app:tabMode="fixed">
 
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
@@ -41,7 +54,8 @@
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:dividerThickness="0.5dp" />
+            app:dividerColor="#2A2A38"
+            app:dividerThickness="0.75dp" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <FrameLayout
@@ -84,7 +98,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:clipToPadding="false"
-                    android:paddingBottom="70dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="80dp"
+                    android:overScrollMode="never"
+                    android:scrollbars="none"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                     tools:listitem="@layout/about_teamview" />
             </LinearLayout>
@@ -100,7 +117,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:clipToPadding="false"
-                    android:paddingBottom="70dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="80dp"
+                    android:overScrollMode="never"
+                    android:scrollbars="none"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
             </LinearLayout>
         </LinearLayout>
@@ -116,28 +136,54 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:visibility="gone">
 
-        <ImageView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/girl_swimming_flat" />
-
-        <TextView
-            android:id="@+id/tv_loading"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/about_loading_title"
-            android:textAppearance="?attr/textAppearanceBodyLarge" />
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            app:cardBackgroundColor="#16161F"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#2A2A38"
+            app:strokeWidth="1dp">
 
-        <TextView
-            android:id="@+id/tv_loading_desc"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingLeft="8dp"
-            android:paddingTop="4dp"
-            android:paddingRight="8dp"
-            android:text="@string/about_loading_subtitle"
-            android:textAppearance="?attr/textAppearanceBodySmall" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/girl_swimming_flat" />
+
+                <TextView
+                    android:id="@+id/tv_loading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
+                    android:text="@string/about_loading_title"
+                    android:textAppearance="?attr/textAppearanceBodyLarge"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_loading_desc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:paddingLeft="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingRight="8dp"
+                    android:text="@string/about_loading_subtitle"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="#8A8A99" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
@@ -145,11 +191,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center|bottom"
-        android:layout_margin="16dp"
+        android:layout_margin="20dp"
+        android:elevation="8dp"
         android:text="@string/about_joindiscord"
         android:textAllCaps="false"
         android:textColor="#FFF"
+        android:textStyle="bold"
         app:backgroundTint="#5865F2"
+        app:rippleColor="#805865F2"
+        app:cornerRadius="28dp"
         app:icon="@drawable/ic_discord"
         app:iconTint="#FFF" />
 
