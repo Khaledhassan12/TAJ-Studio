@@ -2312,5 +2312,14 @@ Please try again later"</string>
     <string name="github_upload_sign_in_hint">Sign in to GitHub to upload</string>
     <string name="github_upload_success_toast">Can you Upload your projects now.</string>
     <string name="github_upload_please_paste_token">Please paste your token.</string>
+    <string name="github_upload_starting">Starting upload…</string>
+    <string name="github_upload_preparing">Preparing files…</string>
+    <string name="github_upload_creating_repo">Creating repository…</string>
+    <string name="github_upload_progress">Uploading files: %1$d/%2$d</string>
+    <string name="github_upload_finalizing">Finalizing commit…</string>
+    <string name="github_upload_success">Project uploaded to GitHub successfully!</string>
+    <string name="github_upload_error">Upload failed: %s</string>
+    <string name="github_upload_no_files">No files found to upload.</string>
+    <string name="github_upload_session_expired">Session expired, please sign in again.</string>
 
 </resources>
