@@ -113,6 +113,35 @@ public class GitHubManager {
         notifyListeners();
     }
 
+    public void refreshUserInfoOnce() {
+        executor.execute(() -> {
+            String token = getAccessToken();
+            String avatar = getUserAvatar();
+            if (token == null || (avatar != null && !avatar.isEmpty())) {
+                return;
+            }
+
+            Request request = new Request.Builder()
+                    .url("https://api.github.com/user")
+                    .header("Authorization", "Bearer " + token)
+                    .header("Accept", "application/vnd.github+json")
+                    .header("User-Agent", "TAJ-Studio")
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful() && response.body() != null) {
+                    UserResponse user = gson.fromJson(response.body().string(), UserResponse.class);
+                    prefs.edit()
+                            .putString(KEY_USER_LOGIN, user.login)
+                            .putString(KEY_USER_AVATAR, user.avatarUrl)
+                            .apply();
+                    notifyListeners();
+                }
+            } catch (IOException ignored) {
+            }
+        });
+    }
+
     public void signInWithToken(String token, SignInCallback callback) {
         executor.execute(() -> {
             Request request = new Request.Builder()

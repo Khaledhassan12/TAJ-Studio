@@ -2308,5 +2308,9 @@ Please try again later"</string>
     <string name="github_account_connect">Connect</string>
     <string name="github_account_connected_success">Connected as @%s</string>
     <string name="github_account_token_empty">Please enter a token</string>
+    <string name="github_upload_project_title">Upload %s</string>
+    <string name="github_upload_sign_in_hint">Sign in to GitHub to upload</string>
+    <string name="github_upload_success_toast">Can you Upload your projects now.</string>
+    <string name="github_upload_please_paste_token">Please paste your token.</string>
 
 </resources>

@@ -24,10 +24,17 @@ import com.google.android.material.navigation.NavigationView;
 import a.a.a.mB;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.res.ColorStateList;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import androidx.core.view.MenuItemCompat;
+
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -135,13 +142,69 @@ public class MainDrawer extends NavigationView {
         if (item == null) return;
 
         GitHubManager manager = GitHubManager.getInstance(getContext());
-        if (manager.isSignedIn()) {
+        boolean signedIn = manager.isSignedIn();
+        if (signedIn) {
             item.setTitle(getContext().getString(R.string.github_account_connected_as, manager.getUserLogin()));
-            // Optionally load avatar if needed, but standard NavigationView items use static icons.
-            // For now, we update the title as requested.
         } else {
             item.setTitle(R.string.github_account);
         }
+        updateGitHubIcon(item, signedIn);
+    }
+
+    private void updateGitHubIcon(MenuItem item, boolean signedIn) {
+        GitHubManager manager = GitHubManager.getInstance(getContext());
+        String avatarUrl = manager.getUserAvatar();
+        ColorStateList navTint = getItemIconTintList();
+
+        if (signedIn) {
+            if (avatarUrl == null || avatarUrl.isEmpty()) {
+                applyDefaultIcon(item, navTint);
+                manager.refreshUserInfoOnce();
+            } else {
+                // Apply default icon first (as a themed placeholder)
+                applyDefaultIcon(item, navTint);
+
+                Glide.with(getContext())
+                        .load(avatarUrl)
+                        .circleCrop()
+                        .dontAnimate()
+                        .placeholder(R.drawable.ic_github_brand)
+                        .error(R.drawable.ic_github_brand)
+                        .into(new CustomTarget<Drawable>() {
+                            @Override
+                            public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                                applyAvatarImage(item, resource);
+                            }
+
+                            @Override
+                            public void onLoadCleared(@Nullable Drawable placeholder) {
+                                applyDefaultIcon(item, navTint);
+                            }
+
+                            @Override
+                            public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                                applyDefaultIcon(item, navTint);
+                            }
+                        });
+            }
+        } else {
+            applyDefaultIcon(item, navTint);
+        }
+    }
+
+    private void applyDefaultIcon(MenuItem item, ColorStateList navTint) {
+        item.setIcon(R.drawable.ic_github_brand);
+        MenuItemCompat.setIconTintList(item, navTint);
+        MenuItemCompat.setIconTintMode(item, PorterDuff.Mode.SRC_IN);
+    }
+
+    private void applyAvatarImage(MenuItem item, Drawable drawable) {
+        Drawable mutated = drawable.mutate();
+        mutated.setTintList(null);
+        mutated.setTintMode(null);
+        item.setIcon(mutated);
+        MenuItemCompat.setIconTintList(item, null);
+        MenuItemCompat.setIconTintMode(item, null);
     }
 
     private void handleGitHubAccountClick() {
