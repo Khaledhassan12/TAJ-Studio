@@ -7,123 +7,113 @@
     android:background="#66000000"
     android:clipChildren="false"
     android:clipToPadding="false"
-    android:paddingLeft="24dp"
-    android:paddingRight="24dp">
+    android:gravity="center"
+    android:padding="24dp">
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
         android:clipChildren="false"
-        android:clipToPadding="false">
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:scrollbars="none">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="10dp"
-            android:layout_marginVertical="20dp"
             android:minWidth="280dp"
-            app:cardBackgroundColor="?colorSurfaceContainerHigh"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
             app:cardCornerRadius="28dp"
-            app:cardElevation="10dp"
+            app:cardElevation="8dp"
             app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:clipChildren="false"
-                android:clipToPadding="false"
-                android:gravity="center"
                 android:orientation="vertical">
 
+                <!-- Header Section -->
                 <LinearLayout
                     android:id="@+id/common_dialog_title_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center|left"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:paddingHorizontal="24dp"
+                    android:paddingTop="24dp"
+                    android:paddingBottom="16dp">
 
                     <ImageView
                         android:id="@+id/common_dialog_icon"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginRight="8dp"
-                        app:tint="?colorSecondary"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_marginEnd="12dp"
+                        app:tint="?attr/colorPrimary"
                         tools:src="@drawable/ic_mtrl_tune" />
 
                     <TextView
                         android:id="@+id/common_dialog_tv_title"
-                        style="@style/MaterialAlertDialog.Material3.Title.Text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
+                        android:textAppearance="?attr/textAppearanceTitleLarge"
+                        android:textColor="?attr/colorOnSurface"
                         tools:text="Sketchware 2022 is real" />
                 </LinearLayout>
 
+                <!-- Content Area -->
                 <LinearLayout
                     android:id="@+id/common_dialog_content"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clipChildren="false"
                     android:clipToPadding="false"
-                    android:orientation="vertical" />
+                    android:orientation="vertical"
+                    android:paddingHorizontal="24dp"
+                    android:paddingBottom="16dp" />
 
+                <!-- Premium Action Buttons Area -->
                 <LinearLayout
                     android:id="@+id/common_dialog_button_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="4dp"
-                    android:layout_marginBottom="10dp"
-                    android:gravity="center_vertical"
-                    android:minWidth="280dp"
-                    android:orientation="horizontal">
+                    android:background="?attr/colorSurfaceContainerHighest"
+                    android:gravity="end|center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
 
-                    <TextView
+                    <!-- Default Button (Secondary) -->
+                    <Button
                         android:id="@+id/common_dialog_default_button"
+                        style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:minWidth="0dp"
-                        android:paddingHorizontal="18dp"
-                        android:paddingVertical="12dp"
-                        android:textColor="?colorPrimary"
-                        tools:text="Default" />
+                        android:layout_marginEnd="8dp"
+                        android:text="Default"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <!-- Cancel Button (Secondary) -->
+                    <Button
+                        android:id="@+id/common_dialog_cancel_button"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center|right"
-                        android:orientation="horizontal">
+                        android:layout_marginEnd="8dp"
+                        android:text="Cancel"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/common_dialog_cancel_button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center"
-                            android:minWidth="0dp"
-                            android:paddingHorizontal="18dp"
-                            android:paddingVertical="12dp"
-                            android:textColor="?colorPrimary"
-                            tools:text="Cancel" />
+                    <!-- OK Button (Primary Action) -->
+                    <Button
+                        android:id="@+id/common_dialog_ok_button"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Okay"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/common_dialog_ok_button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="8dp"
-                            android:gravity="center"
-                            android:minWidth="0dp"
-                            android:paddingHorizontal="18dp"
-                            android:paddingVertical="12dp"
-                            android:textColor="?colorPrimary"
-                            tools:text="Okay" />
-                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

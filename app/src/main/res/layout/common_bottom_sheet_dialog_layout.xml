@@ -13,109 +13,108 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minWidth="280dp"
-        app:cardBackgroundColor="?colorSurfaceContainerHigh"
-        app:cardElevation="10dp"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="8dp"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
-        app:shapeAppearanceOverlay="@style/BottomSheetCardStyle"
         app:strokeWidth="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:orientation="vertical">
 
+            <!-- Premium Drag Handle -->
             <com.google.android.material.bottomsheet.BottomSheetDragHandleView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp" />
 
+            <!-- Header Section -->
             <LinearLayout
                 android:id="@+id/common_dialog_title_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?colorSurfaceContainerHigh"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="16dp"
-                android:translationZ="1dp">
+                android:paddingHorizontal="24dp"
+                android:paddingBottom="16dp">
 
                 <ImageView
                     android:id="@+id/common_dialog_icon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginEnd="14dp"
-                    app:tint="?colorSecondary"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginEnd="12dp"
+                    app:tint="?attr/colorPrimary"
                     tools:src="@drawable/ic_mtrl_tune" />
 
                 <TextView
                     android:id="@+id/common_dialog_tv_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:paddingEnd="8dp"
-                    android:textSize="20sp"
+                    android:textAppearance="?attr/textAppearanceTitleLarge"
+                    android:textColor="?attr/colorOnSurface"
                     tools:text="Sketchware 2022 is real" />
             </LinearLayout>
 
+            <!-- Content Area -->
             <LinearLayout
                 android:id="@+id/common_dialog_content"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:orientation="vertical" />
+                android:orientation="vertical"
+                android:paddingHorizontal="24dp"
+                android:paddingBottom="16dp" />
 
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <!-- Premium Action Buttons Area -->
+            <LinearLayout
                 android:id="@+id/common_dialog_button_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?colorSurfaceContainerHigh"
-                android:paddingHorizontal="4dp"
-                android:paddingVertical="10dp">
+                android:background="?attr/colorSurfaceContainerHighest"
+                android:gravity="end|center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="12dp">
 
-                <TextView
-                    android:id="@+id/common_dialog_default_button"
+                <!-- Default Button (Secondary) -->
+                <com.google.android.material.button.MaterialButtonToggleGroup
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="18dp"
-                    android:paddingVertical="12dp"
-                    android:textColor="?colorPrimary"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:text="Default" />
+                    android:layout_height="wrap_content">
 
+                    <Button
+                        android:id="@+id/common_dialog_default_button"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="Default"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/common_dialog_cancel_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="18dp"
-                    android:paddingVertical="12dp"
-                    android:textColor="?colorPrimary"
-                    app:layout_constraintEnd_toStartOf="@+id/common_dialog_ok_button"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:text="Cancel" />
+                    <Button
+                        android:id="@+id/common_dialog_cancel_button"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="Cancel"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/common_dialog_ok_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="18dp"
-                    android:paddingVertical="12dp"
-                    android:textColor="?colorPrimary"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:text="Okay" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                    <Button
+                        android:id="@+id/common_dialog_ok_button"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Okay"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

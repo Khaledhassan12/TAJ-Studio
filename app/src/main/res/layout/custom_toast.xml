@@ -4,19 +4,37 @@
     android:id="@+id/cardView"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    app:cardBackgroundColor="?colorSurface"
-    app:strokeColor="?colorPrimary"
-    app:cardElevation="8dp"
-    app:cardCornerRadius="16dp">
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp">
 
-    <TextView
-        android:id="@+id/tv_stoast"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:gravity="center"
-        android:textSize="14sp"
-        android:textColor="?colorPrimary"
-        tools:text="toast!"/>
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="12dp">
+
+        <!-- Optional Status Dot for Visual Anchor -->
+        <View
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/circle_bg_white"
+            android:backgroundTint="?attr/colorPrimary" />
+
+        <TextView
+            android:id="@+id/tv_stoast"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:includeFontPadding="false"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            tools:text="Action completed successfully!" />
+
+    </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

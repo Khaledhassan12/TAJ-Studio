@@ -1,34 +1,44 @@
-<androidx.coordinatorlayout.widget.CoordinatorLayout android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:animateLayoutChanges="true"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    android:background="?attr/colorSurface">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <!-- Premium Empty State / Guide -->
         <TextView
             android:id="@+id/tv_guide"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:textSize="14sp"
+            android:paddingHorizontal="48dp"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:visibility="gone"
             tools:text="@string/design_manager_image_description_guide_add_image" />
 
+        <!-- Modern Image Grid -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/image_list"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:scrollbars="vertical"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:padding="12dp"
+            android:scrollbars="none"
             android:splitMotionEvents="false"
+            tools:itemCount="9"
             tools:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
             tools:listitem="@layout/manage_image_list_item"
             tools:spanCount="3" />
+
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

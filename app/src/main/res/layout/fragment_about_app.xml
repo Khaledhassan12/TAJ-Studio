@@ -3,20 +3,33 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:background="?attr/colorSurface">
 
+    <!-- Premium Loading Indicator (Centered & Clean) -->
     <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/loading_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:indeterminate="true" />
+        android:indeterminate="true"
+        app:trackThickness="4dp"
+        app:indicatorSize="48dp"
+        app:trackColor="?attr/colorSurfaceContainerHighest"
+        app:indicatorColor="?attr/colorPrimary" />
 
+    <!-- Modern Team List (No Shadows, Just Clean Spacing) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
         android:paddingBottom="90dp"
+        android:scrollbars="none"
+        android:background="?attr/colorSurface"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:listitem="@layout/about_teamview" />
+
 </RelativeLayout>

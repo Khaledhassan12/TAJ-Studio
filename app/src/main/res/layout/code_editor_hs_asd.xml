@@ -3,65 +3,81 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/colorSurface"
-    android:orientation="vertical"
-    android:theme="@style/Theme.SketchwarePro">
+    android:orientation="vertical">
 
+    <!-- Clean Top Bar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurfaceContainer"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorSurface"
         app:menu="@menu/menu_code_editor_hs"
+        app:navigationIconTint="?attr/colorOnSurface"
         app:subtitle="UTF-8"
-        app:title="Code Editor" />
+        app:subtitleTextColor="?attr/colorOnSurfaceVariant"
+        app:title="Code Editor"
+        app:titleTextColor="?attr/colorOnSurface" />
 
+    <!-- Subtle Divider -->
     <com.google.android.material.divider.MaterialDivider
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:dividerColor="?attr/colorSurfaceContainerHighest" />
+        app:dividerColor="?attr/colorOutlineVariant"
+        app:dividerInsetEnd="16dp"
+        app:dividerInsetStart="16dp" />
 
+    <!-- Code Editor Area -->
     <io.github.rosemoe.sora.widget.CodeEditor
         android:id="@+id/editor"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:background="?attr/colorSurface" />
 
-    <com.google.android.material.divider.MaterialDivider
+    <!-- Floating Action Bar (Premium Touch) -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:dividerColor="?attr/colorSurfaceContainerHighest" />
+        android:background="?attr/colorSurface"
+        android:paddingTop="8dp"
+        android:paddingBottom="16dp"
+        android:elevation="4dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurfaceContainer"
-        android:orientation="horizontal"
-        android:paddingVertical="4dp">
-
-        <Button
-            android:id="@+id/btn_cancel"
-            style="@style/Widget.Material3Expressive.Button"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="1"
-            android:text="@string/common_word_cancel"
-            android:textColor="?attr/colorOnSurface"
-            app:backgroundTint="?attr/colorSurfaceContainerHighest" />
+            android:layout_marginHorizontal="16dp"
+            android:background="?attr/colorSurfaceContainerLow"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical"
+            android:backgroundTintMode="src_over">
 
-        <Button
-            android:id="@+id/btn_save"
-            style="@style/Widget.Material3Expressive.Button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="16dp"
-            android:layout_weight="1"
-            android:text="@string/common_word_save"
-            android:textColor="?attr/colorOnSurface"
-            app:backgroundTint="?attr/colorSurfaceContainerHighest" />
+            <Button
+                android:id="@+id/btn_cancel"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="@string/common_word_cancel"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/btn_save"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="@string/common_word_save"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
+
+        </LinearLayout>
+    </FrameLayout>
 
 </LinearLayout>

@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
     android:fitsSystemWindows="true"
     tools:ignore="ContentDescription">
 
@@ -10,14 +11,24 @@
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fitsSystemWindows="true">
+        android:background="?attr/colorSurface"
+        android:fitsSystemWindows="true"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/collapsingToolbarLayoutLargeSize"
             android:fitsSystemWindows="true"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed">
+            app:collapsedTitleTextAppearance="?attr/textAppearanceTitleMedium"
+            app:contentScrim="?attr/colorSurface"
+            app:expandedTitleMarginBottom="24dp"
+            app:expandedTitleMarginStart="24dp"
+            app:expandedTitleTextAppearance="?attr/textAppearanceDisplaySmall"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:maxLines="2"
+            app:title="Last Compile Log"
+            app:titleCollapseMode="scale">
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/topAppBar"
@@ -25,37 +36,44 @@
                 android:layout_height="?attr/actionBarSize"
                 app:layout_collapseMode="pin"
                 app:navigationIcon="?attr/homeAsUpIndicator"
-                app:title="Last Compile Log" />
+                app:navigationIconTint="?attr/colorOnSurface" />
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- Log Content Area -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/err_vScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:fillViewport="true"
-        android:paddingBottom="50dp"
+        android:overScrollMode="never"
+        android:scrollbars="none"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <HorizontalScrollView
             android:id="@+id/err_hScroll"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:paddingHorizontal="16dp"
+            android:scrollbars="none">
 
             <TextView
                 android:id="@+id/tv_compile_log"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:paddingBottom="48dp"
-                android:textSize="11sp"
-                android:typeface="monospace"
+                android:fontFamily="monospace"
+                android:lineSpacingExtra="4dp"
+                android:paddingVertical="24dp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textIsSelectable="true"
+                android:textSize="12sp"
                 tools:text="Errors will show up here" />
         </HorizontalScrollView>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- Premium Empty State -->
     <LinearLayout
         android:id="@+id/noContentLayout"
         android:layout_width="match_parent"
@@ -63,58 +81,97 @@
         android:background="?attr/colorSurface"
         android:gravity="center"
         android:orientation="vertical"
-        android:paddingHorizontal="24dp"
-        android:paddingBottom="100dp"
+        android:paddingHorizontal="32dp"
         android:visibility="gone"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            app:cardBackgroundColor="?attr/colorPrimaryContainer"
+            app:cardCornerRadius="40dp"
+            app:cardElevation="0dp">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_menu_upload"
+                app:tint="?attr/colorOnPrimaryContainer" />
+        </com.google.android.material.card.MaterialCardView>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:gravity="center"
             android:text="Awesome, no bugs to fix!"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="20sp" />
+            android:textAppearance="?attr/textAppearanceTitleLarge"
+            android:textColor="?attr/colorOnSurface" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:gravity="center"
-            android:text="Let's continue working on the project"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="14sp" />
+            android:text="Your code is clean. Let's continue working on the project."
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
 
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/optionsLayout"
+    <!-- Floating Action Bar (Premium Touch) -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="10dp"
-        android:animateLayoutChanges="true"
-        android:gravity="center"
-        android:orientation="horizontal">
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="24dp"
+        android:animateLayoutChanges="true">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/formatButton"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/optionsLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="5dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="20dp"
-            android:src="@drawable/ic_mtrl_formattext"/>
+            android:layout_gravity="center_horizontal"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="6dp"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/clearButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="5dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="20dp"
-            android:src="@drawable/ic_mtrl_delete" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="8dp">
 
-    </LinearLayout>
+                <ImageButton
+                    android:id="@+id/formatButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Format"
+                    android:src="@drawable/ic_mtrl_formattext"
+                    app:tint="?attr/colorOnSurfaceVariant" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="1dp"
+                    android:layout_height="24dp"
+                    android:layout_marginHorizontal="4dp"
+                    app:dividerColor="?attr/colorOutlineVariant" />
+
+                <ImageButton
+                    android:id="@+id/clearButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Clear"
+                    android:src="@drawable/ic_mtrl_delete"
+                    app:tint="?attr/colorError" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-

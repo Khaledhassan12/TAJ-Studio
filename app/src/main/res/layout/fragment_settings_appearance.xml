@@ -2,25 +2,40 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/app_bar_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:layout_collapseMode="pin"
             app:navigationIcon="?attr/homeAsUpIndicator"
-            app:title="Theme Settings" />
+            app:navigationIconTint="?attr/colorOnSurface"
+            app:title="Theme Settings"
+            app:titleTextColor="?attr/colorOnSurface" />
+
+        <!-- Subtle Divider -->
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:dividerColor="?attr/colorOutlineVariant"
+            app:dividerInsetEnd="16dp"
+            app:dividerInsetStart="16dp" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:scrollbars="none"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -28,32 +43,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="16dp"
             android:paddingBottom="32dp">
 
+            <!-- 1. System Default Card (Smart Control) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/theme_system"
                 style="?attr/materialCardViewFilledStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="8dp"
                 android:checkable="true"
                 android:clickable="true"
                 android:focusable="true"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:shapeAppearanceOverlay="?attr/shapeAppearanceCornerLarge">
+                app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+                app:cardCornerRadius="20dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="12dp">
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="16dp">
 
                     <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:src="@drawable/ic_mtrl_palette"
                         app:tint="?attr/colorPrimary" />
 
@@ -68,98 +86,129 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="System default"
-                            android:textAppearance="?attr/textAppearanceBodyLargeEmphasized" />
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorOnSurface" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:text="Follow system theme settings"
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
                             android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/switch_system"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:focusable="false"
+                        app:thumbTint="?attr/colorPrimary"
+                        app:trackTint="?attr/colorSurfaceContainerHighest" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- 2. Theme Previews (Visual Gallery) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="12dp"
+                android:letterSpacing="0.05"
+                android:text="Choose a style"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                android:textColor="?attr/colorPrimary"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="16dp"
                 android:orientation="horizontal">
 
+                <!-- Light Theme Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/theme_light"
-                    style="?attr/materialCardViewFilledStyle"
+                    style="?attr/materialCardViewOutlinedStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="12dp"
+                    android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:checkable="true"
                     android:clickable="true"
-                    app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                    app:contentPadding="14dp"
-                    app:shapeAppearance="?attr/shapeAppearanceCornerLarge">
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="20dp"
+                    app:strokeColor="?attr/colorOutline"
+                    app:strokeWidth="2dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
 
                         <com.google.android.material.imageview.ShapeableImageView
-                            android:layout_width="100dp"
-                            android:layout_height="120dp"
-                            android:background="@drawable/img_preview_light_theme"
-                            app:shapeAppearance="?attr/shapeAppearanceCornerMedium" />
+                            android:layout_width="match_parent"
+                            android:layout_height="140dp"
+                            android:background="?attr/colorSurfaceContainerHighest"
+                            android:scaleType="centerCrop"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium" />
+
+                        <!-- Note: Replace background with your img_preview_light_theme if available -->
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
                             android:text="Light"
-                            android:textAppearance="?attr/textAppearanceBodyLarge" />
+                            android:textAppearance="?attr/textAppearanceTitleSmall"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Dark Theme Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/theme_dark"
-                    style="?attr/materialCardViewFilledStyle"
+                    style="?attr/materialCardViewOutlinedStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
                     android:layout_weight="1"
                     android:checkable="true"
                     android:clickable="true"
-                    app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                    app:contentPadding="14dp"
-                    app:shapeAppearance="?attr/shapeAppearanceCornerLarge">
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="20dp"
+                    app:strokeColor="?attr/colorOutline"
+                    app:strokeWidth="2dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:padding="12dp">
 
                         <com.google.android.material.imageview.ShapeableImageView
-                            android:layout_width="100dp"
-                            android:layout_height="120dp"
-                            android:background="@drawable/img_preview_dark_theme"
-                            app:shapeAppearance="?attr/shapeAppearanceCornerMedium" />
+                            android:layout_width="match_parent"
+                            android:layout_height="140dp"
+                            android:background="?attr/colorSurfaceContainerHigh"
+                            android:scaleType="centerCrop"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium" />
+
+                        <!-- Note: Replace background with your img_preview_dark_theme if available -->
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
                             android:text="Dark"
-                            android:textAppearance="?attr/textAppearanceBodyLarge" />
+                            android:textAppearance="?attr/textAppearanceTitleSmall"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

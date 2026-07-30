@@ -1,51 +1,89 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:paddingHorizontal="20dp"
-    android:paddingTop="20dp"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:background="?attr/colorSurface"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="20dp">
 
+    <!-- Resource Name Field -->
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/input_layout_res"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/input_layout_res"
-        android:hint="res">
+        android:hint="Resource name"
+        app:boxBackgroundColor="?attr/colorSurfaceContainerLow"
+        app:boxCornerRadiusBottomEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="2dp"
+        app:startIconDrawable="@android:drawable/ic_menu_edit"
+        app:startIconTint="?attr/colorOnSurfaceVariant">
 
-        <EditText
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/input_res"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:fontFamily="monospace"
             android:inputType="text"
-            android:textSize="16sp" />
+            android:singleLine="true"
+            android:textSize="15sp" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Attribute Field -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:hint="attr">
+        android:layout_marginTop="12dp"
+        android:hint="Attribute"
+        app:boxBackgroundColor="?attr/colorSurfaceContainerLow"
+        app:boxCornerRadiusBottomEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="2dp"
+        app:startIconDrawable="@android:drawable/ic_dialog_info"
+        app:startIconTint="?attr/colorOnSurfaceVariant">
 
-        <EditText
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/input_attr"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
             android:inputType="text"
-            android:textSize="16sp" />
+            android:singleLine="true"
+            android:textSize="15sp" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Value Field -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/input_layout_value"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:hint="value">
+        android:layout_marginTop="12dp"
+        android:hint="Value"
+        app:boxBackgroundColor="?attr/colorSurfaceContainerLow"
+        app:boxCornerRadiusBottomEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="2dp"
+        app:startIconDrawable="@android:drawable/ic_menu_add"
+        app:startIconTint="?attr/colorOnSurfaceVariant">
 
-        <EditText
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/input_value"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:fontFamily="monospace"
             android:inputType="text"
-            android:textSize="16sp" />
+            android:singleLine="true"
+            android:textSize="15sp" />
     </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>

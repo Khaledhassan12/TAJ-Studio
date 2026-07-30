@@ -5,47 +5,72 @@
     style="?attr/materialCardViewFilledStyle"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="4dp"
-    android:layout_marginTop="10dp"
-    app:cardBackgroundColor="?attr/colorSurfaceContainerHighest">
+    android:layout_marginHorizontal="6dp"
+    android:layout_marginTop="12dp"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="?attr/colorOutlineVariant"
+    app:strokeWidth="1dp">
 
     <LinearLayout
-        android:layout_width="96dp"
-        android:layout_height="74dp"
-        android:gravity="center"
-        android:orientation="vertical">
+        android:layout_width="100dp"
+        android:layout_height="80dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp">
 
-        <RelativeLayout
-            android:layout_width="32dp"
-            android:layout_height="32dp">
+        <!-- Icon Container with Status Badge -->
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp">
 
+            <!-- Main Icon Background (Soft Circle) -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/circle_bg_white"
+                android:backgroundTint="?attr/colorSurfaceContainerHighest" />
+
+            <!-- Main Icon -->
             <ImageView
                 android:id="@+id/img_icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_centerInParent="true"
-                tools:src="@drawable/event_on_click_48dp"
-                tools:tint="?attr/colorOnSurface" />
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:scaleType="fitCenter"
+                app:tint="?attr/colorOnSurfaceVariant"
+                tools:src="@drawable/event_on_click_48dp" />
 
+            <!-- Status Indicator (Used Event) -->
             <ImageView
                 android:id="@+id/img_used_event"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentRight="true"
-                app:tint="?colorCoolGreen"
-                android:src="@drawable/ic_mtrl_add_circle" />
-        </RelativeLayout>
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_gravity="top|end"
+                android:layout_marginEnd="-2dp"
+                android:layout_marginTop="-2dp"
+                android:src="@drawable/ic_mtrl_add_circle"
+                android:visibility="gone"
+                app:tint="?attr/colorPrimary"
+                tools:visibility="visible" />
+        </FrameLayout>
 
+        <!-- Title Text -->
         <TextView
             android:id="@+id/tv_title"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
             android:maxLines="2"
             android:paddingHorizontal="4dp"
+            android:text="onClick"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
             android:textColor="?attr/colorOnSurface"
             android:textSize="11sp"
             tools:text="onClick" />
-    </LinearLayout>
 
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

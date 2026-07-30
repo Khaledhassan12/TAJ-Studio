@@ -3,16 +3,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="?attr/colorSurface"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:padding="16dp">
 
+    <!-- Premium Icon Grid -->
     <GridView
         android:id="@+id/grid_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:horizontalSpacing="8dp"
-        android:numColumns="6"
+        android:layout_height="400dp"
+        android:clipToPadding="false"
+        android:horizontalSpacing="12dp"
+        android:numColumns="5"
+        android:overScrollMode="never"
+        android:scrollbars="none"
         android:stretchMode="columnWidth"
-        android:verticalSpacing="8dp"
+        android:verticalSpacing="12dp"
         tools:listitem="@layout/item_icon_selector" />
+
 </LinearLayout>

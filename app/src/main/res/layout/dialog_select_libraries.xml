@@ -2,43 +2,45 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="?attr/colorSurface"
     android:orientation="vertical"
     android:paddingHorizontal="20dp"
-    android:paddingTop="10dp">
+    android:paddingTop="16dp">
 
-    <LinearLayout
+    <!-- Premium Search Bar (No Icons, Clean Look) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/searchInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="4dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:hint="Search for libraries"
+        android:importantForAutofill="noExcludeDescendants"
+        app:boxBackgroundColor="?attr/colorSurfaceContainerLow"
+        app:boxCornerRadiusBottomEnd="50dp"
+        app:boxCornerRadiusBottomStart="50dp"
+        app:boxCornerRadiusTopEnd="50dp"
+        app:boxCornerRadiusTopStart="50dp"
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="2dp">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/searchInputLayout"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/searchInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Search for libraries"
-            android:importantForAutofill="noExcludeDescendants"
-            app:boxCornerRadiusBottomEnd="50dp"
-            app:boxCornerRadiusBottomStart="50dp"
-            app:boxCornerRadiusTopEnd="50dp"
-            app:boxCornerRadiusTopStart="50dp"
-            app:startIconDrawable="@drawable/search_icon_grey">
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:singleLine="true"
+            android:textSize="15sp" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/searchInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:imeOptions="actionDone"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-    </LinearLayout>
-
+    <!-- Clean RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="vertical" />
+        android:layout_marginTop="12dp"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingBottom="24dp"
+        android:scrollbars="none" />
 
 </LinearLayout>
