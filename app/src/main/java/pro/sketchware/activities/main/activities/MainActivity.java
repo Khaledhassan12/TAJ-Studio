@@ -49,6 +49,7 @@ import pro.sketchware.R;
 import pro.sketchware.activities.about.AboutActivity;
 import pro.sketchware.activities.main.fragments.projects.ProjectsFragment;
 import pro.sketchware.activities.main.fragments.projects_store.ProjectsStoreFragment;
+import pro.sketchware.activities.main.fragments.git.GitUploadsFragment;
 import pro.sketchware.databinding.MainBinding;
 import pro.sketchware.lib.base.BottomSheetDialogView;
 import pro.sketchware.utility.DataResetter;
@@ -59,6 +60,7 @@ import pro.sketchware.utility.UI;
 public class MainActivity extends BasePermissionAppCompatActivity {
     private static final String PROJECTS_FRAGMENT_TAG = "projects_fragment";
     private static final String PROJECTS_STORE_FRAGMENT_TAG = "projects_store_fragment";
+    private static final String GIT_FRAGMENT_TAG = "git_fragment";
     private ActionBarDrawerToggle drawerToggle;
     private DB u;
     private Snackbar storageAccessDenied;
@@ -72,6 +74,7 @@ public class MainActivity extends BasePermissionAppCompatActivity {
     };
     private ProjectsFragment projectsFragment;
     private ProjectsStoreFragment projectsStoreFragment;
+    private GitUploadsFragment gitUploadsFragment;
     private Fragment activeFragment;
     @IdRes
     private int currentNavItemId = R.id.item_projects;
@@ -276,6 +279,9 @@ public class MainActivity extends BasePermissionAppCompatActivity {
             } else if (id == R.id.item_sketchub) {
                 navigateToSketchubFragment();
                 return true;
+            } else if (id == R.id.item_git) {
+                navigateToGitFragment();
+                return true;
             }
             return false;
         });
@@ -283,12 +289,15 @@ public class MainActivity extends BasePermissionAppCompatActivity {
         if (savedInstanceState != null) {
             projectsFragment = (ProjectsFragment) getSupportFragmentManager().findFragmentByTag(PROJECTS_FRAGMENT_TAG);
             projectsStoreFragment = (ProjectsStoreFragment) getSupportFragmentManager().findFragmentByTag(PROJECTS_STORE_FRAGMENT_TAG);
+            gitUploadsFragment = (GitUploadsFragment) getSupportFragmentManager().findFragmentByTag(GIT_FRAGMENT_TAG);
             currentNavItemId = savedInstanceState.getInt("selected_tab_id");
             Fragment current = getFragmentForNavId(currentNavItemId);
             if (current instanceof ProjectsFragment) {
                 navigateToProjectsFragment();
             } else if (current instanceof ProjectsStoreFragment) {
                 navigateToSketchubFragment();
+            } else if (current instanceof GitUploadsFragment) {
+                navigateToGitFragment();
             }
 
             return;
@@ -302,6 +311,8 @@ public class MainActivity extends BasePermissionAppCompatActivity {
             return projectsFragment;
         } else if (navItemId == R.id.item_sketchub) {
             return projectsStoreFragment;
+        } else if (navItemId == R.id.item_git) {
+            return gitUploadsFragment;
         }
         throw new IllegalArgumentException();
     }
@@ -354,6 +365,28 @@ public class MainActivity extends BasePermissionAppCompatActivity {
 
         activeFragment = projectsStoreFragment;
         currentNavItemId = R.id.item_sketchub;
+    }
+
+    private void navigateToGitFragment() {
+        if (gitUploadsFragment == null) {
+            gitUploadsFragment = new GitUploadsFragment();
+        }
+
+        boolean shouldShow = true;
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
+
+        binding.createNewProject.hide();
+        if (activeFragment != null) transaction.hide(activeFragment);
+        if (fm.findFragmentByTag(GIT_FRAGMENT_TAG) == null) {
+            shouldShow = false;
+            transaction.add(binding.container.getId(), gitUploadsFragment, GIT_FRAGMENT_TAG);
+        }
+        if (shouldShow) transaction.show(gitUploadsFragment);
+        transaction.commit();
+
+        activeFragment = gitUploadsFragment;
+        currentNavItemId = R.id.item_git;
     }
 
     @NonNull

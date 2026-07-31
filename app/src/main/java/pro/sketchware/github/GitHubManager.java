@@ -24,7 +24,10 @@ import com.google.gson.annotations.SerializedName;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,6 +46,7 @@ public class GitHubManager {
     private static final String KEY_USER_AVATAR = "user_avatar";
 
     private static GitHubManager instance;
+    private final Context context;
     private final SharedPreferences prefs;
     private final OkHttpClient client;
     private final Gson gson;
@@ -84,8 +88,28 @@ public class GitHubManager {
     private String cachedAvatarUrl;
     private Bitmap cachedAvatarBitmap;
 
+    // اسم ملف التفضيلات الخاص بسجل الرفعات؛ نستخدم ملفاً منفصلاً لسهولة الإدارة
+    // Preferences file name for upload records; kept separate for easier management.
+    private static final String PREF_UPLOAD_LOG = "github_upload_log";
+    private static final String KEY_RECORDS = "records";
+
+    public static class GitUploadRecord {
+        public String projectId;
+        public String projectTitle;
+        public String repoHtmlUrl;
+        public String login;
+        public String avatarUrl;
+        public long uploadedAtMillis;
+        public int fileCount;
+        public String byDirSummary;
+
+        // نحتاج هذا المنشئ الفارغ لعملية تحويل Gson بشكل صحيح
+        // Empty constructor needed for proper Gson deserialization.
+        public GitUploadRecord() {}
+    }
+
     private GitHubManager(Context context) {
-        context = context.getApplicationContext();
+        this.context = context.getApplicationContext();
         this.client = new OkHttpClient();
         this.gson = new Gson();
         this.executor = Executors.newSingleThreadExecutor();
@@ -153,6 +177,78 @@ public class GitHubManager {
             cachedAvatarBitmap = null;
         }
         notifyListeners();
+    }
+
+    /**
+     * نسجل هنا كل عملية رفع ناجحة في سجل محلي؛ هذا يتيح لنا عرض الرفعات لاحقاً وربطها بالأيقونات المحلية.
+     * We log every successful upload to a local record; this allows us to display history
+     * and link uploads back to their local project icons.
+     */
+    public synchronized void recordSuccessfulUpload(String projectId, String projectTitle, 
+                                                     String repoHtmlUrl, int fileCount, String byDirSummary) {
+        String login = getUserLogin();
+        String avatar = getUserAvatar();
+        
+        List<GitUploadRecord> records = getUploadRecords();
+        
+        GitUploadRecord newRecord = new GitUploadRecord();
+        newRecord.projectId = projectId;
+        newRecord.projectTitle = projectTitle;
+        newRecord.repoHtmlUrl = repoHtmlUrl;
+        newRecord.login = login;
+        newRecord.avatarUrl = avatar;
+        newRecord.uploadedAtMillis = System.currentTimeMillis();
+        newRecord.fileCount = fileCount;
+        newRecord.byDirSummary = byDirSummary;
+
+        // نزيل أي سجل قديم لنفس المشروع في نفس المستودع لتجنب التكرار
+        // Remove any existing record for the same project/repo to avoid duplicates.
+        records.removeIf(r -> (projectId != null && projectId.equals(r.projectId)) 
+                || repoHtmlUrl.equals(r.repoHtmlUrl));
+        
+        // نضع السجل الجديد في البداية (الأحدث أولاً)
+        // Insert the new record at the beginning (newest first).
+        records.add(0, newRecord);
+
+        // نحدد السجل بـ 200 مدخلة كحد أقصى للحفاظ على الأداء
+        // Limit history to 200 entries to maintain performance.
+        if (records.size() > 200) {
+            records = records.subList(0, 200);
+        }
+
+        SharedPreferences logPrefs = context.getSharedPreferences(PREF_UPLOAD_LOG, Context.MODE_PRIVATE);
+        logPrefs.edit().putString(KEY_RECORDS, gson.toJson(records)).apply();
+    }
+
+    /**
+     * نسترجع قائمة الرفعات السابقة؛ القائمة مرتبة زمنياً من الأحدث للأقدم.
+     * Retrieves the list of past uploads, ordered chronologically (newest first).
+     */
+    public List<GitUploadRecord> getUploadRecords() {
+        SharedPreferences logPrefs = context.getSharedPreferences(PREF_UPLOAD_LOG, Context.MODE_PRIVATE);
+        String json = logPrefs.getString(KEY_RECORDS, "[]");
+        try {
+            GitUploadRecord[] array = gson.fromJson(json, GitUploadRecord[].class);
+            List<GitUploadRecord> list = new ArrayList<>();
+            if (array != null) {
+                Collections.addAll(list, array);
+            }
+            return list;
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * نستخدم هذا المساعد لاستخراج معرف المشروع (مثل 601) من مساره الكامل؛
+     * نعتمد على أن المسار ينتهي عادة بـ /.sketchware/mysc/ID
+     * Helper to extract project ID (e.g., 601) from its absolute path;
+     * assumes the path typically ends with /.sketchware/mysc/ID.
+     */
+    public static String extractProjectId(String absolutePath) {
+        if (absolutePath == null || absolutePath.isEmpty()) return null;
+        File file = new File(absolutePath);
+        return file.getName();
     }
 
     public void loadAvatarBitmap(String url, AvatarBitmapCallback callback) {
@@ -624,12 +720,47 @@ public class GitHubManager {
         return sanitized.isEmpty() ? "project" : sanitized;
     }
 
+    /**
+     * Reads file content as UTF-8 text, sanitizes invalid characters, and encodes to Base64.
+     * This prevents 422 errors from GitHub when files contain non-standard UTF-8 bytes
+     * (common in Sketchware-generated .java files with special characters or BOM markers).
+     *
+     * يقرأ محتوى الملف كنص UTF-8، وينظّف الأحرف غير الصالحة، ثم يشفّره إلى Base64.
+     * هذا يمنع خطأ 422 من GitHub عندما تحتوي الملفات على بايتات UTF-8 غير قياسية
+     * (شائع في ملفات .java المولَّدة بواسطة Sketchware والتي قد تحوي أحرفاً خاصة أو علامات BOM).
+     */
     private String encodeFileToBase64(File file) throws IOException {
-        byte[] bytes = new byte[(int) file.length()];
-        try (FileInputStream fis = new FileInputStream(file)) {
-            fis.read(bytes);
+        // Read raw bytes first
+        byte[] rawBytes = new byte[(int) file.length()];
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+            int read = fis.read(rawBytes);
+            if (read != rawBytes.length) {
+                // File changed during read; retry with actual size
+                rawBytes = java.util.Arrays.copyOf(rawBytes, read);
+            }
         }
-        return Base64.encodeToString(bytes, Base64.NO_WRAP);
+
+        // Try to decode as UTF-8, replacing invalid sequences with replacement char
+        String content = new String(rawBytes, java.nio.charset.StandardCharsets.UTF_8);
+
+        // Sanitize: remove null bytes and other control chars that GitHub rejects
+        // Keep newlines (\n, \r), tabs (\t), but remove chars < 0x20 except those three
+        StringBuilder sanitized = new StringBuilder(content.length());
+        for (int i = 0; i < content.length(); i++) {
+            char c = content.charAt(i);
+            if (c == '\n' || c == '\r' || c == '\t') {
+                sanitized.append(c);
+            } else if (c < 0x20 || c == 0x7F) {
+                // Skip control characters GitHub rejects
+                continue;
+            } else {
+                sanitized.append(c);
+            }
+        }
+
+        // Encode the sanitized string back to UTF-8 bytes, then Base64
+        byte[] cleanBytes = sanitized.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return Base64.encodeToString(cleanBytes, Base64.NO_WRAP);
     }
 
     public static class UserResponse {

@@ -64,6 +64,7 @@ public class GitHubUploadService extends Service {
 
     private void startUpload(File projectRoot) {
         GitHubManager manager = GitHubManager.getInstance(this);
+        String rootPath = projectRoot.getAbsolutePath();
         
         // Try to load avatar for large icon
         manager.loadAvatarBitmap(manager.getUserAvatar(), new GitHubManager.AvatarBitmapCallback() {
@@ -87,6 +88,24 @@ public class GitHubUploadService extends Service {
 
             @Override
             public void onSuccess(String repoHtmlUrl, String details) {
+                // نؤرخ نجاح الرفع هنا في السجل المحلي لربطه بالأيقونة وتوفير الوصول السريع
+                // We record the success here in the local log to link it with the icon and provide quick access.
+                int fileCount = 0;
+                if (details.contains("files=")) {
+                    try {
+                        String sub = details.substring(details.indexOf("files=") + 6);
+                        fileCount = Integer.parseInt(sub.split(" ")[0]);
+                    } catch (Exception ignored) {}
+                }
+                
+                manager.recordSuccessfulUpload(
+                        GitHubManager.extractProjectId(rootPath),
+                        projectTitle,
+                        repoHtmlUrl,
+                        fileCount,
+                        details
+                );
+
                 notificationManager.notify(DONE_ID, buildSuccessNotification(repoHtmlUrl, details));
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     stopForeground(STOP_FOREGROUND_REMOVE);

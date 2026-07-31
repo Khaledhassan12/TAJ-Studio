@@ -304,7 +304,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/colorSurfaceContainerHigh"
+        android:background="?attr/colorSurface"
         android:gravity="end"
         android:orientation="horizontal"
         android:paddingHorizontal="20dp"

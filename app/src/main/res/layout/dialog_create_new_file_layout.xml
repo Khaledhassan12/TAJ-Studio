@@ -21,7 +21,6 @@
         app:boxCornerRadiusTopStart="16dp"
         app:boxStrokeWidth="0dp"
         app:boxStrokeWidthFocused="2dp"
-        app:startIconDrawable="@android:drawable/ic_menu_edit"
         app:startIconTint="?attr/colorOnSurfaceVariant">
 
         <com.google.android.material.textfield.TextInputEditText
