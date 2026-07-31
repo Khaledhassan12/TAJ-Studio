@@ -58,19 +58,25 @@ public class GitCommitService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && ACTION_COMMIT.equals(intent.getAction())) {
-            handleCommitIntent(intent);
+            // نُظهر الإشعار الهيكلي فوراً كأول إجراء لضمان عدم تأخر ظهور الإشعار في مركز التنبيهات.
+            // Raise the skeleton notification immediately as the first action to prevent any perceived UI delay.
+            startForeground(PROGRESS_ID, buildProgressNotification(0, 0, getString(R.string.git_commit_preparing)));
+
+            // ننقل كل العمل الثقيل (تحليل JSON وقراءة الملفات) إلى خيط خلفي.
+            // Move all heavy work (JSON parsing and file I/O) to a background thread.
+            new Thread(() -> handleCommitWork(intent)).start();
         }
         return START_NOT_STICKY;
     }
 
-    private void handleCommitIntent(Intent intent) {
+    private void handleCommitWork(Intent intent) {
         String recordJson = intent.getStringExtra(EXTRA_RECORD_JSON);
         String message = intent.getStringExtra(EXTRA_MESSAGE);
         String readme = intent.getStringExtra(EXTRA_README);
         String[] paths = intent.getStringArrayExtra(EXTRA_ATTACHED_PATHS);
 
         if (recordJson == null || message == null) {
-            stopSelf();
+            cleanupAndStop();
             return;
         }
 
@@ -86,9 +92,9 @@ public class GitCommitService extends Service {
             }
         }
 
-        // إشعار البدء الفوري لمتطلبات Foreground Service
-        // Immediate start notification for Foreground Service requirements.
-        startForeground(PROGRESS_ID, buildProgressNotification(0, 0, getString(R.string.git_commit_preparing)));
+        // تحديث الإشعار باسم المستودع الفعلي بعد استخراجه في الخلفية
+        // Update the notification with the actual repo name after extracting it in the background.
+        notificationManager.notify(PROGRESS_ID, buildProgressNotification(0, 0, getString(R.string.git_commit_preparing)));
 
         manager.createCommit(record, message, readme, attachments, new GitHubManager.CommitCallback() {
             @Override

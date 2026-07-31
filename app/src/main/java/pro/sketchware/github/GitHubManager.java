@@ -1001,7 +1001,10 @@ public class GitHubManager {
     private String encodeBinaryToBase64(File file) throws IOException {
         byte[] bytes = new byte[(int) file.length()];
         try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
-            fis.read(bytes);
+            int read = fis.read(bytes);
+            if (read != bytes.length) {
+                bytes = java.util.Arrays.copyOf(bytes, read);
+            }
         }
         return Base64.encodeToString(bytes, Base64.NO_WRAP);
     }
