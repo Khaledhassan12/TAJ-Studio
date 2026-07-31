@@ -2,6 +2,12 @@ package pro.sketchware.github;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Shader;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
@@ -56,9 +62,27 @@ public class GitHubManager {
 
     public interface UploadCallback {
         void onProgress(int done, int total, String currentPath);
-        void onSuccess(String repoHtmlUrl);
-        void onError(String error);
+        void onSuccess(String repoHtmlUrl, String details);
+        void onError(String error, String details);
     }
+
+    public interface AvatarBitmapCallback {
+        void onBitmap(Bitmap bitmap);
+        void onFailed();
+    }
+
+    public static class UploadFile {
+        public final String relativePath;
+        public final File file;
+
+        public UploadFile(String relativePath, File file) {
+            this.relativePath = relativePath;
+            this.file = file;
+        }
+    }
+
+    private String cachedAvatarUrl;
+    private Bitmap cachedAvatarBitmap;
 
     private GitHubManager(Context context) {
         context = context.getApplicationContext();
@@ -123,7 +147,60 @@ public class GitHubManager {
 
     public void signOut() {
         prefs.edit().clear().apply();
+        cachedAvatarUrl = null;
+        if (cachedAvatarBitmap != null) {
+            cachedAvatarBitmap.recycle();
+            cachedAvatarBitmap = null;
+        }
         notifyListeners();
+    }
+
+    public void loadAvatarBitmap(String url, AvatarBitmapCallback callback) {
+        if (url == null || url.isEmpty()) {
+            mainHandler.post(callback::onFailed);
+            return;
+        }
+
+        if (url.equals(cachedAvatarUrl) && cachedAvatarBitmap != null) {
+            mainHandler.post(() -> callback.onBitmap(cachedAvatarBitmap));
+            return;
+        }
+
+        executor.execute(() -> {
+            Request request = new Request.Builder()
+                    .url(url)
+                    .header("User-Agent", "TAJ-Studio")
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Bitmap raw = BitmapFactory.decodeStream(response.body().byteStream());
+                    if (raw != null) {
+                        Bitmap circular = getCircleBitmap(raw);
+                        cachedAvatarUrl = url;
+                        cachedAvatarBitmap = circular;
+                        mainHandler.post(() -> callback.onBitmap(circular));
+                        return;
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+            mainHandler.post(callback::onFailed);
+        });
+    }
+
+    public static Bitmap getCircleBitmap(Bitmap bitmap) {
+        int size = Math.min(bitmap.getWidth(), bitmap.getHeight());
+        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setShader(new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+
+        float r = size / 2f;
+        canvas.drawCircle(r, r, r, paint);
+        return output;
     }
 
     public void refreshUserInfoOnce() {
@@ -193,23 +270,41 @@ public class GitHubManager {
         executor.execute(() -> {
             String token = getAccessToken();
             String login = getUserLogin();
+            StringBuilder stages = new StringBuilder();
+            
             if (token == null || login.equals("Unknown")) {
-                mainHandler.post(() -> callback.onError("Not signed in."));
+                mainHandler.post(() -> callback.onError("Not signed in.", "auth=fail"));
                 return;
             }
 
             if (projectRoot == null || !projectRoot.exists() || !projectRoot.isDirectory()) {
-                mainHandler.post(() -> callback.onError("Project folder not found."));
+                mainHandler.post(() -> callback.onError("Project folder not found.", "fs=missing"));
                 return;
             }
 
             try {
                 mainHandler.post(() -> callback.onProgress(0, 0, "Preparing files…"));
-                List<File> filesToUpload = new ArrayList<>();
-                collectFiles(projectRoot, projectRoot, filesToUpload);
+                List<UploadFile> filesToUpload = collectUploadFiles(projectRoot);
+
+                // Telemetry
+                int javaCount = 0, resCount = 0, assetsCount = 0, rootCount = 0, otherCount = 0;
+                for (UploadFile f : filesToUpload) {
+                    String p = f.relativePath;
+                    if (p.contains("/src/main/java/")) javaCount++;
+                    else if (p.contains("/src/main/res/")) resCount++;
+                    else if (p.contains("/src/main/assets/")) assetsCount++;
+                    else if (!p.contains("/")) rootCount++;
+                    else otherCount++;
+                }
+                String[] topList = projectRoot.list();
+                stages.append("files=").append(filesToUpload.size())
+                      .append(" top=").append(topList != null ? java.util.Arrays.toString(topList) : "[]")
+                      .append(" byDir={java=").append(javaCount).append(",res=").append(resCount)
+                      .append(",assets=").append(assetsCount).append(",root=").append(rootCount)
+                      .append(",other=").append(otherCount).append("}\n");
 
                 if (filesToUpload.isEmpty()) {
-                    mainHandler.post(() -> callback.onError("No files to upload."));
+                    mainHandler.post(() -> callback.onError("No files to upload.", stages.toString()));
                     return;
                 }
 
@@ -221,50 +316,103 @@ public class GitHubManager {
                 String defaultBranch = "main";
                 Request getRepoRequest = buildRequest(repoUrl).get().build();
                 try (Response response = client.newCall(getRepoRequest).execute()) {
+                    stages.append("repo_get=").append(response.code()).append(" ");
                     if (response.code() == 404) {
                         mainHandler.post(() -> callback.onProgress(0, filesToUpload.size(), "Creating repository…"));
                         JsonObject createRepoBody = new JsonObject();
                         createRepoBody.addProperty("name", repoName);
                         createRepoBody.addProperty("private", false);
-                        createRepoBody.addProperty("auto_init", false);
-                        
+                        createRepoBody.addProperty("auto_init", true); // تهيئة الـ backend بـ commit أولي => يمنع 409 على blob
+
                         Request createRepoRequest = buildRequest("https://api.github.com/user/repos")
                                 .post(RequestBody.create(createRepoBody.toString(), MediaType.get("application/json")))
                                 .build();
                         try (Response createResponse = client.newCall(createRepoRequest).execute()) {
-                            if (!createResponse.isSuccessful() && createResponse.code() != 422) {
-                                mainHandler.post(() -> callback.onError("Failed to create repository: " + createResponse.code()));
+                            String createBodyStr = createResponse.body() != null ? createResponse.body().string() : "";
+                            stages.append("repo_post=").append(createResponse.code()).append(" ");
+                            if (createResponse.isSuccessful() && !createBodyStr.isEmpty()) {
+                                JsonObject created = gson.fromJson(createBodyStr, JsonObject.class);
+                                if (created.has("default_branch") && !created.get("default_branch").isJsonNull()) {
+                                    defaultBranch = created.get("default_branch").getAsString();
+                                }
+                            } else if (!createResponse.isSuccessful() && createResponse.code() != 422) {
+                                String err = createBodyStr.length() > 300 ? createBodyStr.substring(0, 300) + "..." : createBodyStr;
+                                mainHandler.post(() -> callback.onError("Repo creation failed: " + err, stages.toString()));
                                 return;
                             }
+                            // 422 => المستودع موجود فعلاً؛ سيُحسم فرعه عبر ref_get أدناه
                         }
                     } else if (response.isSuccessful() && response.body() != null) {
                         JsonObject repoJson = gson.fromJson(response.body().string(), JsonObject.class);
-                        defaultBranch = repoJson.get("default_branch").getAsString();
+                        if (repoJson.has("default_branch") && !repoJson.get("default_branch").isJsonNull()) {
+                            defaultBranch = repoJson.get("default_branch").getAsString();
+                        }
                     }
                 }
+                stages.append("branch=").append(defaultBranch).append("\n");
 
+                // جلب الفرع الأساسي مع إعادة محاولة على 409 (تهيئة backend عابرة بعد الإنشاء)
                 String baseSha = null;
                 String baseTreeSha = null;
-                Request getRefRequest = buildRequest(repoUrl + "/git/ref/heads/" + defaultBranch).get().build();
-                try (Response response = client.newCall(getRefRequest).execute()) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        JsonObject refJson = gson.fromJson(response.body().string(), JsonObject.class);
-                        baseSha = refJson.getAsJsonObject("object").get("sha").getAsString();
-                        
-                        Request getCommitRequest = buildRequest(repoUrl + "/git/commits/" + baseSha).get().build();
-                        try (Response commitResponse = client.newCall(getCommitRequest).execute()) {
-                            if (commitResponse.isSuccessful() && commitResponse.body() != null) {
-                                JsonObject commitJson = gson.fromJson(commitResponse.body().string(), JsonObject.class);
-                                baseTreeSha = commitJson.getAsJsonObject("tree").get("sha").getAsString();
+                for (int attempt = 0; attempt < 4; attempt++) {
+                    Request getRefRequest = buildRequest(repoUrl + "/git/ref/heads/" + defaultBranch).get().build();
+                    try (Response response = client.newCall(getRefRequest).execute()) {
+                        if (attempt == 0) stages.append("ref_get=").append(response.code()).append(" ");
+                        if (response.isSuccessful() && response.body() != null) {
+                            JsonObject refJson = gson.fromJson(response.body().string(), JsonObject.class);
+                            baseSha = refJson.getAsJsonObject("object").get("sha").getAsString();
+                            Request getCommitRequest = buildRequest(repoUrl + "/git/commits/" + baseSha).get().build();
+                            try (Response commitResponse = client.newCall(getCommitRequest).execute()) {
+                                if (commitResponse.isSuccessful() && commitResponse.body() != null) {
+                                    JsonObject commitJson = gson.fromJson(commitResponse.body().string(), JsonObject.class);
+                                    baseTreeSha = commitJson.getAsJsonObject("tree").get("sha").getAsString();
+                                }
                             }
+                            break; // نجح جلب الفرع
+                        } else if (response.code() == 409) {
+                            try { Thread.sleep(2000L); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                        } else {
+                            break; // 404 أو غيره => فرع غير موجود (repo فارغ)؛ نعالجه بالـ bootstrap
                         }
                     }
                 }
 
+                // إن بقي baseSha == null => repo موجود لكن فارغ تماماً (لا commit) => bootstrap بـ README عبر Contents API
+                if (baseSha == null) {
+                    stages.append("bootstrap=1 ");
+                    JsonObject readmeBody = new JsonObject();
+                    readmeBody.addProperty("message", "Initial commit");
+                    readmeBody.addProperty("content",
+                            Base64.encodeToString("# Project\n".getBytes(java.nio.charset.StandardCharsets.UTF_8), Base64.NO_WRAP));
+                    Request putReadme = buildRequest(repoUrl + "/contents/README.md")
+                            .put(RequestBody.create(readmeBody.toString(), MediaType.get("application/json")))
+                            .build();
+                    try (Response response = client.newCall(putReadme).execute()) {
+                        stages.append("bootstrap_code=").append(response.code()).append(" ");
+                        if (response.isSuccessful() && response.body() != null) {
+                            JsonObject putJson = gson.fromJson(response.body().string(), JsonObject.class);
+                            if (putJson.has("commit") && putJson.getAsJsonObject("commit").has("sha")) {
+                                baseSha = putJson.getAsJsonObject("commit").get("sha").getAsString();
+                                Request gc = buildRequest(repoUrl + "/git/commits/" + baseSha).get().build();
+                                try (Response cr = client.newCall(gc).execute()) {
+                                    if (cr.isSuccessful() && cr.body() != null) {
+                                        baseTreeSha = gson.fromJson(cr.body().string(), JsonObject.class)
+                                                .getAsJsonObject("tree").get("sha").getAsString();
+                                    }
+                                }
+                            }
+                        }
+                        // إن فشل bootstrap (مثلاً 422 لأن README موجود) نتابع؛ الـ backend قد يكون جاهزاً على أي حال
+                    }
+                }
+
+                // إنشاء الـ blobs مع إعادة محاولة على 409
                 JsonArray treeArray = new JsonArray();
+                int blobsOk = 0;
                 for (int i = 0; i < filesToUpload.size(); i++) {
-                    File file = filesToUpload.get(i);
-                    String relativePath = projectRoot.toURI().relativize(file.toURI()).getPath();
+                    UploadFile uploadFile = filesToUpload.get(i);
+                    File file = uploadFile.file;
+                    String relativePath = uploadFile.relativePath;
                     final int index = i + 1;
                     mainHandler.post(() -> callback.onProgress(index, filesToUpload.size(), relativePath));
 
@@ -272,25 +420,37 @@ public class GitHubManager {
                     JsonObject blobBody = new JsonObject();
                     blobBody.addProperty("content", contentBase64);
                     blobBody.addProperty("encoding", "base64");
-                    
                     Request createBlobRequest = buildRequest(repoUrl + "/git/blobs")
                             .post(RequestBody.create(blobBody.toString(), MediaType.get("application/json")))
                             .build();
-                    try (Response response = client.newCall(createBlobRequest).execute()) {
-                        if (response.isSuccessful() && response.body() != null) {
-                            JsonObject blobJson = gson.fromJson(response.body().string(), JsonObject.class);
+
+                    Response response = null;
+                    for (int attempt = 0; attempt < 3; attempt++) {
+                        if (response != null) response.close();
+                        response = client.newCall(createBlobRequest).execute();
+                        if (response.code() != 409) break;
+                        try { Thread.sleep(1500L); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                    }
+                    try (Response r = response) {
+                        if (r != null && r.isSuccessful() && r.body() != null) {
+                            JsonObject blobJson = gson.fromJson(r.body().string(), JsonObject.class);
                             JsonObject treeElement = new JsonObject();
                             treeElement.addProperty("path", relativePath);
                             treeElement.addProperty("mode", "100644");
                             treeElement.addProperty("type", "blob");
                             treeElement.addProperty("sha", blobJson.get("sha").getAsString());
                             treeArray.add(treeElement);
+                            blobsOk++;
                         } else {
-                            mainHandler.post(() -> callback.onError("Failed to upload file " + relativePath + ": " + response.code()));
+                            int code = r != null ? r.code() : -1;
+                            stages.append("blob_err=").append(code).append(" path=").append(relativePath).append(" ");
+                            String err = r != null ? getShortError(r) : "null response";
+                            mainHandler.post(() -> callback.onError("File upload failed (" + relativePath + "): " + err, stages.toString()));
                             return;
                         }
                     }
                 }
+                stages.append("blobs=").append(blobsOk).append("/").append(filesToUpload.size()).append("\n");
 
                 mainHandler.post(() -> callback.onProgress(filesToUpload.size(), filesToUpload.size(), "Finalizing commit…"));
                 JsonObject treeBody = new JsonObject();
@@ -304,10 +464,12 @@ public class GitHubManager {
                         .post(RequestBody.create(treeBody.toString(), MediaType.get("application/json")))
                         .build();
                 try (Response response = client.newCall(createTreeRequest).execute()) {
+                    stages.append("tree=").append(response.code()).append(" ");
                     if (response.isSuccessful() && response.body() != null) {
                         newTreeSha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
                     } else {
-                        mainHandler.post(() -> callback.onError("Failed to create tree: " + response.code()));
+                        String err = getShortError(response);
+                        mainHandler.post(() -> callback.onError("Tree creation failed: " + err, stages.toString()));
                         return;
                     }
                 }
@@ -326,49 +488,74 @@ public class GitHubManager {
                         .post(RequestBody.create(commitBody.toString(), MediaType.get("application/json")))
                         .build();
                 try (Response response = client.newCall(createCommitRequest).execute()) {
+                    stages.append("commit=").append(response.code()).append("\n");
                     if (response.isSuccessful() && response.body() != null) {
                         newCommitSha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
                     } else {
-                        mainHandler.post(() -> callback.onError("Failed to create commit: " + response.code()));
+                        String err = getShortError(response);
+                        mainHandler.post(() -> callback.onError("Commit failed: " + err, stages.toString()));
                         return;
                     }
                 }
 
-                JsonObject refUpdateBody = new JsonObject();
-                refUpdateBody.addProperty("sha", newCommitSha);
-                refUpdateBody.addProperty("force", false);
-                
-                String refUrl = repoUrl + "/git/refs/heads/" + defaultBranch;
-                Request updateRefRequest = buildRequest(refUrl)
-                        .patch(RequestBody.create(refUpdateBody.toString(), MediaType.get("application/json")))
-                        .build();
-                try (Response response = client.newCall(updateRefRequest).execute()) {
-                    if (response.code() == 422 && baseSha == null) {
-                        JsonObject createRefBody = new JsonObject();
-                        createRefBody.addProperty("ref", "refs/heads/" + defaultBranch);
-                        createRefBody.addProperty("sha", newCommitSha);
-                        Request createRefRequest = buildRequest(repoUrl + "/git/refs")
-                                .post(RequestBody.create(createRefBody.toString(), MediaType.get("application/json")))
-                                .build();
-                        try (Response createRefResponse = client.newCall(createRefRequest).execute()) {
-                            if (!createRefResponse.isSuccessful()) {
-                                mainHandler.post(() -> callback.onError("Failed to create ref: " + createRefResponse.code()));
-                                return;
-                            }
+                // Linking Branch (Ref)
+                boolean refLinked = false;
+                if (baseSha != null) {
+                    // PATCH existing ref
+                    JsonObject refUpdateBody = new JsonObject();
+                    refUpdateBody.addProperty("sha", newCommitSha);
+                    refUpdateBody.addProperty("force", false);
+                    
+                    String refUrl = repoUrl + "/git/refs/heads/" + defaultBranch;
+                    Request updateRefRequest = buildRequest(refUrl)
+                            .patch(RequestBody.create(refUpdateBody.toString(), MediaType.get("application/json")))
+                            .build();
+                    try (Response response = client.newCall(updateRefRequest).execute()) {
+                        stages.append("ref_patch=").append(response.code()).append(" ");
+                        if (response.isSuccessful()) {
+                            refLinked = true;
                         }
-                    } else if (!response.isSuccessful()) {
-                        mainHandler.post(() -> callback.onError("Failed to update ref: " + response.code()));
-                        return;
+                    }
+                }
+
+                if (!refLinked) {
+                    // POST new ref (fallback or new repo)
+                    JsonObject createRefBody = new JsonObject();
+                    createRefBody.addProperty("ref", "refs/heads/" + defaultBranch);
+                    createRefBody.addProperty("sha", newCommitSha);
+                    Request createRefRequest = buildRequest(repoUrl + "/git/refs")
+                            .post(RequestBody.create(createRefBody.toString(), MediaType.get("application/json")))
+                            .build();
+                    try (Response response = client.newCall(createRefRequest).execute()) {
+                        stages.append("ref_post=").append(response.code()).append(" ");
+                        if (response.isSuccessful()) {
+                            refLinked = true;
+                        } else {
+                            String err = getShortError(response);
+                            mainHandler.post(() -> callback.onError("Ref linking failed: " + err, stages.toString()));
+                            return;
+                        }
                     }
                 }
 
                 String finalHtmlUrl = "https://github.com/" + login + "/" + repoName;
-                mainHandler.post(() -> callback.onSuccess(finalHtmlUrl));
+                mainHandler.post(() -> callback.onSuccess(finalHtmlUrl, stages.toString()));
 
             } catch (Exception e) {
-                mainHandler.post(() -> callback.onError(e.getMessage()));
+                mainHandler.post(() -> callback.onError(e.toString(), stages.toString()));
             }
         });
+    }
+
+    private String getShortError(Response response) {
+        try {
+            if (response.body() == null) return "null body";
+            String body = response.body().string();
+            if (body.length() > 300) return body.substring(0, 300) + "...";
+            return body;
+        } catch (Exception e) {
+            return "failed to read error body";
+        }
     }
 
     private Request.Builder buildRequest(String url) {
@@ -379,19 +566,52 @@ public class GitHubManager {
                 .header("User-Agent", "TAJ-Studio");
     }
 
+    public List<UploadFile> collectUploadFiles(File projectRoot) {
+        List<UploadFile> result = new ArrayList<>();
+        if (projectRoot != null && projectRoot.exists() && projectRoot.isDirectory()) {
+            collectFilesInternal(projectRoot, projectRoot, result);
+        }
+        return result;
+    }
+
+    private void collectFilesInternal(File root, File dir, List<UploadFile> result) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            String name = file.getName().toLowerCase();
+            if (file.isDirectory()) {
+                if (name.equals("build") || name.equals(".gradle") || name.equals(".idea") || 
+                    name.equals(".git") || name.equals("bin") || name.equals("gen") || name.equals(".ds_store")) {
+                    continue;
+                }
+                collectFilesInternal(root, file, result);
+            } else {
+                if (name.endsWith(".apk") || name.endsWith(".class") || name.endsWith(".dex") || 
+                    name.endsWith(".o") || name.endsWith(".so") || name.equals(".ds_store") ||
+                    file.length() > 25 * 1024 * 1024) {
+                    continue;
+                }
+                String relativePath = root.toURI().relativize(file.toURI()).getPath();
+                result.add(new UploadFile(relativePath, file));
+            }
+        }
+    }
+
     private void collectFiles(File root, File dir, List<File> result) {
         File[] files = dir.listFiles();
         if (files == null) return;
         for (File file : files) {
-            String relativePath = root.toURI().relativize(file.toURI()).getPath();
+            String name = file.getName().toLowerCase();
             if (file.isDirectory()) {
-                if (relativePath.startsWith("build/") || relativePath.startsWith(".gradle/") || 
-                    relativePath.startsWith(".idea/") || relativePath.contains("/.git/")) {
+                if (name.equals("build") || name.equals(".gradle") || name.equals(".idea") || 
+                    name.equals(".git") || name.equals("bin") || name.equals("gen") || name.equals(".ds_store")) {
                     continue;
                 }
                 collectFiles(root, file, result);
             } else {
-                if (relativePath.endsWith(".apk") || file.length() > 25 * 1024 * 1024) {
+                if (name.endsWith(".apk") || name.endsWith(".class") || name.endsWith(".dex") || 
+                    name.endsWith(".o") || name.endsWith(".so") || name.equals(".ds_store") ||
+                    file.length() > 25 * 1024 * 1024) {
                     continue;
                 }
                 result.add(file);

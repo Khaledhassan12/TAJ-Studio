@@ -2321,5 +2321,14 @@ Please try again later"</string>
     <string name="github_upload_error">Upload failed: %s</string>
     <string name="github_upload_no_files">No files found to upload.</string>
     <string name="github_upload_session_expired">Session expired, please sign in again.</string>
+    <string name="github_upload_in_progress_title">Uploading project</string>
+    <string name="github_upload_in_progress_body">Uploading %1$s…</string>
+    <string name="github_upload_success_title">Upload complete</string>
+    <string name="github_upload_success_body">%1$s has been uploaded to GitHub successfully.</string>
+    <string name="github_upload_failed_title">Upload failed</string>
+    <string name="github_upload_failed_body">Couldn’t upload %1$s. Tap for details.</string>
+    <string name="github_upload_view_on_github">View on GitHub</string>
+    <string name="github_upload_channel_progress_name">Project Upload Progress</string>
+    <string name="github_upload_channel_done_name">Project Upload Completion</string>
 
 </resources>

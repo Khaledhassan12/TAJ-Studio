@@ -86,8 +86,8 @@
 
                     <ImageView
                         android:id="@+id/github_icon"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="54dp"
+                        android:layout_height="50dp"
                         app:srcCompat="@drawable/ic_github_brand" />
 
                     <LinearLayout
@@ -110,6 +110,8 @@
                             android:id="@+id/github_sub_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="2"
                             android:text="Sign in to GitHub to upload"
                             android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:textColor="?attr/colorOnSurfaceVariant" />

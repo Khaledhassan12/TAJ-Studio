@@ -3,6 +3,7 @@ package com.besome.sketch.adapters;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,8 @@ import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.DiffUtil;
@@ -43,6 +46,7 @@ import pro.sketchware.databinding.BottomSheetProjectOptionsBinding;
 import pro.sketchware.databinding.MyprojectsItemBinding;
 import pro.sketchware.github.GitHubManager;
 import pro.sketchware.github.GitHubSignInSheet;
+import pro.sketchware.github.GitHubUploadService;
 
 public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.ProjectViewHolder> {
     private final ProjectsFragment projectsFragment;
@@ -303,46 +307,26 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
                             .show(((FragmentActivity) activity).getSupportFragmentManager(), "GitHubSignIn");
                 }
             } else {
-                binding.githubAuthCard.setEnabled(false);
-                binding.githubProgress.setVisibility(View.VISIBLE);
-                binding.githubProgress.setIndeterminate(true);
-                binding.githubSubText.setText(R.string.github_upload_starting);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (ContextCompat.checkSelfPermission(activity, android.Manifest.permission.POST_NOTIFICATIONS) 
+                            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(activity, 
+                                new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+                    }
+                }
 
                 String scId = yB.c(projectMap, "sc_id");
                 File projectRoot = new File(wq.d(scId));
 
-                ghManager.uploadProject(projectTitle, projectRoot, new GitHubManager.UploadCallback() {
-                    @Override
-                    public void onProgress(int done, int total, String currentPath) {
-                        if (total > 0) {
-                            binding.githubProgress.setIndeterminate(false);
-                            binding.githubProgress.setMax(total);
-                            binding.githubProgress.setProgress(done);
-                            binding.githubSubText.setText(activity.getString(R.string.github_upload_progress, done, total));
-                        } else {
-                            binding.githubSubText.setText(currentPath);
-                        }
-                    }
+                Intent intent = new Intent(activity, GitHubUploadService.class);
+                intent.setAction(GitHubUploadService.ACTION_START_UPLOAD);
+                intent.putExtra(GitHubUploadService.EXTRA_PROJECT_TITLE, projectTitle);
+                intent.putExtra(GitHubUploadService.EXTRA_PROJECT_ROOT, projectRoot.getAbsolutePath());
+                ContextCompat.startForegroundService(activity, intent);
 
-                    @Override
-                    public void onSuccess(String repoHtmlUrl) {
-                        binding.githubAuthCard.setEnabled(true);
-                        binding.githubProgress.setVisibility(View.GONE);
-                        binding.githubSubText.setText(R.string.github_upload_success);
-                        Toast.makeText(activity, R.string.github_upload_success, Toast.LENGTH_LONG).show();
-
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(repoHtmlUrl));
-                        activity.startActivity(intent);
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        binding.githubAuthCard.setEnabled(true);
-                        binding.githubProgress.setVisibility(View.GONE);
-                        binding.githubSubText.setText(activity.getString(R.string.github_upload_error, error));
-                        Toast.makeText(activity, activity.getString(R.string.github_upload_error, error), Toast.LENGTH_LONG).show();
-                    }
-                });
+                binding.githubAuthCard.setEnabled(false);
+                binding.githubSubText.setText(R.string.github_upload_starting);
+                Toast.makeText(activity, R.string.github_upload_starting, Toast.LENGTH_SHORT).show();
             }
         });
 
