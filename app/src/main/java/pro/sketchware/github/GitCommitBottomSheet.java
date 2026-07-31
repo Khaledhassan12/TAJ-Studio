@@ -1,9 +1,6 @@
 package pro.sketchware.github;
 
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,15 +10,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.chip.Chip;
@@ -30,8 +27,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import a.a.a.lC;
+import a.a.a.wq;
+import a.a.a.yB;
 import pro.sketchware.R;
 import pro.sketchware.databinding.SheetGitCommitBinding;
 
@@ -111,11 +112,30 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
         String repoName = record.repoHtmlUrl.substring(record.repoHtmlUrl.lastIndexOf("/") + 1);
         binding.repoDisplayName.setText(repoName);
         binding.pushTargetLabel.setText(getString(R.string.git_commit_pushing_to, record.login, "main"));
+
+        // تحميل أيقونة المشروع المحلية في الهيدر لتعزيز الانتماء المحلي
+        // Load the local project icon in the header to enhance local identity.
+        boolean iconSet = false;
+        if (record.projectId != null) {
+            HashMap<String, Object> projectMap = lC.b(record.projectId);
+            if (projectMap != null && yB.a(projectMap, "custom_icon")) {
+                File iconFile = new File(wq.e() + File.separator + record.projectId, "icon.png");
+                if (iconFile.exists()) {
+                    String providerPath = requireContext().getPackageName() + ".provider";
+                    Uri uri = FileProvider.getUriForFile(requireContext(), providerPath, iconFile);
+                    binding.projectIconView.setImageURI(uri);
+                    iconSet = true;
+                }
+            }
+        }
+        if (!iconSet) {
+            binding.projectIconView.setImageResource(R.drawable.ic_github_brand);
+        }
     }
 
     private void setupChangesPreview() {
         GitHubManager manager = GitHubManager.getInstance(requireContext());
-        File root = new File(a.a.a.wq.d(record.projectId));
+        File root = new File(wq.d(record.projectId));
         List<GitHubManager.UploadFile> files = manager.collectUploadFiles(root);
         
         int java = 0, res = 0, assets = 0, other = 0;
@@ -180,9 +200,13 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
     }
 
     private File saveUriToCache(Uri uri) {
+        File dir = new File(requireContext().getCacheDir(), "commit_attachments");
+        if (!dir.exists()) dir.mkdirs();
+        
+        String name = "img_" + System.currentTimeMillis() + "_" + uri.getLastPathSegment() + ".png";
+        File file = new File(dir, name);
+        
         try (InputStream is = requireContext().getContentResolver().openInputStream(uri)) {
-            String name = "commit_img_" + System.currentTimeMillis() + ".png";
-            File file = new File(requireContext().getCacheDir(), name);
             try (FileOutputStream os = new FileOutputStream(file)) {
                 byte[] buf = new byte[8192];
                 int len;
@@ -200,11 +224,16 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
             ImageView img = view.findViewById(R.id.thumb_image);
             View del = view.findViewById(R.id.btn_remove);
             
-            Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath());
+            // مصغرات سريعة لضمان عدم استهلاك الذاكرة
+            // Quick thumbnails to prevent memory exhaustion.
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inSampleSize = 4;
+            Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath(), opts);
             img.setImageBitmap(b);
             
             final int index = i;
             del.setOnClickListener(v -> {
+                attachedFiles.get(index).delete();
                 attachedFiles.remove(index);
                 updateAttachmentsRow();
             });
@@ -223,34 +252,24 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
         }
         binding.commitMessageLayout.setError(null);
 
-        setLoading(true);
-        String readme = binding.checkReadme.isChecked() ? 
-                (binding.readmeContentField.getText() != null ? binding.readmeContentField.getText().toString() : "") : null;
+        // نُغلق البوتم شيت فور الضغط ونسلّم العمل للخدمة، لأن الـ commit قد يستغرق وقتاً طويلاً.
+        // We dismiss the sheet the instant the user taps push and hand the work to the service.
+        Intent intent = new Intent(requireContext(), GitCommitService.class);
+        intent.setAction(GitCommitService.ACTION_COMMIT);
+        intent.putExtra(GitCommitService.EXTRA_RECORD_JSON, new com.google.gson.Gson().toJson(record));
+        intent.putExtra(GitCommitService.EXTRA_MESSAGE, msg);
+        if (binding.checkReadme.isChecked()) {
+            intent.putExtra(GitCommitService.EXTRA_README, 
+                    binding.readmeContentField.getText() != null ? binding.readmeContentField.getText().toString() : "");
+        }
+        
+        String[] paths = new String[attachedFiles.size()];
+        for (int i = 0; i < attachedFiles.size(); i++) paths[i] = attachedFiles.get(i).getAbsolutePath();
+        intent.putExtra(GitCommitService.EXTRA_ATTACHED_PATHS, paths);
 
-        GitHubManager.getInstance(requireContext()).createCommit(record, msg, readme, attachedFiles, 
-                new GitHubManager.CommitCallback() {
-            @Override public void onSuccess() {
-                if (isAdded()) {
-                    Toast.makeText(requireContext(), R.string.git_commit_success, Toast.LENGTH_SHORT).show();
-                    dismiss();
-                }
-            }
-            @Override public void onError(String err) {
-                if (isAdded()) {
-                    setLoading(false);
-                    Toast.makeText(requireContext(), "Error: " + err, Toast.LENGTH_LONG).show();
-                }
-            }
-            @Override public void onProgress(String stage) {
-                if (isAdded()) requireActivity().runOnUiThread(() -> binding.btnCommitPush.setText(stage));
-            }
-        });
-    }
-
-    private void setLoading(boolean l) {
-        binding.btnCommitPush.setEnabled(!l);
-        binding.progressLoader.setVisibility(l ? View.VISIBLE : View.GONE);
-        binding.btnCommitPush.setText(l ? R.string.git_commit_committing : R.string.git_commit_button);
+        ContextCompat.startForegroundService(requireContext(), intent);
+        Toast.makeText(requireContext(), R.string.git_commit_preparing, Toast.LENGTH_SHORT).show();
+        dismissAllowingStateLoss();
     }
 
     @Override

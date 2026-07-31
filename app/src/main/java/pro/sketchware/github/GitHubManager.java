@@ -71,9 +71,9 @@ public class GitHubManager {
     }
 
     public interface CommitCallback {
-        void onSuccess();
-        void onError(String error);
-        void onProgress(String stage);
+        void onProgress(int done, int total, String currentPath);
+        void onSuccess(String commitHtmlUrl);
+        void onError(String error, String details);
     }
 
     public interface AvatarBitmapCallback {
@@ -336,6 +336,8 @@ public class GitHubManager {
 
     /**
      * ينشئ commit جديداً في المستودع باستخدام الملفات المحلية، رسالة مخصصة، وإرفاقات صور اختيارية.
+     * نستخدم تحليل الرابط المباشر للمستودع لضمان الدقة وتجنب أخطاء 404 الناتجة عن تباين التسمية.    /**
+     * ينشئ commit جديداً في المستودع باستخدام الملفات المحلية، رسالة مخصصة، وإرفاقات صور اختيارية.
      * نستخدم تحليل الرابط المباشر للمستودع لضمان الدقة وتجنب أخطاء 404 الناتجة عن تباين التسمية.
      * Creates a new commit in the repository with local files, custom message, and optional image attachments.
      * We analyze the repo's HTML URL directly to ensure accuracy and avoid 404s caused by naming mismatches.
@@ -344,14 +346,15 @@ public class GitHubManager {
                              List<File> attachedFiles, CommitCallback callback) {
         executor.execute(() -> {
             String token = getAccessToken();
+            StringBuilder stages = new StringBuilder();
             if (token == null) {
-                mainHandler.post(() -> callback.onError("Not signed in."));
+                mainHandler.post(() -> callback.onError("Not signed in.", "auth=fail"));
                 return;
             }
 
             File projectRoot = new File(a.a.a.wq.d(record.projectId));
             if (!projectRoot.exists()) {
-                mainHandler.post(() -> callback.onError("Local project files not found."));
+                mainHandler.post(() -> callback.onError("Local project files not found.", "fs=missing"));
                 return;
             }
 
@@ -361,20 +364,21 @@ public class GitHubManager {
                 String repoPath = record.repoHtmlUrl.replace("https://github.com/", "");
                 String[] parts = repoPath.split("/");
                 if (parts.length < 2) {
-                    mainHandler.post(() -> callback.onError("Invalid repository URL format."));
+                    mainHandler.post(() -> callback.onError("Invalid repository URL format.", "url=invalid"));
                     return;
                 }
                 String owner = parts[0];
                 String repo = parts[1];
                 String repoUrl = "https://api.github.com/repos/" + owner + "/" + repo;
 
-                mainHandler.post(() -> callback.onProgress("Fetching repo info…"));
+                mainHandler.post(() -> callback.onProgress(0, 0, "Fetching repo info…"));
                 
                 // جلب الفرع الافتراضي ديناميكياً لتجنب تثبيته على "main"
                 // Fetch default branch dynamically instead of hardcoding to "main".
                 String defaultBranch = "main";
                 Request getRepoInfo = buildRequest(repoUrl).get().build();
                 try (Response response = client.newCall(getRepoInfo).execute()) {
+                    stages.append("repo_get=").append(response.code()).append(" ");
                     if (response.isSuccessful() && response.body() != null) {
                         JsonObject repoJson = gson.fromJson(response.body().string(), JsonObject.class);
                         if (repoJson.has("default_branch")) {
@@ -388,22 +392,27 @@ public class GitHubManager {
                 String baseSha = null;
                 Request getRefRequest = buildRequest(repoUrl + "/git/ref/heads/" + defaultBranch).get().build();
                 try (Response response = client.newCall(getRefRequest).execute()) {
+                    stages.append("ref_get=").append(response.code()).append(" ");
                     if (response.isSuccessful() && response.body() != null) {
                         JsonObject refJson = gson.fromJson(response.body().string(), JsonObject.class);
                         baseSha = refJson.getAsJsonObject("object").get("sha").getAsString();
                     } else {
-                        mainHandler.post(() -> callback.onError("Failed to fetch latest commit. Code: " + response.code()));
+                        mainHandler.post(() -> callback.onError("Failed to fetch latest commit. Code: " + response.code(), stages.toString()));
                         return;
                     }
                 }
 
-                mainHandler.post(() -> callback.onProgress("Creating blobs…"));
                 List<UploadFile> filesToUpload = collectUploadFiles(projectRoot);
+                int totalBlobs = filesToUpload.size() + (attachedFiles != null ? attachedFiles.size() : 0);
                 JsonArray treeArray = new JsonArray();
+                int doneBlobs = 0;
 
                 // 1. معالجة ملفات المشروع (نصية أم ثنائية)
                 // 1. Process project files (text vs binary)
                 for (UploadFile uploadFile : filesToUpload) {
+                    final int progress = ++doneBlobs;
+                    mainHandler.post(() -> callback.onProgress(progress, totalBlobs, uploadFile.relativePath));
+                    
                     String contentB64 = isBinaryByExtension(uploadFile.file.getName()) ? 
                             encodeBinaryToBase64(uploadFile.file) : encodeFileToBase64(uploadFile.file);
                     
@@ -431,6 +440,9 @@ public class GitHubManager {
                 // 2. Process attachments (always raw binary) inside a dedicated folder.
                 if (attachedFiles != null) {
                     for (File file : attachedFiles) {
+                        final int progress = ++doneBlobs;
+                        mainHandler.post(() -> callback.onProgress(progress, totalBlobs, "attachment: " + file.getName()));
+                        
                         String b64 = encodeBinaryToBase64(file);
                         JsonObject blobBody = new JsonObject();
                         blobBody.addProperty("content", b64);
@@ -477,7 +489,7 @@ public class GitHubManager {
                     }
                 }
 
-                mainHandler.post(() -> callback.onProgress("Finalizing commit…"));
+                mainHandler.post(() -> callback.onProgress(totalBlobs, totalBlobs, "Finalizing commit…"));
                 
                 // إنشاء الشجرة والـ commit وتحديث الـ Ref
                 // Create tree, commit, and update Ref.
@@ -488,10 +500,11 @@ public class GitHubManager {
                         .post(RequestBody.create(treeBody.toString(), MediaType.get("application/json")))
                         .build();
                 try (Response response = client.newCall(createTree).execute()) {
+                    stages.append("tree=").append(response.code()).append(" ");
                     if (response.isSuccessful() && response.body() != null) {
                         newTreeSha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
                     } else {
-                        mainHandler.post(() -> callback.onError("Tree creation failed."));
+                        mainHandler.post(() -> callback.onError("Tree creation failed.", stages.toString()));
                         return;
                     }
                 }
@@ -508,10 +521,11 @@ public class GitHubManager {
                         .post(RequestBody.create(commitBody.toString(), MediaType.get("application/json")))
                         .build();
                 try (Response response = client.newCall(createCommit).execute()) {
+                    stages.append("commit=").append(response.code()).append(" ");
                     if (response.isSuccessful() && response.body() != null) {
                         newCommitSha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
                     } else {
-                        mainHandler.post(() -> callback.onError("Commit failed."));
+                        mainHandler.post(() -> callback.onError("Commit failed.", stages.toString()));
                         return;
                     }
                 }
@@ -524,17 +538,19 @@ public class GitHubManager {
                         .patch(RequestBody.create(refUpdateBody.toString(), MediaType.get("application/json")))
                         .build();
                 try (Response response = client.newCall(updateRef).execute()) {
+                    stages.append("ref_patch=").append(response.code()).append(" ");
                     if (response.isSuccessful()) {
                         recordSuccessfulUpload(record.projectId, record.projectTitle, record.repoHtmlUrl, 
                                 filesToUpload.size(), "Commit push");
-                        mainHandler.post(callback::onSuccess);
+                        String commitUrl = "https://github.com/" + owner + "/" + repo + "/commit/" + newCommitSha;
+                        mainHandler.post(() -> callback.onSuccess(commitUrl));
                     } else {
-                        mainHandler.post(() -> callback.onError("Ref update failed."));
+                        mainHandler.post(() -> callback.onError("Ref update failed.", stages.toString()));
                     }
                 }
 
             } catch (Exception e) {
-                mainHandler.post(() -> callback.onError(e.toString()));
+                mainHandler.post(() -> callback.onError(e.toString(), stages.toString()));
             }
         });
     }
@@ -723,8 +739,11 @@ public class GitHubManager {
                     final int index = i + 1;
                     mainHandler.post(() -> callback.onProgress(index, filesToUpload.size(), relativePath));
 
+                    // نستخدم التشفير المناسب حسب نوع الملف (نصي أم ثنائي) لمنع التلف
+                    // Use appropriate encoding based on file type (text vs binary) to prevent corruption.
                     String contentBase64 = isBinaryByExtension(file.getName()) ? 
                             encodeBinaryToBase64(file) : encodeFileToBase64(file);
+                    
                     JsonObject blobBody = new JsonObject();
                     blobBody.addProperty("content", contentBase64);
                     blobBody.addProperty("encoding", "base64");

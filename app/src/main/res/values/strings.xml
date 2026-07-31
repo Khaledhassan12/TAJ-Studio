@@ -2359,5 +2359,12 @@ Please try again later"</string>
     <string name="git_commit_success">Commit pushed successfully</string>
     <string name="git_commit_error_empty">Please write a commit message</string>
     <string name="git_commit_error_generic">Couldn\'t push the commit. Tap for details.</string>
+    <string name="git_commit_progress_title">Pushing commit</string>
+    <string name="git_commit_success_title">Commit pushed</string>
+    <string name="git_commit_success_body">%1$s is now on GitHub.</string>
+    <string name="git_commit_failed_title">Commit failed</string>
+    <string name="git_commit_failed_body">Couldn\'t push to %1$s. Tap for details.</string>
+    <string name="git_commit_view_commit">View commit</string>
+    <string name="git_commit_preparing">Preparing commit…</string>
 
 </resources>
