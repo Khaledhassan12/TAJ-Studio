@@ -70,6 +70,11 @@ public class GitHubManager {
         void onError(String error, String details);
     }
 
+    public interface CommitCallback {
+        void onSuccess();
+        void onError(String error);
+    }
+
     public interface AvatarBitmapCallback {
         void onBitmap(Bitmap bitmap);
         void onFailed();
@@ -324,6 +329,164 @@ public class GitHubManager {
                     notifyListeners();
                 }
             } catch (IOException ignored) {
+            }
+        });
+    }
+
+    /**
+     * Creates a new commit in the repository with the current local files and a custom message.
+     * This is useful for pushing updates to an existing repository from the history tab.
+     *
+     * ينشئ commit جديداً في المستودع باستخدام الملفات المحلية الحالية ورسالة مخصصة.
+     * هذا مفيد لدفع التحديثات لمستودع موجود مسبقاً من تاب السجل.
+     */
+    public void createCommit(GitUploadRecord record, String message, String readmeContent, CommitCallback callback) {
+        executor.execute(() -> {
+            String token = getAccessToken();
+            if (token == null) {
+                mainHandler.post(() -> callback.onError("Not signed in."));
+                return;
+            }
+
+            File projectRoot = new File(a.a.a.wq.d(record.projectId));
+            if (!projectRoot.exists()) {
+                mainHandler.post(() -> callback.onError("Local project files not found."));
+                return;
+            }
+
+            try {
+                List<UploadFile> filesToUpload = collectUploadFiles(projectRoot);
+                String repoUrl = "https://api.github.com/repos/" + record.login + "/" + sanitizeRepoName(record.projectTitle);
+
+                // 1. جلب آخر commit SHA للفرع الأساسي
+                // 1. Fetch latest commit SHA for the default branch
+                String baseSha = null;
+                String defaultBranch = "main"; // Defaulting to main, could be improved by checking repo settings
+                
+                Request getRefRequest = buildRequest(repoUrl + "/git/ref/heads/" + defaultBranch).get().build();
+                try (Response response = client.newCall(getRefRequest).execute()) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        JsonObject refJson = gson.fromJson(response.body().string(), JsonObject.class);
+                        baseSha = refJson.getAsJsonObject("object").get("sha").getAsString();
+                    } else {
+                        mainHandler.post(() -> callback.onError("Failed to fetch latest commit. Code: " + response.code()));
+                        return;
+                    }
+                }
+
+                // 2. إنشاء الـ blobs للملفات المحلية
+                // 2. Create blobs for local files
+                JsonArray treeArray = new JsonArray();
+                for (UploadFile uploadFile : filesToUpload) {
+                    String contentBase64 = encodeFileToBase64(uploadFile.file);
+                    JsonObject blobBody = new JsonObject();
+                    blobBody.addProperty("content", contentBase64);
+                    blobBody.addProperty("encoding", "base64");
+                    
+                    Request createBlobRequest = buildRequest(repoUrl + "/git/blobs")
+                            .post(RequestBody.create(blobBody.toString(), MediaType.get("application/json")))
+                            .build();
+                    try (Response response = client.newCall(createBlobRequest).execute()) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            JsonObject blobJson = gson.fromJson(response.body().string(), JsonObject.class);
+                            JsonObject treeElement = new JsonObject();
+                            treeElement.addProperty("path", uploadFile.relativePath);
+                            treeElement.addProperty("mode", "100644");
+                            treeElement.addProperty("type", "blob");
+                            treeElement.addProperty("sha", blobJson.get("sha").getAsString());
+                            treeArray.add(treeElement);
+                        }
+                    }
+                }
+
+                // إضافة README مخصص إن وجد
+                // Add custom README if provided
+                if (readmeContent != null && !readmeContent.trim().isEmpty()) {
+                    JsonObject readmeBlobBody = new JsonObject();
+                    readmeBlobBody.addProperty("content", Base64.encodeToString(readmeContent.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP));
+                    readmeBlobBody.addProperty("encoding", "base64");
+                    
+                    Request createReadmeBlob = buildRequest(repoUrl + "/git/blobs")
+                            .post(RequestBody.create(readmeBlobBody.toString(), MediaType.get("application/json")))
+                            .build();
+                    try (Response response = client.newCall(createReadmeBlob).execute()) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            JsonObject blobJson = gson.fromJson(response.body().string(), JsonObject.class);
+                            JsonObject treeElement = new JsonObject();
+                            treeElement.addProperty("path", "README.md");
+                            treeElement.addProperty("mode", "100644");
+                            treeElement.addProperty("type", "blob");
+                            treeElement.addProperty("sha", blobJson.get("sha").getAsString());
+                            treeArray.add(treeElement);
+                        }
+                    }
+                }
+
+                // 3. إنشاء شجرة جديدة
+                // 3. Create a new tree
+                JsonObject treeBody = new JsonObject();
+                treeBody.add("tree", treeArray);
+                // We don't strictly need base_tree if we are providing all files, 
+                // but adding it ensures we only override changed files if our collect is partial.
+                // However, our collect is full, so let's keep it simple.
+                
+                String newTreeSha;
+                Request createTreeRequest = buildRequest(repoUrl + "/git/trees")
+                        .post(RequestBody.create(treeBody.toString(), MediaType.get("application/json")))
+                        .build();
+                try (Response response = client.newCall(createTreeRequest).execute()) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        newTreeSha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
+                    } else {
+                        mainHandler.post(() -> callback.onError("Tree creation failed."));
+                        return;
+                    }
+                }
+
+                // 4. إنشاء الـ commit
+                // 4. Create the commit
+                JsonObject commitBody = new JsonObject();
+                commitBody.addProperty("message", message);
+                commitBody.addProperty("tree", newTreeSha);
+                JsonArray parents = new JsonArray();
+                parents.add(baseSha);
+                commitBody.add("parents", parents);
+                
+                String newCommitSha;
+                Request createCommitRequest = buildRequest(repoUrl + "/git/commits")
+                        .post(RequestBody.create(commitBody.toString(), MediaType.get("application/json")))
+                        .build();
+                try (Response response = client.newCall(createCommitRequest).execute()) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        newCommitSha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
+                    } else {
+                        mainHandler.post(() -> callback.onError("Commit failed."));
+                        return;
+                    }
+                }
+
+                // 5. تحديث الفرع (Ref)
+                // 5. Update the branch reference
+                JsonObject refUpdateBody = new JsonObject();
+                refUpdateBody.addProperty("sha", newCommitSha);
+                refUpdateBody.addProperty("force", false);
+                
+                Request updateRefRequest = buildRequest(repoUrl + "/git/refs/heads/" + defaultBranch)
+                        .patch(RequestBody.create(refUpdateBody.toString(), MediaType.get("application/json")))
+                        .build();
+                try (Response response = client.newCall(updateRefRequest).execute()) {
+                    if (response.isSuccessful()) {
+                        // تحديث وقت الرفع في السجل المحلي
+                        // Update upload time in local record
+                        recordSuccessfulUpload(record.projectId, record.projectTitle, record.repoHtmlUrl, filesToUpload.size(), "Commit update");
+                        mainHandler.post(callback::onSuccess);
+                    } else {
+                        mainHandler.post(() -> callback.onError("Ref update failed."));
+                    }
+                }
+
+            } catch (Exception e) {
+                mainHandler.post(() -> callback.onError(e.toString()));
             }
         });
     }

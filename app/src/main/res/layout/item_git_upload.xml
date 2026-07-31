@@ -115,10 +115,14 @@
         </LinearLayout>
 
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/ic_mtrl_chevron_right_24"
-            app:tint="?attr/colorSurfaceContainerHighest" />
+            android:id="@+id/commit_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/circle_bg_primary_alpha"
+            android:padding="8dp"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/ic_mtrl_upload"
+            app:tint="?attr/colorPrimary" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

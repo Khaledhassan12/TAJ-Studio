@@ -24,6 +24,7 @@ import a.a.a.yB;
 import pro.sketchware.R;
 import pro.sketchware.databinding.ItemGitUploadBinding;
 import pro.sketchware.github.GitHubManager;
+import pro.sketchware.github.GitCommitBottomSheet;
 
 /**
  * محول مخصص لعرض قائمة سجلات الرفع إلى GitHub.
@@ -120,6 +121,16 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
             binding.getRoot().setOnClickListener(v -> {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(record.repoHtmlUrl));
                 context.startActivity(intent);
+            });
+
+            // ربط زر الـ Commit بفتح البوتم شيت المخصص مع منع وصول الحدث للأب (Row)
+            // Link the Commit button to open the custom BottomSheet while preventing event bubbling.
+            binding.commitButton.setOnClickListener(v -> {
+                if (context instanceof androidx.fragment.app.FragmentActivity) {
+                    GitCommitBottomSheet.newInstance(record)
+                            .show(((androidx.fragment.app.FragmentActivity) context).getSupportFragmentManager(), 
+                                    "GitCommit");
+                }
             });
         }
     }
