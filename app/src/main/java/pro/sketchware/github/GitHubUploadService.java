@@ -27,6 +27,10 @@ public class GitHubUploadService extends Service {
     public static final String ACTION_START_UPLOAD = "pro.sketchware.github.action.START_UPLOAD";
     public static final String EXTRA_PROJECT_TITLE = "extra_project_title";
     public static final String EXTRA_PROJECT_ROOT = "extra_project_root";
+    public static final String EXTRA_COMMIT_MESSAGE = "extra_commit_message";
+    public static final String EXTRA_README_CONTENT = "extra_readme_content";
+    public static final String EXTRA_README_ICON_PATH = "extra_readme_icon_path";
+    public static final String EXTRA_ATTACHED_PATHS = "extra_attached_paths";
 
     private static final String CHANNEL_PROGRESS = "github_upload_progress";
     private static final String CHANNEL_DONE = "github_upload_done";
@@ -56,13 +60,19 @@ public class GitHubUploadService extends Service {
                 return START_NOT_STICKY;
             }
 
+            String commitMessage = intent.getStringExtra(EXTRA_COMMIT_MESSAGE);
+            String readmeContent = intent.getStringExtra(EXTRA_README_CONTENT);
+            String readmeIconPath = intent.getStringExtra(EXTRA_README_ICON_PATH);
+            String[] attachedPaths = intent.getStringArrayExtra(EXTRA_ATTACHED_PATHS);
+
             startForeground(NOTIFICATION_ID, buildProgressNotification(0, 0, projectTitle));
-            startUpload(new File(rootPath));
+            startUpload(new File(rootPath), commitMessage, readmeContent, readmeIconPath, attachedPaths);
         }
         return START_NOT_STICKY;
     }
 
-    private void startUpload(File projectRoot) {
+    private void startUpload(File projectRoot, String commitMessage, String readmeContent,
+                             String readmeIconPath, String[] attachedPaths) {
         GitHubManager manager = GitHubManager.getInstance(this);
         String rootPath = projectRoot.getAbsolutePath();
         
@@ -80,7 +90,36 @@ public class GitHubUploadService extends Service {
             }
         });
 
-        manager.uploadProject(projectTitle, projectRoot, new GitHubManager.UploadCallback() {
+        java.util.List<GitHubManager.ExtraEntry> extraEntries = new java.util.ArrayList<>();
+        
+        // 1. إضافة الـ README إن وُجد
+        if (readmeContent != null && !readmeContent.isEmpty()) {
+            try {
+                File tempReadme = new File(getCacheDir(), "README_UPLOAD_" + System.currentTimeMillis() + ".md");
+                java.nio.file.Files.write(tempReadme.toPath(), readmeContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                extraEntries.add(new GitHubManager.ExtraEntry("README.md", tempReadme));
+            } catch (Exception ignored) {}
+        }
+
+        // 2. إضافة أيقونة المشروع للـ README (docs/app-icon.png)
+        if (readmeIconPath != null) {
+            File iconFile = new File(readmeIconPath);
+            if (iconFile.exists()) {
+                extraEntries.add(new GitHubManager.ExtraEntry("docs/app-icon.png", iconFile));
+            }
+        }
+
+        // 3. إضافة الإرفاقات (attachments/)
+        if (attachedPaths != null) {
+            for (String path : attachedPaths) {
+                File file = new File(path);
+                if (file.exists()) {
+                    extraEntries.add(new GitHubManager.ExtraEntry("attachments/" + file.getName(), file));
+                }
+            }
+        }
+
+        manager.uploadProject(projectTitle, projectRoot, commitMessage, extraEntries, new GitHubManager.UploadCallback() {
             @Override
             public void onProgress(int done, int total, String currentPath) {
                 notificationManager.notify(NOTIFICATION_ID, buildProgressNotification(done, total, currentPath));

@@ -72,6 +72,18 @@ public class GitHubManager {
         void onError(String error, String details);
     }
 
+    // مدخلة إضافية تُمثّل ملفاً يُراد زرعه في المستودع بمسار محدد (مثل README أو الأيقونة)
+    // An extra entry representing a file to be planted in the repo at a specific path.
+    public static class ExtraEntry {
+        public final String repoPath;
+        public final File file;
+
+        public ExtraEntry(String repoPath, File file) {
+            this.repoPath = repoPath;
+            this.file = file;
+        }
+    }
+
     public interface CommitCallback {
         void onProgress(int done, int total, String currentPath);
         void onSuccess(String commitHtmlUrl);
@@ -276,7 +288,7 @@ public class GitHubManager {
     }
 
     /**
-     * نسترجع قائمة الرفعات السابقة؛ القائمة مرتبة زمنياً من الأحدث للأقدم.
+     * يسترجع قائمة الرفعات السابقة؛ القائمة مرتبة زمنياً من الأحدث للأقدم.
      * Retrieves the list of past uploads, ordered chronologically (newest first).
      */
     public List<GitUploadRecord> getUploadRecords() {
@@ -292,6 +304,29 @@ public class GitHubManager {
         } catch (Exception e) {
             return new ArrayList<>();
         }
+    }
+
+    /**
+     * يتحقق مما إذا كان المشروع قد رُفع مسبقاً عبر البحث في السجل المحلي.
+     * Checks if the project has been uploaded before by searching the local log.
+     */
+    public boolean isProjectUploaded(String projectId, String expectedRepoHtmlUrl) {
+        return findUploadRecord(projectId, expectedRepoHtmlUrl) != null;
+    }
+
+    /**
+     * يبحث عن سجل رفع مطابق للمشروع بناءً على المعرف أو الرابط المتوقع.
+     * Searches for a matching upload record based on the ID or expected URL.
+     */
+    public GitUploadRecord findUploadRecord(String projectId, String expectedRepoHtmlUrl) {
+        List<GitUploadRecord> records = getUploadRecords();
+        for (GitUploadRecord r : records) {
+            if ((projectId != null && projectId.equals(r.projectId))
+                    || (expectedRepoHtmlUrl != null && expectedRepoHtmlUrl.equalsIgnoreCase(r.repoHtmlUrl))) {
+                return r;
+            }
+        }
+        return null;
     }
 
     /**
@@ -745,6 +780,15 @@ public class GitHubManager {
     }
 
     public void uploadProject(String projectTitle, File projectRootParam, UploadCallback callback) {
+        uploadProject(projectTitle, projectRootParam, null, null, callback);
+    }
+
+    /**
+     * نسخة موسّعة من رفع المشروع تقبل رسالة commit مخصصة ومدخلات إضافية (مثل README والإرفاقات).
+     * Extended version of project upload that accepts a custom commit message and extra entries.
+     */
+    public void uploadProject(String projectTitle, File projectRootParam, String commitMessage,
+                              List<ExtraEntry> extraEntries, UploadCallback callback) {
         executor.execute(() -> {
             String token = getAccessToken();
             String login = getUserLogin();
@@ -785,7 +829,7 @@ public class GitHubManager {
                       .append(",assets=").append(assetsCount).append(",root=").append(rootCount)
                       .append(",other=").append(otherCount).append("}\n");
 
-                if (filesToUpload.isEmpty()) {
+                if (filesToUpload.isEmpty() && (extraEntries == null || extraEntries.isEmpty())) {
                     mainHandler.post(() -> callback.onError("No files to upload.", stages.toString()));
                     return;
                 }
@@ -890,34 +934,55 @@ public class GitHubManager {
 
                 // إنشاء الـ blobs مع الدرع الدفاعي ضد الملفات المعطوبة
                 // Creating blobs with the defensive shield against corrupted files
-                JsonArray treeArray = new JsonArray();
+                // نستخدم Map لبناء الشجرة؛ هذا يسمح لـ extraEntries بتجاوز ملفات المشروع الأصلية عند تطابق المسار.
+                // We use a Map to build the tree; this allows extraEntries to override original project files on path collision.
+                java.util.Map<String, JsonObject> treeMap = new java.util.HashMap<>();
+                int totalToProcess = filesToUpload.size() + (extraEntries != null ? extraEntries.size() : 0);
+                int processed = 0;
                 int blobsOk = 0;
                 List<String> skippedFiles = new ArrayList<>();
 
-                for (int i = 0; i < filesToUpload.size(); i++) {
-                    UploadFile uploadFile = filesToUpload.get(i);
-                    final int index = i + 1;
-                    mainHandler.post(() -> callback.onProgress(index, filesToUpload.size(), uploadFile.relativePath));
+                // 1. معالجة ملفات المشروع
+                for (UploadFile uploadFile : filesToUpload) {
+                    final int index = ++processed;
+                    mainHandler.post(() -> callback.onProgress(index, totalToProcess, uploadFile.relativePath));
 
                     String sha = createBlobWithFallback(repoUrl, uploadFile, stages);
-                    
                     if (sha != null) {
                         JsonObject treeElement = new JsonObject();
                         treeElement.addProperty("path", uploadFile.relativePath);
                         treeElement.addProperty("mode", "100644");
                         treeElement.addProperty("type", "blob");
                         treeElement.addProperty("sha", sha);
-                        treeArray.add(treeElement);
+                        treeMap.put(uploadFile.relativePath, treeElement);
                         blobsOk++;
                     } else {
-                        // نتجاوز الملف الذي يستعصي بدل إسقاط الرفع كله
-                        // Skip the stubborn file instead of dropping the entire upload
                         skippedFiles.add(new File(uploadFile.relativePath).getName());
-                        stages.append("skipped=").append(uploadFile.relativePath).append(" ");
+                    }
+                }
+
+                // 2. معالجة المدخلات الإضافية (README، الأيقونة، الإرفاقات) - لها الأولوية
+                if (extraEntries != null) {
+                    for (ExtraEntry entry : extraEntries) {
+                        final int index = ++processed;
+                        mainHandler.post(() -> callback.onProgress(index, totalToProcess, "Extra: " + entry.repoPath));
+
+                        String sha = tryCreateBlob(repoUrl, entry.file, isBinaryByExtension(entry.repoPath), stages);
+                        if (sha != null) {
+                            JsonObject treeElement = new JsonObject();
+                            treeElement.addProperty("path", entry.repoPath);
+                            treeElement.addProperty("mode", "100644");
+                            treeElement.addProperty("type", "blob");
+                            treeElement.addProperty("sha", sha);
+                            treeMap.put(entry.repoPath, treeElement);
+                            blobsOk++;
+                        } else {
+                            skippedFiles.add(entry.file.getName());
+                        }
                     }
                 }
                 
-                if (blobsOk == 0 && !filesToUpload.isEmpty()) {
+                if (blobsOk == 0 && totalToProcess > 0) {
                     mainHandler.post(() -> callback.onError("All files failed to upload. Check your project content.", stages.toString()));
                     return;
                 }
@@ -926,9 +991,15 @@ public class GitHubManager {
                 if (!skippedFiles.isEmpty()) {
                     skippedReport = " (skipped " + skippedFiles.size() + " files: " + skippedFiles + ")";
                 }
-                stages.append("blobs=").append(blobsOk).append("/").append(filesToUpload.size()).append(skippedReport).append("\n");
+                stages.append("blobs=").append(blobsOk).append("/").append(totalToProcess).append(skippedReport).append("\n");
 
-                mainHandler.post(() -> callback.onProgress(filesToUpload.size(), filesToUpload.size(), "Finalizing commit…"));
+                mainHandler.post(() -> callback.onProgress(totalToProcess, totalToProcess, "Finalizing commit…"));
+                
+                JsonArray treeArray = new JsonArray();
+                for (JsonObject node : treeMap.values()) {
+                    treeArray.add(node);
+                }
+
                 JsonObject treeBody = new JsonObject();
                 treeBody.add("tree", treeArray);
                 if (baseTreeSha != null) {
@@ -951,7 +1022,7 @@ public class GitHubManager {
                 }
 
                 JsonObject commitBody = new JsonObject();
-                commitBody.addProperty("message", "Upload project: " + projectTitle);
+                commitBody.addProperty("message", commitMessage != null ? commitMessage : "Upload project: " + projectTitle);
                 commitBody.addProperty("tree", newTreeSha);
                 if (baseSha != null) {
                     JsonArray parents = new JsonArray();

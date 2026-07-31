@@ -47,6 +47,7 @@ import pro.sketchware.databinding.MyprojectsItemBinding;
 import pro.sketchware.github.GitHubManager;
 import pro.sketchware.github.GitHubSignInSheet;
 import pro.sketchware.github.GitHubUploadService;
+import pro.sketchware.github.ProjectUploadBottomSheet;
 
 public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.ProjectViewHolder> {
     private final ProjectsFragment projectsFragment;
@@ -318,15 +319,9 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
                 String scId = yB.c(projectMap, "sc_id");
                 File projectRoot = new File(wq.d(scId));
 
-                Intent intent = new Intent(activity, GitHubUploadService.class);
-                intent.setAction(GitHubUploadService.ACTION_START_UPLOAD);
-                intent.putExtra(GitHubUploadService.EXTRA_PROJECT_TITLE, projectTitle);
-                intent.putExtra(GitHubUploadService.EXTRA_PROJECT_ROOT, projectRoot.getAbsolutePath());
-                ContextCompat.startForegroundService(activity, intent);
-
-                binding.githubAuthCard.setEnabled(false);
-                binding.githubSubText.setText(R.string.github_upload_starting);
-                Toast.makeText(activity, R.string.github_upload_starting, Toast.LENGTH_SHORT).show();
+                projectOptionsBSD.dismiss();
+                ProjectUploadBottomSheet.newInstance(scId, projectTitle, projectRoot.getAbsolutePath())
+                        .show(((FragmentActivity) activity).getSupportFragmentManager(), "UploadStudio");
             }
         });
 
