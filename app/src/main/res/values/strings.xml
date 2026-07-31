@@ -2359,6 +2359,16 @@ Please try again later"</string>
     <string name="git_commit_success">Commit pushed successfully</string>
     <string name="git_commit_error_empty">Please write a commit message</string>
     <string name="git_commit_error_generic">Couldn\'t push the commit. Tap for details.</string>
+    <string name="git_selection_count">%1$d selected · tap name to cancel</string>
+    <string name="git_delete_title">Delete selected projects</string>
+    <string name="git_delete_explain">These will be removed from this app. Choose whether to also erase them from GitHub.</string>
+    <string name="git_delete_github_switch">Also delete repositories from GitHub (permanent)</string>
+    <string name="git_delete_github_warn">Cannot be undone. Requires the delete_repo permission on your token; without it the repo stays on GitHub.</string>
+    <string name="git_delete_cancel">Cancel</string>
+    <string name="git_delete_confirm">Delete %1$d</string>
+    <string name="git_delete_local_done">Removed %1$d project(s) from app.</string>
+    <string name="git_delete_full_done">Removed %1$d from app; %2$d repository(ies) deleted from GitHub.</string>
+    <string name="git_delete_github_kept">%1$d repository(ies) stayed on GitHub (token lacks delete_repo).</string>
     <string name="git_commit_progress_title">Pushing commit</string>
     <string name="git_commit_success_title">Commit pushed</string>
     <string name="git_commit_success_body">%1$s is now on GitHub.</string>

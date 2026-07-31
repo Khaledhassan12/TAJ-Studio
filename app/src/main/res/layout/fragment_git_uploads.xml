@@ -48,6 +48,7 @@
                 </FrameLayout>
 
                 <LinearLayout
+                    android:id="@+id/header_text_container"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
@@ -70,6 +71,26 @@
                         android:textColor="?attr/colorOnSurfaceVariant"
                         tools:text="5 projects synced · last 2 days ago" />
                 </LinearLayout>
+
+                <!-- Master Delete Button (visible only in selection mode) -->
+                <FrameLayout
+                    android:id="@+id/master_delete_button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/circle_bg_error_alpha"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center"
+                        app:srcCompat="@drawable/icon_delete"
+                        app:tint="?attr/colorError" />
+                </FrameLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

@@ -3,7 +3,7 @@
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/colorSurface"
+    android:background="@drawable/bg_bottom_sheet_rounded"
     android:orientation="vertical"
     android:paddingBottom="32dp">
 

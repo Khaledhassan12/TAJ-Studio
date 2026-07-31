@@ -2,6 +2,7 @@ package pro.sketchware.activities.main.fragments.git;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
@@ -15,8 +16,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import a.a.a.lC;
 import a.a.a.wq;
@@ -27,19 +31,28 @@ import pro.sketchware.github.GitHubManager;
 import pro.sketchware.github.GitCommitBottomSheet;
 
 /**
- * محول مخصص لعرض قائمة سجلات الرفع إلى GitHub.
- * نربط كل سجل ببيانات المشروع المحلية (إن وجدت) لعرض الأيقونة الصحيحة.
- * Custom adapter to display GitHub upload records.
- * We link each record to local project data (if available) to show the correct icon.
+ * محول مخصص لعرض قائمة سجلات الرفع إلى GitHub مع دعم وضع الحذف المتعدد.
+ * نتحكم هنا في مظهر الصفوف (عادي أم تحديد) ونطلق الأنيميشن المناسب.
+ * Custom adapter to display GitHub upload records with multi-select delete support.
+ * We control row appearance (normal vs selection) and trigger the appropriate animations.
  */
 public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.RecordViewHolder> {
 
     private final List<GitHubManager.GitUploadRecord> records;
     private final Context context;
+    private final SelectionListener selectionListener;
 
-    public GitUploadsAdapter(Context context, List<GitHubManager.GitUploadRecord> records) {
+    private boolean selectionMode = false;
+    private final Set<String> selectedRepoUrls = new LinkedHashSet<>();
+
+    public interface SelectionListener {
+        void onSelectionModeChanged(boolean enabled, int count);
+    }
+
+    public GitUploadsAdapter(Context context, List<GitHubManager.GitUploadRecord> records, SelectionListener listener) {
         this.context = context;
         this.records = records;
+        this.selectionListener = listener;
     }
 
     @NonNull
@@ -61,6 +74,28 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
         return records.size();
     }
 
+    public boolean isSelectionMode() {
+        return selectionMode;
+    }
+
+    public void exitSelectionMode() {
+        if (!selectionMode) return;
+        selectionMode = false;
+        selectedRepoUrls.clear();
+        notifyDataSetChanged();
+        if (selectionListener != null) selectionListener.onSelectionModeChanged(false, 0);
+    }
+
+    public List<GitHubManager.GitUploadRecord> getSelectedRecords() {
+        List<GitHubManager.GitUploadRecord> selected = new ArrayList<>();
+        for (GitHubManager.GitUploadRecord r : records) {
+            if (selectedRepoUrls.contains(r.repoHtmlUrl)) {
+                selected.add(r);
+            }
+        }
+        return selected;
+    }
+
     class RecordViewHolder extends RecyclerView.ViewHolder {
         private final ItemGitUploadBinding binding;
 
@@ -71,22 +106,29 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
 
         void bind(GitHubManager.GitUploadRecord record) {
             binding.projectTitle.setText(record.projectTitle);
-            
-            // استخراج المسار القصير للمستودع (user/repo) للعرض الجمالي
-            // Extract short repo path (user/repo) for a cleaner UI.
             String repoPath = record.repoHtmlUrl.replace("https://github.com/", "");
             binding.repoPath.setText(repoPath);
 
-            // عرض الوقت النسبي (مثلاً: منذ ساعتين) بلغة الجهاز تلقائياً
-            // Display relative time (e.g., 2h ago) automatically in system language.
             CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
                     record.uploadedAtMillis, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
             binding.uploadTime.setText(relativeTime);
-
             binding.fileCount.setText(context.getString(R.string.git_files_count, record.fileCount));
 
-            // نحاول استعادة أيقونة المشروع من المجلد المحلي باستخدام المعرف المخزن
-            // Attempt to restore project icon from local folder using the stored ID.
+            // أيقونة المشروع المحلية
+            loadLocalProjectIcon(record);
+
+            // صورة البروفايل المصغرة
+            if (record.avatarUrl != null) {
+                Glide.with(context).load(record.avatarUrl).circleCrop()
+                        .placeholder(R.drawable.ic_github_brand).into(binding.miniAvatar);
+            } else {
+                binding.miniAvatar.setImageResource(R.drawable.ic_github_brand);
+            }
+
+            updateUiState(record);
+        }
+
+        private void loadLocalProjectIcon(GitHubManager.GitUploadRecord record) {
             boolean iconSet = false;
             if (record.projectId != null) {
                 HashMap<String, Object> projectMap = lC.b(record.projectId);
@@ -103,35 +145,79 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
             if (!iconSet) {
                 binding.projectIcon.setImageResource(R.drawable.default_icon);
             }
+        }
 
-            // تحميل صورة البروفايل المصغرة كشارة فوق الأيقونة
-            // Load mini profile avatar as a badge over the icon.
-            if (record.avatarUrl != null) {
-                Glide.with(context)
-                        .load(record.avatarUrl)
-                        .circleCrop()
-                        .placeholder(R.drawable.ic_github_brand)
-                        .into(binding.miniAvatar);
+        private void updateUiState(GitHubManager.GitUploadRecord record) {
+            boolean isSelected = selectedRepoUrls.contains(record.repoHtmlUrl);
+            
+            if (selectionMode) {
+                // وضع الحذف: تبديل الأيقونة إلى سلة (حمراء للمحدد، رمادية للغير)
+                // Delete mode: switch icon to trash (red for selected, grey otherwise)
+                binding.commitButton.setImageResource(R.drawable.icon_delete);
+                binding.commitButton.setBackgroundResource(isSelected ? 
+                        R.drawable.circle_bg_error_alpha : R.drawable.circle_bg_surface);
+                binding.commitButton.setImageTintList(ColorStateList.valueOf(isSelected ? 
+                        context.getColor(R.color.scolor_red_01) : context.getColor(R.color.grey)));
+                
+                // تمييز الصف المحدّد بحدود أو لون مختلف
+                binding.getRoot().setBackgroundResource(isSelected ? 
+                        R.drawable.bg_round_border_red : R.drawable.project_item_shape_alone);
+                
+                binding.getRoot().setOnClickListener(v -> toggleSelection(record));
+                binding.commitButton.setOnClickListener(v -> toggleSelection(record));
+                binding.getRoot().setOnLongClickListener(null);
             } else {
-                binding.miniAvatar.setImageResource(R.drawable.ic_github_brand);
+                // الوضع العادي: أيقونة commit/push الزرقاء
+                // Normal mode: blue commit/push icon
+                binding.commitButton.setImageResource(R.drawable.ic_mtrl_update);
+                binding.commitButton.setBackgroundResource(R.drawable.circle_bg_primary_alpha);
+                binding.commitButton.setImageTintList(ColorStateList.valueOf(context.getColor(R.color.color_primary)));
+                binding.getRoot().setBackgroundResource(R.drawable.project_item_shape_alone);
+
+                binding.getRoot().setOnClickListener(v -> {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(record.repoHtmlUrl));
+                    context.startActivity(intent);
+                });
+
+                binding.commitButton.setOnClickListener(v -> {
+                    if (context instanceof androidx.fragment.app.FragmentActivity) {
+                        GitCommitBottomSheet.newInstance(record)
+                                .show(((androidx.fragment.app.FragmentActivity) context).getSupportFragmentManager(), "GitCommit");
+                    }
+                });
+
+                binding.getRoot().setOnLongClickListener(v -> {
+                    enterSelectionMode(record);
+                    return true;
+                });
             }
+        }
 
-            // عند النقر، نفتح المستودع مباشرة في المتصفح
-            // On click, open the repository directly in the browser.
-            binding.getRoot().setOnClickListener(v -> {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(record.repoHtmlUrl));
-                context.startActivity(intent);
-            });
+        private void enterSelectionMode(GitHubManager.GitUploadRecord origin) {
+            selectionMode = true;
+            selectedRepoUrls.add(origin.repoHtmlUrl);
+            notifyDataSetChanged();
+            if (selectionListener != null) {
+                selectionListener.onSelectionModeChanged(true, selectedRepoUrls.size());
+            }
+        }
 
-            // ربط زر الـ Commit بفتح البوتم شيت المخصص مع منع وصول الحدث للأب (Row)
-            // Link the Commit button to open the custom BottomSheet while preventing event bubbling.
-            binding.commitButton.setOnClickListener(v -> {
-                if (context instanceof androidx.fragment.app.FragmentActivity) {
-                    GitCommitBottomSheet.newInstance(record)
-                            .show(((androidx.fragment.app.FragmentActivity) context).getSupportFragmentManager(), 
-                                    "GitCommit");
-                }
-            });
+        private void toggleSelection(GitHubManager.GitUploadRecord record) {
+            if (selectedRepoUrls.contains(record.repoHtmlUrl)) {
+                selectedRepoUrls.remove(record.repoHtmlUrl);
+            } else {
+                selectedRepoUrls.add(record.repoHtmlUrl);
+            }
+            
+            // أنيميشن POP للأيقونة عند التحديد
+            binding.commitButton.animate().scaleX(1.3f).scaleY(1.3f).setDuration(120).withEndAction(() -> 
+                binding.commitButton.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
+            ).start();
+            
+            notifyItemChanged(getBindingAdapterPosition());
+            if (selectionListener != null) {
+                selectionListener.onSelectionModeChanged(true, selectedRepoUrls.size());
+            }
         }
     }
 }

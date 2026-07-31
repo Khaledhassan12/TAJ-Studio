@@ -78,6 +78,10 @@ public class GitHubManager {
         void onError(String error, String details);
     }
 
+    public interface RepoDeleteCallback {
+        void onResult(boolean removed, int code, String detail);
+    }
+
     public interface AvatarBitmapCallback {
         void onBitmap(Bitmap bitmap);
         void onFailed();
@@ -226,6 +230,49 @@ public class GitHubManager {
 
         SharedPreferences logPrefs = context.getSharedPreferences(PREF_UPLOAD_LOG, Context.MODE_PRIVATE);
         logPrefs.edit().putString(KEY_RECORDS, gson.toJson(records)).apply();
+    }
+
+    /**
+     * يحذف مجموعة من السجلات من السجل المحلي بناءً على روابط المستودعات.
+     * هذا الحذف محلي فقط ولا يؤثر على GitHub.
+     * Removes a set of records from the local log based on repository URLs.
+     * This deletion is local only and does not affect GitHub.
+     */
+    public synchronized void removeUploadRecords(List<String> repoKeys) {
+        if (repoKeys == null || repoKeys.isEmpty()) return;
+        List<GitUploadRecord> records = getUploadRecords();
+        records.removeIf(r -> repoKeys.contains(r.repoHtmlUrl));
+        
+        SharedPreferences logPrefs = context.getSharedPreferences(PREF_UPLOAD_LOG, Context.MODE_PRIVATE);
+        logPrefs.edit().putString(KEY_RECORDS, gson.toJson(records)).apply();
+    }
+
+    /**
+     * يحاول حذف مستودع من GitHub. يتطلب توكناً يملك صلاحية 'delete_repo'.
+     * إذا أرجع GitHub خطأ 403، فهذا يعني غالباً نقص الصلاحية في التوكن.
+     * Attempts to delete a repository from GitHub. Requires a token with 'delete_repo' scope.
+     * If GitHub returns 403, it usually means the token lacks this specific permission.
+     */
+    public void deleteRepository(String owner, String repo, RepoDeleteCallback cb) {
+        executor.execute(() -> {
+            String url = "https://api.github.com/repos/" + owner + "/" + repo;
+            Request request = buildRequest(url).delete().build();
+            
+            try (Response response = client.newCall(request).execute()) {
+                int code = response.code();
+                if (code == 204 || code == 404) {
+                    // 204 = نجاح، 404 = المستودع غير موجود أصلاً (نعتبره نجاحاً)
+                    mainHandler.post(() -> cb.onResult(true, code, ""));
+                } else {
+                    String body = response.body() != null ? response.body().string() : "empty body";
+                    if (body.length() > 400) body = body.substring(0, 400) + "...";
+                    final String finalBody = body;
+                    mainHandler.post(() -> cb.onResult(false, code, finalBody));
+                }
+            } catch (Exception e) {
+                mainHandler.post(() -> cb.onResult(false, -1, e.toString()));
+            }
+        });
     }
 
     /**
