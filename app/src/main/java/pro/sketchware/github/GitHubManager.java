@@ -21,9 +21,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -352,9 +354,12 @@ public class GitHubManager {
                 return;
             }
 
-            File projectRoot = new File(a.a.a.wq.d(record.projectId));
-            if (!projectRoot.exists()) {
-                mainHandler.post(() -> callback.onError("Local project files not found.", "fs=missing"));
+            // محاولة حل مسار المشروع بذكاء
+            // Try to resolve the project path intelligently
+            File projectRoot = resolveProjectRoot(new File(a.a.a.wq.d(record.projectId)), record.projectId, stages);
+
+            if (projectRoot == null || !projectRoot.exists()) {
+                mainHandler.post(() -> callback.onError("Local project files not found on your device.", stages.toString()));
                 return;
             }
 
@@ -406,61 +411,47 @@ public class GitHubManager {
                 int totalBlobs = filesToUpload.size() + (attachedFiles != null ? attachedFiles.size() : 0);
                 JsonArray treeArray = new JsonArray();
                 int doneBlobs = 0;
+                int blobsOk = 0;
+                List<String> skippedFiles = new ArrayList<>();
 
-                // 1. معالجة ملفات المشروع (نصية أم ثنائية)
-                // 1. Process project files (text vs binary)
+                // 1. معالجة ملفات المشروع (الدرع الدفاعي)
+                // 1. Process project files (Defensive Shield)
                 for (UploadFile uploadFile : filesToUpload) {
                     final int progress = ++doneBlobs;
                     mainHandler.post(() -> callback.onProgress(progress, totalBlobs, uploadFile.relativePath));
                     
-                    String contentB64 = isBinaryByExtension(uploadFile.file.getName()) ? 
-                            encodeBinaryToBase64(uploadFile.file) : encodeFileToBase64(uploadFile.file);
-                    
-                    JsonObject blobBody = new JsonObject();
-                    blobBody.addProperty("content", contentB64);
-                    blobBody.addProperty("encoding", "base64");
-                    
-                    Request createBlob = buildRequest(repoUrl + "/git/blobs")
-                            .post(RequestBody.create(blobBody.toString(), MediaType.get("application/json")))
-                            .build();
-                    try (Response response = client.newCall(createBlob).execute()) {
-                        if (response.isSuccessful() && response.body() != null) {
-                            String sha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
-                            JsonObject treeElement = new JsonObject();
-                            treeElement.addProperty("path", uploadFile.relativePath);
-                            treeElement.addProperty("mode", "100644");
-                            treeElement.addProperty("type", "blob");
-                            treeElement.addProperty("sha", sha);
-                            treeArray.add(treeElement);
-                        }
+                    String sha = createBlobWithFallback(repoUrl, uploadFile, stages);
+                    if (sha != null) {
+                        JsonObject treeElement = new JsonObject();
+                        treeElement.addProperty("path", uploadFile.relativePath);
+                        treeElement.addProperty("mode", "100644");
+                        treeElement.addProperty("type", "blob");
+                        treeElement.addProperty("sha", sha);
+                        treeArray.add(treeElement);
+                    } else {
+                        skippedFiles.add(new File(uploadFile.relativePath).getName());
                     }
                 }
 
-                // 2. معالجة الإرفاقات (دائماً ثنائية خام) داخل مجلد خاص
-                // 2. Process attachments (always raw binary) inside a dedicated folder.
+                // 2. معالجة الإرفاقات
+                // 2. Process attachments
                 if (attachedFiles != null) {
                     for (File file : attachedFiles) {
                         final int progress = ++doneBlobs;
                         mainHandler.post(() -> callback.onProgress(progress, totalBlobs, "attachment: " + file.getName()));
                         
-                        String b64 = encodeBinaryToBase64(file);
-                        JsonObject blobBody = new JsonObject();
-                        blobBody.addProperty("content", b64);
-                        blobBody.addProperty("encoding", "base64");
-                        
-                        Request createBlob = buildRequest(repoUrl + "/git/blobs")
-                                .post(RequestBody.create(blobBody.toString(), MediaType.get("application/json")))
-                                .build();
-                        try (Response response = client.newCall(createBlob).execute()) {
-                            if (response.isSuccessful() && response.body() != null) {
-                                String sha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
-                                JsonObject treeElement = new JsonObject();
-                                treeElement.addProperty("path", "attachments/" + file.getName());
-                                treeElement.addProperty("mode", "100644");
-                                treeElement.addProperty("type", "blob");
-                                treeElement.addProperty("sha", sha);
-                                treeArray.add(treeElement);
-                            }
+                        // الإرفاقات ثنائية دائماً
+                        String sha = tryCreateBlob(repoUrl, file, true, stages);
+                        if (sha != null) {
+                            JsonObject treeElement = new JsonObject();
+                            treeElement.addProperty("path", "attachments/" + file.getName());
+                            treeElement.addProperty("mode", "100644");
+                            treeElement.addProperty("type", "blob");
+                            treeElement.addProperty("sha", sha);
+                            treeArray.add(treeElement);
+                            blobsOk++;
+                        } else {
+                            skippedFiles.add(file.getName());
                         }
                     }
                 }
@@ -485,10 +476,21 @@ public class GitHubManager {
                             treeElement.addProperty("type", "blob");
                             treeElement.addProperty("sha", sha);
                             treeArray.add(treeElement);
+                            blobsOk++;
                         }
                     }
                 }
 
+                if (blobsOk == 0 && totalBlobs > 0) {
+                    mainHandler.post(() -> callback.onError("All files failed to upload.", stages.toString()));
+                    return;
+                }
+
+                String skippedReport = "";
+                if (!skippedFiles.isEmpty()) {
+                    skippedReport = " (skipped " + skippedFiles.size() + " files: " + skippedFiles + ")";
+                }
+                
                 mainHandler.post(() -> callback.onProgress(totalBlobs, totalBlobs, "Finalizing commit…"));
                 
                 // إنشاء الشجرة والـ commit وتحديث الـ Ref
@@ -543,7 +545,8 @@ public class GitHubManager {
                         recordSuccessfulUpload(record.projectId, record.projectTitle, record.repoHtmlUrl, 
                                 filesToUpload.size(), "Commit push");
                         String commitUrl = "https://github.com/" + owner + "/" + repo + "/commit/" + newCommitSha;
-                        mainHandler.post(() -> callback.onSuccess(commitUrl));
+                        final String finalReport = skippedReport;
+                        mainHandler.post(() -> callback.onSuccess(commitUrl + finalReport));
                     } else {
                         mainHandler.post(() -> callback.onError("Ref update failed.", stages.toString()));
                     }
@@ -589,7 +592,112 @@ public class GitHubManager {
         });
     }
 
-    public void uploadProject(String projectTitle, File projectRoot, UploadCallback callback) {
+    /**
+     * يحاول حل مسار مجلد المشروع محلياً؛ إن لم يكن المسار المقترح موجوداً، نبحث عنه في المجلدات القياسية
+     * لـ Sketchware (mysc) باستخدام معرف المشروع.
+     * Attempts to resolve the project's root folder locally; if the proposed path is missing,
+     * we search the standard Sketchware (mysc) directories using the project ID.
+     */
+    public File resolveProjectRoot(File proposed, String projectId, StringBuilder stages) {
+        if (proposed != null && proposed.exists() && proposed.isDirectory()) {
+            stages.append("fs=found_direct ");
+            return proposed;
+        }
+
+        if (projectId != null && !projectId.isEmpty()) {
+            // نجرب المسار القياسي الأول
+            // Try the first standard path
+            File standard = new File(a.a.a.wq.d(projectId));
+            if (standard.exists() && standard.isDirectory()) {
+                stages.append("fs=found_standard ");
+                return standard;
+            }
+
+            // البحث اليدوي في مجلد mysc
+            // Manual search in the mysc folder
+            File myscRoot = new File(a.a.a.wq.getAbsolutePathOf(a.a.a.wq.b));
+            if (myscRoot.exists() && myscRoot.isDirectory()) {
+                File[] children = myscRoot.listFiles();
+                if (children != null) {
+                    for (File child : children) {
+                        if (child.isDirectory() && child.getName().equals(projectId)) {
+                            stages.append("fs=found_searched ");
+                            return child;
+                        }
+                    }
+                }
+            }
+        }
+
+        stages.append("fs=missing ");
+        return null;
+    }
+
+    /**
+     * يقرأ محتوى الملف بالكامل وبشكل مضمون عبر حلقة تكرارية، مما يمنع القراءة الجزئية أو تلف البيانات.
+     * Reads the entire file content reliably using a loop, preventing partial reads or data corruption.
+     */
+    private byte[] readFileFully(File file) throws IOException {
+        try (InputStream is = new FileInputStream(file);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = is.read(buf)) != -1) {
+                bos.write(buf, 0, len);
+            }
+            return bos.toByteArray();
+        }
+    }
+
+    /**
+     * يحاول إنشاء Blob على GitHub مع استراتيجية تراجع (Fallback)؛ إذا فشل الترميز المفضل، نجرب الآخر.
+     * هذا يمنع سقوط الرفع بسبب ملف واحد معطوب أو بترميز غير متوقع.
+     * Attempts to create a GitHub Blob with a fallback strategy; if the preferred encoding fails, we try the other.
+     * This prevents the entire upload from failing due to a single corrupted or unusually encoded file.
+     */
+    private String createBlobWithFallback(String repoUrl, UploadFile uploadFile, StringBuilder stages) {
+        String fileName = uploadFile.file.getName();
+        boolean isBinary = isBinaryByExtension(fileName);
+        
+        // المحاولة الأولى: حسب نوع الملف
+        // Attempt 1: Based on file type
+        String sha = tryCreateBlob(repoUrl, uploadFile.file, isBinary, stages);
+        if (sha != null) return sha;
+
+        // المحاولة الثانية: الاستراتيجية البديلة (الدرع الدفاعي)
+        // Attempt 2: Alternative strategy (The defensive shield)
+        stages.append("blob_retry=").append(fileName).append(" ");
+        return tryCreateBlob(repoUrl, uploadFile.file, !isBinary, stages);
+    }
+
+    private String tryCreateBlob(String repoUrl, File file, boolean raw, StringBuilder stages) {
+        try {
+            String b64 = raw ? encodeBinaryToBase64(file) : encodeFileToBase64(file);
+            JsonObject blobBody = new JsonObject();
+            blobBody.addProperty("content", b64);
+            blobBody.addProperty("encoding", "base64");
+
+            Request request = buildRequest(repoUrl + "/git/blobs")
+                    .post(RequestBody.create(blobBody.toString(), MediaType.get("application/json")))
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful() && response.body() != null) {
+                    return gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
+                } else {
+                    stages.append("blob_err_code=").append(response.code()).append(" ");
+                    String err = getShortError(response);
+                    if (err.length() > 600) err = err.substring(0, 600) + "...";
+                    stages.append("msg=").append(err).append(" ");
+                }
+            }
+        } catch (Exception e) {
+            stages.append("blob_exception=").append(e.getClass().getSimpleName()).append(" ");
+        }
+        return null;
+    }
+
+    public void uploadProject(String projectTitle, File projectRootParam, UploadCallback callback) {
         executor.execute(() -> {
             String token = getAccessToken();
             String login = getUserLogin();
@@ -600,8 +708,12 @@ public class GitHubManager {
                 return;
             }
 
-            if (projectRoot == null || !projectRoot.exists() || !projectRoot.isDirectory()) {
-                mainHandler.post(() -> callback.onError("Project folder not found.", "fs=missing"));
+            // نحاول حل مسار المشروع بذكاء قبل الفشل
+            // Attempt to resolve project path intelligently before failing
+            File projectRoot = resolveProjectRoot(projectRootParam, null, stages);
+
+            if (projectRoot == null) {
+                mainHandler.post(() -> callback.onError("This project's folder wasn't found on your device. It may have been deleted or moved.", stages.toString()));
                 return;
             }
 
@@ -729,55 +841,45 @@ public class GitHubManager {
                     }
                 }
 
-                // إنشاء الـ blobs مع إعادة محاولة على 409
+                // إنشاء الـ blobs مع الدرع الدفاعي ضد الملفات المعطوبة
+                // Creating blobs with the defensive shield against corrupted files
                 JsonArray treeArray = new JsonArray();
                 int blobsOk = 0;
+                List<String> skippedFiles = new ArrayList<>();
+
                 for (int i = 0; i < filesToUpload.size(); i++) {
                     UploadFile uploadFile = filesToUpload.get(i);
-                    File file = uploadFile.file;
-                    String relativePath = uploadFile.relativePath;
                     final int index = i + 1;
-                    mainHandler.post(() -> callback.onProgress(index, filesToUpload.size(), relativePath));
+                    mainHandler.post(() -> callback.onProgress(index, filesToUpload.size(), uploadFile.relativePath));
 
-                    // نستخدم التشفير المناسب حسب نوع الملف (نصي أم ثنائي) لمنع التلف
-                    // Use appropriate encoding based on file type (text vs binary) to prevent corruption.
-                    String contentBase64 = isBinaryByExtension(file.getName()) ? 
-                            encodeBinaryToBase64(file) : encodeFileToBase64(file);
+                    String sha = createBlobWithFallback(repoUrl, uploadFile, stages);
                     
-                    JsonObject blobBody = new JsonObject();
-                    blobBody.addProperty("content", contentBase64);
-                    blobBody.addProperty("encoding", "base64");
-                    Request createBlobRequest = buildRequest(repoUrl + "/git/blobs")
-                            .post(RequestBody.create(blobBody.toString(), MediaType.get("application/json")))
-                            .build();
-
-                    Response response = null;
-                    for (int attempt = 0; attempt < 3; attempt++) {
-                        if (response != null) response.close();
-                        response = client.newCall(createBlobRequest).execute();
-                        if (response.code() != 409) break;
-                        try { Thread.sleep(1500L); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
-                    }
-                    try (Response r = response) {
-                        if (r != null && r.isSuccessful() && r.body() != null) {
-                            JsonObject blobJson = gson.fromJson(r.body().string(), JsonObject.class);
-                            JsonObject treeElement = new JsonObject();
-                            treeElement.addProperty("path", relativePath);
-                            treeElement.addProperty("mode", "100644");
-                            treeElement.addProperty("type", "blob");
-                            treeElement.addProperty("sha", blobJson.get("sha").getAsString());
-                            treeArray.add(treeElement);
-                            blobsOk++;
-                        } else {
-                            int code = r != null ? r.code() : -1;
-                            stages.append("blob_err=").append(code).append(" path=").append(relativePath).append(" ");
-                            String err = r != null ? getShortError(r) : "null response";
-                            mainHandler.post(() -> callback.onError("File upload failed (" + relativePath + "): " + err, stages.toString()));
-                            return;
-                        }
+                    if (sha != null) {
+                        JsonObject treeElement = new JsonObject();
+                        treeElement.addProperty("path", uploadFile.relativePath);
+                        treeElement.addProperty("mode", "100644");
+                        treeElement.addProperty("type", "blob");
+                        treeElement.addProperty("sha", sha);
+                        treeArray.add(treeElement);
+                        blobsOk++;
+                    } else {
+                        // نتجاوز الملف الذي يستعصي بدل إسقاط الرفع كله
+                        // Skip the stubborn file instead of dropping the entire upload
+                        skippedFiles.add(new File(uploadFile.relativePath).getName());
+                        stages.append("skipped=").append(uploadFile.relativePath).append(" ");
                     }
                 }
-                stages.append("blobs=").append(blobsOk).append("/").append(filesToUpload.size()).append("\n");
+                
+                if (blobsOk == 0 && !filesToUpload.isEmpty()) {
+                    mainHandler.post(() -> callback.onError("All files failed to upload. Check your project content.", stages.toString()));
+                    return;
+                }
+
+                String skippedReport = "";
+                if (!skippedFiles.isEmpty()) {
+                    skippedReport = " (skipped " + skippedFiles.size() + " files: " + skippedFiles + ")";
+                }
+                stages.append("blobs=").append(blobsOk).append("/").append(filesToUpload.size()).append(skippedReport).append("\n");
 
                 mainHandler.post(() -> callback.onProgress(filesToUpload.size(), filesToUpload.size(), "Finalizing commit…"));
                 JsonObject treeBody = new JsonObject();
@@ -961,18 +1063,8 @@ public class GitHubManager {
      * (شائع في ملفات .java المولَّدة بواسطة Sketchware والتي قد تحوي أحرفاً خاصة أو علامات BOM).
      */
     private String encodeFileToBase64(File file) throws IOException {
-        // Read raw bytes first
-        byte[] rawBytes = new byte[(int) file.length()];
-        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
-            int read = fis.read(rawBytes);
-            if (read != rawBytes.length) {
-                // File changed during read; retry with actual size
-                rawBytes = java.util.Arrays.copyOf(rawBytes, read);
-            }
-        }
-
-        // Try to decode as UTF-8, replacing invalid sequences with replacement char
-        String content = new String(rawBytes, java.nio.charset.StandardCharsets.UTF_8);
+        byte[] rawBytes = readFileFully(file);
+        String content = new String(rawBytes, StandardCharsets.UTF_8);
 
         // Sanitize: remove null bytes and other control chars that GitHub rejects
         // Keep newlines (\n, \r), tabs (\t), but remove chars < 0x20 except those three
@@ -999,13 +1091,7 @@ public class GitHubManager {
      * Encodes binary files (images, fonts) raw as-is to prevent corruption.
      */
     private String encodeBinaryToBase64(File file) throws IOException {
-        byte[] bytes = new byte[(int) file.length()];
-        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
-            int read = fis.read(bytes);
-            if (read != bytes.length) {
-                bytes = java.util.Arrays.copyOf(bytes, read);
-            }
-        }
+        byte[] bytes = readFileFully(file);
         return Base64.encodeToString(bytes, Base64.NO_WRAP);
     }
 
