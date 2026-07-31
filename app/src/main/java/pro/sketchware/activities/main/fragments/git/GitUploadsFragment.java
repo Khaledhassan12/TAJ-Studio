@@ -103,6 +103,14 @@ public class GitUploadsFragment extends Fragment implements GitHubManager.AuthSt
     private void refreshUi() {
         if (binding == null) return;
         binding.swipeRefresh.setRefreshing(false);
+        
+        // تصفير حالة وضع التحديد عند التحديث لضمان عدم بقاء السلّة (علاج E2)
+        // Reset selection UI state on refresh to ensure the trash can doesn't linger (fixing E2).
+        binding.masterDeleteButton.setVisibility(View.GONE);
+        binding.masterDeleteButton.setScaleX(0);
+        binding.masterDeleteButton.setScaleY(0);
+        binding.swipeRefresh.setEnabled(true);
+        if (backCallback != null) backCallback.setEnabled(false);
 
         boolean signedIn = gitHubManager.isSignedIn();
         
@@ -130,21 +138,7 @@ public class GitUploadsFragment extends Fragment implements GitHubManager.AuthSt
                 
                 updateStatsText(records);
 
-                adapter = new GitUploadsAdapter(requireContext(), records, (enabled, count) -> {
-                    backCallback.setEnabled(enabled);
-                    binding.masterDeleteButton.setVisibility(enabled ? View.VISIBLE : View.GONE);
-                    if (enabled) {
-                        // أنيميشن قفزة للسلّة الكبيرة
-                        binding.masterDeleteButton.setScaleX(0);
-                        binding.masterDeleteButton.setScaleY(0);
-                        binding.masterDeleteButton.animate().scaleX(1).scaleY(1).setDuration(250).start();
-                        
-                        binding.syncStats.setText(getString(R.string.git_selection_count, count));
-                        binding.masterDeleteButton.setAlpha(count > 0 ? 1f : 0.4f);
-                    } else {
-                        updateStatsText(records);
-                    }
-                });
+                adapter = new GitUploadsAdapter(requireContext(), records, this::onSelectionChanged);
                 binding.recyclerGitUploads.setAdapter(adapter);
             }
         } else {
@@ -152,6 +146,41 @@ public class GitUploadsFragment extends Fragment implements GitHubManager.AuthSt
             binding.emptySignedOut.setVisibility(View.VISIBLE);
             binding.emptyNoRecords.setVisibility(View.GONE);
             binding.recyclerGitUploads.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * نُطلق مُبلّغاً واحداً عند كل تغيّر في التحديد فيُزامن الهيدر والسحب وزر الرجوع معاً، لأن الأخطاء
+     * السابقة كلها كانت نصفَ مشهدٍ: الصفوف تعرف شيئاً والهيدر يعرف آخر. المصدر الواحد يمنع الانقسام.
+     * We fire a single listener on every selection change so the header, the pull-to-refresh and the back
+     * button all move in lockstep, because every past bug was a half-scene: rows knew one thing, header
+     * another. One source of truth makes the split visually impossible.
+     */
+    private void onSelectionChanged(boolean enabled, int count) {
+        if (binding == null) return;
+        
+        backCallback.setEnabled(enabled);
+        binding.swipeRefresh.setEnabled(!enabled); // منع السحب أثناء التحديد لتجنب E2
+        
+        binding.masterDeleteButton.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        
+        if (enabled) {
+            // أنيميشن قفزة للسلّة الكبيرة
+            if (binding.masterDeleteButton.getScaleX() == 0) {
+                binding.masterDeleteButton.setScaleX(0);
+                binding.masterDeleteButton.setScaleY(0);
+                binding.masterDeleteButton.animate().scaleX(1).scaleY(1).setDuration(250).start();
+            }
+            
+            binding.syncStats.setText(getString(R.string.git_selection_count, count));
+            binding.masterDeleteButton.setAlpha(count > 0 ? 1f : 0.4f);
+            binding.masterDeleteButton.setClickable(count > 0);
+        } else {
+            List<GitHubManager.GitUploadRecord> records = gitHubManager.getUploadRecords();
+            updateStatsText(records);
+            // إخفاء السلّة بوضوح عند الخروج
+            binding.masterDeleteButton.animate().scaleX(0).scaleY(0).setDuration(200)
+                    .withEndAction(() -> binding.masterDeleteButton.setVisibility(View.GONE)).start();
         }
     }
 

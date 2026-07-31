@@ -40,19 +40,24 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
 
     private final List<GitHubManager.GitUploadRecord> records;
     private final Context context;
-    private final SelectionListener selectionListener;
+    private final OnSelectionChangeListener selectionChangeListener;
 
     private boolean selectionMode = false;
+    private boolean longPressConsumed = false;
     private final Set<String> selectedRepoUrls = new LinkedHashSet<>();
 
-    public interface SelectionListener {
-        void onSelectionModeChanged(boolean enabled, int count);
+    /**
+     * مُبلّغ موحّد لتزامن حالة التحديد بين المحول والواجهة الرئيسية.
+     * Unified listener to synchronize selection state between adapter and fragment.
+     */
+    public interface OnSelectionChangeListener {
+        void onSelectionChanged(boolean inMode, int selectedCount);
     }
 
-    public GitUploadsAdapter(Context context, List<GitHubManager.GitUploadRecord> records, SelectionListener listener) {
+    public GitUploadsAdapter(Context context, List<GitHubManager.GitUploadRecord> records, OnSelectionChangeListener listener) {
         this.context = context;
         this.records = records;
-        this.selectionListener = listener;
+        this.selectionChangeListener = listener;
     }
 
     @NonNull
@@ -81,9 +86,10 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
     public void exitSelectionMode() {
         if (!selectionMode) return;
         selectionMode = false;
+        longPressConsumed = false;
         selectedRepoUrls.clear();
         notifyDataSetChanged();
-        if (selectionListener != null) selectionListener.onSelectionModeChanged(false, 0);
+        notifyListener();
     }
 
     public List<GitHubManager.GitUploadRecord> getSelectedRecords() {
@@ -94,6 +100,12 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
             }
         }
         return selected;
+    }
+
+    private void notifyListener() {
+        if (selectionChangeListener != null) {
+            selectionChangeListener.onSelectionChanged(selectionMode, selectedRepoUrls.size());
+        }
     }
 
     class RecordViewHolder extends RecyclerView.ViewHolder {
@@ -163,8 +175,18 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
                 binding.getRoot().setBackgroundResource(isSelected ? 
                         R.drawable.bg_round_border_red : R.drawable.project_item_shape_alone);
                 
-                binding.getRoot().setOnClickListener(v -> toggleSelection(record));
-                binding.commitButton.setOnClickListener(v -> toggleSelection(record));
+                // نستهلك النقرة المتسرّبة حتى في وضع التحديد لمنع إلغاء التحديد فور بدئه (سبب E1)
+                // Even in selection mode, we consume the ghost click to prevent instant deselection (fixing E1).
+                View.OnClickListener toggleClick = v -> {
+                    if (longPressConsumed) {
+                        longPressConsumed = false;
+                        return;
+                    }
+                    toggleSelection(record);
+                };
+
+                binding.getRoot().setOnClickListener(toggleClick);
+                binding.commitButton.setOnClickListener(toggleClick);
                 binding.getRoot().setOnLongClickListener(null);
             } else {
                 // الوضع العادي: أيقونة commit/push الزرقاء
@@ -175,6 +197,12 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
                 binding.getRoot().setBackgroundResource(R.drawable.project_item_shape_alone);
 
                 binding.getRoot().setOnClickListener(v -> {
+                    // نستهلك النقرة المتسرّبة التي قد تأتي فوراً بعد الضغط المطوّل (سبب E1)
+                    // Consume the ghost click that often follows a long-press (fixing E1).
+                    if (longPressConsumed) {
+                        longPressConsumed = false;
+                        return;
+                    }
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(record.repoHtmlUrl));
                     context.startActivity(intent);
                 });
@@ -187,6 +215,7 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
                 });
 
                 binding.getRoot().setOnLongClickListener(v -> {
+                    longPressConsumed = true;
                     enterSelectionMode(record);
                     return true;
                 });
@@ -195,11 +224,10 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
 
         private void enterSelectionMode(GitHubManager.GitUploadRecord origin) {
             selectionMode = true;
+            selectedRepoUrls.clear();
             selectedRepoUrls.add(origin.repoHtmlUrl);
             notifyDataSetChanged();
-            if (selectionListener != null) {
-                selectionListener.onSelectionModeChanged(true, selectedRepoUrls.size());
-            }
+            notifyListener();
         }
 
         private void toggleSelection(GitHubManager.GitUploadRecord record) {
@@ -209,15 +237,20 @@ public class GitUploadsAdapter extends RecyclerView.Adapter<GitUploadsAdapter.Re
                 selectedRepoUrls.add(record.repoHtmlUrl);
             }
             
+            // إغلاق الوضع تلقائياً عند فراغ التحديد، لمنع حالة "0 selected" الغريبة
+            // Auto-exit if selection becomes empty, preventing the weird "0 selected" state.
+            if (selectedRepoUrls.isEmpty()) {
+                exitSelectionMode();
+                return;
+            }
+
             // أنيميشن POP للأيقونة عند التحديد
             binding.commitButton.animate().scaleX(1.3f).scaleY(1.3f).setDuration(120).withEndAction(() -> 
                 binding.commitButton.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
             ).start();
             
             notifyItemChanged(getBindingAdapterPosition());
-            if (selectionListener != null) {
-                selectionListener.onSelectionModeChanged(true, selectedRepoUrls.size());
-            }
+            notifyListener();
         }
     }
 }
