@@ -35,10 +35,10 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_gravity="bottom|end"
-                android:padding="1dp"
                 android:background="?attr/colorSurface"
+                android:padding="1dp"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-                tools:src="@drawable/ic_github_brand" />
+                tools:src="@drawable/ic_github" />
         </FrameLayout>
 
         <LinearLayout
@@ -121,7 +121,7 @@
             android:background="@drawable/circle_bg_primary_alpha"
             android:padding="8dp"
             android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_mtrl_upload"
+            app:srcCompat="@drawable/ic_mtrl_update"
             app:tint="?attr/colorPrimary" />
 
     </LinearLayout>

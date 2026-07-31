@@ -2338,18 +2338,26 @@ Please try again later"</string>
     <string name="git_connect">Connect GitHub</string>
     <string name="git_files_count">%1$d files</string>
     <string name="git_commit_title">New Commit</string>
-    <string name="git_commit_subtitle">Review changes and write a message before pushing to %1$s</string>
-    <string name="git_commit_message_hint">Write a commit message...</string>
+    <string name="git_commit_pushing_to">Pushing to %1$s · %2$s</string>
+    <string name="git_commit_changes_title">Changes</string>
+    <string name="git_commit_changes_files">%1$d files</string>
+    <string name="git_commit_changes_summary">java %1$d · res %2$d · assets %3$d · other %4$d</string>
+    <string name="git_commit_changes_empty">No files to commit</string>
+    <string name="git_commit_message_hint">Describe what changed…</string>
     <string name="git_commit_suggestion_update">Update project</string>
     <string name="git_commit_suggestion_fix">Fix bug</string>
     <string name="git_commit_suggestion_add">Add feature</string>
     <string name="git_commit_suggestion_refactor">Refactor code</string>
-    <string name="git_commit_readme_checkbox">Include custom README for this commit</string>
-    <string name="git_commit_readme_hint">Write README content...</string>
+    <string name="git_commit_suggestion_ui">Improve UI</string>
+    <string name="git_commit_attachments_title">Attachments</string>
+    <string name="git_commit_attachments_count">%1$d/%2$d</string>
+    <string name="git_commit_attachments_too_big">Image too large (max 5 MB): %1$s</string>
+    <string name="git_commit_readme_toggle">Include a README with this commit</string>
+    <string name="git_commit_readme_hint">Write release notes or context…</string>
     <string name="git_commit_button">Commit &amp; Push</string>
     <string name="git_commit_committing">Committing…</string>
     <string name="git_commit_success">Commit pushed successfully</string>
-    <string name="git_commit_no_changes">No local changes detected</string>
-    <string name="git_commit_error_empty_message">Please write a commit message</string>
+    <string name="git_commit_error_empty">Please write a commit message</string>
+    <string name="git_commit_error_generic">Couldn\'t push the commit. Tap for details.</string>
 
 </resources>

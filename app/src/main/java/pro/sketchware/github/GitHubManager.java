@@ -73,6 +73,7 @@ public class GitHubManager {
     public interface CommitCallback {
         void onSuccess();
         void onError(String error);
+        void onProgress(String stage);
     }
 
     public interface AvatarBitmapCallback {
@@ -334,13 +335,13 @@ public class GitHubManager {
     }
 
     /**
-     * Creates a new commit in the repository with the current local files and a custom message.
-     * This is useful for pushing updates to an existing repository from the history tab.
-     *
-     * ينشئ commit جديداً في المستودع باستخدام الملفات المحلية الحالية ورسالة مخصصة.
-     * هذا مفيد لدفع التحديثات لمستودع موجود مسبقاً من تاب السجل.
+     * ينشئ commit جديداً في المستودع باستخدام الملفات المحلية، رسالة مخصصة، وإرفاقات صور اختيارية.
+     * نستخدم تحليل الرابط المباشر للمستودع لضمان الدقة وتجنب أخطاء 404 الناتجة عن تباين التسمية.
+     * Creates a new commit in the repository with local files, custom message, and optional image attachments.
+     * We analyze the repo's HTML URL directly to ensure accuracy and avoid 404s caused by naming mismatches.
      */
-    public void createCommit(GitUploadRecord record, String message, String readmeContent, CommitCallback callback) {
+    public void createCommit(GitUploadRecord record, String message, String readmeContent, 
+                             List<File> attachedFiles, CommitCallback callback) {
         executor.execute(() -> {
             String token = getAccessToken();
             if (token == null) {
@@ -355,14 +356,36 @@ public class GitHubManager {
             }
 
             try {
-                List<UploadFile> filesToUpload = collectUploadFiles(projectRoot);
-                String repoUrl = "https://api.github.com/repos/" + record.login + "/" + sanitizeRepoName(record.projectTitle);
+                // استخراج المالك والمستودع من الرابط المخزن بدلاً من التخمين من العنوان
+                // Extract owner and repo from the stored URL instead of guessing from the title.
+                String repoPath = record.repoHtmlUrl.replace("https://github.com/", "");
+                String[] parts = repoPath.split("/");
+                if (parts.length < 2) {
+                    mainHandler.post(() -> callback.onError("Invalid repository URL format."));
+                    return;
+                }
+                String owner = parts[0];
+                String repo = parts[1];
+                String repoUrl = "https://api.github.com/repos/" + owner + "/" + repo;
 
-                // 1. جلب آخر commit SHA للفرع الأساسي
-                // 1. Fetch latest commit SHA for the default branch
-                String baseSha = null;
-                String defaultBranch = "main"; // Defaulting to main, could be improved by checking repo settings
+                mainHandler.post(() -> callback.onProgress("Fetching repo info…"));
                 
+                // جلب الفرع الافتراضي ديناميكياً لتجنب تثبيته على "main"
+                // Fetch default branch dynamically instead of hardcoding to "main".
+                String defaultBranch = "main";
+                Request getRepoInfo = buildRequest(repoUrl).get().build();
+                try (Response response = client.newCall(getRepoInfo).execute()) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        JsonObject repoJson = gson.fromJson(response.body().string(), JsonObject.class);
+                        if (repoJson.has("default_branch")) {
+                            defaultBranch = repoJson.get("default_branch").getAsString();
+                        }
+                    }
+                }
+
+                // جلب آخر commit SHA للفرع الأساسي
+                // Fetch latest commit SHA for the base branch.
+                String baseSha = null;
                 Request getRefRequest = buildRequest(repoUrl + "/git/ref/heads/" + defaultBranch).get().build();
                 try (Response response = client.newCall(getRefRequest).execute()) {
                     if (response.isSuccessful() && response.body() != null) {
@@ -374,67 +397,97 @@ public class GitHubManager {
                     }
                 }
 
-                // 2. إنشاء الـ blobs للملفات المحلية
-                // 2. Create blobs for local files
+                mainHandler.post(() -> callback.onProgress("Creating blobs…"));
+                List<UploadFile> filesToUpload = collectUploadFiles(projectRoot);
                 JsonArray treeArray = new JsonArray();
+
+                // 1. معالجة ملفات المشروع (نصية أم ثنائية)
+                // 1. Process project files (text vs binary)
                 for (UploadFile uploadFile : filesToUpload) {
-                    String contentBase64 = encodeFileToBase64(uploadFile.file);
+                    String contentB64 = isBinaryByExtension(uploadFile.file.getName()) ? 
+                            encodeBinaryToBase64(uploadFile.file) : encodeFileToBase64(uploadFile.file);
+                    
                     JsonObject blobBody = new JsonObject();
-                    blobBody.addProperty("content", contentBase64);
+                    blobBody.addProperty("content", contentB64);
                     blobBody.addProperty("encoding", "base64");
                     
-                    Request createBlobRequest = buildRequest(repoUrl + "/git/blobs")
+                    Request createBlob = buildRequest(repoUrl + "/git/blobs")
                             .post(RequestBody.create(blobBody.toString(), MediaType.get("application/json")))
                             .build();
-                    try (Response response = client.newCall(createBlobRequest).execute()) {
+                    try (Response response = client.newCall(createBlob).execute()) {
                         if (response.isSuccessful() && response.body() != null) {
-                            JsonObject blobJson = gson.fromJson(response.body().string(), JsonObject.class);
+                            String sha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
                             JsonObject treeElement = new JsonObject();
                             treeElement.addProperty("path", uploadFile.relativePath);
                             treeElement.addProperty("mode", "100644");
                             treeElement.addProperty("type", "blob");
-                            treeElement.addProperty("sha", blobJson.get("sha").getAsString());
+                            treeElement.addProperty("sha", sha);
                             treeArray.add(treeElement);
                         }
                     }
                 }
 
-                // إضافة README مخصص إن وجد
-                // Add custom README if provided
+                // 2. معالجة الإرفاقات (دائماً ثنائية خام) داخل مجلد خاص
+                // 2. Process attachments (always raw binary) inside a dedicated folder.
+                if (attachedFiles != null) {
+                    for (File file : attachedFiles) {
+                        String b64 = encodeBinaryToBase64(file);
+                        JsonObject blobBody = new JsonObject();
+                        blobBody.addProperty("content", b64);
+                        blobBody.addProperty("encoding", "base64");
+                        
+                        Request createBlob = buildRequest(repoUrl + "/git/blobs")
+                                .post(RequestBody.create(blobBody.toString(), MediaType.get("application/json")))
+                                .build();
+                        try (Response response = client.newCall(createBlob).execute()) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                String sha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
+                                JsonObject treeElement = new JsonObject();
+                                treeElement.addProperty("path", "attachments/" + file.getName());
+                                treeElement.addProperty("mode", "100644");
+                                treeElement.addProperty("type", "blob");
+                                treeElement.addProperty("sha", sha);
+                                treeArray.add(treeElement);
+                            }
+                        }
+                    }
+                }
+
+                // 3. معالجة الـ README المخصص
+                // 3. Process custom README.
                 if (readmeContent != null && !readmeContent.trim().isEmpty()) {
-                    JsonObject readmeBlobBody = new JsonObject();
-                    readmeBlobBody.addProperty("content", Base64.encodeToString(readmeContent.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP));
-                    readmeBlobBody.addProperty("encoding", "base64");
+                    String b64 = Base64.encodeToString(readmeContent.getBytes(java.nio.charset.StandardCharsets.UTF_8), Base64.NO_WRAP);
+                    JsonObject blobBody = new JsonObject();
+                    blobBody.addProperty("content", b64);
+                    blobBody.addProperty("encoding", "base64");
                     
-                    Request createReadmeBlob = buildRequest(repoUrl + "/git/blobs")
-                            .post(RequestBody.create(readmeBlobBody.toString(), MediaType.get("application/json")))
+                    Request createBlob = buildRequest(repoUrl + "/git/blobs")
+                            .post(RequestBody.create(blobBody.toString(), MediaType.get("application/json")))
                             .build();
-                    try (Response response = client.newCall(createReadmeBlob).execute()) {
+                    try (Response response = client.newCall(createBlob).execute()) {
                         if (response.isSuccessful() && response.body() != null) {
-                            JsonObject blobJson = gson.fromJson(response.body().string(), JsonObject.class);
+                            String sha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
                             JsonObject treeElement = new JsonObject();
                             treeElement.addProperty("path", "README.md");
                             treeElement.addProperty("mode", "100644");
                             treeElement.addProperty("type", "blob");
-                            treeElement.addProperty("sha", blobJson.get("sha").getAsString());
+                            treeElement.addProperty("sha", sha);
                             treeArray.add(treeElement);
                         }
                     }
                 }
 
-                // 3. إنشاء شجرة جديدة
-                // 3. Create a new tree
+                mainHandler.post(() -> callback.onProgress("Finalizing commit…"));
+                
+                // إنشاء الشجرة والـ commit وتحديث الـ Ref
+                // Create tree, commit, and update Ref.
                 JsonObject treeBody = new JsonObject();
                 treeBody.add("tree", treeArray);
-                // We don't strictly need base_tree if we are providing all files, 
-                // but adding it ensures we only override changed files if our collect is partial.
-                // However, our collect is full, so let's keep it simple.
-                
                 String newTreeSha;
-                Request createTreeRequest = buildRequest(repoUrl + "/git/trees")
+                Request createTree = buildRequest(repoUrl + "/git/trees")
                         .post(RequestBody.create(treeBody.toString(), MediaType.get("application/json")))
                         .build();
-                try (Response response = client.newCall(createTreeRequest).execute()) {
+                try (Response response = client.newCall(createTree).execute()) {
                     if (response.isSuccessful() && response.body() != null) {
                         newTreeSha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
                     } else {
@@ -443,8 +496,6 @@ public class GitHubManager {
                     }
                 }
 
-                // 4. إنشاء الـ commit
-                // 4. Create the commit
                 JsonObject commitBody = new JsonObject();
                 commitBody.addProperty("message", message);
                 commitBody.addProperty("tree", newTreeSha);
@@ -453,10 +504,10 @@ public class GitHubManager {
                 commitBody.add("parents", parents);
                 
                 String newCommitSha;
-                Request createCommitRequest = buildRequest(repoUrl + "/git/commits")
+                Request createCommit = buildRequest(repoUrl + "/git/commits")
                         .post(RequestBody.create(commitBody.toString(), MediaType.get("application/json")))
                         .build();
-                try (Response response = client.newCall(createCommitRequest).execute()) {
+                try (Response response = client.newCall(createCommit).execute()) {
                     if (response.isSuccessful() && response.body() != null) {
                         newCommitSha = gson.fromJson(response.body().string(), JsonObject.class).get("sha").getAsString();
                     } else {
@@ -465,20 +516,17 @@ public class GitHubManager {
                     }
                 }
 
-                // 5. تحديث الفرع (Ref)
-                // 5. Update the branch reference
                 JsonObject refUpdateBody = new JsonObject();
                 refUpdateBody.addProperty("sha", newCommitSha);
                 refUpdateBody.addProperty("force", false);
                 
-                Request updateRefRequest = buildRequest(repoUrl + "/git/refs/heads/" + defaultBranch)
+                Request updateRef = buildRequest(repoUrl + "/git/refs/heads/" + defaultBranch)
                         .patch(RequestBody.create(refUpdateBody.toString(), MediaType.get("application/json")))
                         .build();
-                try (Response response = client.newCall(updateRefRequest).execute()) {
+                try (Response response = client.newCall(updateRef).execute()) {
                     if (response.isSuccessful()) {
-                        // تحديث وقت الرفع في السجل المحلي
-                        // Update upload time in local record
-                        recordSuccessfulUpload(record.projectId, record.projectTitle, record.repoHtmlUrl, filesToUpload.size(), "Commit update");
+                        recordSuccessfulUpload(record.projectId, record.projectTitle, record.repoHtmlUrl, 
+                                filesToUpload.size(), "Commit push");
                         mainHandler.post(callback::onSuccess);
                     } else {
                         mainHandler.post(() -> callback.onError("Ref update failed."));
@@ -675,7 +723,8 @@ public class GitHubManager {
                     final int index = i + 1;
                     mainHandler.post(() -> callback.onProgress(index, filesToUpload.size(), relativePath));
 
-                    String contentBase64 = encodeFileToBase64(file);
+                    String contentBase64 = isBinaryByExtension(file.getName()) ? 
+                            encodeBinaryToBase64(file) : encodeFileToBase64(file);
                     JsonObject blobBody = new JsonObject();
                     blobBody.addProperty("content", contentBase64);
                     blobBody.addProperty("encoding", "base64");
@@ -924,6 +973,33 @@ public class GitHubManager {
         // Encode the sanitized string back to UTF-8 bytes, then Base64
         byte[] cleanBytes = sanitized.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
         return Base64.encodeToString(cleanBytes, Base64.NO_WRAP);
+    }
+
+    /**
+     * يشفّر الملفات الثنائية (مثل الصور والخطوط) خاماً كما هي لضمان عدم تلفها.
+     * Encodes binary files (images, fonts) raw as-is to prevent corruption.
+     */
+    private String encodeBinaryToBase64(File file) throws IOException {
+        byte[] bytes = new byte[(int) file.length()];
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+            fis.read(bytes);
+        }
+        return Base64.encodeToString(bytes, Base64.NO_WRAP);
+    }
+
+    /**
+     * يحدد ما إذا كان الملف ثنائياً بناءً على امتداده لاختيار طريقة التشفير المناسبة.
+     * Determines if a file is binary by extension to choose the correct encoding method.
+     */
+    public static boolean isBinaryByExtension(String name) {
+        if (name == null) return false;
+        String ext = name.toLowerCase();
+        return ext.endsWith(".png") || ext.endsWith(".jpg") || ext.endsWith(".jpeg") ||
+               ext.endsWith(".gif") || ext.endsWith(".webp") || ext.endsWith(".bmp") ||
+               ext.endsWith(".ico") || ext.endsWith(".ttf") || ext.endsWith(".otf") ||
+               ext.endsWith(".woff") || ext.endsWith(".woff2") || ext.endsWith(".mp3") ||
+               ext.endsWith(".mp4") || ext.endsWith(".wav") || ext.endsWith(".ogg") ||
+               ext.endsWith(".zip") || ext.endsWith(".pdf");
     }
 
     public static class UserResponse {
