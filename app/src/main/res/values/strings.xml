@@ -2425,4 +2425,16 @@ Please try again later"</string>
     <string name="git_commit_view_commit">View commit</string>
     <string name="git_commit_preparing">Preparing commit…</string>
 
+    <string name="change_app_icon_title">Change app icon</string>
+    <string name="change_app_icon_sub">Pick an installed app\'s icon</string>
+    <string name="app_icon_sheet_title">App icon</string>
+    <string name="app_icon_sheet_sub">Choose how %1$s looks in your projects list</string>
+    <string name="app_icon_pick">Pick Image</string>
+    <string name="app_icon_reset">Reset to default</string>
+    <string name="app_icon_apply">Apply</string>
+    <string name="app_icon_cancel">Cancel</string>
+    <string name="app_icon_loading">Loading apps…</string>
+    <string name="app_icon_search_hint">Search apps…</string>
+    <string name="app_icon_changed">App icon updated</string>
+    <string name="app_icon_pick_hint">Tap Pick Image to browse installed apps</string>
 </resources>

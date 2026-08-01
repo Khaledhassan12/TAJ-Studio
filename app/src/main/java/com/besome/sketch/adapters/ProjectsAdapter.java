@@ -330,6 +330,15 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
             projectOptionsBSD.dismiss();
         });
 
+        binding.changeAppIcon.setOnClickListener(v -> {
+            projectOptionsBSD.dismiss();
+            if (activity instanceof FragmentActivity) {
+                String scId = yB.c(projectMap, "sc_id");
+                pro.sketchware.activities.main.fragments.projects.AppIconPickerSheet.newInstance(scId, projectTitle)
+                        .show(((FragmentActivity) activity).getSupportFragmentManager(), "AppIconPicker");
+            }
+        });
+
         binding.projectBackup.setOnClickListener(v -> {
             backupProject(projectMap);
             projectOptionsBSD.dismiss();
