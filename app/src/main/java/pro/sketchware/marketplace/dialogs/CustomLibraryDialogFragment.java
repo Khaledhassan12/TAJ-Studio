@@ -43,6 +43,12 @@ public class CustomLibraryDialogFragment extends BottomSheetDialogFragment {
         }
 
         binding.btnCancel.setOnClickListener(v -> dismiss());
+        
+        binding.btnMoreInfo.setOnClickListener(v -> {
+            LibraryInfoBottomSheet infoSheet = new LibraryInfoBottomSheet();
+            infoSheet.show(getChildFragmentManager(), "LibraryInfo");
+        });
+
         binding.btnInstallCustom.setOnClickListener(v -> {
             String coordinate = binding.etCoordinate.getText().toString().trim();
             if (coordinate.matches("^[^:]+:[^:]+:.+$")) {

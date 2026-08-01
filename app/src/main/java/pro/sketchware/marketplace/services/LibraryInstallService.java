@@ -38,6 +38,10 @@ public class LibraryInstallService extends Service {
     public static final String ACTION_STATUS_CHANGE = "pro.sketchware.marketplace.STATUS_CHANGE";
     public static final String ACTION_INSTALL_STARTED = "pro.sketchware.marketplace.INSTALL_STARTED";
     public static final String ACTION_INSTALL_FINISHED = "pro.sketchware.marketplace.INSTALL_FINISHED";
+    public static final String ACTION_INSTALL_SUCCESS = "pro.sketchware.marketplace.INSTALL_SUCCESS";
+    public static final String ACTION_INSTALL_FAILURE = "pro.sketchware.marketplace.INSTALL_FAILURE";
+    public static final String EXTRA_COORDINATE = "extra_coordinate";
+    public static final String EXTRA_ERROR = "extra_error";
     
     private static final String CHANNEL_ID = "library_install_channel";
     private static final int NOTIFICATION_ID = 3001;
@@ -86,6 +90,9 @@ public class LibraryInstallService extends Service {
                 Log.d(TAG, "Starting install for: " + coordinate);
                 semaphore.acquire();
                 
+                // T1: Immediate notification update when task starts
+                updateNotification();
+
                 String[] parts = coordinate.split(":");
                 if (parts.length != 3) {
                     handleFailure(coordinate, "Invalid Maven format");
@@ -95,32 +102,40 @@ public class LibraryInstallService extends Service {
                 BuildSettings buildSettings = new BuildSettings("system");
                 DependencyResolver resolver = new DependencyResolver(parts[0], parts[1], parts[2], false, buildSettings);
                 
-                // T6: Fix silent failure - properly handle resolve callbacks
                 resolver.resolveDependency(new DependencyResolver.DependencyResolverCallback() {
                     @Override
                     public void onTaskCompleted(@NonNull List<String> dependencies) {
                         Log.d(TAG, "Successfully installed: " + coordinate);
-                        // Registration is handled inside DependencyResolver.resolveDependency for local_libs
-                        // but we ensure status is reported.
                         handleSuccess(coordinate);
+                        sendBroadcast(new Intent(ACTION_INSTALL_SUCCESS)
+                                .putExtra(EXTRA_COORDINATE, coordinate));
                     }
 
                     @Override
                     public void onDownloadError(@NonNull Artifact dep, @NonNull Throwable e) {
                         Log.e(TAG, "Download error for " + coordinate, e);
                         handleFailure(coordinate, e.getMessage());
+                        sendBroadcast(new Intent(ACTION_INSTALL_FAILURE)
+                                .putExtra(EXTRA_COORDINATE, coordinate)
+                                .putExtra(EXTRA_ERROR, e.getMessage()));
                     }
 
                     @Override
                     public void onArtifactNotFound(@NonNull Artifact dep) {
                         Log.e(TAG, "Artifact not found: " + coordinate);
                         handleFailure(coordinate, "Artifact not found");
+                        sendBroadcast(new Intent(ACTION_INSTALL_FAILURE)
+                                .putExtra(EXTRA_COORDINATE, coordinate)
+                                .putExtra(EXTRA_ERROR, "Artifact not found"));
                     }
                     
                     @Override
                     public void dexingFailed(@NonNull Artifact dep, @NonNull Exception e) {
                         Log.e(TAG, "Dexing failed for " + coordinate, e);
                         handleFailure(coordinate, "Dexing failed: " + e.getMessage());
+                        sendBroadcast(new Intent(ACTION_INSTALL_FAILURE)
+                                .putExtra(EXTRA_COORDINATE, coordinate)
+                                .putExtra(EXTRA_ERROR, "Dexing failed"));
                     }
                 });
             } catch (Exception e) {
@@ -154,8 +169,11 @@ public class LibraryInstallService extends Service {
 
     private void checkCompletion() {
         if (completedCount + failedCount >= totalCount) {
+            // T2: Use persistent final notification so it doesn't disappear silently
             showFinalNotification();
             sendBroadcast(new Intent(ACTION_INSTALL_FINISHED));
+            
+            // T3: Reset but keep service alive just enough for the final notify
             totalCount = 0;
             completedCount = 0;
             failedCount = 0;
@@ -174,19 +192,27 @@ public class LibraryInstallService extends Service {
                 .setContentText(msg)
                 .setProgress(totalCount, completedCount, false)
                 .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW);
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setSilent(true); // Don't beep every update
 
         startForeground(NOTIFICATION_ID, builder.build());
     }
 
     private void showFinalNotification() {
-        String message = failedCount == 0 
-                ? getString(R.string.lib_install_all_done) 
-                : getString(R.string.lib_install_some_failed, failedCount);
+        String message;
+        int iconRes;
+        
+        if (failedCount == 0) {
+            message = getString(R.string.lib_install_all_success);
+            iconRes = R.drawable.ic_mtrl_done;
+        } else {
+            message = getString(R.string.lib_install_fail_count, failedCount);
+            iconRes = R.drawable.ic_mtrl_warning;
+        }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(failedCount == 0 ? R.drawable.ic_mtrl_done : R.drawable.ic_mtrl_warning)
-                .setContentTitle(getString(R.string.app_name))
+                .setSmallIcon(iconRes)
+                .setContentTitle(getString(R.string.lib_install_complete))
                 .setContentText(message)
                 .setAutoCancel(true)
                 .setOngoing(false)

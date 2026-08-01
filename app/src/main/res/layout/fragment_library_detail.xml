@@ -50,6 +50,15 @@
                     android:textColor="?attr/colorOnSurfaceVariant"
                     tools:text="com.github.bumptech.glide:glide:4.16.0" />
 
+                <ProgressBar
+                    android:id="@+id/pb_checking"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
             </LinearLayout>
 
         </LinearLayout>

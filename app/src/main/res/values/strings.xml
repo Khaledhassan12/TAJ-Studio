@@ -2478,4 +2478,27 @@ Please try again later"</string>
     <string name="app_icon_search_hint">Search apps…</string>
     <string name="app_icon_changed">App icon updated</string>
     <string name="app_icon_pick_hint">Tap Pick Image to browse installed apps</string>
+    <string name="lib_custom_explanation_1">A Maven coordinate identifies a library in the format:</string>
+    <string name="lib_custom_format">group:artifact:version</string>
+    <string name="lib_custom_examples">Examples:</string>
+    <string name="lib_custom_example_1">com.github.bumptech.glide:glide:4.16.0</string>
+    <string name="lib_custom_example_2">com.squareup.retrofit2:retrofit:2.9.0</string>
+    <string name="lib_custom_repos">These coordinates point to libraries in Maven Central, Google, JitPack, etc.</string>
+    <string name="lib_custom_more_info">More Info</string>
+    <string name="lib_custom_info_title">About Maven Coordinates</string>
+    <string name="lib_custom_info_group">• group: The organization or group (e.g., com.github.bumptech.glide)</string>
+    <string name="lib_custom_info_artifact">• artifact: The library name (e.g., glide)</string>
+    <string name="lib_custom_info_version">• version: The release version (e.g., 4.16.0)</string>
+    <string name="lib_custom_info_repos_title">Supported repositories:</string>
+    <string name="lib_custom_info_repo_1">• Maven Central (default)</string>
+    <string name="lib_custom_info_repo_2">• Google (Android libraries)</string>
+    <string name="lib_custom_info_repo_3">• JitPack (GitHub libraries)</string>
+    <string name="lib_custom_info_repo_4">• JCenter (deprecated but still works)</string>
+    <string name="lib_custom_info_max">You can paste multiple coordinates at once (max 3 concurrent installs).</string>
+    <string name="lib_install_success">Installed successfully</string>
+    <string name="lib_install_failed_with_reason">Installation failed: %1$s</string>
+    <string name="lib_install_complete">Installation complete</string>
+    <string name="lib_install_all_success">All libraries installed successfully</string>
+    <string name="lib_install_partial_fail">Installation partially failed</string>
+    <string name="lib_install_fail_count">%1$d libraries failed</string>
 </resources>

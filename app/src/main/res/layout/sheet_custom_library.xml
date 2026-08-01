@@ -63,6 +63,66 @@
         android:textColor="?attr/colorOnSurfaceVariant"
         app:layout_constraintTop_toBottomOf="@id/til_coordinate" />
 
+    <LinearLayout
+        android:id="@+id/layout_explanation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical"
+        android:background="@drawable/shape_rounded_bottom_sheet"
+        android:backgroundTint="?attr/colorSurfaceVariant"
+        android:padding="16dp"
+        app:layout_constraintTop_toBottomOf="@id/tv_warning">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/lib_custom_explanation_1"
+            android:textAppearance="?attr/textAppearanceLabelLarge"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/lib_custom_format"
+            android:fontFamily="monospace"
+            android:textSize="12sp"
+            android:textColor="?attr/colorPrimary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/lib_custom_examples"
+            android:textAppearance="?attr/textAppearanceLabelSmall" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/lib_custom_example_1"
+            android:fontFamily="monospace"
+            android:textSize="11sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/lib_custom_example_2"
+            android:fontFamily="monospace"
+            android:textSize="11sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_more_info"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_gravity="end"
+            android:text="@string/lib_custom_more_info"
+            app:icon="@drawable/ic_mtrl_info" />
+
+    </LinearLayout>
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_cancel"
         style="@style/Widget.Material3.Button.TextButton"
@@ -71,7 +131,7 @@
         android:layout_marginTop="32dp"
         android:text="@string/common_word_cancel"
         app:layout_constraintEnd_toStartOf="@id/btn_install_custom"
-        app:layout_constraintTop_toBottomOf="@id/tv_warning" />
+        app:layout_constraintTop_toBottomOf="@id/layout_explanation" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_install_custom"

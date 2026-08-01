@@ -1,9 +1,12 @@
 package pro.sketchware.marketplace.dialogs;
 
+import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,6 +22,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import dev.aldi.sayuti.editor.manage.LocalLibrariesUtil;
@@ -30,14 +35,22 @@ import pro.sketchware.marketplace.services.LibraryInstallService;
 import pro.sketchware.utility.SketchwareUtil;
 
 /**
- * بوتم شيت تفاصيل المكتبة - تم تحسينه بحواف مدورة وأزرار صلبة ومعالجة حقيقية للتثبيت.
- * Library detail sheet - refined with rounded corners, solid buttons, and real install handling.
+ * بوتم شيت تفاصيل المكتبة - تم تحسينه بنقل العمليات الثقيلة للخلفية وإضافة مستمع حي للتنزيل.
+ * Library detail sheet - improved by moving heavy I/O to background and adding live install listener.
  */
 public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
 
     private FragmentLibraryDetailBinding binding;
     private MarketplaceLibrary library;
     private Runnable onDismissListener;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            checkStatusAsync();
+        }
+    };
 
     public static LibraryDetailBottomSheet newInstance(MarketplaceLibrary library) {
         LibraryDetailBottomSheet fragment = new LibraryDetailBottomSheet();
@@ -67,6 +80,13 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
         }
         
         setupUI();
+        
+        IntentFilter filter = new IntentFilter(LibraryInstallService.ACTION_STATUS_CHANGE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireContext().registerReceiver(statusReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            requireContext().registerReceiver(statusReceiver, filter);
+        }
     }
 
     private void setupUI() {
@@ -97,8 +117,8 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
             }
         });
 
-        checkConflicts();
-        updateInstallButton();
+        // T5: Check status in background to avoid freezing the UI (30s delay fix)
+        checkStatusAsync();
 
         binding.btnInstall.setOnClickListener(v -> startInstallProcess());
         
@@ -117,6 +137,26 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
                 SketchwareUtil.toast(getString(R.string.lib_copied));
             });
         }
+    }
+
+    private void checkStatusAsync() {
+        if (binding == null) return;
+        
+        binding.pbChecking.setVisibility(View.VISIBLE);
+        executor.execute(() -> {
+            boolean installed = isInstalled();
+            String conflictId = getConflictId();
+            
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    if (binding != null) {
+                        binding.pbChecking.setVisibility(View.GONE);
+                        updateInstallButton(installed);
+                        showConflict(conflictId);
+                    }
+                });
+            }
+        });
     }
 
     private void startInstallProcess() {
@@ -140,19 +180,26 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
-    private void checkConflicts() {
+    private String getConflictId() {
         List<String> installed = LocalLibrariesUtil.getAllLocalLibraries().stream()
                 .map(LocalLibrary::getName)
                 .collect(Collectors.toList());
 
         for (String conflictId : library.getConflictsWith()) {
             if (installed.stream().anyMatch(name -> name.toLowerCase().contains(conflictId.toLowerCase()))) {
-                binding.cardConflict.setVisibility(View.VISIBLE);
-                binding.tvConflictWarn.setText(getString(R.string.lib_conflict_warn, conflictId));
-                return;
+                return conflictId;
             }
         }
-        binding.cardConflict.setVisibility(View.GONE);
+        return null;
+    }
+
+    private void showConflict(String conflictId) {
+        if (conflictId != null) {
+            binding.cardConflict.setVisibility(View.VISIBLE);
+            binding.tvConflictWarn.setText(getString(R.string.lib_conflict_warn, conflictId));
+        } else {
+            binding.cardConflict.setVisibility(View.GONE);
+        }
     }
 
     private boolean isInstalled() {
@@ -160,14 +207,16 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
                 .anyMatch(l -> l.getName().equalsIgnoreCase(library.getId()) || l.getName().toLowerCase().contains(library.getId().toLowerCase()));
     }
 
-    private void updateInstallButton() {
-        if (isInstalled()) {
+    private void updateInstallButton(boolean installed) {
+        if (installed) {
             binding.btnInstall.setText(R.string.lib_installed);
             binding.btnInstall.setEnabled(false);
             binding.btnInstall.setAlpha(0.6f);
             if (library.getUsageSnippet() != null) {
                 binding.layoutQuickStart.setVisibility(View.VISIBLE);
             }
+            binding.pbInstallHorizontal.setVisibility(View.GONE);
+            binding.btnBgTask.setVisibility(View.GONE);
         } else {
             binding.btnInstall.setText(R.string.lib_install);
             binding.btnInstall.setEnabled(true);
@@ -177,9 +226,16 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
     }
 
     @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        super.onDismiss(dialog);
+        if (onDismissListener != null) onDismissListener.run();
+    }
+
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (onDismissListener != null) onDismissListener.run();
+        requireContext().unregisterReceiver(statusReceiver);
+        executor.shutdownNow();
         binding = null;
     }
 }
