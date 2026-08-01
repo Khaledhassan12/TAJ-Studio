@@ -1,0 +1,212 @@
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/shape_circle_accent_light">
+
+                <TextView
+                    android:id="@+id/tv_detail_initial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                    android:textColor="?attr/colorPrimary"
+                    tools:text="G" />
+
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_detail_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                    tools:text="Glide" />
+
+                <TextView
+                    android:id="@+id/tv_detail_coordinate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    tools:text="com.github.bumptech.glide:glide:4.16.0" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_detail_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            tools:text="Glide is a fast and efficient open source media management and image loading framework for Android..." />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorOutlineVariant">
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:stretchColumns="1">
+
+                <TableRow android:paddingVertical="4dp">
+                    <TextView android:text="@string/lib_version" android:textAppearance="?attr/textAppearanceLabelLarge" />
+                    <TextView android:id="@+id/tv_detail_version" android:gravity="end" tools:text="4.16.0" />
+                </TableRow>
+
+                <TableRow android:paddingVertical="4dp">
+                    <TextView android:text="AndroidX" android:textAppearance="?attr/textAppearanceLabelLarge" />
+                    <TextView android:id="@+id/tv_detail_androidx" android:gravity="end" tools:text="Compatible" />
+                </TableRow>
+
+                <TableRow android:id="@+id/row_downloads" android:paddingVertical="4dp">
+                    <TextView android:text="@string/lib_downloads" android:textAppearance="?attr/textAppearanceLabelLarge" />
+                    <TextView android:id="@+id/tv_detail_downloads" android:gravity="end" tools:text="150k+" />
+                </TableRow>
+
+            </TableLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <Button
+            android:id="@+id/btn_docs"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/lib_docs"
+            app:icon="@drawable/ic_mtrl_link" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_conflict"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="#FFF8E1"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#FFC107"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/tv_conflict_warn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:textColor="#A85E00"
+                android:textSize="12sp"
+                tools:text="May conflict with Glide already installed." />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <Button
+            android:id="@+id/btn_install"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/lib_install"
+            app:cornerRadius="16dp" />
+
+        <ProgressBar
+            android:id="@+id/pb_install"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="24dp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/layout_quick_start"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lib_quick_start"
+                android:textAppearance="?attr/textAppearanceTitleSmall" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="?attr/colorSurfaceVariant"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:id="@+id/tv_usage_snippet"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_toStartOf="@id/btn_copy"
+                        android:fontFamily="monospace"
+                        android:textSize="12sp"
+                        tools:text="Glide.with(context).load(url).into(imageView);" />
+
+                    <ImageButton
+                        android:id="@+id/btn_copy"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_alignParentEnd="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_mtrl_article"
+                        app:tint="?attr/colorPrimary" />
+
+                </RelativeLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="40dp" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

@@ -287,6 +287,10 @@
 
         <activity android:name="pro.sketchware.activities.settings.SettingsActivity" />
 
+        <activity android:name="pro.sketchware.marketplace.activities.LibraryMarketplaceActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/settings_library_marketplace_title" />
+
         <activity android:name="pro.sketchware.activities.resourceseditor.ResourcesEditorActivity" />
 
         <activity

@@ -98,6 +98,33 @@
     <string name="block_camera_start_take_picture_tail">take picture</string>
     <string name="block_category_component_func">Component</string>
     <string name="block_category_control">Control</string>
+
+    <string name="settings_library_marketplace_title">Library Marketplace</string>
+    <string name="settings_library_marketplace_sub">Browse and install popular libraries in one tap</string>
+    <string name="lib_search_hint">Search libraries…</string>
+    <string name="lib_most_used">Most used</string>
+    <string name="lib_all">All libraries</string>
+    <string name="lib_installed">Installed</string>
+    <string name="lib_update">Update</string>
+    <string name="lib_install">Install</string>
+    <string name="lib_installing">Installing…</string>
+    <string name="lib_reinstall">Reinstall</string>
+    <string name="lib_remove">Remove</string>
+    <string name="lib_version">Stable version</string>
+    <string name="lib_androidx_yes">AndroidX compatible</string>
+    <string name="lib_androidx_no">—</string>
+    <string name="lib_downloads">Downloads</string>
+    <string name="lib_docs">Documentation</string>
+    <string name="lib_conflict_warn">May conflict with %1$s already installed. Installing both can cause build errors.</string>
+    <string name="lib_quick_start">Quick start</string>
+    <string name="lib_copy">Copy</string>
+    <string name="lib_copied">Copied</string>
+    <string name="lib_installed_toast">Installed %1$s</string>
+    <string name="lib_next_step">Now add it to your project from Local library manager / project settings.</string>
+    <string name="lib_install_failed">Couldn\'t install %1$s. See details.</string>
+    <string name="lib_empty">No libraries match your search.</string>
+    <string name="lib_loading">Loading catalog…</string>
+
     <string name="block_category_file">File</string>
     <string name="block_category_list">List</string>
     <string name="block_category_math">Math</string>
