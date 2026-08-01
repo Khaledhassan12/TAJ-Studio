@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:background="?attr/colorSurface">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -10,19 +11,36 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorSurface"
+        android:fitsSystemWindows="true"
         app:elevation="0dp">
 
-        <com.google.android.material.search.SearchBar
-            android:id="@+id/search_bar"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="8dp"
-            android:hint="@string/lib_search_hint"
-            app:defaultMarginsEnabled="false"
-            app:navigationIcon="?attr/homeAsUpIndicator" />
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.search.SearchBar
+                android:id="@+id/search_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="72dp"
+                android:layout_marginBottom="8dp"
+                android:hint="@string/lib_search_hint"
+                app:defaultMarginsEnabled="false"
+                app:navigationIcon="?attr/homeAsUpIndicator" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_add_custom"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="16dp"
+                app:icon="@drawable/ic_mtrl_add" />
+
+        </RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -45,6 +63,7 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="8dp"
                 android:text="@string/lib_most_used"
+                android:textStyle="bold"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
                 android:textColor="?attr/colorPrimary" />
 
@@ -55,6 +74,7 @@
                 android:clipToPadding="false"
                 android:orientation="horizontal"
                 android:paddingHorizontal="16dp"
+                android:textStyle="bold"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:listitem="@layout/view_item_marketplace_horizontal" />
 
@@ -65,6 +85,7 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="8dp"
                 android:text="@string/lib_all"
+                android:textStyle="bold"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
                 android:textColor="?attr/colorPrimary" />
 
@@ -104,5 +125,17 @@
             tools:listitem="@layout/view_item_marketplace_vertical" />
 
     </com.google.android.material.search.SearchView>
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/btn_background_task"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="24dp"
+        android:text="@string/lib_install_bg_task"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:icon="@drawable/ic_mtrl_download"
+        tools:visibility="visible" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

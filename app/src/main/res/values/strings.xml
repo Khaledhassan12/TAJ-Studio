@@ -124,6 +124,20 @@
     <string name="lib_install_failed">Couldn\'t install %1$s. See details.</string>
     <string name="lib_empty">No libraries match your search.</string>
     <string name="lib_loading">Loading catalog…</string>
+    <string name="lib_install_progress">Installing %1$d of %2$d libraries…</string>
+    <string name="lib_install_all_done">All libraries installed successfully</string>
+    <string name="lib_install_some_failed">%1$d libraries failed to install. Tap for details.</string>
+    <string name="lib_install_bg_task">Background Task</string>
+    <string name="lib_install_check_notifications">Installation started in background. Check notifications for progress.</string>
+    <string name="lib_custom_add">Add custom library</string>
+    <string name="lib_custom_hint">group:artifact:version</string>
+    <string name="lib_custom_invalid">Invalid Maven coordinate format</string>
+    <string name="lib_install_max_concurrent">Installing in background (max 3 concurrent)</string>
+    <string name="lib_install_background">Background Task</string>
+    <string name="lib_install_check_notif">Check notifications for progress</string>
+    <string name="lib_custom_add_title">Add custom library</string>
+    <string name="lib_custom_warning">Must be a valid Maven coordinate</string>
+
 
     <string name="block_category_file">File</string>
     <string name="block_category_list">List</string>

@@ -1,12 +1,15 @@
 package pro.sketchware.marketplace.activities;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,12 +26,14 @@ import pro.sketchware.databinding.ActivityLibraryMarketplaceBinding;
 import pro.sketchware.databinding.ViewItemMarketplaceHorizontalBinding;
 import pro.sketchware.databinding.ViewItemMarketplaceVerticalBinding;
 import pro.sketchware.marketplace.catalog.LibraryCatalog;
+import pro.sketchware.marketplace.dialogs.CustomLibraryDialogFragment;
 import pro.sketchware.marketplace.dialogs.LibraryDetailBottomSheet;
 import pro.sketchware.marketplace.models.MarketplaceLibrary;
+import pro.sketchware.marketplace.services.LibraryInstallService;
 
 /**
- * النشاط الرئيسي لمتجر المكتبات.
- * Main activity for the Library Marketplace.
+ * النشاط الرئيسي لمتجر المكتبات - تم إصلاح شريط البحث وإضافة ميزة المكتبات المخصصة.
+ * Main Library Marketplace activity - fixed search bar and added custom library feature.
  */
 public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
 
@@ -38,6 +43,20 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
     private MarketplaceAdapter allAdapter;
     private MostUsedAdapter mostUsedAdapter;
     private MarketplaceAdapter searchAdapter;
+
+    private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (LibraryInstallService.ACTION_STATUS_CHANGE.equals(action)) {
+                refreshUI();
+            } else if (LibraryInstallService.ACTION_INSTALL_STARTED.equals(action)) {
+                binding.btnBackgroundTask.setVisibility(View.VISIBLE);
+            } else if (LibraryInstallService.ACTION_INSTALL_FINISHED.equals(action)) {
+                binding.btnBackgroundTask.setVisibility(View.GONE);
+            }
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,6 +69,23 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
         refreshInstalledStatus();
 
         setupUI();
+        
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(LibraryInstallService.ACTION_STATUS_CHANGE);
+        filter.addAction(LibraryInstallService.ACTION_INSTALL_STARTED);
+        filter.addAction(LibraryInstallService.ACTION_INSTALL_FINISHED);
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(statusReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(statusReceiver, filter);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(statusReceiver);
     }
 
     private void refreshInstalledStatus() {
@@ -59,10 +95,7 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
     }
 
     private boolean isInstalled(MarketplaceLibrary library) {
-        // Simple check: artifactId or displayName might match the local directory name
-        // Usually local libraries are named after artifactId or a custom name.
-        // For our catalog, we assume the name in local_libs matches something predictable.
-        String expectedName = library.getId(); // e.g., "glide"
+        String expectedName = library.getId();
         for (String installed : installedLibraryNames) {
             if (installed.equalsIgnoreCase(expectedName) || installed.toLowerCase().contains(expectedName.toLowerCase())) {
                 return true;
@@ -73,6 +106,18 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
 
     private void setupUI() {
         binding.searchBar.setNavigationOnClickListener(v -> finish());
+        
+        // T6: Custom Library Feature
+        binding.btnAddCustom.setOnClickListener(v -> {
+            CustomLibraryDialogFragment dialog = new CustomLibraryDialogFragment();
+            dialog.show(getSupportFragmentManager(), "CustomLibrary");
+        });
+
+        binding.btnBackgroundTask.setOnClickListener(v -> {
+            Intent intent = new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+            intent.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName());
+            startActivity(intent);
+        });
 
         mostUsedAdapter = new MostUsedAdapter(allLibraries.stream().filter(MarketplaceLibrary::isMostUsed).collect(Collectors.toList()));
         binding.rvMostUsed.setAdapter(mostUsedAdapter);
@@ -106,16 +151,19 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
     }
 
     private void showDetails(MarketplaceLibrary library) {
+        // T5: Open sheet immediately for better UX
         LibraryDetailBottomSheet bottomSheet = LibraryDetailBottomSheet.newInstance(library);
         bottomSheet.show(getSupportFragmentManager(), "LibraryDetail");
         bottomSheet.setOnDismissListener(this::refreshUI);
     }
 
     public void refreshUI() {
-        refreshInstalledStatus();
-        allAdapter.notifyDataSetChanged();
-        mostUsedAdapter.notifyDataSetChanged();
-        searchAdapter.notifyDataSetChanged();
+        runOnUiThread(() -> {
+            refreshInstalledStatus();
+            allAdapter.notifyDataSetChanged();
+            mostUsedAdapter.notifyDataSetChanged();
+            searchAdapter.notifyDataSetChanged();
+        });
     }
 
     // Adapters
@@ -145,7 +193,14 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
             holder.binding.tvName.setText(lib.getDisplayName());
             holder.binding.tvSummary.setText(lib.getSummary());
             holder.binding.tvCoordinate.setText(lib.getCoordinate());
-            holder.binding.tvInitial.setText(lib.getDisplayName().substring(0, 1).toUpperCase());
+            
+            if (lib.getIconRes() != 0) {
+                holder.binding.ivIcon.setImageResource(lib.getIconRes());
+                holder.binding.tvInitial.setVisibility(View.GONE);
+            } else {
+                holder.binding.tvInitial.setText(lib.getDisplayName().substring(0, 1).toUpperCase());
+                holder.binding.tvInitial.setVisibility(View.VISIBLE);
+            }
 
             if (isInstalled(lib)) {
                 holder.binding.tvStatusBadge.setVisibility(View.VISIBLE);
@@ -185,7 +240,14 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             MarketplaceLibrary lib = data.get(position);
             holder.binding.tvName.setText(lib.getDisplayName());
-            holder.binding.tvInitial.setText(lib.getDisplayName().substring(0, 1).toUpperCase());
+            
+            if (lib.getIconRes() != 0) {
+                holder.binding.ivIcon.setImageResource(lib.getIconRes());
+                holder.binding.tvInitial.setVisibility(View.GONE);
+            } else {
+                holder.binding.tvInitial.setText(lib.getDisplayName().substring(0, 1).toUpperCase());
+                holder.binding.tvInitial.setVisibility(View.VISIBLE);
+            }
 
             if (isInstalled(lib)) {
                 holder.binding.tvStatus.setVisibility(View.VISIBLE);

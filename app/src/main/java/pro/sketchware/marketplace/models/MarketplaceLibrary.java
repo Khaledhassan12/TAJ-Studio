@@ -21,11 +21,13 @@ public class MarketplaceLibrary {
     private final String usageSnippet;
     private final List<String> conflictsWith;
     private final boolean mostUsed;
+    private final String iconUrl;
+    private final int iconRes;
 
     public MarketplaceLibrary(String id, String displayName, String summary, String description,
                               String stableVersion, String coordinate, String docUrl, boolean androidx,
                               String downloadUrl, Integer downloads, String usageSnippet,
-                              List<String> conflictsWith, boolean mostUsed) {
+                              List<String> conflictsWith, boolean mostUsed, String iconUrl, int iconRes) {
         this.id = id;
         this.displayName = displayName;
         this.summary = summary;
@@ -39,6 +41,8 @@ public class MarketplaceLibrary {
         this.usageSnippet = usageSnippet;
         this.conflictsWith = conflictsWith != null ? conflictsWith : new ArrayList<>();
         this.mostUsed = mostUsed;
+        this.iconUrl = iconUrl;
+        this.iconRes = iconRes;
     }
 
     public String getId() { return id; }
@@ -54,4 +58,6 @@ public class MarketplaceLibrary {
     public String getUsageSnippet() { return usageSnippet; }
     public List<String> getConflictsWith() { return conflictsWith; }
     public boolean isMostUsed() { return mostUsed; }
+    public String getIconUrl() { return iconUrl; }
+    public int getIconRes() { return iconRes; }
 }

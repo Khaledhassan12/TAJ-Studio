@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface"
+    android:background="@drawable/shape_rounded_bottom_sheet"
     android:padding="20dp">
 
     <LinearLayout
@@ -18,21 +18,13 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <FrameLayout
+            <ImageView
+                android:id="@+id/iv_detail_icon"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                android:background="@drawable/shape_circle_accent_light">
-
-                <TextView
-                    android:id="@+id/tv_detail_initial"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:textAppearance="?attr/textAppearanceHeadlineMedium"
-                    android:textColor="?attr/colorPrimary"
-                    tools:text="G" />
-
-            </FrameLayout>
+                android:padding="8dp"
+                android:background="@drawable/shape_circle_accent_light"
+                android:src="@drawable/ic_lib_generic" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -46,6 +38,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                    android:textStyle="bold"
                     tools:text="Glide" />
 
                 <TextView
@@ -53,7 +46,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="monospace"
-                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textSize="11sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     tools:text="com.github.bumptech.glide:glide:4.16.0" />
 
             </LinearLayout>
@@ -66,14 +60,16 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurface"
             tools:text="Glide is a fast and efficient open source media management and image loading framework for Android..." />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
+            app:cardBackgroundColor="@android:color/transparent"
             app:strokeWidth="1dp"
             app:strokeColor="?attr/colorOutlineVariant">
 
@@ -117,11 +113,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:visibility="gone"
-            app:cardBackgroundColor="#FFF8E1"
-            app:cardCornerRadius="8dp"
+            app:cardBackgroundColor="#1AFFA000"
+            app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
             app:strokeWidth="1dp"
-            app:strokeColor="#FFC107"
+            app:strokeColor="#FFA000"
             tools:visibility="visible">
 
             <TextView
@@ -135,21 +131,46 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <Button
-            android:id="@+id/btn_install"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="@string/lib_install"
-            app:cornerRadius="16dp" />
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_install"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="@string/lib_install"
+                android:textColor="?attr/colorOnPrimary"
+                android:backgroundTint="?attr/colorPrimary"
+                app:cornerRadius="16dp"
+                app:elevation="2dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_bg_task"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:layout_marginStart="12dp"
+                android:text="@string/lib_install_background"
+                android:visibility="gone"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_mtrl_update"
+                tools:visibility="visible" />
+
+        </LinearLayout>
 
         <ProgressBar
-            android:id="@+id/pb_install"
-            android:layout_width="wrap_content"
+            android:id="@+id/pb_install_horizontal"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="24dp"
-            android:visibility="gone" />
+            android:layout_marginTop="16dp"
+            android:indeterminate="true"
+            android:visibility="gone"
+            tools:visibility="visible" />
 
         <LinearLayout
             android:id="@+id/layout_quick_start"
@@ -171,7 +192,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 app:cardBackgroundColor="?attr/colorSurfaceVariant"
-                app:cardCornerRadius="8dp"
+                app:cardCornerRadius="12dp"
                 app:cardElevation="0dp">
 
                 <RelativeLayout
