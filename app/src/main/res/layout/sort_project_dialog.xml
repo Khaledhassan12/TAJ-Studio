@@ -16,6 +16,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:textStyle="bold"
             android:text="Sort by Project Name" />
 
         <RadioButton
@@ -23,6 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:textStyle="bold"
             android:text="Sort by ID" />
     </RadioGroup>
 
@@ -37,6 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:textStyle="bold"
             android:text="Ascending (A-Z)" />
 
         <RadioButton
@@ -44,6 +47,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:textStyle="bold"
             android:text="Descending (Z-A)" />
     </RadioGroup>
 </LinearLayout>

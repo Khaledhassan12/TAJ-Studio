@@ -33,6 +33,7 @@
         android:gravity="center"
         android:singleLine="true"
         android:textAppearance="?attr/textAppearanceHeadlineSmall"
+        android:textStyle="bold"
         tools:text="New version is out!" />
 
     <TextView
@@ -62,6 +63,7 @@
             android:layout_marginEnd="16dp"
             android:layout_weight="1"
             android:text="@android:string/cancel"
+            android:textStyle="bold"
             android:visibility="gone"
             tools:visibility="visible" />
 
@@ -72,6 +74,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@android:string/ok"
+            android:textStyle="bold"
             android:visibility="gone"
             tools:visibility="visible" />
     </LinearLayout>

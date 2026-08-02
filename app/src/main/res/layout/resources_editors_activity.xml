@@ -48,6 +48,7 @@
         android:layout_margin="16dp"
         android:src="@drawable/ic_mtrl_add"
         android:text="@string/common_word_create"
+        android:textStyle="bold"
         app:icon="@drawable/ic_mtrl_add"
         tools:ignore="ContentDescription" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

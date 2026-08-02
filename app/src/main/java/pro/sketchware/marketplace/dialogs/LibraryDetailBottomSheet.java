@@ -10,12 +10,19 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import com.google.android.material.snackbar.Snackbar;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
@@ -44,13 +51,40 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
     private MarketplaceLibrary library;
     private Runnable onDismissListener;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private ActivityResultLauncher<String> notificationPermissionLauncher;
 
     private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (LibraryInstallService.ACTION_LIBRARY_INSTALLED.equals(action)) {
+                String installedName = intent.getStringExtra(LibraryInstallService.EXTRA_LIBRARY_NAME);
+                if (installedName != null && library.getCoordinate().contains(installedName)) {
+                    // WHAT: Visual assurance signals.
+                    // HOW: Animated button change + Green Snackbar.
+                    showSuccessState();
+                }
+            }
             checkStatusAsync();
         }
     };
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // WHAT: Notification permission gate for Android 13+.
+        // HOW: Registering launcher to handle user response before starting service.
+        notificationPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (!isGranted) {
+                        Log.w("LibDetail", "Notification permission denied - progress won't be visible");
+                    }
+                    // Proceed with installation regardless of permission
+                    actuallyStartService();
+                }
+        );
+    }
 
     public static LibraryDetailBottomSheet newInstance(MarketplaceLibrary library) {
         LibraryDetailBottomSheet fragment = new LibraryDetailBottomSheet();
@@ -73,15 +107,21 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         
-        // T1 & T3: Apply rounded corners properly
+        // P3: Apply rounded corners properly
         if (view.getParent() instanceof View) {
             View parent = (View) view.getParent();
             parent.setBackgroundResource(R.drawable.shape_rounded_bottom_sheet);
         }
         
-        setupUI();
+        // G2: Synchronous Install Check - الفحص المتزامن والفوري عند الفتح لتجنب التأخير.
+        // G2: Synchronous Install Check - reflect status immediately on open to avoid UI lag.
+        boolean isAlreadyInstalled = pro.sketchware.marketplace.utils.MarketplaceHelper.isInstalledSync(library);
+        setupUI(isAlreadyInstalled);
         
-        IntentFilter filter = new IntentFilter(LibraryInstallService.ACTION_STATUS_CHANGE);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(LibraryInstallService.ACTION_STATUS_CHANGE);
+        filter.addAction(LibraryInstallService.ACTION_LIBRARY_INSTALLED);
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requireContext().registerReceiver(statusReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
@@ -89,12 +129,42 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
-    private void setupUI() {
+    private void setupUI(boolean isAlreadyInstalled) {
         binding.tvDetailName.setText(library.getDisplayName());
         binding.tvDetailCoordinate.setText(library.getCoordinate());
         binding.tvDetailDescription.setText(library.getDescription());
         binding.tvDetailVersion.setText(library.getStableVersion());
         binding.tvDetailAndroidx.setText(library.isAndroidx() ? R.string.lib_androidx_yes : R.string.lib_androidx_no);
+        
+        updateInstallButton(isAlreadyInstalled);
+
+        // P7: Bind new fields
+        if (library.getCategory() != null) {
+            binding.tvDetailCategory.setText(library.getCategory());
+        }
+        
+        binding.tvDetailMinSdk.setText(getString(R.string.lib_min_sdk, library.getMinSdk()));
+        
+        if (library.getLicense() != null) {
+            binding.tvDetailLicense.setText(library.getLicense());
+        }
+
+        binding.chipKotlin.setVisibility(library.isKotlinSupport() ? View.VISIBLE : View.GONE);
+        binding.chipJava.setVisibility(library.isJavaSupport() ? View.VISIBLE : View.GONE);
+        binding.chipCompose.setVisibility(library.isComposeSupport() ? View.VISIBLE : View.GONE);
+
+        if (library.getGithubUrl() != null) {
+            binding.btnGithub.setVisibility(View.VISIBLE);
+            binding.btnGithub.setOnClickListener(v -> {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(library.getGithubUrl())));
+                } catch (Exception e) {
+                    SketchwareUtil.toast("Could not open GitHub");
+                }
+            });
+        } else {
+            binding.btnGithub.setVisibility(View.GONE);
+        }
 
         // T4: Real Icons
         if (library.getIconRes() != 0) {
@@ -117,14 +187,13 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
             }
         });
 
-        // T5: Check status in background to avoid freezing the UI (30s delay fix)
+        // T5: Check status in background for deeper verification (conflicts)
         checkStatusAsync();
 
         binding.btnInstall.setOnClickListener(v -> startInstallProcess());
         
         binding.btnBgTask.setOnClickListener(v -> {
-            // T8: Dismiss and let it run in background
-            SketchwareUtil.toast(getString(R.string.lib_install_check_notif));
+            // G5-D: Dismiss and let it run in background with no annoying Toast.
             dismissAllowingStateLoss();
         });
 
@@ -142,9 +211,9 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
     private void checkStatusAsync() {
         if (binding == null) return;
         
-        binding.pbChecking.setVisibility(View.VISIBLE);
         executor.execute(() -> {
-            boolean installed = isInstalled();
+            pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+            boolean installed = pro.sketchware.marketplace.utils.MarketplaceHelper.isInstalledSync(library);
             String conflictId = getConflictId();
             
             if (getActivity() != null) {
@@ -160,6 +229,21 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
     }
 
     private void startInstallProcess() {
+        // WHAT: Check for notification permission before starting foreground service.
+        // HOW: Using launcher on SDK 33+, otherwise starting directly.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) 
+                    != PackageManager.PERMISSION_GRANTED) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                return;
+            }
+        }
+        actuallyStartService();
+    }
+
+    private void actuallyStartService() {
+        if (binding == null) return;
+        
         // Update UI to installing state
         binding.btnInstall.setEnabled(false);
         binding.btnInstall.setAlpha(0.5f);
@@ -178,6 +262,27 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
         } else {
             requireContext().startService(intent);
         }
+    }
+
+    private void showSuccessState() {
+        if (binding == null) return;
+        
+        // WHAT: Visual feedback on successful installation.
+        // HOW: Scaling animation + Green Snackbar with disk verification confirmation.
+        binding.btnInstall.setText("Installed ✓");
+        binding.btnInstall.setEnabled(false);
+        binding.btnInstall.setAlpha(0.6f);
+        binding.btnInstall.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200)
+                .withEndAction(() -> binding.btnInstall.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200));
+        
+        binding.pbInstallHorizontal.setVisibility(View.GONE);
+        binding.btnBgTask.setVisibility(View.GONE);
+        
+        Snackbar snackbar = Snackbar.make(binding.getRoot(), 
+                library.getDisplayName() + " installed and verified on disk", Snackbar.LENGTH_SHORT);
+        snackbar.setBackgroundTint(0xFF00C853);
+        snackbar.setTextColor(0xFFFFFFFF);
+        snackbar.show();
     }
 
     private String getConflictId() {
@@ -203,8 +308,7 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
     }
 
     private boolean isInstalled() {
-        return LocalLibrariesUtil.getAllLocalLibraries().stream()
-                .anyMatch(l -> l.getName().equalsIgnoreCase(library.getId()) || l.getName().toLowerCase().contains(library.getId().toLowerCase()));
+        return pro.sketchware.marketplace.utils.MarketplaceHelper.isInstalledSync(library);
     }
 
     private void updateInstallButton(boolean installed) {
@@ -222,6 +326,7 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
             binding.btnInstall.setEnabled(true);
             binding.btnInstall.setAlpha(1.0f);
             binding.layoutQuickStart.setVisibility(View.GONE);
+            binding.btnBgTask.setVisibility(View.GONE);
         }
     }
 

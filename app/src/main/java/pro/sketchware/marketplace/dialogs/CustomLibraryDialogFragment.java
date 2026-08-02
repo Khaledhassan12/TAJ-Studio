@@ -50,14 +50,42 @@ public class CustomLibraryDialogFragment extends BottomSheetDialogFragment {
         });
 
         binding.btnInstallCustom.setOnClickListener(v -> {
-            String coordinate = binding.etCoordinate.getText().toString().trim();
-            if (coordinate.matches("^[^:]+:[^:]+:.+$")) {
+            String input = binding.etCoordinate.getText().toString().trim();
+            if (input.isEmpty()) return;
+
+            // P8: Support GitHub repositories
+            if (input.contains("github.com") || input.matches("^[^/:]+/[^/:]+$")) {
+                String coordinate = convertGitHubToJitPack(input);
                 startInstallService(coordinate);
+                dismiss();
+            } else if (input.matches("^[^:]+:[^:]+:.+$")) {
+                // Maven coordinate
+                startInstallService(input);
                 dismiss();
             } else {
                 binding.tilCoordinate.setError(getString(R.string.lib_custom_invalid));
             }
         });
+    }
+
+    /**
+     * يحول رابط GitHub أو "user/repo" إلى إحداثيات JitPack.
+     * Converts GitHub URL or "user/repo" to JitPack coordinate.
+     */
+    private String convertGitHubToJitPack(String input) {
+        String repo = input.replace("https://github.com/", "")
+                          .replace("http://github.com/", "");
+        
+        // Remove trailing slashes or .git
+        if (repo.endsWith("/")) repo = repo.substring(0, repo.length() - 1);
+        if (repo.endsWith(".git")) repo = repo.substring(0, repo.length() - 4);
+
+        String[] parts = repo.split("/");
+        if (parts.length >= 2) {
+            // Format: com.github.user:repo:master-SNAPSHOT (fallback version)
+            return "com.github." + parts[0] + ":" + parts[1] + ":master-SNAPSHOT";
+        }
+        return input; // Fallback
     }
 
     private void startInstallService(String coordinate) {

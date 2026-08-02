@@ -21,6 +21,7 @@
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintEnd_toStartOf="@id/material_switch"
         app:layout_constraintStart_toStartOf="parent"
+        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@id/library_size"
         app:layout_constraintTop_toTopOf="@id/material_switch"
         tools:text="appcompat-v1.7.0" />

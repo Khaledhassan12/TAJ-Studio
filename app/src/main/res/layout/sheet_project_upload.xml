@@ -9,76 +9,91 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?attr/colorSurface"
-        android:orientation="vertical"
-        android:paddingTop="12dp">
+        android:background="?attr/colorSurfaceContainerLow"
+        android:orientation="vertical">
 
-        <View
-            android:layout_width="48dp"
-            android:layout_height="4dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_pill_handle" />
+        <!-- Handle Area with better spacing -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp">
+
+            <View
+                android:layout_width="40dp"
+                android:layout_height="4dp"
+                android:layout_gravity="center_horizontal"
+                android:alpha="0.2"
+                android:background="@drawable/bg_pill_handle" />
+        </FrameLayout>
 
         <androidx.core.widget.NestedScrollView
             android:id="@+id/content_scroll_view"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingBottom="100dp">
+            android:paddingBottom="140dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingHorizontal="20dp">
+                android:paddingHorizontal="24dp">
 
-                <!-- Header -->
+                <!-- Header: Enhanced Typography and Icon Layout -->
                 <LinearLayout
                     android:id="@+id/header"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="32dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <com.google.android.material.imageview.ShapeableImageView
-                        android:id="@+id/project_icon"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:scaleType="centerCrop"
-                        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="2dp"
                         app:strokeColor="?attr/colorOutlineVariant"
-                        app:strokeWidth="1dp"
-                        tools:src="@drawable/default_icon" />
+                        app:strokeWidth="1dp">
 
-                    <FrameLayout
-                        android:id="@+id/project_icon_fallback_container"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:visibility="gone">
-
-                        <View
-                            android:id="@+id/project_icon_fallback_bg"
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/project_icon"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:background="@drawable/circle_bg" />
+                            android:scaleType="centerCrop"
+                            tools:src="@drawable/default_icon" />
 
-                        <TextView
-                            android:id="@+id/project_icon_fallback_text"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:fontFamily="sans-serif-black"
-                            android:textColor="@android:color/white"
-                            android:textSize="20sp"
-                            tools:text="S" />
-                    </FrameLayout>
+                        <FrameLayout
+                            android:id="@+id/project_icon_fallback_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:visibility="gone">
+
+                            <View
+                                android:id="@+id/project_icon_fallback_bg"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/circle_bg" />
+
+                            <TextView
+                                android:id="@+id/project_icon_fallback_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:fontFamily="sans-serif"
+                                android:textStyle="bold"
+                                android:textColor="@android:color/white"
+                                android:textSize="24sp"
+                                tools:text="S" />
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
+                        android:layout_marginStart="20dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -89,60 +104,69 @@
                             android:fontFamily="sans-serif-black"
                             android:singleLine="true"
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="20sp"
+                            android:textSize="22sp"
+                            android:letterSpacing="-0.01"
                             tools:text="Sketchware Pro" />
 
                         <TextView
                             android:id="@+id/upload_target"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:alpha="0.7"
+                            android:layout_marginTop="4dp"
+                            android:alpha="0.6"
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="12sp"
+                            android:textSize="13sp"
+                            android:fontFamily="sans-serif"
                             tools:text="Uploading to @Sketchware-Pro · main" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Changes Summary -->
+                <!-- Changes Summary: Modernized Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="20dp"
-                    app:cardBackgroundColor="@android:color/transparent"
-                    app:cardCornerRadius="16dp"
+                    android:layout_marginBottom="24dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                    app:cardCornerRadius="24dp"
                     app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="16dp">
+                        android:padding="20dp">
 
                         <RelativeLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp">
+                            android:layout_marginBottom="12dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:fontFamily="sans-serif-medium"
+                                android:fontFamily="sans-serif"
+                                android:textStyle="bold"
                                 android:text="@string/upload_changes_title"
                                 android:textColor="?attr/colorOnSurfaceVariant"
-                                android:textSize="14sp" />
+                                android:textSize="13sp"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.06" />
 
                             <TextView
                                 android:id="@+id/files_badge"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentEnd="true"
-                                android:alpha="0.8"
-                                android:fontFamily="sans-serif-medium"
-                                android:textColor="?attr/colorOnSurfaceVariant"
-                                android:textSize="12sp"
-                                tools:text="142 files" />
+                                android:background="?attr/colorPrimaryContainer"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="4dp"
+                                android:fontFamily="sans-serif"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnPrimaryContainer"
+                                android:textSize="10sp"
+                                tools:text="142 FILES" />
                         </RelativeLayout>
 
                         <FrameLayout
@@ -153,9 +177,10 @@
                                 android:id="@+id/changes_summary"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:alpha="0.7"
+                                android:alpha="0.8"
                                 android:textColor="?attr/colorOnSurfaceVariant"
-                                android:textSize="12sp"
+                                android:textSize="14sp"
+                                android:lineSpacingExtra="2dp"
                                 tools:text="java 42 · res 88 · assets 10 · other 2" />
 
                             <LinearLayout
@@ -168,172 +193,189 @@
 
                                 <ProgressBar
                                     style="?android:attr/progressBarStyleSmall"
-                                    android:layout_width="14dp"
-                                    android:layout_height="14dp"
-                                    android:layout_marginEnd="8dp" />
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:layout_marginEnd="10dp"
+                                    android:indeterminateTint="?attr/colorPrimary" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:alpha="0.5"
+                                    android:alpha="0.6"
                                     android:text="@string/upload_changes_reading"
-                                    android:textSize="12sp" />
+                                    android:textSize="14sp"
+                                    android:fontFamily="sans-serif" />
                             </LinearLayout>
                         </FrameLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Message Section -->
+                <!-- Message Section: M3 Style -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/message_input_layout"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:boxCornerRadiusBottomEnd="16dp"
-                    app:boxCornerRadiusBottomStart="16dp"
-                    app:boxCornerRadiusTopEnd="16dp"
-                    app:boxCornerRadiusTopStart="16dp"
-                    app:hintEnabled="true">
+                    android:layout_marginBottom="16dp"
+                    app:boxCornerRadiusBottomEnd="20dp"
+                    app:boxCornerRadiusBottomStart="20dp"
+                    app:boxCornerRadiusTopEnd="20dp"
+                    app:boxCornerRadiusTopStart="20dp"
+                    app:hintEnabled="true"
+                    android:hint="Upload message">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/message_input"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="top"
-                        android:hint="@null"
                         android:inputType="textMultiLine"
-                        android:minLines="1" />
+                        android:minLines="2"
+                        android:paddingVertical="18dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="16sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
-                    android:scrollbars="none">
+                    android:layout_marginBottom="32dp"
+                    android:scrollbars="none"
+                    android:overScrollMode="never">
 
                     <com.google.android.material.chip.ChipGroup
                         android:id="@+id/suggestion_chips"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        app:singleLine="true">
+                        app:singleLine="true"
+                        app:chipSpacingHorizontal="8dp">
 
                         <com.google.android.material.chip.Chip
                             style="@style/Widget.Material3.Chip.Suggestion"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/upload_suggestion_initial"
-                            app:chipCornerRadius="12dp" />
+                            app:chipCornerRadius="14dp" />
 
                         <com.google.android.material.chip.Chip
                             style="@style/Widget.Material3.Chip.Suggestion"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/upload_suggestion_release"
-                            app:chipCornerRadius="12dp" />
+                            app:chipCornerRadius="14dp" />
 
                         <com.google.android.material.chip.Chip
                             style="@style/Widget.Material3.Chip.Suggestion"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/upload_suggestion_import"
-                            app:chipCornerRadius="12dp" />
+                            app:chipCornerRadius="14dp" />
 
                         <com.google.android.material.chip.Chip
                             style="@style/Widget.Material3.Chip.Suggestion"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/upload_suggestion_backup"
-                            app:chipCornerRadius="12dp" />
+                            app:chipCornerRadius="14dp" />
                     </com.google.android.material.chip.ChipGroup>
                 </HorizontalScrollView>
 
-                <!-- Attachments Section -->
-                <RelativeLayout
+                <!-- Attachments Section: Stylized List -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp">
+                    android:orientation="vertical"
+                    android:layout_marginBottom="32dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <RelativeLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-medium"
-                        android:text="@string/upload_attachments_title"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="14sp" />
+                        android:layout_marginBottom="16dp">
 
-                    <TextView
-                        android:id="@+id/attachments_count"
-                        android:layout_width="wrap_content"
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-black"
+                            android:text="@string/upload_attachments_title"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="15sp" />
+
+                        <TextView
+                            android:id="@+id/attachments_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:alpha="0.5"
+                            android:fontFamily="sans-serif-black"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="13sp"
+                            tools:text="0/5" />
+                    </RelativeLayout>
+
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:alpha="0.6"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="12sp"
-                        tools:text="0/5" />
-                </RelativeLayout>
+                        android:scrollbars="none"
+                        android:overScrollMode="never">
 
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
-                    android:scrollbars="none">
+                        <LinearLayout
+                            android:id="@+id/attachments_strip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                    <LinearLayout
-                        android:id="@+id/attachments_strip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                            <!-- Elements added dynamically -->
 
-                        <!-- Elements will be added dynamically -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/add_attachment"
+                                android:layout_width="72dp"
+                                android:layout_height="72dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="?attr/colorOutlineVariant"
+                                app:strokeWidth="1dp"
+                                app:rippleColor="?attr/colorControlHighlight">
 
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/add_attachment"
-                            android:layout_width="64dp"
-                            android:layout_height="64dp"
-                            android:clickable="true"
-                            android:focusable="true"
-                            app:cardBackgroundColor="@android:color/transparent"
-                            app:cardCornerRadius="12dp"
-                            app:cardElevation="0dp"
-                            app:strokeColor="?attr/colorOutline"
-                            app:strokeWidth="1dp">
+                                <ImageView
+                                    android:layout_width="28dp"
+                                    android:layout_height="28dp"
+                                    android:layout_gravity="center"
+                                    android:alpha="0.8"
+                                    android:src="@drawable/ic_add_white_24dp"
+                                    app:tint="?attr/colorPrimary" />
+                            </com.google.android.material.card.MaterialCardView>
+                        </LinearLayout>
+                    </HorizontalScrollView>
+                </LinearLayout>
 
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_gravity="center"
-                                android:alpha="0.5"
-                                android:src="@drawable/ic_add_white_24dp"
-                                app:tint="?attr/colorOnSurface" />
-                        </com.google.android.material.card.MaterialCardView>
-                    </LinearLayout>
-                </HorizontalScrollView>
-
-                <!-- README Section -->
+                <!-- README Section: Tonal Segmented Control -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginBottom="16dp"
+                    android:fontFamily="sans-serif-black"
                     android:text="README.md"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="14sp" />
+                    android:textSize="15sp" />
 
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardBackgroundColor="@android:color/transparent"
-                    app:cardCornerRadius="12dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                    app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:id="@+id/readme_mode_segment"
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
+                        android:layout_height="48dp"
                         android:orientation="horizontal"
                         android:padding="4dp">
 
@@ -344,7 +386,10 @@
                             android:layout_weight="1"
                             android:gravity="center"
                             android:text="@string/upload_readme_none"
-                            android:textSize="13sp" />
+                            android:fontFamily="sans-serif"
+                            android:textStyle="bold"
+                            android:textSize="13sp"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                         <TextView
                             android:id="@+id/readme_custom"
@@ -353,7 +398,10 @@
                             android:layout_weight="1"
                             android:gravity="center"
                             android:text="@string/upload_readme_custom"
-                            android:textSize="13sp" />
+                            android:fontFamily="sans-serif"
+                            android:textStyle="bold"
+                            android:textSize="13sp"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                         <TextView
                             android:id="@+id/readme_auto"
@@ -362,7 +410,10 @@
                             android:layout_weight="1"
                             android:gravity="center"
                             android:text="@string/upload_readme_auto"
-                            android:textSize="13sp" />
+                            android:fontFamily="sans-serif"
+                            android:textStyle="bold"
+                            android:textSize="13sp"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -377,9 +428,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:alpha="0.6"
-                        android:padding="8dp"
+                        android:padding="12dp"
                         android:text="@string/upload_readme_none_hint"
-                        android:textSize="13sp" />
+                        android:textSize="14sp"
+                        android:fontFamily="sans-serif-medium" />
 
                     <EditText
                         android:id="@+id/readme_custom_input"
@@ -389,9 +441,10 @@
                         android:gravity="top"
                         android:hint="@string/upload_readme_custom_hint"
                         android:inputType="textMultiLine"
-                        android:minHeight="96dp"
-                        android:padding="8dp"
-                        android:textSize="14sp"
+                        android:minHeight="120dp"
+                        android:padding="12dp"
+                        android:textSize="15sp"
+                        android:fontFamily="sans-serif-medium"
                         android:visibility="gone" />
 
                     <LinearLayout
@@ -399,46 +452,48 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="8dp"
+                        android:padding="12dp"
                         android:visibility="gone">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/upload_readme_auto_preview"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
+                            android:textSize="14sp"
+                            android:fontFamily="sans-serif-black"
+                            android:textColor="?attr/colorPrimary" />
 
                         <TextView
                             android:id="@+id/auto_readme_preview"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="8dp"
                             android:alpha="0.8"
-                            android:lineSpacingExtra="4dp"
-                            android:textSize="12sp"
+                            android:lineSpacingExtra="6dp"
+                            android:textSize="13sp"
+                            android:fontFamily="monospace"
                             tools:text="• Title: Sketchware Pro\n• Package: pro.sketchware\n• Files breakdown included\n• App icon included" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="12dp"
                             android:alpha="0.5"
                             android:fontFamily="sans-serif-italic"
                             android:text="@string/upload_readme_auto_note"
-                            android:textSize="11sp" />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </FrameLayout>
 
-                <!-- Context Info Card -->
+                <!-- Context Info Card: Tertiary Highlight -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/context_info_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:layout_marginBottom="16dp"
-                    app:cardBackgroundColor="@android:color/transparent"
-                    app:cardCornerRadius="16dp"
+                    android:layout_marginTop="32dp"
+                    android:layout_marginBottom="24dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                    app:cardCornerRadius="24dp"
                     app:cardElevation="0dp"
                     app:strokeColor="?attr/colorOutlineVariant"
                     app:strokeWidth="1dp">
@@ -448,13 +503,13 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:padding="16dp">
+                        android:padding="20dp">
 
                         <ImageView
                             android:id="@+id/context_icon"
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
-                            android:padding="8dp"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:padding="10dp"
                             android:background="@drawable/circle_bg_primary_alpha"
                             android:src="@drawable/ic_github_brand"
                             app:tint="?attr/colorPrimary" />
@@ -462,16 +517,17 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
+                            android:layout_marginStart="20dp"
                             android:orientation="vertical">
 
                             <TextView
                                 android:id="@+id/context_title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:fontFamily="sans-serif-black"
+                                android:fontFamily="sans-serif"
+                                android:textStyle="bold"
                                 android:textColor="?attr/colorOnSurfaceVariant"
-                                android:textSize="13sp"
+                                android:textSize="14sp"
                                 tools:text="Already on GitHub" />
 
                             <TextView
@@ -480,18 +536,20 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:alpha="0.8"
+                                android:fontFamily="sans-serif"
                                 android:textColor="?attr/colorOnSurfaceVariant"
-                                android:textSize="12sp"
+                                android:textSize="13sp"
                                 tools:text="Last synced 2 hours ago" />
 
                             <TextView
                                 android:id="@+id/context_hint"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
+                                android:layout_marginTop="6dp"
                                 android:alpha="0.6"
+                                android:fontFamily="sans-serif"
                                 android:textColor="?attr/colorOnSurfaceVariant"
-                                android:textSize="11sp"
+                                android:textSize="12sp"
                                 tools:text="Pushing again updates the existing repository." />
                         </LinearLayout>
                     </LinearLayout>
@@ -501,44 +559,51 @@
         </androidx.core.widget.NestedScrollView>
     </LinearLayout>
 
+    <!-- Floating Action Bar at Bottom -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/upload_button_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        app:cardBackgroundColor="@android:color/transparent"
-        app:cardCornerRadius="0dp"
-        app:cardElevation="0dp"
-        app:strokeWidth="0dp">
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="12dp"
+        app:strokeWidth="0dp"
+        android:layout_margin="20dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="16dp">
 
             <TextView
                 android:id="@+id/upload_button_hint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:alpha="0.6"
+                android:alpha="0.7"
                 android:gravity="center"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp"
+                android:fontFamily="sans-serif-medium"
                 tools:text="No details added — we'll upload with defaults." />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/upload_button"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="64dp"
                 android:fontFamily="sans-serif-black"
                 android:text="@string/upload_button"
-                android:textSize="16sp"
-                app:cornerRadius="16dp"
+                android:textSize="18sp"
+                android:letterSpacing="0.02"
+                app:cornerRadius="24dp"
                 app:icon="@drawable/ic_github_brand"
-                app:iconGravity="textStart" />
+                app:iconGravity="textStart"
+                app:iconSize="24dp"
+                app:iconPadding="12dp"
+                app:elevation="4dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

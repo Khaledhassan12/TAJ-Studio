@@ -17,6 +17,7 @@
         android:layout_height="wrap_content"
         android:paddingHorizontal="12dp"
         android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textStyle="bold"
         android:text="Select Import option" />
 
     <com.google.android.material.chip.ChipGroup
@@ -34,17 +35,20 @@
             android:id="@+id/chip_merge_and_skip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textStyle="bold"
             android:text="Merge and Skip" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip_merge_and_replace"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textStyle="bold"
             android:text="Merge and Replace" />
 
         <com.google.android.material.chip.Chip
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textStyle="bold"
             android:text="Replace all" />
 
     </com.google.android.material.chip.ChipGroup>

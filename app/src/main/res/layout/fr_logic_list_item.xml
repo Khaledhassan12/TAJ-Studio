@@ -24,7 +24,7 @@
                 android:layout_alignParentTop="true"
                 android:layout_marginStart="24dp"
                 android:alpha="0.87"
-                android:fontFamily="sans-serif-medium"
+                android:fontFamily="sans-serif"
                 android:paddingLeft="4dp"
                 android:paddingRight="4dp"
                 android:textSize="12sp"

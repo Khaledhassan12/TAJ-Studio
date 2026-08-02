@@ -38,6 +38,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintBottom_toTopOf="@id/library_size"
                 app:layout_constraintTop_toTopOf="@id/material_switch"
+                android:textStyle="bold"
                 tools:text="appcompat-v1.7.0" />
 
             <TextView

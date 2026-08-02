@@ -55,6 +55,14 @@
             android:orientation="vertical"
             android:paddingBottom="24dp">
 
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/pb_loading"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:indeterminate="true"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
             <TextView
                 android:id="@+id/tv_most_used_title"
                 android:layout_width="match_parent"
@@ -125,17 +133,5 @@
             tools:listitem="@layout/view_item_marketplace_vertical" />
 
     </com.google.android.material.search.SearchView>
-
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/btn_background_task"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="24dp"
-        android:text="@string/lib_install_bg_task"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:icon="@drawable/ic_mtrl_download"
-        tools:visibility="visible" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

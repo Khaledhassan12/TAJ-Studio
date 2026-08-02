@@ -2495,10 +2495,23 @@ Please try again later"</string>
     <string name="lib_custom_info_repo_3">• JitPack (GitHub libraries)</string>
     <string name="lib_custom_info_repo_4">• JCenter (deprecated but still works)</string>
     <string name="lib_custom_info_max">You can paste multiple coordinates at once (max 3 concurrent installs).</string>
-    <string name="lib_install_success">Installed successfully</string>
+    <string name="lib_install_success">%1$s is Successfully Installed</string>
     <string name="lib_install_failed_with_reason">Installation failed: %1$s</string>
     <string name="lib_install_complete">Installation complete</string>
     <string name="lib_install_all_success">All libraries installed successfully</string>
     <string name="lib_install_partial_fail">Installation partially failed</string>
     <string name="lib_install_fail_count">%1$d libraries failed</string>
+    <string name="lib_category">Category</string>
+    <string name="lib_license">License</string>
+    <string name="lib_min_sdk">Requires Android %1$d+</string>
+    <string name="lib_kotlin">Kotlin</string>
+    <string name="lib_java">Java</string>
+    <string name="lib_compose">Compose</string>
+    <string name="lib_popularity">%1$s downloads</string>
+    <string name="lib_maintained_active">Active</string>
+    <string name="lib_maintained_inactive">Inactive</string>
+    <string name="lib_last_update">Updated %1$s ago</string>
+    <string name="lib_dependencies">Dependencies</string>
+    <string name="lib_sample_code">Sample Code</string>
+    <string name="lib_github">GitHub</string>
 </resources>

@@ -53,6 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
+            android:textStyle="bold"
             android:text="@string/design_manager_sound_title_add_sound"
             app:icon="@drawable/ic_mtrl_add"
             tools:ignore="ContentDescription" />
@@ -76,6 +77,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
+                android:textStyle="bold"
                 android:text="@string/common_word_import"
                 android:textSize="@dimen/text_size_button_material"
                 app:cornerRadius="15dp" />
@@ -110,6 +112,7 @@
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
                     android:text="@string/cancel"
+                    android:textStyle="bold"
                     android:textSize="@dimen/text_size_button_material"
                     app:cornerRadius="15dp" />
 
@@ -119,6 +122,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
+                    android:textStyle="bold"
                     android:text="@string/common_word_delete"
                     android:textSize="@dimen/text_size_button_material"
                     app:cornerRadius="15dp" />

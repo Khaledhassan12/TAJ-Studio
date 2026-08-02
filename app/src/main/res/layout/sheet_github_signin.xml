@@ -100,6 +100,7 @@
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="32dp"
         android:text="@string/github_account_connect"
+        android:textStyle="bold"
         app:cornerRadius="26dp" />
 
     <ProgressBar

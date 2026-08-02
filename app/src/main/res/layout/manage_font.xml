@@ -15,7 +15,8 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="?attr/homeAsUpIndicator"
-            app:title="@string/design_actionbar_title_manager_font" />
+            app:title="@string/design_actionbar_title_manager_font"
+            app:titleTextAppearance="@style/TextAppearance.SketchwarePro.Toolbar.Title.Bold" />
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tab_layout"

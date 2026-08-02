@@ -32,6 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/lib_custom_info_group"
+            android:textStyle="bold"
             android:textAppearance="?attr/textAppearanceLabelMedium" />
 
         <TextView
@@ -39,6 +40,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/lib_custom_info_artifact"
+            android:textStyle="bold"
             android:textAppearance="?attr/textAppearanceLabelMedium" />
 
         <TextView
@@ -46,6 +48,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/lib_custom_info_version"
+            android:textStyle="bold"
             android:textAppearance="?attr/textAppearanceLabelMedium" />
 
     </LinearLayout>
@@ -55,6 +58,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:text="@string/lib_custom_info_repos_title"
+        android:textStyle="bold"
         android:textAppearance="?attr/textAppearanceTitleSmall" />
 
     <TextView
@@ -97,6 +101,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:text="OK"
+        android:textStyle="bold"
         app:cornerRadius="12dp" />
 
 </LinearLayout>

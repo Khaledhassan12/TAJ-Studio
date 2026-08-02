@@ -36,7 +36,7 @@
             android:layout_marginLeft="16dp"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp"
-            android:fontFamily="sans-serif-medium"
+            android:fontFamily="sans-serif"
             android:textAppearance="?attr/textAppearanceBodyMedium"
             android:textColor="?attr/colorPrimary"
             tools:text="@string/common_word_activity" />

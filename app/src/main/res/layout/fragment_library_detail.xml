@@ -93,9 +93,24 @@
                     <TextView android:id="@+id/tv_detail_version" android:gravity="end" tools:text="4.16.0" />
                 </TableRow>
 
+                <TableRow android:id="@+id/row_category" android:paddingVertical="4dp">
+                    <TextView android:text="@string/lib_category" android:textAppearance="?attr/textAppearanceLabelLarge" />
+                    <TextView android:id="@+id/tv_detail_category" android:gravity="end" android:textColor="?attr/colorPrimary" tools:text="Image Loading" />
+                </TableRow>
+
                 <TableRow android:paddingVertical="4dp">
                     <TextView android:text="AndroidX" android:textAppearance="?attr/textAppearanceLabelLarge" />
                     <TextView android:id="@+id/tv_detail_androidx" android:gravity="end" tools:text="Compatible" />
+                </TableRow>
+
+                <TableRow android:id="@+id/row_min_sdk" android:paddingVertical="4dp">
+                    <TextView android:text="Min SDK" android:textAppearance="?attr/textAppearanceLabelLarge" />
+                    <TextView android:id="@+id/tv_detail_min_sdk" android:gravity="end" tools:text="Android 5.0 (21)" />
+                </TableRow>
+
+                <TableRow android:id="@+id/row_license" android:paddingVertical="4dp">
+                    <TextView android:text="@string/lib_license" android:textAppearance="?attr/textAppearanceLabelLarge" />
+                    <TextView android:id="@+id/tv_detail_license" android:gravity="end" tools:text="Apache-2.0" />
                 </TableRow>
 
                 <TableRow android:id="@+id/row_downloads" android:paddingVertical="4dp">
@@ -107,14 +122,62 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <Button
-            android:id="@+id/btn_docs"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/cg_support"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:chipSpacingHorizontal="8dp">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_kotlin"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lib_kotlin"
+                app:chipIcon="@drawable/ic_mtrl_kotlin" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_java"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lib_java"
+                app:chipIcon="@drawable/ic_mtrl_java" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_compose"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lib_compose"
+                app:chipIcon="@drawable/ic_mtrl_material3" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/lib_docs"
-            app:icon="@drawable/ic_mtrl_link" />
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_docs"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lib_docs"
+                app:icon="@drawable/ic_mtrl_link" />
+
+            <Button
+                android:id="@+id/btn_github"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lib_github"
+                app:icon="@drawable/ic_github_brand" />
+
+        </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_conflict"

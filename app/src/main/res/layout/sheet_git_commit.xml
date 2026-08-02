@@ -69,7 +69,7 @@
                             android:layout_height="wrap_content"
                             android:textAppearance="?attr/textAppearanceTitleLarge"
                             android:textStyle="bold"
-                            tools:text="Page_Transitions" />
+                            tools:text="TAJ EGYPT" />
 
                         <TextView
                             android:id="@+id/push_target_label"
@@ -330,7 +330,7 @@
                 android:text="@string/git_commit_button"
                 android:textAllCaps="false"
                 android:textColor="?attr/colorOnPrimary"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:textStyle="bold"
                 app:cornerRadius="16dp"
                 app:icon="@drawable/ic_mtrl_upload"
