@@ -57,7 +57,23 @@ public class LibraryCatalog {
         }
     }
 
-    public static List<MarketplaceLibrary> getCuratedLibraries() {
+    private static List<MarketplaceLibrary> cachedCuratedCatalog = null;
+
+    /**
+     * WHAT: Static caching of the library list to avoid repetitive allocations.
+     * HOW: Build the list once and return the cached instance on subsequent calls.
+     * WHY: The catalog is hardcoded and constant; re-creating 50+ objects on every call is wasteful.
+     *
+     * (عربي)
+     * ماذا: تخزين قائمة المكتبات في ذاكرة مؤقتة ثابتة (Static Cache) لتجنب إعادة الإنشاء المتكررة.
+     * كيف: بناء القائمة مرة واحدة فقط وإرجاع النسخة المحفوظة في الاستدعاءات اللاحقة.
+     * لماذا: الكتالوج ثابت (Hardcoded)؛ إعادة إنشاء أكثر من 50 كائناً في كل مرة يستهلك الذاكرة والمعالج بلا داعٍ.
+     */
+    public static synchronized List<MarketplaceLibrary> getCuratedLibraries() {
+        if (cachedCuratedCatalog != null) {
+            return cachedCuratedCatalog;
+        }
+
         List<MarketplaceLibrary> libraries = new ArrayList<>();
         int G = R.drawable.ic_lib_github; // fallback أنيق للمكتبات بلا أيقونة خاصة
         
@@ -143,7 +159,7 @@ public class LibraryCatalog {
         add(libraries, "firebase-firestore", "Firebase Firestore", "Cloud NoSQL database", "com.google.firebase:firebase-firestore:24.10.3", "Firebase", "https://firebase.google.com/docs/firestore", R.drawable.ic_mtrl_firebase_auth);
         add(libraries, "firebase-storage", "Firebase Storage", "Cloud file storage", "com.google.firebase:firebase-storage:20.3.0", "Firebase", "https://firebase.google.com/docs/storage", R.drawable.ic_mtrl_firebase_auth);
         
-        
-        return libraries;
+        cachedCuratedCatalog = java.util.Collections.unmodifiableList(libraries);
+        return cachedCuratedCatalog;
     }
 }

@@ -1,78 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurfaceContainerLow"
-    android:orientation="vertical">
+    android:background="@drawable/shape_rounded_bottom_sheet">
 
-    <!-- Premium Drag Handle -->
-    <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+    <!-- WHAT: iconPickerStudioLayout - Premium redesign for project icon selector.
+         WHY: Improves UX with live preview, polished search, and fixed actions.
+         (عربي) إعادة تصميم واجهة اختيار أيقونة المشروع بشكل "بريميوم" يوفر معاينة حية وبحث مصقول. -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:tint="?attr/colorOutline" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingBottom="100dp">
-
-        <LinearLayout
+        <!-- Drag Handle -->
+        <com.google.android.material.bottomsheet.BottomSheetDragHandleView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="24dp">
+            android:tint="?attr/colorOutline" />
 
-            <!-- Title Section -->
-            <TextView
-                android:id="@+id/sheet_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:textStyle="bold"
-                android:text="@string/app_icon_sheet_title"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="24sp"
-                android:letterSpacing="-0.02" />
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingBottom="16dp">
 
-            <TextView
-                android:id="@+id/sheet_sub"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:alpha="0.7"
-                android:fontFamily="sans-serif"
-                android:text="@string/app_icon_sheet_sub"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="14sp" />
-
-            <!-- Creative Preview Card -->
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="32dp"
-                app:cardElevation="0dp"
-                app:strokeColor="?attr/colorOutlineVariant"
-                app:strokeWidth="1dp">
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingBottom="48dp">
 
+                <!-- Header: Live Preview Section -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:paddingVertical="32dp"
-                    android:paddingHorizontal="24dp">
+                    android:paddingTop="8dp"
+                    android:paddingBottom="24dp">
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/icon_preview_frame"
-                        android:layout_width="100dp"
-                        android:layout_height="100dp"
-                        app:cardCornerRadius="28dp"
+                        android:layout_width="92dp"
+                        android:layout_height="92dp"
+                        app:cardCornerRadius="26dp"
                         app:cardElevation="6dp"
                         app:strokeColor="?attr/colorOutlineVariant"
                         app:strokeWidth="2dp">
@@ -90,201 +65,174 @@
                         android:id="@+id/project_name_preview"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:fontFamily="sans-serif"
-                        android:textStyle="bold"
+                        android:layout_marginTop="16dp"
+                        android:fontFamily="sans-serif-medium"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="18sp"
-                        android:letterSpacing="0.01"
-                        tools:text="My Awesome App" />
+                        tools:text="Project Name" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="LIVE PREVIEW"
-                        android:fontFamily="sans-serif"
-                        android:textStyle="bold"
-                        android:textColor="?attr/colorPrimary"
-                        android:textSize="12sp"
+                        android:alpha="0.8"
+                        android:fontFamily="sans-serif-black"
                         android:letterSpacing="0.1"
-                        android:alpha="0.8" />
+                        android:text="LIVE PREVIEW"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="11sp" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
-            <!-- Actions Row: More Character -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_pick_image"
-                    style="?attr/materialButtonTonalStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="60dp"
-                    android:layout_weight="1"
-                    android:fontFamily="sans-serif"
-                    android:textStyle="bold"
-                    android:text="@string/app_icon_pick"
-                    android:textSize="14sp"
-                    app:cornerRadius="20dp"
-                    app:icon="@drawable/ic_mtrl_image"
-                    app:iconPadding="8dp" />
-
-                <Space
-                    android:layout_width="12dp"
-                    android:layout_height="wrap_content" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_reset"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="60dp"
-                    android:layout_weight="1"
-                    android:fontFamily="sans-serif"
-                    android:textStyle="bold"
-                    android:text="@string/app_icon_reset"
-                    android:textSize="14sp"
-                    app:cornerRadius="20dp" />
-            </LinearLayout>
-
-            <com.google.android.material.divider.MaterialDivider
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:alpha="0.5" />
-
-            <!-- Search Area -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/search_layout"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:hint="@string/app_icon_search_hint"
-                app:boxCornerRadiusBottomEnd="20dp"
-                app:boxCornerRadiusBottomStart="20dp"
-                app:boxCornerRadiusTopEnd="20dp"
-                app:boxCornerRadiusTopStart="20dp"
-                app:endIconMode="clear_text"
-                app:startIconDrawable="@drawable/ic_mtrl_search"
-                app:startIconTint="?attr/colorPrimary">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/search_input"
+                <!-- Search & Options Row -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif"
-                    android:inputType="text" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-            <!-- Grid Container -->
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:minHeight="240dp">
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                        app:cardCornerRadius="24dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/installed_apps_grid"
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="16dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_mtrl_search"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+
+                            <EditText
+                                android:id="@+id/search_input"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@null"
+                                android:hint="@string/app_icon_search_hint"
+                                android:imeOptions="actionSearch"
+                                android:importantForAutofill="no"
+                                android:inputType="text"
+                                android:paddingHorizontal="12dp"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_pick_image"
+                        style="?attr/materialButtonTonalStyle"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="12dp"
+                        android:padding="0dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        app:icon="@drawable/ic_mtrl_image"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_reset"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="8dp"
+                        android:padding="0dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        app:icon="@drawable/ic_mtrl_refresh"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:strokeColor="?attr/colorOutlineVariant" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="12dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Installed apps"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="13sp" />
+
+                <!-- Grid Section -->
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:overScrollMode="never"
-                    android:paddingTop="8dp"
-                    android:clipToPadding="false" />
+                    android:minHeight="300dp">
 
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/installed_apps_grid"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false"
+                        android:overScrollMode="never" />
+
+                </FrameLayout>
+
+                <!-- Status States: Sequential to avoid overlap -->
                 <LinearLayout
                     android:id="@+id/loading_state"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="64dp"
                     android:gravity="center"
                     android:orientation="vertical"
+                    android:paddingTop="64dp"
                     android:visibility="gone">
 
-                    <com.google.android.material.progressindicator.CircularProgressIndicator
-                        android:layout_width="wrap_content"
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:layout_width="120dp"
                         android:layout_height="wrap_content"
                         android:indeterminate="true"
-                        app:indicatorSize="32dp"
-                        app:trackThickness="4dp" />
+                        app:trackCornerRadius="4dp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:fontFamily="sans-serif"
-                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium"
                         android:text="@string/app_icon_loading"
                         android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="14sp" />
                 </LinearLayout>
 
-                <TextView
+                <LinearLayout
                     android:id="@+id/empty_state"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="80dp"
                     android:gravity="center"
-                    android:fontFamily="sans-serif"
-                    android:text="@string/app_icon_pick_hint"
-                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:orientation="vertical"
+                    android:paddingTop="80dp"
                     android:alpha="0.6"
-                    android:textSize="15sp"
-                    android:visibility="visible" />
-            </FrameLayout>
+                    android:visibility="gone">
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_mtrl_info"
+                        app:tint="?attr/colorOnSurfaceVariant" />
 
-    <!-- Bottom Action Bar: Floating Footer Style -->
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardBackgroundColor="?attr/colorSurface"
-        app:cardCornerRadius="28dp"
-        app:cardElevation="8dp"
-        app:strokeWidth="0dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/app_icon_pick_hint"
+                        android:textSize="14sp" />
+                </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="12dp">
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_cancel"
-                style="?attr/borderlessButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="52dp"
-                android:fontFamily="sans-serif"
-                android:textStyle="bold"
-                android:text="@string/app_icon_cancel"
-                android:textColor="?attr/colorError"
-                app:cornerRadius="20dp" />
+    </LinearLayout>
 
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_apply"
-                style="?attr/materialButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="52dp"
-                android:enabled="false"
-                android:fontFamily="sans-serif"
-                android:textStyle="bold"
-                android:text="@string/app_icon_apply"
-                android:paddingHorizontal="24dp"
-                app:cornerRadius="20dp" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

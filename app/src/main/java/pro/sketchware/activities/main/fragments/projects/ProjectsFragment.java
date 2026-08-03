@@ -227,6 +227,7 @@ public class ProjectsFragment extends DA {
             DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new ProjectDiffCallback(projectsList, loadedProjects));
 
             requireActivity().runOnUiThread(() -> {
+                if (binding == null) return;
                 if (binding.swipeRefresh.isRefreshing()) binding.swipeRefresh.setRefreshing(false);
                 if (binding.loadingContainer.getVisibility() == View.VISIBLE) {
                     binding.loadingContainer.setVisibility(View.GONE);
@@ -239,6 +240,16 @@ public class ProjectsFragment extends DA {
                     projectsAdapter.filterData(projectsSearchView.getQuery().toString());
             });
         });
+    }
+
+    /**
+     * WHAT: lightweightProjectIconRefresh - Proxy for the adapter's targeted refresh.
+     * (عربي) تحديث خفيف: واجهة لتحديث أيقونة مشروع واحد عبر الـ adapter.
+     */
+    public void lightweightProjectIconRefresh(String scId) {
+        if (projectsAdapter != null) {
+            projectsAdapter.lightweightProjectIconRefresh(scId);
+        }
     }
 
     private void addProject(String sc_id) {

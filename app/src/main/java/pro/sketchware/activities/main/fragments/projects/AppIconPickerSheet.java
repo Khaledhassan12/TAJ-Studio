@@ -1,14 +1,8 @@
 package pro.sketchware.activities.main.fragments.projects;
 
+import android.app.Activity;
 import android.app.Dialog;
-import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,16 +12,13 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.besome.sketch.beans.ProjectBean;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
@@ -42,300 +33,349 @@ import java.util.concurrent.Executors;
 
 import a.a.a.lC;
 import a.a.a.wq;
-import a.a.a.yB;
 import pro.sketchware.R;
 import pro.sketchware.databinding.ItemInstalledAppBinding;
 import pro.sketchware.databinding.SheetAppIconPickerBinding;
 
 /**
- * A "Premium" BottomSheet for picking a project icon from installed apps.
- * It follows the minty fresh theme and provides a live preview.
- * 
- * بوطم شيت "بريميوم" لاختيار أيقونة المشروع من التطبيقات المثبتة.
- * يتبع الثيم النعناعي ويوفر معاينة حية للأيقونة قبل التطبيق.
+ * WHAT: UI-only picker. List from InstalledAppsRepository, icons from AppIconLoader
+ *      (prefetch-warmed), tap applies instantly from cache. Whole tile is tappable.
+ * (عربي) واجهة فقط: القائمة من المستودع، الأيقونات مسخّنة مسبقاً، والضغط على أي
+ *      مكان في البطاقة يطبّق الأيقونة فوراً من الكاش.
  */
 public class AppIconPickerSheet extends BottomSheetDialogFragment {
 
     private SheetAppIconPickerBinding binding;
     private String scId;
     private String projectTitle;
-    private Bitmap selectedBitmap;
     private AppsAdapter adapter;
-    private final ExecutorService loaderExecutor = Executors.newSingleThreadExecutor();
-    private List<AppInfo> allApps = new ArrayList<>();
+    private volatile boolean isApplying = false;
+    private final ExecutorService applyExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService filterExecutor = Executors.newSingleThreadExecutor();
+    private int tilePx = 160;
+
+    /**
+     * WHAT: projectIconPreviewCache - Static cache for project icons.
+     * WHY: Makes reopening the sheet instantaneous for the same project.
+     * (عربي) كاش أيقونة المشروع: يضمن فتح النافذة فوراً لنفس المشروع دون إعادة المعالجة.
+     */
+    private static final android.util.LruCache<String, Bitmap> projectIconPreviewCache = 
+            new android.util.LruCache<>(20);
 
     public static AppIconPickerSheet newInstance(String scId, String projectTitle) {
-        AppIconPickerSheet fragment = new AppIconPickerSheet();
+        AppIconPickerSheet f = new AppIconPickerSheet();
         Bundle args = new Bundle();
         args.putString("sc_id", scId);
         args.putString("title", projectTitle);
-        fragment.setArguments(args);
-        return fragment;
+        f.setArguments(args);
+        return f;
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    @Override public void onCreate(@Nullable Bundle s) {
+        super.onCreate(s);
         if (getArguments() != null) {
             scId = getArguments().getString("sc_id");
             projectTitle = getArguments().getString("title");
         }
     }
 
-    @NonNull
-    @Override
-    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
-        dialog.setOnShowListener(dialogInterface -> {
-            BottomSheetDialog bottomSheetDialog = (BottomSheetDialog) dialogInterface;
-            FrameLayout bottomSheet = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
-            if (bottomSheet != null) {
-                BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
-                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                behavior.setSkipCollapsed(true);
+    @NonNull @Override
+    public Dialog onCreateDialog(@Nullable Bundle s) {
+        BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(s);
+        dialog.setOnShowListener(d -> {
+            BottomSheetDialog bsd = (BottomSheetDialog) d;
+            FrameLayout sheet = bsd.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (sheet != null) {
+                BottomSheetBehavior<FrameLayout> b = BottomSheetBehavior.from(sheet);
+                b.setState(BottomSheetBehavior.STATE_EXPANDED);
+                b.setSkipCollapsed(true);
             }
         });
-        
-        Window window = dialog.getWindow();
-        if (window != null) {
-            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        }
-        
+        Window w = dialog.getWindow();
+        if (w != null) w.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         return dialog;
     }
 
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = SheetAppIconPickerBinding.inflate(inflater, container, false);
+    @Nullable @Override
+    public View onCreateView(@NonNull LayoutInflater i, @Nullable ViewGroup c, @Nullable Bundle s) {
+        binding = SheetAppIconPickerBinding.inflate(i, c, false);
         return binding.getRoot();
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
+    public void onViewCreated(@NonNull View v, @Nullable Bundle s) {
+        super.onViewCreated(v, s);
+        // WHAT: loadingStateGuard - Ensure states are reset before loading.
+        // (عربي) حارس الحالة: تصفير حالات الفراغ قبل البدء بالتحميل لضمان عدم التداخل.
+        binding.emptyState.setVisibility(View.GONE);
+        
+        tilePx = (int) (96 * getResources().getDisplayMetrics().density);
         binding.projectNamePreview.setText(projectTitle);
         loadCurrentIcon();
-
         setupGrid();
         setupListeners();
+        loadApps();
+    }
+
+    private void loadApps() {
+        binding.loadingState.setVisibility(View.VISIBLE);
+        binding.emptyState.setVisibility(View.GONE);
+        binding.installedAppsGrid.setVisibility(View.GONE);
+
+        InstalledAppsRepository.load(requireContext(), apps -> {
+            if (binding == null || !isAdded()) return;
+            binding.loadingState.setVisibility(View.GONE);
+            binding.emptyState.setVisibility(apps.isEmpty() ? View.VISIBLE : View.GONE);
+            binding.installedAppsGrid.setVisibility(apps.isEmpty() ? View.GONE : View.VISIBLE);
+            adapter.setApps(apps);
+            // WHAT: prefetch warm-up - warm the cache for the whole list off-main.
+            List<String> pkgs = new ArrayList<>();
+            for (InstalledAppsRepository.App a : apps) pkgs.add(a.packageName);
+            AppIconLoader.get().prefetch(requireContext(), pkgs, tilePx);
+        });
     }
 
     private void loadCurrentIcon() {
-        // We load the current icon from the project's resource folder to show the user what they have now.
-        // نقوم بتحميل الأيقونة الحالية من مجلد موارد المشروع لنعرض للمستخدم ما لديه الآن.
-        String iconPath = wq.e() + File.separator + scId + File.separator + "icon.png";
-        File file = new File(iconPath);
+        // WHAT: projectIconPreviewCache hit check.
+        // (عربي) فحص الكاش: استخدام النسخة المخزنة لأيقونة المشروع إن وجدت.
+        Bitmap hit = projectIconPreviewCache.get(scId);
+        if (hit != null) {
+            binding.iconPreview.setImageBitmap(hit);
+            return;
+        }
+
+        String path = wq.e() + File.separator + scId + File.separator + "icon.png";
+        File file = new File(path);
         if (file.exists()) {
-            binding.iconPreview.setImageURI(Uri.fromFile(file));
+            applyExecutor.execute(() -> {
+                Bitmap b = decodeFile(path, 256);
+                Activity act = getActivity();
+                if (act == null || !isAdded() || b == null) return;
+                
+                projectIconPreviewCache.put(scId, b);
+                act.runOnUiThread(() -> { if (binding != null) binding.iconPreview.setImageBitmap(b); });
+            });
         } else {
             binding.iconPreview.setImageResource(R.drawable.default_icon);
         }
     }
 
     private void setupGrid() {
-        adapter = new AppsAdapter(appInfo -> {
-            selectedBitmap = appInfo.icon;
-            updatePreview(selectedBitmap);
-            binding.btnApply.setEnabled(true);
-        });
+        adapter = new AppsAdapter(app -> applyPickedIconToProject(app));
         binding.installedAppsGrid.setLayoutManager(new GridLayoutManager(getContext(), 4));
+        binding.installedAppsGrid.setHasFixedSize(true);
+        binding.installedAppsGrid.setItemViewCacheSize(24);
         binding.installedAppsGrid.setAdapter(adapter);
     }
 
     private void setupListeners() {
-        binding.btnPickImage.setOnClickListener(v -> loadInstalledApps());
-        
-        binding.btnReset.setOnClickListener(v -> {
-            selectedBitmap = null;
-            binding.iconPreview.setImageResource(R.drawable.default_icon);
-            binding.btnApply.setEnabled(true);
-        });
-
-        binding.btnCancel.setOnClickListener(v -> dismiss());
-
-        binding.btnApply.setOnClickListener(v -> applyPickedIconToProject());
-
+        binding.btnPickImage.setOnClickListener(v -> loadApps());
+        binding.btnReset.setOnClickListener(v -> applyPickedIconToProject(null));
         binding.searchInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterApps(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c) { filterApps(s.toString()); }
+            @Override public void afterTextChanged(Editable s) {}
         });
     }
 
-    private void updatePreview(Bitmap bitmap) {
-        // Animation for live preview: a small pop to make it feel responsive.
-        // أنيميشن للمعاينة الحية: "هزة" خفيفة لتجعل الواجهة تبدو متفاعلة.
-        binding.iconPreviewFrame.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100).withEndAction(() -> {
-            binding.iconPreview.setImageBitmap(bitmap);
-            binding.iconPreviewFrame.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
-        }).start();
-    }
-
-    private void loadInstalledApps() {
-        // We load icons off the main thread to keep the UI smooth, as PackageManager can be slow.
-        // نحمل الأيقونات بعيداً عن الخيط الرئيسي للحفاظ على سلاسة الواجهة، لأن PackageManager قد يكون بطيئاً.
-        binding.loadingState.setVisibility(View.VISIBLE);
-        binding.emptyState.setVisibility(View.GONE);
-        binding.btnPickImage.setEnabled(false);
-
-        loaderExecutor.execute(() -> {
-            PackageManager pm = requireContext().getPackageManager();
-            List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
-            List<AppInfo> apps = new ArrayList<>();
-
-            for (ApplicationInfo app : packages) {
-                if (pm.getLaunchIntentForPackage(app.packageName) != null) {
-                    try {
-                        Drawable icon = pm.getApplicationIcon(app);
-                        Bitmap bitmap = drawableToBitmap(icon);
-                        apps.add(new AppInfo(pm.getApplicationLabel(app).toString(), bitmap, app.packageName));
-                    } catch (Exception ignored) {}
-                }
-            }
-
-            apps.sort((a, b) -> a.label.compareToIgnoreCase(b.label));
+    private void filterApps(String q) {
+        if (binding == null || !isAdded()) return;
+        // WHAT: Background Filtering - Offload string search to executor.
+        // WHY: Smooth typing experience even with 500+ apps.
+        // (عربي) بحث خلفي: تنفيذ البحث في خيط مستقل لضمان سلاسة الكتابة.
+        filterExecutor.execute(() -> {
+            List<InstalledAppsRepository.App> all = InstalledAppsRepository.cached();
+            if (all == null) return;
+            List<InstalledAppsRepository.App> out = new ArrayList<>();
+            String lq = q.toLowerCase();
+            for (InstalledAppsRepository.App a : all) if (a.label.toLowerCase().contains(lq)) out.add(a);
             
-            requireActivity().runOnUiThread(() -> {
-                allApps = apps;
-                adapter.setApps(apps);
-                binding.loadingState.setVisibility(View.GONE);
-                binding.btnPickImage.setEnabled(true);
-            });
+            Activity act = getActivity();
+            if (act != null) {
+                act.runOnUiThread(() -> {
+                    if (binding != null && isAdded()) {
+                        binding.emptyState.setVisibility(out.isEmpty() ? View.VISIBLE : View.GONE);
+                        binding.installedAppsGrid.setVisibility(out.isEmpty() ? View.GONE : View.VISIBLE);
+                        adapter.setApps(out);
+                    }
+                });
+            }
         });
     }
 
-    private void filterApps(String query) {
-        List<AppInfo> filtered = new ArrayList<>();
-        for (AppInfo app : allApps) {
-            if (app.label.toLowerCase().contains(query.toLowerCase())) {
-                filtered.add(app);
-            }
+    /**
+     * WHAT: instantTapApply - preview + file from cache; high-res decode off-main.
+     * (عربي) تطبيق فوري: المعاينة والملف من الكاش، والفك عالي الدقة في الخلفية.
+     */
+    private void applyPickedIconToProject(@Nullable InstalledAppsRepository.App app) {
+        if (isApplying) return;
+        isApplying = true;
+        final Activity act = getActivity();
+        if (act == null || !isAdded()) { isApplying = false; return; }
+        final String pkg = (app != null) ? app.packageName : null;
+
+        if (pkg != null) {
+            Bitmap preview = AppIconLoader.get().cached(pkg);
+            if (preview != null) updatePreview(preview);
         }
-        adapter.setApps(filtered);
-    }
 
-    private void applyPickedIconToProject() {
-        // The core logic: writing the Bitmap to icon.png and updating the project metadata.
-        // المنطق الأساسي: كتابة الـ Bitmap في ملف icon.png وتحديث بيانات المشروع الوصفية.
-        String iconDir = wq.e() + File.separator + scId;
-        File dir = new File(iconDir);
-        if (!dir.exists()) dir.mkdirs();
+        applyExecutor.execute(() -> {
+            try {
+                Bitmap high = null;
+                if (pkg != null) high = AppIconLoader.get().fetchHighRes(act, pkg, 512);
 
-        File iconFile = new File(dir, "icon.png");
-
-        try {
-            if (selectedBitmap != null) {
-                try (FileOutputStream out = new FileOutputStream(iconFile)) {
-                    selectedBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                File dir = new File(wq.e() + File.separator + scId);
+                if (!dir.exists()) dir.mkdirs();
+                File iconFile = new File(dir, "icon.png");
+                if (high != null) {
+                    try (FileOutputStream out = new FileOutputStream(iconFile)) {
+                        high.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    }
+                } else if (iconFile.exists()) {
+                    iconFile.delete();
                 }
-            } else {
-                if (iconFile.exists()) iconFile.delete();
-            }
+                
+                // WHAT: Heavy Data Write - update project metadata off-main.
+                HashMap<String, Object> map = lC.b(scId);
+                if (map != null) { map.put("custom_icon", high != null); lC.b(scId, map); }
 
-            // Update metadata
-            HashMap<String, Object> projectMap = lC.b(scId);
-            if (projectMap != null) {
-                projectMap.put("custom_icon", selectedBitmap != null);
-                lC.b(scId, projectMap);
+                final Bitmap preview2 = high;
+                act.runOnUiThread(() -> {
+                    if (!isAdded() || binding == null) { isApplying = false; return; }
+                    if (preview2 != null) {
+                        updatePreview(preview2);
+                        projectIconPreviewCache.put(scId, preview2);
+                    } else {
+                        binding.iconPreview.setImageResource(R.drawable.default_icon);
+                        projectIconPreviewCache.remove(scId);
+                    }
+                    
+                    com.besome.sketch.adapters.ProjectsAdapter.invalidateIconCache(scId);
+                    Toast.makeText(act, R.string.app_icon_changed, Toast.LENGTH_SHORT).show();
+                    
+                    binding.getRoot().postDelayed(() -> {
+                        if (!isAdded()) return;
+                        dismissAllowingStateLoss();
+                        Activity a = getActivity();
+                        if (a instanceof pro.sketchware.activities.main.activities.MainActivity) {
+                            ((pro.sketchware.activities.main.activities.MainActivity) a).lightweightProjectIconRefresh(scId);
+                        }
+                        isApplying = false;
+                    }, 180);
+                });
+            } catch (Exception e) {
+                act.runOnUiThread(() -> {
+                    isApplying = false;
+                    if (isAdded()) Toast.makeText(act, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
             }
-
-            Toast.makeText(getContext(), R.string.app_icon_changed, Toast.LENGTH_SHORT).show();
-            dismiss();
-            
-            // We assume the parent listener or ProjectsFragment will handle the refresh.
-            // نفترض أن المستمع الأب أو ProjectsFragment سيتولى تحديث القائمة.
-            if (getActivity() instanceof pro.sketchware.activities.main.activities.MainActivity) {
-                ((pro.sketchware.activities.main.activities.MainActivity) getActivity()).n();
-            }
-
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+        });
     }
 
-    private Bitmap drawableToBitmap(Drawable drawable) {
-        if (drawable instanceof BitmapDrawable) {
-            return ((BitmapDrawable) drawable).getBitmap();
+    private void updatePreview(Bitmap b) {
+        if (binding == null) return;
+        binding.iconPreviewFrame.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100)
+                .withEndAction(() -> {
+                    if (binding != null) {
+                        binding.iconPreview.setImageBitmap(b);
+                        binding.iconPreviewFrame.animate().scaleX(1f).scaleY(1f).setDuration(100).start();
+                    }
+                }).start();
+    }
+
+    private Bitmap decodeFile(String path, int req) {
+        android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        android.graphics.BitmapFactory.decodeFile(path, o);
+        int s = 1;
+        if (o.outHeight > req || o.outWidth > req) {
+            int hh = o.outHeight / 2, hw = o.outWidth / 2;
+            while ((hh / s) >= req && (hw / s) >= req) s *= 2;
         }
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-        return bitmap;
+        o.inSampleSize = s;
+        o.inJustDecodeBounds = false;
+        return android.graphics.BitmapFactory.decodeFile(path, o);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        loaderExecutor.shutdownNow();
+        applyExecutor.shutdownNow();
+        filterExecutor.shutdownNow();
         binding = null;
     }
 
-    private static class AppInfo {
-        String label;
-        Bitmap icon;
-        String packageName;
+    private interface OnAppSelected { void onAppSelected(InstalledAppsRepository.App app); }
 
-        AppInfo(String label, Bitmap icon, String packageName) {
-            this.label = label;
-            this.icon = icon;
-            this.packageName = packageName;
-        }
-    }
+    private class AppsAdapter extends RecyclerView.Adapter<AppsAdapter.VH> {
+        private List<InstalledAppsRepository.App> apps = new ArrayList<>();
+        private final OnAppSelected listener;
+        private int selectedPosition = -1;
 
-    private static class AppsAdapter extends RecyclerView.Adapter<AppsAdapter.ViewHolder> {
-        private List<AppInfo> apps = new ArrayList<>();
-        private final OnAppSelectedListener listener;
+        AppsAdapter(OnAppSelected l) { listener = l; }
 
-        AppsAdapter(OnAppSelectedListener listener) {
-            this.listener = listener;
+        void setApps(List<InstalledAppsRepository.App> list) {
+            apps = list; selectedPosition = -1; notifyDataSetChanged();
         }
 
-        void setApps(List<AppInfo> apps) {
-            this.apps = apps;
-            notifyDataSetChanged();
-        }
-
-        @NonNull
-        @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            ItemInstalledAppBinding binding = ItemInstalledAppBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
-            return new ViewHolder(binding);
+        @NonNull @Override
+        public VH onCreateViewHolder(@NonNull ViewGroup p, int vt) {
+            return new VH(ItemInstalledAppBinding.inflate(LayoutInflater.from(p.getContext()), p, false));
         }
 
         @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            AppInfo app = apps.get(position);
+        public void onBindViewHolder(@NonNull VH holder, int position) {
+            InstalledAppsRepository.App app = apps.get(position);
             holder.binding.label.setText(app.label);
-            holder.binding.icon.setImageBitmap(app.icon);
-            holder.itemView.setOnClickListener(v -> listener.onAppSelected(app));
-        }
+            holder.binding.icon.setTag(app.packageName);
 
-        @Override
-        public int getItemCount() {
-            return apps.size();
-        }
-
-        static class ViewHolder extends RecyclerView.ViewHolder {
-            final ItemInstalledAppBinding binding;
-
-            ViewHolder(ItemInstalledAppBinding binding) {
-                super(binding.getRoot());
-                this.binding = binding;
+            Bitmap b = AppIconLoader.get().cached(app.packageName);
+            if (b != null) {
+                holder.binding.icon.setImageBitmap(b);
+                holder.binding.icon.setAlpha(1f);
+            } else {
+                holder.binding.icon.setImageResource(R.drawable.default_icon);
+                holder.binding.icon.setAlpha(0.35f);
+                AppIconLoader.get().load(requireContext(), app.packageName, tilePx, bitmap -> {
+                    if (bitmap != null && app.packageName.equals(holder.binding.icon.getTag())) {
+                        holder.binding.icon.setImageBitmap(bitmap);
+                        holder.binding.icon.setAlpha(1f);
+                    }
+                });
             }
+
+            boolean sel = (selectedPosition == position);
+            holder.binding.tileContainer.setActivated(sel);
+            holder.binding.selectionBadge.setVisibility(sel ? View.VISIBLE : View.GONE);
+
+            // WHAT: Tap-to-apply guard.
+            // (عربي) حارس النقر: تجنب إعادة الربط غير الضرورية.
+            View.OnClickListener cl = v -> {
+                if (isApplying) return;
+                int pos = holder.getBindingAdapterPosition();
+                if (selectedPosition == pos) {
+                    listener.onAppSelected(app);
+                    return;
+                }
+
+                v.animate().scaleX(0.9f).scaleY(0.9f).setDuration(90)
+                        .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(90).start()).start();
+                
+                int old = selectedPosition;
+                selectedPosition = pos;
+                if (old >= 0) notifyItemChanged(old);
+                notifyItemChanged(selectedPosition);
+                listener.onAppSelected(app);
+            };
+            holder.binding.tileContainer.setOnClickListener(cl);
+            holder.binding.getRoot().setOnClickListener(cl);
         }
 
-        interface OnAppSelectedListener {
-            void onAppSelected(AppInfo appInfo);
+        @Override public int getItemCount() { return apps.size(); }
+
+        class VH extends RecyclerView.ViewHolder {
+            final ItemInstalledAppBinding binding;
+            VH(ItemInstalledAppBinding b) { super(b.getRoot()); binding = b; }
         }
     }
 }

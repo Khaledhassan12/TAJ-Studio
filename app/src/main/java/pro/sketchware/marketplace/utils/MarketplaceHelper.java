@@ -60,24 +60,37 @@ public class MarketplaceHelper {
     }
 
     /**
-     * يتحقق من وجود المجلد الفعلي على القرص حالياً بالبحث في القائمة الحقيقية.
-     * Checks if the actual folder exists on disk by searching the real list.
+     * يتحقق من وجود المجلد الفعلي على القرص حالياً بالبحث في القائمة الحقيقية (عبر الكاش).
+     * Checks if the actual folder exists on disk (via session cache).
+     *
+     * WHAT: Session-cached version of disk check.
+     * HOW: Uses installedCache instead of repetitive listFiles() calls.
+     * WHY: isActuallyOnDisk was performing heavy I/O on every call, taxing the UI thread.
      */
-    public static boolean isActuallyOnDisk(MarketplaceLibrary library) {
+    public static synchronized boolean isActuallyOnDisk(MarketplaceLibrary library) {
+        if (installedCache == null) {
+            refreshCache();
+        }
         String artifact = artifactOf(library.getCoordinate());
         String id = library.getId();
         
-        File root = new File(LOCAL_LIBS_PATH);
-        if (!root.exists() || !root.isDirectory()) return false;
-        
-        File[] kids = root.listFiles();
-        if (kids != null) {
-            for (File f : kids) {
-                if (f.isDirectory()) {
-                    String name = f.getName().toLowerCase();
-                    if (matchesArtifact(name, artifact, id)) return true;
-                }
-            }
+        for (String folder : installedCache) {
+            if (matchesArtifact(folder, artifact, id)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Overload for raw coordinates, helpful for internal service checks.
+     * (عربي) نسخة إضافية للتحقق عبر الإحداثيات مباشرة، مفيدة للخدمات الخلفية.
+     */
+    public static synchronized boolean isActuallyOnDisk(String coordinate) {
+        if (installedCache == null) {
+            refreshCache();
+        }
+        String artifact = artifactOf(coordinate);
+        for (String folder : installedCache) {
+            if (matchesArtifact(folder, artifact, null)) return true;
         }
         return false;
     }

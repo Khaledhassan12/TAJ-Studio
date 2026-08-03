@@ -289,7 +289,8 @@
 
         <activity android:name="pro.sketchware.marketplace.activities.LibraryMarketplaceActivity"
             android:configChanges="orientation|screenSize"
-            android:label="@string/settings_library_marketplace_title" />
+            android:label="@string/settings_library_marketplace_title"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
 
         <activity android:name="pro.sketchware.activities.resourceseditor.ResourcesEditorActivity" />
 
