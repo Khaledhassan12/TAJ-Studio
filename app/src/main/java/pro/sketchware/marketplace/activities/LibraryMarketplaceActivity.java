@@ -43,7 +43,6 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
 
     private ActivityLibraryMarketplaceBinding binding;
     private List<MarketplaceLibrary> allLibraries;
-    private List<String> installedLibraryNames;
     private MarketplaceAdapter allAdapter;
     private MostUsedAdapter mostUsedAdapter;
     private MarketplaceAdapter searchAdapter;
@@ -89,9 +88,9 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
     private void loadCatalogAsync() {
         binding.pbLoading.setVisibility(View.VISIBLE);
         executor.execute(() -> {
-            // T2: Perform heavy I/O on executor to fix 30s delay
+            // WHAT: Load catalog once (cached in LibraryCatalog).
+            // WHY: Keeps UI thread free during initial object mapping.
             allLibraries = LibraryCatalog.getCuratedLibraries();
-            refreshInstalledStatus();
             
             runOnUiThread(() -> {
                 if (binding != null) {
@@ -112,21 +111,27 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
         executor.shutdownNow();
     }
 
-    private void refreshInstalledStatus() {
-        // نجمع أسماء مجلدات المكتبات المحلية (عادة تكون artifact-vVersion) للمطابقة الدقيقة.
-        // We collect local library folder names (usually artifact-vVersion) for exact matching.
-        installedLibraryNames = LocalLibrariesUtil.getAllLocalLibraries().stream()
-                .map(LocalLibrary::getName)
-                .collect(Collectors.toList());
-        android.util.Log.d("LibMarket", "Syncing installed libraries: " + installedLibraryNames);
-    }
-
     /**
-     * يتحقق مما إذا كانت المكتبة مثبتة بمطابقة دقيقة للمفتاح المخزن باستخدام المساعد الموحد.
-     * Checks if a library is installed using the unified helper for exact matching.
+     * يتحقق مما إذا كانت المكتبة مثبتة باستخدام المساعد الموحد الذي يعتمد على الكاش.
+     * Checks if a library is installed using the unified, cached helper.
      */
     private boolean isInstalled(MarketplaceLibrary library) {
         return pro.sketchware.marketplace.utils.MarketplaceHelper.isInstalledSync(library);
+    }
+
+    /**
+     * تبديل مركزي بين واجهة المتجر الرئيسية ونتائج البحث.
+     * Centralized toggle between main marketplace UI and search results.
+     *
+     * @param active true if search results should be visible (query not empty).
+     */
+    private void setSearchMode(boolean active) {
+        if (binding == null) return;
+        // WHAT: Marketplace Content Switcher - Toggle between main catalog and search results.
+        // WHY: Case A/B fix - Ensures the main content doesn't show through the search results list.
+        // (عربي) تبديل المحتوى: إخفاء القائمة الرئيسية وإظهار نتائج البحث لضمان عدم التداخل.
+        binding.marketplaceMainContent.setVisibility(active ? View.GONE : View.VISIBLE);
+        binding.rvSearchResults.setVisibility(active ? View.VISIBLE : View.GONE);
     }
 
     private void setupUI() {
@@ -139,12 +144,15 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
         });
 
         mostUsedAdapter = new MostUsedAdapter(new ArrayList<>());
+        binding.rvMostUsed.setHasFixedSize(true);
         binding.rvMostUsed.setAdapter(mostUsedAdapter);
 
         allAdapter = new MarketplaceAdapter(new ArrayList<>());
+        binding.rvAllLibraries.setHasFixedSize(true);
         binding.rvAllLibraries.setAdapter(allAdapter);
 
         searchAdapter = new MarketplaceAdapter(new ArrayList<>());
+        binding.rvSearchResults.setHasFixedSize(true);
         binding.rvSearchResults.setAdapter(searchAdapter);
 
         binding.searchView.getEditText().addTextChangedListener(new TextWatcher() {
@@ -153,19 +161,45 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // WHAT: searchOverlayToggleV3 - Toggle based on text presence.
+                // WHY: Resolves UI conflict by ensuring main content is hidden only when query is active.
+                // (عربي) تبديل واجهة البحث: إخفاء المحتوى الرئيسي فقط عند وجود نص بحث لتجنب التداخل.
+                setSearchMode(s.length() != 0);
                 filter(s.toString());
             }
 
             @Override
             public void afterTextChanged(Editable s) {}
         });
+
+        // WHAT: searchTransitionListener - Handle search exit paths.
+        // WHY: Case C fix - Ensures main UI returns when search is closed even if text wasn't cleared.
+        binding.searchView.addTransitionListener((searchView, previousState, newState) -> {
+            if (newState == com.google.android.material.search.SearchView.TransitionState.HIDDEN 
+                    || newState == com.google.android.material.search.SearchView.TransitionState.HIDING) {
+                setSearchMode(false);
+            }
+        });
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Handle search back navigation correctly
+        if (binding.searchView.isShowing()) {
+            binding.searchView.hide();
+        } else {
+            super.onBackPressed();
+        }
     }
 
     private void filter(String query) {
         if (allLibraries == null) return;
+        // WHAT: Hoist lowercase conversion out of the stream.
+        // WHY: Avoids redundant toLowerCase() calls for every item in the catalog.
+        String q = query.toLowerCase();
         List<MarketplaceLibrary> filtered = allLibraries.stream()
-                .filter(lib -> lib.getDisplayName().toLowerCase().contains(query.toLowerCase()) ||
-                        lib.getCoordinate().toLowerCase().contains(query.toLowerCase()))
+                .filter(lib -> lib.getDisplayName().toLowerCase().contains(q) ||
+                        lib.getCoordinate().toLowerCase().contains(q))
                 .collect(Collectors.toList());
         searchAdapter.updateData(filtered);
     }
@@ -177,18 +211,18 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
         bottomSheet.setOnDismissListener(this::refreshUI);
     }
 
+    /**
+     * تحديث الواجهة لإعادة رسم حالة التثبيت (Badges).
+     * Refreshes the UI to redraw installation status badges.
+     *
+     * WHAT: Direct notifyDataSetChanged() on UI thread.
+     * WHY: Status checks now use a fast cache, no need for background executor overhead here.
+     */
     public void refreshUI() {
         if (allLibraries == null) return;
-        executor.execute(() -> {
-            refreshInstalledStatus();
-            runOnUiThread(() -> {
-                if (binding != null) {
-                    allAdapter.notifyDataSetChanged();
-                    mostUsedAdapter.notifyDataSetChanged();
-                    searchAdapter.notifyDataSetChanged();
-                }
-            });
-        });
+        if (allAdapter != null) allAdapter.notifyDataSetChanged();
+        if (mostUsedAdapter != null) mostUsedAdapter.notifyDataSetChanged();
+        if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
     }
 
     // Adapters

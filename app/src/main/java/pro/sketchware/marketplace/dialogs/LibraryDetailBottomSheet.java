@@ -307,10 +307,6 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
-    private boolean isInstalled() {
-        return pro.sketchware.marketplace.utils.MarketplaceHelper.isInstalledSync(library);
-    }
-
     private void updateInstallButton(boolean installed) {
         if (installed) {
             binding.btnInstall.setText(R.string.lib_installed);
@@ -339,8 +335,11 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        // WHAT: Memory leak prevention - unregistering receiver and clearing references.
+        // WHY: Fragment may outlive its view; executor and context-bound receivers must be cleared.
         requireContext().unregisterReceiver(statusReceiver);
         executor.shutdownNow();
+        onDismissListener = null;
         binding = null;
     }
 }

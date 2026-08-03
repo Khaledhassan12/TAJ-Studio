@@ -49,7 +49,11 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <!-- WHAT: marketplace_main_content - Single container for all main marketplace sections.
+             WHY: Fixes search UI conflict by allowing a clean toggle of the entire list area.
+             (عربي) حاوية واحدة لكافة أقسام المتجر الرئيسية للسماح بتبديل الواجهة بالكامل عند البحث. -->
         <LinearLayout
+            android:id="@+id/marketplace_main_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -87,6 +91,7 @@
                 tools:listitem="@layout/view_item_marketplace_horizontal" />
 
             <TextView
+                android:id="@+id/tv_all_libraries_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
@@ -118,20 +123,25 @@
 
     </androidx.core.widget.NestedScrollView>
 
+    <!-- WHAT: rv_search_results - Sibling to main content for clean UI switching.
+         WHY: Resolves M3 Search overlay overlap issues by managing visibility manually.
+         (عربي) نتائج البحث كعنصر مستقل بجانب المحتوى الرئيسي لضمان عدم تداخل الواجهات. -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_search_results"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:background="?attr/colorSurface"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        tools:listitem="@layout/view_item_marketplace_vertical"
+        tools:visibility="gone" />
+
     <com.google.android.material.search.SearchView
         android:id="@+id/search_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:hint="@string/lib_search_hint"
-        app:layout_anchor="@id/search_bar">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_search_results"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/view_item_marketplace_vertical" />
-
-    </com.google.android.material.search.SearchView>
+        app:layout_anchor="@id/search_bar" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

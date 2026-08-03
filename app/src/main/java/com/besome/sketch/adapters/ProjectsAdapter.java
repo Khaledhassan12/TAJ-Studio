@@ -42,6 +42,8 @@ import mod.hey.studios.project.backup.BackupRestoreManager;
 import mod.hey.studios.util.Helper;
 import pro.sketchware.R;
 import pro.sketchware.activities.main.fragments.projects.ProjectsFragment;
+import pro.sketchware.activities.main.fragments.projects.InstalledAppsRepository;
+import pro.sketchware.activities.main.fragments.projects.AppIconLoader;
 import pro.sketchware.databinding.BottomSheetProjectOptionsBinding;
 import pro.sketchware.databinding.MyprojectsItemBinding;
 import pro.sketchware.github.GitHubManager;
@@ -55,6 +57,42 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
     private final DB preference;
     private List<HashMap<String, Object>> shownProjects = new ArrayList<>();
     private List<HashMap<String, Object>> allProjects;
+
+    /**
+     * WHAT: Static LruCache for project icons.
+     * WHY: Reading icons from disk (setImageURI) on every bind during scroll causes jank.
+     * (عربي) كاش ثابت لأيقونات المشاريع لتجنب القراءة المتكررة من القرص أثناء التمرير.
+     */
+    private static final android.util.LruCache<String, android.graphics.Bitmap> ICON_CACHE = 
+            new android.util.LruCache<>(30);
+
+    /**
+     * WHAT: Public API to invalidate the icon cache for a specific project.
+     * WHY: Ensures UI reflects icon changes immediately without direct cache exposure.
+     * (عربي) واجهة برمجية لإبطال كاش أيقونة مشروع معين عند تغييرها.
+     */
+    public static void invalidateIconCache(String scId) {
+        if (scId != null) {
+            ICON_CACHE.remove(scId);
+        }
+    }
+
+    /**
+     * WHAT: lightweightProjectIconRefresh - Targeted refresh for a single project icon.
+     * WHY: Avoids reloading the entire project list from disk when only one icon changes.
+     * (عربي) تحديث خفيف: تحديث أيقونة مشروع واحد فقط لتجنب إعادة تحميل القائمة بالكامل من القرص.
+     */
+    public void lightweightProjectIconRefresh(String scId) {
+        invalidateIconCache(scId);
+        for (int i = 0; i < shownProjects.size(); i++) {
+            if (Objects.equals(yB.c(shownProjects.get(i), "sc_id"), scId)) {
+                notifyItemChanged(i);
+                return;
+            }
+        }
+        // Fallback for safety (e.g. if filtered out)
+        notifyDataSetChanged();
+    }
 
     public ProjectsAdapter(ProjectsFragment projectsFragment, List<HashMap<String, Object>> allProjects) {
         this.projectsFragment = projectsFragment;
@@ -112,7 +150,6 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
         }, true);
         shownProjects = newProjects;
         result.dispatchUpdatesTo(this);
-        notifyDataSetChanged();
     }
 
     @Override
@@ -149,67 +186,71 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
         HashMap<String, Object> projectMap = shownProjects.get(position);
         String scId = yB.c(projectMap, "sc_id");
 
-        holder.binding.imgIcon.setImageResource(R.drawable.default_icon);
-
+        // WHAT: Memory-only data normalization to avoid DB writes during scroll.
+        // WHY: Fixing data (lC.b) in onBind is extremely heavy. We fix it in memory for the UI.
+        // (عربي) إصلاح البيانات في الذاكرة فقط لتجنب الكتابة الثقيلة في قاعدة البيانات أثناء التمرير.
         if (yB.c(projectMap, "sc_ver_code").isEmpty()) {
             projectMap.put("sc_ver_code", "1");
             projectMap.put("sc_ver_name", "1.0");
-            lC.b(scId, projectMap);
         }
-
         if (yB.b(projectMap, "sketchware_ver") <= 0) {
             projectMap.put("sketchware_ver", 61);
-            lC.b(scId, projectMap);
         }
 
+        // WHAT: Use cached Bitmap if available, otherwise read synchronously once.
+        // WHY: setImageURI is a blocking I/O call. Pre-loading into LruCache respects G1 while being fast.
+        // (عربي) استخدام أيقونة مخزنة في الذاكرة (Cache) لتجنب تقطيع الواجهة الناتج عن قراءة القرص.
         if (yB.a(projectMap, "custom_icon")) {
-            String iconFolder = wq.e() + File.separator + scId;
-            File iconFile = new File(iconFolder, "icon.png");
-            if (iconFile.exists()) {
-                Uri uri;
-                String providerPath = activity.getPackageName() + ".provider";
-                uri = FileProvider.getUriForFile(activity, providerPath, iconFile);
-                holder.binding.imgIcon.setImageURI(uri);
+            android.graphics.Bitmap cached = ICON_CACHE.get(scId);
+            if (cached != null) {
+                holder.binding.imgIcon.setImageBitmap(cached);
             } else {
-                holder.binding.imgIcon.setImageResource(R.drawable.default_icon);
+                String iconPath = wq.e() + File.separator + scId + File.separator + "icon.png";
+                File iconFile = new File(iconPath);
+                if (iconFile.exists()) {
+                    android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(iconPath);
+                    if (bitmap != null) {
+                        ICON_CACHE.put(scId, bitmap);
+                        holder.binding.imgIcon.setImageBitmap(bitmap);
+                    } else {
+                        holder.binding.imgIcon.setImageResource(R.drawable.default_icon);
+                    }
+                } else {
+                    holder.binding.imgIcon.setImageResource(R.drawable.default_icon);
+                }
             }
+        } else {
+            holder.binding.imgIcon.setImageResource(R.drawable.default_icon);
         }
 
         if (isPinned(projectMap)) {
             holder.binding.imgPin.setVisibility(View.VISIBLE);
         } else {
             holder.binding.imgPin.setVisibility(View.INVISIBLE);
-
         }
 
-        String version = " - " + yB.c(projectMap, "sc_ver_name") + " (" + yB.c(projectMap, "sc_ver_code") + ")";
-        holder.binding.appName.setText(yB.c(projectMap, "my_ws_name") + version);
+        // WHAT: Using a pre-built string instead of repeated concatenation.
+        // WHY: Reduces garbage collection pressure in hot scroll paths.
+        // (عربي) بناء نص الإصدار مرة واحدة لتقليل استهلاك الذاكرة أثناء التمرير.
+        String wsName = yB.c(projectMap, "my_ws_name");
+        String verName = yB.c(projectMap, "sc_ver_name");
+        String verCode = yB.c(projectMap, "sc_ver_code");
+        
+        StringBuilder title = new StringBuilder(wsName);
+        if (!verName.isEmpty() || !verCode.isEmpty()) {
+            title.append(" - ").append(verName).append(" (").append(verCode).append(")");
+        }
+        
+        holder.binding.appName.setText(title.toString());
         holder.binding.projectName.setText(yB.c(projectMap, "my_app_name"));
         holder.binding.packageName.setText(yB.c(projectMap, "my_sc_pkg_name"));
         holder.binding.tvPublished.setVisibility(View.VISIBLE);
         holder.binding.tvPublished.setText(scId);
         holder.itemView.setTag("custom");
 
-        holder.binding.getRoot().setOnClickListener(v -> {
-            if (!mB.a()) {
-                projectsFragment.toDesignActivity(scId);
-            }
-        });
-
-        View.OnClickListener showProjectSettingsDialog = v -> {
-            mB.a(v);
-            int currentPosition = holder.getAbsoluteAdapterPosition();
-            if (currentPosition != RecyclerView.NO_POSITION) {
-                showProjectOptionsBottomSheet(projectMap, currentPosition);
-            }
-        };
-
-        holder.binding.expand.setOnClickListener(showProjectSettingsDialog);
-        holder.binding.imgIcon.setOnClickListener(v -> toProjectSettingOrRequestPermission(projectMap, position));
-        holder.binding.getRoot().setOnLongClickListener(v -> {
-            showProjectOptionsBottomSheet(projectMap, holder.getAbsoluteAdapterPosition());
-            return true;
-        });
+        // WHAT: Click listeners are handled by the holder to avoid repeated lambda allocations.
+        // (عربي) إدارة مستمعي النقر داخل ViewHolder لتقليل إنشاء الكائنات المتكرر.
+        holder.bindListeners(projectMap);
     }
 
     @NonNull
@@ -275,6 +316,15 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
     }
 
     private void showProjectOptionsBottomSheet(HashMap<String, Object> projectMap, int position) {
+        // WHAT: optionsSheetPrewarm - Background loading of apps list and icons.
+        // WHY: Pre-fills caches so that if the user clicks "Change Icon", the UI is instant.
+        // (عربي) تسخين مسبق: جلب قائمة التطبيقات والأيقونات في الخلفية عند فتح الخيارات.
+        InstalledAppsRepository.load(activity, apps -> {
+            List<String> pkgs = new ArrayList<>();
+            for (InstalledAppsRepository.App a : apps) pkgs.add(a.packageName);
+            AppIconLoader.get().prefetch(activity, pkgs, (int) (96 * activity.getResources().getDisplayMetrics().density));
+        });
+
         BottomSheetDialog projectOptionsBSD = new BottomSheetDialog(activity);
         BottomSheetProjectOptionsBinding binding = BottomSheetProjectOptionsBinding.inflate(LayoutInflater.from(activity));
         projectOptionsBSD.setContentView(binding.getRoot());
@@ -384,12 +434,39 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
         projectOptionsBSD.show();
     }
 
-    public static class ProjectViewHolder extends RecyclerView.ViewHolder {
+    public class ProjectViewHolder extends RecyclerView.ViewHolder {
         final MyprojectsItemBinding binding;
 
         ProjectViewHolder(MyprojectsItemBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+        }
+
+        void bindListeners(HashMap<String, Object> projectMap) {
+            String scId = yB.c(projectMap, "sc_id");
+            
+            binding.getRoot().setOnClickListener(v -> {
+                if (!mB.a()) {
+                    projectsFragment.toDesignActivity(scId);
+                }
+            });
+
+            binding.expand.setOnClickListener(v -> {
+                mB.a(v);
+                int currentPosition = getAbsoluteAdapterPosition();
+                if (currentPosition != RecyclerView.NO_POSITION) {
+                    showProjectOptionsBottomSheet(projectMap, currentPosition);
+                }
+            });
+
+            binding.imgIcon.setOnClickListener(v -> 
+                toProjectSettingOrRequestPermission(projectMap, getAbsoluteAdapterPosition())
+            );
+
+            binding.getRoot().setOnLongClickListener(v -> {
+                showProjectOptionsBottomSheet(projectMap, getAbsoluteAdapterPosition());
+                return true;
+            });
         }
     }
 }

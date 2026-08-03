@@ -1,40 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:clickable="true"
-    android:focusable="true"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="8dp">
 
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="0dp"
-        app:strokeColor="?attr/colorOutlineVariant"
-        app:strokeWidth="1dp">
-
-        <ImageView
-            android:id="@+id/icon"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="8dp"
-            android:scaleType="fitCenter" />
-    </com.google.android.material.card.MaterialCardView>
-
-    <TextView
-        android:id="@+id/label"
+    <!-- WHAT: iconPickerStudioLayout - Themed tile for app icon selection.
+         WHY: Modernizes the picker UI with M3 containers and selection states.
+         (عربي) بلاطة اختيار أيقونة التطبيق بتصميم عصري يدعم حالة التحديد. -->
+    <LinearLayout
+        android:id="@+id/tile_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:ellipsize="end"
+        android:background="@drawable/shape_app_tile_background"
+        android:clickable="true"
+        android:focusable="true"
         android:gravity="center"
-        android:maxLines="1"
-        android:textAppearance="?attr/textAppearanceLabelSmall"
-        android:textColor="?attr/colorOnSurface" />
+        android:orientation="vertical"
+        android:paddingVertical="12dp">
 
-</LinearLayout>
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/icon_wrapper"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="1dp">
+
+            <ImageView
+                android:id="@+id/icon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="10dp"
+                android:scaleType="fitCenter"
+                tools:src="@drawable/default_icon" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingHorizontal="4dp"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="11sp"
+            tools:text="App Name" />
+
+    </LinearLayout>
+
+    <!-- Selection Badge -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/selection_badge"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="2dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="?attr/colorPrimary"
+        app:cardCornerRadius="11dp"
+        app:cardElevation="4dp"
+        app:strokeWidth="0dp"
+        tools:visibility="visible">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="4dp"
+            android:src="@drawable/ic_mtrl_done"
+            app:tint="?attr/colorOnPrimary" />
+    </com.google.android.material.card.MaterialCardView>
+
+</FrameLayout>

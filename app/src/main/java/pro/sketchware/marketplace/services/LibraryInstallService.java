@@ -173,6 +173,7 @@ public class LibraryInstallService extends Service {
         }
         
         pendingCoords.clear();
+        pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
         notificationManager.cancel(NOTIFICATION_ID);
         notificationManager.cancel(DONE_ID);
         stopForeground(true);
@@ -212,24 +213,28 @@ public class LibraryInstallService extends Service {
             updateNotification();
             
             // G3: Already Installed Guard - treat re-download of existing library as silent success.
-            if (isActuallyOnDisk(coordinate)) {
+            if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
                 Log.d(TAG, "Library already installed: " + coordinate);
                 handleSuccess(coordinate);
                 return;
             }
 
-            // Timeout احتياطي لضمان عدم بقاء الإشعار معلقاً.
+            // WHAT: generousInstallTimeout - Increased to 5 minutes to accommodate slow connections and heavy AndroidX dependencies.
+            // WHY: Previous 60s timeout caused false failures for larger library sets.
             timeoutHandler.postDelayed(() -> {
                 if (!completed[0]) {
                     Log.e(TAG, "Timeout for " + coordinate);
+                    // WHAT: Forced cache refresh for double-verification.
+                    // WHY: Cache must be fresh before checking disk in case I/O finished but wasn't indexed.
+                    pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
                     // Double check before failing
-                    if (isActuallyOnDisk(coordinate)) {
+                    if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
                         handleSuccess(coordinate);
                     } else {
                         handleFailure(coordinate, "Network timeout");
                     }
                 }
-            }, 60000);
+            }, 300000);
 
             try {
                 Log.d(TAG, "Mirroring working downloader for: " + coordinate);
@@ -252,11 +257,25 @@ public class LibraryInstallService extends Service {
                 resolver.resolveDependency(new DependencyResolver.DependencyResolverCallback() {
                     @Override
                     public void onTaskCompleted(@NonNull List<String> dependencies) {
-                        if (completed[0]) return;
+                        if (completed[0]) {
+                            // WHAT: lateSuccessReconciler - Correct UI state if downloader finished after timeout.
+                            // WHY: Prevents contradiction between "Failed" notification and "Installed" badge.
+                            pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+                            if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
+                                successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
+                                sendBroadcast(successIntent);
+                            }
+                            return;
+                        }
                         completed[0] = true;
                         
+                        // WHAT: Forced cache refresh before double-verification callback.
+                        // WHY: DependencyResolver finishes I/O; cache must be invalidated to see new folder.
+                        pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+
                         // G4: Double Verified Badge - التأكد من وجود المجلد فعلاً قبل إرسال النجاح.
-                        if (isActuallyOnDisk(coordinate)) {
+                        if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
                             Log.d(TAG, "Successfully installed and verified: " + coordinate);
                             handleSuccess(coordinate);
                             
@@ -271,11 +290,23 @@ public class LibraryInstallService extends Service {
 
                     @Override
                     public void onDownloadError(@NonNull Artifact dep, @NonNull Throwable e) {
-                        if (completed[0]) return;
+                        if (completed[0]) {
+                            // lateSuccessReconciler for late errors/success check
+                            pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+                            if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
+                                successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
+                                sendBroadcast(successIntent);
+                            }
+                            return;
+                        }
                         completed[0] = true;
                         
+                        // WHAT: Refresh cache on error callback to check if it partially or fully finished.
+                        pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+
                         // Check if it actually succeeded despite the error
-                        if (isActuallyOnDisk(coordinate)) {
+                        if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
                             handleSuccess(coordinate);
                         } else {
                             handleFailure(coordinate, e.getMessage());
@@ -295,9 +326,21 @@ public class LibraryInstallService extends Service {
                     
                     @Override
                     public void dexingFailed(@NonNull Artifact dep, @NonNull Exception e) {
-                        if (completed[0]) return;
+                        if (completed[0]) {
+                            pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+                            if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
+                                successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
+                                sendBroadcast(successIntent);
+                            }
+                            return;
+                        }
                         completed[0] = true;
-                        if (isActuallyOnDisk(coordinate)) {
+                        
+                        // WHAT: Refresh cache on dexing failure to check if folder exists.
+                        pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+
+                        if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
                             handleSuccess(coordinate);
                         } else {
                             handleFailure(coordinate, "Dexing failed: " + e.getMessage());
@@ -311,29 +354,6 @@ public class LibraryInstallService extends Service {
                 }
             }
         });
-    }
-
-    private boolean isActuallyOnDisk(String coordinate) {
-        // WHAT: Flexible artifact matching to handle diverse folder naming shapes.
-        // WHY: Some artifacts use different version prefixes or separator styles.
-        String artifact = coordinate.contains(":") ? coordinate.split(":")[1] : coordinate;
-        File root = new File(Environment.getExternalStorageDirectory(), "/.sketchware/libs/local_libs/");
-        
-        if (!root.exists() || !root.isDirectory()) return false;
-        
-        File[] kids = root.listFiles();
-        if (kids != null) {
-            String a = artifact.toLowerCase();
-            for (File f : kids) {
-                if (f.isDirectory()) {
-                    String name = f.getName().toLowerCase();
-                    // Flexible matching: equals, startsWith common separators, or contains artifact
-                    if (name.equals(a) || name.startsWith(a + "-") || name.startsWith(a + "_") 
-                            || name.contains(a)) return true;
-                }
-            }
-        }
-        return false;
     }
 
     private synchronized void handleSuccess(String coordinate) {
@@ -351,6 +371,8 @@ public class LibraryInstallService extends Service {
 
     private synchronized void handleFailure(String coordinate, String reason) {
         Log.e(TAG, "Install failed for " + coordinate + ": " + reason);
+        // WHAT: Invalidate cache on failure to ensure UI consistency.
+        pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
         String artifactId = coordinate.contains(":") ? coordinate.split(":")[1] : coordinate;
         synchronized (activeArtifacts) {
             activeArtifacts.remove(artifactId);
@@ -361,6 +383,7 @@ public class LibraryInstallService extends Service {
             failedNames.add(name);
         }
         failedCount++;
+        pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
         broadcastUpdate();
         checkCompletion();
     }

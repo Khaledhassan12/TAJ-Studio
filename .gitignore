@@ -67,5 +67,4 @@ fastlane/readme.md
 /actions-runner
 app/release/
 .artifacts/
-app/release/
 TODO_AGENT.md

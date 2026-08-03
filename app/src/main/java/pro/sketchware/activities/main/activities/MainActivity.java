@@ -120,6 +120,16 @@ public class MainActivity extends BasePermissionAppCompatActivity {
         }
     }
 
+    /**
+     * WHAT: lightweightProjectIconRefresh - Targeted refresh for a single project icon.
+     * (عربي) تحديث خفيف: تحديث أيقونة مشروع واحد فقط دون إعادة تحميل الكل.
+     */
+    public void lightweightProjectIconRefresh(String scId) {
+        if (activeFragment instanceof ProjectsFragment) {
+            ((ProjectsFragment) activeFragment).lightweightProjectIconRefresh(scId);
+        }
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -170,15 +180,25 @@ public class MainActivity extends BasePermissionAppCompatActivity {
         binding.statusBarOverlapper.setMinimumHeight(UI.getStatusBarHeight(this));
         UI.addSystemWindowInsetToPadding(binding.appbar, true, false, true, false);
 
-        u = new DB(getApplicationContext(), "U1");
-        int u1I0 = u.a("U1I0", -1);
-        long u1I1 = u.e("U1I1");
-        if (u1I1 <= 0) {
-            u.a("U1I1", System.currentTimeMillis());
-        }
-        if (System.currentTimeMillis() - u1I1 > /* (a day) */ 1000 * 60 * 60 * 24) {
-            u.a("U1I0", Integer.valueOf(u1I0 + 1));
-        }
+        // WHAT: Deferring non-UI tracking and initialization to an IdleHandler.
+        // WHY: Reading preferences and file checks on the main thread during onCreate slows down Cold-start.
+        // (عربي) تأجيل عمليات التتبع والتهيئة غير المرئية إلى وقت فراغ المعالج (Idle).
+        android.os.Looper.myQueue().addIdleHandler(() -> {
+            if (binding == null) return false;
+            
+            u = new DB(getApplicationContext(), "U1");
+            int u1I0 = u.a("U1I0", -1);
+            long u1I1 = u.e("U1I1");
+            if (u1I1 <= 0) {
+                u.a("U1I1", System.currentTimeMillis());
+            }
+            if (System.currentTimeMillis() - u1I1 > 1000 * 60 * 60 * 24) {
+                u.a("U1I0", u1I0 + 1);
+            }
+
+            checkBackgroundNotices();
+            return false;
+        });
 
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(null);
@@ -204,72 +224,6 @@ public class MainActivity extends BasePermissionAppCompatActivity {
             public void onDrawerStateChanged(int newState) {
             }
         });
-
-        boolean hasStorageAccess = isStoragePermissionGranted();
-        if (!hasStorageAccess) {
-            showNoticeNeedStorageAccess();
-        }
-        if (hasStorageAccess) {
-            allFilesAccessCheck();
-        }
-
-        if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
-            Uri data = getIntent().getData();
-            if (data != null) {
-                new SingleCopyTask(this, new SingleCopyTask.CallBackTask() {
-                    @Override
-                    public void onCopyPreExecute() {
-                    }
-
-                    @Override
-                    public void onCopyProgressUpdate(int progress) {
-                    }
-
-                    @Override
-                    public void onCopyPostExecute(@NonNull String path, boolean wasSuccessful, @NonNull String reason) {
-                        if (wasSuccessful) {
-                            BackupRestoreManager manager = new BackupRestoreManager(MainActivity.this, projectsFragment);
-
-                            if (BackupFactory.zipContainsFile(path, "local_libs")) {
-                                new MaterialAlertDialogBuilder(MainActivity.this)
-                                        .setTitle("Warning")
-                                        .setMessage(BackupRestoreManager.getRestoreIntegratedLocalLibrariesMessage(false, -1, -1, null))
-                                        .setPositiveButton("Copy", (dialog, which) -> manager.doRestore(path, true))
-                                        .setNegativeButton("Don't copy", (dialog, which) -> manager.doRestore(path, false))
-                                        .setNeutralButton(R.string.common_word_cancel, null)
-                                        .show();
-                            } else {
-                                manager.doRestore(path, true);
-                            }
-
-                            // Clear intent so it doesn't duplicate
-                            getIntent().setData(null);
-                        } else {
-                            SketchwareUtil.toastError("Failed to copy backup file to temporary location: " + reason, Toast.LENGTH_LONG);
-                        }
-                    }
-                }).copyFile(data);
-            }
-        } else if (!ConfigActivity.isSettingEnabled(ConfigActivity.SETTING_CRITICAL_UPDATE_REMINDER)) {
-            BottomSheetDialogView bottomSheetDialog = getBottomSheetDialogView();
-            bottomSheetDialog.getPositiveButton().setEnabled(false);
-
-            CountDownTimer countDownTimer = new CountDownTimer(10000, 1000) {
-                @Override
-                public void onTick(long millisUntilFinished) {
-                    bottomSheetDialog.setPositiveButtonText(millisUntilFinished / 1000 + "");
-                }
-
-                @Override
-                public void onFinish() {
-                    bottomSheetDialog.setPositiveButtonText("View changes");
-                    bottomSheetDialog.getPositiveButton().setEnabled(true);
-                }
-            };
-            countDownTimer.start();
-
-            if (!isFinishing()) bottomSheetDialog.show();
-        }
 
         binding.bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
@@ -422,9 +376,14 @@ public class MainActivity extends BasePermissionAppCompatActivity {
     public void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         drawerToggle.syncState();
-        if (isFirebaseInitialized(this)) {
-            FirebaseMessaging.getInstance().subscribeToTopic("all");
-        }
+        // WHAT: Move non-critical topic subscription to the background or idle time.
+        // WHY: Firebase initialization can be slow; no need to block UI syncState.
+        android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+        handler.post(() -> {
+            if (isFirebaseInitialized(this)) {
+                FirebaseMessaging.getInstance().subscribeToTopic("all");
+            }
+        });
     }
 
     @Override
@@ -503,6 +462,88 @@ public class MainActivity extends BasePermissionAppCompatActivity {
             });
             storageAccessDenied.setActionTextColor(Color.YELLOW);
             storageAccessDenied.show();
+        }
+    }
+
+    /**
+     * WHAT: Grouping non-critical notices and permission checks.
+     * WHY: Centralized handling for deferred background work that might show overlays.
+     */
+    private void checkBackgroundNotices() {
+        if (isFinishing()) return;
+
+        boolean hasStorageAccess = isStoragePermissionGranted();
+        if (!hasStorageAccess) {
+            showNoticeNeedStorageAccess();
+        }
+        if (hasStorageAccess) {
+            allFilesAccessCheck();
+        }
+
+        handleIntentOrReminder();
+    }
+
+    /**
+     * WHAT: Deferring file backup restore or "Major changes" reminder.
+     * WHY: Prevents heavy disk I/O (JSON parsing) on the first frame.
+     */
+    private void handleIntentOrReminder() {
+        if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+            Uri data = getIntent().getData();
+            if (data != null) {
+                new SingleCopyTask(this, new SingleCopyTask.CallBackTask() {
+                    @Override
+                    public void onCopyPreExecute() {
+                    }
+
+                    @Override
+                    public void onCopyProgressUpdate(int progress) {
+                    }
+
+                    @Override
+                    public void onCopyPostExecute(@NonNull String path, boolean wasSuccessful, @NonNull String reason) {
+                        if (wasSuccessful) {
+                            BackupRestoreManager manager = new BackupRestoreManager(MainActivity.this, projectsFragment);
+
+                            if (BackupFactory.zipContainsFile(path, "local_libs")) {
+                                new MaterialAlertDialogBuilder(MainActivity.this)
+                                        .setTitle("Warning")
+                                        .setMessage(BackupRestoreManager.getRestoreIntegratedLocalLibrariesMessage(false, -1, -1, null))
+                                        .setPositiveButton("Copy", (dialog, which) -> manager.doRestore(path, true))
+                                        .setNegativeButton("Don't copy", (dialog, which) -> manager.doRestore(path, false))
+                                        .setNeutralButton(R.string.common_word_cancel, null)
+                                        .show();
+                            } else {
+                                manager.doRestore(path, true);
+                            }
+
+                            // Clear intent so it doesn't duplicate
+                            getIntent().setData(null);
+                        } else {
+                            SketchwareUtil.toastError("Failed to copy backup file to temporary location: " + reason, Toast.LENGTH_LONG);
+                        }
+                    }
+                }).copyFile(data);
+            }
+        } else if (!ConfigActivity.isSettingEnabled(ConfigActivity.SETTING_CRITICAL_UPDATE_REMINDER)) {
+            BottomSheetDialogView bottomSheetDialog = getBottomSheetDialogView();
+            bottomSheetDialog.getPositiveButton().setEnabled(false);
+
+            CountDownTimer countDownTimer = new CountDownTimer(10000, 1000) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    bottomSheetDialog.setPositiveButtonText(millisUntilFinished / 1000 + "");
+                }
+
+                @Override
+                public void onFinish() {
+                    bottomSheetDialog.setPositiveButtonText("View changes");
+                    bottomSheetDialog.getPositiveButton().setEnabled(true);
+                }
+            };
+            countDownTimer.start();
+
+            if (!isFinishing()) bottomSheetDialog.show();
         }
     }
 
