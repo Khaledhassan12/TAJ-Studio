@@ -2436,6 +2436,17 @@ Please try again later"</string>
     <string name="github_upload_channel_progress_name">Project Upload Progress</string>
     <string name="github_upload_channel_done_name">Project Upload Completion</string>
     <string name="tab_git">Git</string>
+    <string name="upgrades_tab">Upgrades</string>
+    <string name="upgrade_center_title">Smart Upgrade Center</string>
+    <string name="upgrade_resources">Upgrade Resources</string>
+    <string name="recheck">Recheck</string>
+    <string name="last_checked">Last checked: %1$s</string>
+    <string name="age_days">Age: %1$d days</string>
+    <string name="age_weeks">Age: %1$d weeks</string>
+    <string name="age_months">Age: %1$d months</string>
+    <string name="age_years">Age: %1$d years</string>
+    <string name="up_to_date">Up to date</string>
+    <string name="upgrades_available">%1$d upgrades available</string>
     <string name="git_header_stats">%1$d projects synced · last %2$s</string>
     <string name="git_empty_signedin">No uploads yet — long-press a project and tap your account to upload.</string>
     <string name="git_empty_signedout_title">See your GitHub uploads here</string>
@@ -2530,4 +2541,15 @@ Please try again later"</string>
     <string name="lib_dependencies">Dependencies</string>
     <string name="lib_sample_code">Sample Code</string>
     <string name="lib_github">GitHub</string>
+
+    <!-- Project Doctor & Upgrades -->
+    <string name="scan_summary_text">Scanned %1$d • %2$d upgradable • %3$d clean</string>
+    <string name="upgrade_confirm_title">Confirm Upgrades</string>
+    <string name="upgrade_confirm_msg">The following items will be upgraded for %1$s:\n%2$s</string>
+    <string name="finding_empty_java">Empty/Abandoned Java file</string>
+    <string name="finding_empty_java_detail">File %1$s contains no valid class body or logic.</string>
+    <string name="finding_build_artifact">Regenerable build cache</string>
+    <string name="finding_build_artifact_detail">Temporary files in %1$s that can be safely deleted.</string>
+    <string name="project_details_sub">%1$s • %2$s • Last modified: %3$s</string>
+    <string name="project_tech_details">%1$s\nver %2$d→%3$d • %4$s • minSdk %5$d • %6$d libs</string>
 </resources>

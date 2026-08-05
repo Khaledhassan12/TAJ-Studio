@@ -61,6 +61,7 @@ public class MainActivity extends BasePermissionAppCompatActivity {
     private static final String PROJECTS_FRAGMENT_TAG = "projects_fragment";
     private static final String PROJECTS_STORE_FRAGMENT_TAG = "projects_store_fragment";
     private static final String GIT_FRAGMENT_TAG = "git_fragment";
+    private static final String UPGRADES_FRAGMENT_TAG = "upgrades_fragment";
     private ActionBarDrawerToggle drawerToggle;
     private DB u;
     private Snackbar storageAccessDenied;
@@ -75,6 +76,7 @@ public class MainActivity extends BasePermissionAppCompatActivity {
     private ProjectsFragment projectsFragment;
     private ProjectsStoreFragment projectsStoreFragment;
     private GitUploadsFragment gitUploadsFragment;
+    private pro.sketchware.upgrades.UpgradeCenterFragment upgradesFragment;
     private Fragment activeFragment;
     @IdRes
     private int currentNavItemId = R.id.item_projects;
@@ -236,6 +238,9 @@ public class MainActivity extends BasePermissionAppCompatActivity {
             } else if (id == R.id.item_git) {
                 navigateToGitFragment();
                 return true;
+            } else if (id == R.id.item_upgrades) {
+                navigateToUpgradesFragment();
+                return true;
             }
             return false;
         });
@@ -244,6 +249,7 @@ public class MainActivity extends BasePermissionAppCompatActivity {
             projectsFragment = (ProjectsFragment) getSupportFragmentManager().findFragmentByTag(PROJECTS_FRAGMENT_TAG);
             projectsStoreFragment = (ProjectsStoreFragment) getSupportFragmentManager().findFragmentByTag(PROJECTS_STORE_FRAGMENT_TAG);
             gitUploadsFragment = (GitUploadsFragment) getSupportFragmentManager().findFragmentByTag(GIT_FRAGMENT_TAG);
+            upgradesFragment = (pro.sketchware.upgrades.UpgradeCenterFragment) getSupportFragmentManager().findFragmentByTag(UPGRADES_FRAGMENT_TAG);
             currentNavItemId = savedInstanceState.getInt("selected_tab_id");
             Fragment current = getFragmentForNavId(currentNavItemId);
             if (current instanceof ProjectsFragment) {
@@ -252,6 +258,8 @@ public class MainActivity extends BasePermissionAppCompatActivity {
                 navigateToSketchubFragment();
             } else if (current instanceof GitUploadsFragment) {
                 navigateToGitFragment();
+            } else if (current instanceof pro.sketchware.upgrades.UpgradeCenterFragment) {
+                navigateToUpgradesFragment();
             }
 
             return;
@@ -267,6 +275,8 @@ public class MainActivity extends BasePermissionAppCompatActivity {
             return projectsStoreFragment;
         } else if (navItemId == R.id.item_git) {
             return gitUploadsFragment;
+        } else if (navItemId == R.id.item_upgrades) {
+            return upgradesFragment;
         }
         throw new IllegalArgumentException();
     }
@@ -341,6 +351,28 @@ public class MainActivity extends BasePermissionAppCompatActivity {
 
         activeFragment = gitUploadsFragment;
         currentNavItemId = R.id.item_git;
+    }
+
+    private void navigateToUpgradesFragment() {
+        if (upgradesFragment == null) {
+            upgradesFragment = new pro.sketchware.upgrades.UpgradeCenterFragment();
+        }
+
+        boolean shouldShow = true;
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
+
+        binding.createNewProject.hide();
+        if (activeFragment != null) transaction.hide(activeFragment);
+        if (fm.findFragmentByTag(UPGRADES_FRAGMENT_TAG) == null) {
+            shouldShow = false;
+            transaction.add(binding.container.getId(), upgradesFragment, UPGRADES_FRAGMENT_TAG);
+        }
+        if (shouldShow) transaction.show(upgradesFragment);
+        transaction.commit();
+
+        activeFragment = upgradesFragment;
+        currentNavItemId = R.id.item_upgrades;
     }
 
     @NonNull
