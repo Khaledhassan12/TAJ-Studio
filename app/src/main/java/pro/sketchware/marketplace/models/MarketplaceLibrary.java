@@ -12,8 +12,8 @@ public class MarketplaceLibrary {
     private final String displayName;
     private final String summary;
     private final String description;
-    private final String stableVersion;
-    private final String coordinate;
+    private String stableVersion;
+    private String coordinate;
     private final String docUrl;
     private final boolean androidx;
     private final String downloadUrl;
@@ -81,7 +81,16 @@ public class MarketplaceLibrary {
     public String getSummary() { return summary; }
     public String getDescription() { return description; }
     public String getStableVersion() { return stableVersion; }
+    
+    // WHAT: Setter for dynamic version switching.
+    // HOW: Updating the stableVersion field to reflect user choice from Picker.
+    public void setStableVersion(String stableVersion) { this.stableVersion = stableVersion; }
+    
     public String getCoordinate() { return coordinate; }
+    
+    // WHAT: Setter for updating coordinates with new version.
+    // HOW: Replacing the version part of the group:artifact:version string.
+    public void setCoordinate(String coordinate) { this.coordinate = coordinate; }
     public String getDocUrl() { return docUrl; }
     public boolean isAndroidx() { return androidx; }
     public String getDownloadUrl() { return downloadUrl; }

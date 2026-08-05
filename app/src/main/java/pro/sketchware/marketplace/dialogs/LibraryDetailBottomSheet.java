@@ -206,6 +206,24 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
                 SketchwareUtil.toast(getString(R.string.lib_copied));
             });
         }
+
+        // WHAT: Version Picker Integration.
+        // HOW: Opening the picker sheet and updating coordinates/UI on selection.
+        binding.btnVersions.setOnClickListener(v -> {
+            LibraryVersionPickerSheet.newInstance(library, version -> {
+                String[] parts = library.getCoordinate().split(":");
+                if (parts.length >= 2) {
+                    String newCoordinate = parts[0] + ":" + parts[1] + ":" + version;
+                    library.setCoordinate(newCoordinate);
+                    library.setStableVersion(version);
+
+                    binding.tvDetailCoordinate.setText(newCoordinate);
+                    binding.tvDetailVersion.setText(version);
+
+                    actuallyStartService();
+                }
+            }).show(getParentFragmentManager(), "version_picker");
+        });
     }
 
     private void checkStatusAsync() {
