@@ -15,4 +15,9 @@
         android:icon="@drawable/ic_github_brand"
         android:title="Git" />
 
+    <item
+        android:id="@+id/item_upgrades"
+        android:icon="@drawable/ic_tab_upgrades"
+        android:title="@string/upgrades_tab" />
+
 </menu>
