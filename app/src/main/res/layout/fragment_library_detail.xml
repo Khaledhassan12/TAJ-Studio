@@ -177,6 +177,15 @@
                 android:text="@string/lib_github"
                 app:icon="@drawable/ic_github_brand" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_versions"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/lib_versions_title"
+                app:icon="@drawable/ic_mtrl_history" />
+
         </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView

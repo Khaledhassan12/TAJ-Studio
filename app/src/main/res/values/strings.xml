@@ -1497,6 +1497,10 @@ Please try again after removing the blocks with this variable"</string>
     <string name="logic_editor_title_enter_string_value">Enter string value</string>
     <string name="logic_editor_title_location_manager_provider_type">Select Provider Type</string>
     <string name="logic_editor_title_mapview_map_type">Select Map Type</string>
+    <string name="lib_versions_title">Versions</string>
+    <string name="lib_version_picker_title">Select Version</string>
+    <string name="lib_retry">Retry</string>
+    <string name="lib_error_fetch">Failed to fetch versions</string>
     <string name="logic_editor_title_mapview_marker_color">Select Marker Color</string>
     <string name="logic_editor_title_remove_list">Remove a list</string>
     <string name="logic_editor_title_remove_variable">Remove a variable</string>
