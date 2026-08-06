@@ -50,6 +50,7 @@ import pro.sketchware.github.GitHubManager;
 import pro.sketchware.github.GitHubSignInSheet;
 import pro.sketchware.github.GitHubUploadService;
 import pro.sketchware.github.ProjectUploadBottomSheet;
+import pro.sketchware.security.ProjectLockManager;
 
 public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.ProjectViewHolder> {
     private final ProjectsFragment projectsFragment;
@@ -229,6 +230,12 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
             holder.binding.imgPin.setVisibility(View.INVISIBLE);
         }
 
+        if (ProjectLockManager.isLocked(scId)) {
+            holder.binding.imgLock.setVisibility(View.VISIBLE);
+        } else {
+            holder.binding.imgLock.setVisibility(View.GONE);
+        }
+
         // WHAT: Using a pre-built string instead of repeated concatenation.
         // WHY: Reduces garbage collection pressure in hot scroll paths.
         // (عربي) بناء نص الإصدار مرة واحدة لتقليل استهلاك الذاكرة أثناء التمرير.
@@ -316,6 +323,7 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
     }
 
     private void showProjectOptionsBottomSheet(HashMap<String, Object> projectMap, int position) {
+        String scId = yB.c(projectMap, "sc_id");
         // WHAT: optionsSheetPrewarm - Background loading of apps list and icons.
         // WHY: Pre-fills caches so that if the user clicks "Change Icon", the UI is instant.
         // (عربي) تسخين مسبق: جلب قائمة التطبيقات والأيقونات في الخلفية عند فتح الخيارات.
@@ -331,7 +339,13 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
 
         String projectTitle = yB.c(projectMap, "my_ws_name");
         binding.title.setText(projectTitle);
-        binding.tvProjectId.setText(yB.c(projectMap, "sc_id"));
+        binding.tvProjectId.setText(scId);
+
+        if (ProjectLockManager.isLocked(scId)) {
+            binding.imgLockStatus.setVisibility(View.VISIBLE);
+        } else {
+            binding.imgLockStatus.setVisibility(View.GONE);
+        }
 
         GitHubManager ghManager = GitHubManager.getInstance(activity);
         if (ghManager.isSignedIn()) {
@@ -366,7 +380,6 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
                     }
                 }
 
-                String scId = yB.c(projectMap, "sc_id");
                 File projectRoot = new File(wq.d(scId));
 
                 projectOptionsBSD.dismiss();
@@ -383,7 +396,6 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
         binding.changeAppIcon.setOnClickListener(v -> {
             projectOptionsBSD.dismiss();
             if (activity instanceof FragmentActivity) {
-                String scId = yB.c(projectMap, "sc_id");
                 pro.sketchware.activities.main.fragments.projects.AppIconPickerSheet.newInstance(scId, projectTitle)
                         .show(((FragmentActivity) activity).getSupportFragmentManager(), "AppIconPicker");
             }
@@ -409,6 +421,21 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
             projectOptionsBSD.dismiss();
         });
 
+        binding.projectLock.setOnClickListener(v -> {
+            if (ProjectLockManager.isLocked(scId)) {
+                ProjectLockManager.requirePin(activity, scId, () -> {
+                    ProjectLockManager.removeLock(scId);
+                    notifyItemChanged(position);
+                    projectOptionsBSD.dismiss();
+                });
+            } else {
+                ProjectLockManager.showSetLockDialog(activity, scId, () -> {
+                    notifyItemChanged(position);
+                    projectOptionsBSD.dismiss();
+                });
+            }
+        });
+
         binding.projectDelete.setOnClickListener(v -> {
             projectOptionsBSD.dismiss();
             MaterialAlertDialogBuilder dialog = new MaterialAlertDialogBuilder(activity);
@@ -429,6 +456,14 @@ public class ProjectsAdapter extends RecyclerView.Adapter<ProjectsAdapter.Projec
         } else {
             binding.pinIcon.setImageResource(R.drawable.ic_mtrl_pin);
             binding.pinText.setText("Pin project");
+        }
+
+        if (ProjectLockManager.isLocked(scId)) {
+            binding.lockIcon.setImageResource(R.drawable.ic_mtrl_shield_lock);
+            binding.lockText.setText(R.string.unlock_project);
+        } else {
+            binding.lockIcon.setImageResource(R.drawable.ic_mtrl_shield_lock);
+            binding.lockText.setText(R.string.lock_project);
         }
 
         projectOptionsBSD.show();

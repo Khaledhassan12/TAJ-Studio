@@ -48,6 +48,7 @@ import pro.sketchware.R;
 import pro.sketchware.activities.main.activities.MainActivity;
 import pro.sketchware.databinding.MyprojectsBinding;
 import pro.sketchware.databinding.SortProjectDialogBinding;
+import pro.sketchware.security.ProjectLockManager;
 import pro.sketchware.utility.UI;
 
 public class ProjectsFragment extends DA {
@@ -86,7 +87,15 @@ public class ProjectsFragment extends DA {
     public void b(int requestCode) {
     }
 
-    public void toDesignActivity(String sc_id) {
+    public void toDesignActivity(String scId) {
+        if (ProjectLockManager.isLocked(scId) && !ProjectLockManager.isSessionUnlocked(scId)) {
+            ProjectLockManager.requirePin(requireActivity(), scId, () -> launchDesign(scId));
+            return;
+        }
+        launchDesign(scId);
+    }
+
+    private void launchDesign(String sc_id) {
         Intent intent = new Intent(requireContext(), DesignActivity.class);
         ProjectTracker.setScId(sc_id);
         intent.putExtra("sc_id", sc_id);
