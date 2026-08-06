@@ -32,6 +32,7 @@ import pro.sketchware.marketplace.catalog.LibraryCatalog;
 import pro.sketchware.marketplace.dialogs.CustomLibraryDialogFragment;
 import pro.sketchware.marketplace.dialogs.LibraryDetailBottomSheet;
 import pro.sketchware.marketplace.models.MarketplaceLibrary;
+import pro.sketchware.marketplace.services.InstallStateHub;
 import pro.sketchware.marketplace.services.LibraryInstallService;
 import pro.sketchware.utility.SketchwareUtil;
 
@@ -47,6 +48,8 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
     private MostUsedAdapter mostUsedAdapter;
     private MarketplaceAdapter searchAdapter;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private final InstallStateHub.Listener hubListener = (coordinate, entry) -> refreshBadges();
 
     private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
         @Override
@@ -71,6 +74,9 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
         setupUI();
         loadCatalogAsync();
         
+        // R5: Registry Hub Listener
+        InstallStateHub.getInstance().addListener(hubListener);
+
         IntentFilter filter = new IntentFilter();
         filter.addAction(LibraryInstallService.ACTION_STATUS_CHANGE);
         filter.addAction(LibraryInstallService.ACTION_INSTALL_STARTED);
@@ -107,6 +113,7 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        InstallStateHub.getInstance().removeListener(hubListener);
         unregisterReceiver(statusReceiver);
         executor.shutdownNow();
     }
@@ -212,6 +219,13 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
     }
 
     /**
+     * تحديث شارات الحالة فقط لضمان سلاسة الواجهة.
+     */
+    public void refreshBadges() {
+        refreshUI();
+    }
+
+    /**
      * تحديث الواجهة لإعادة رسم حالة التثبيت (Badges).
      * Refreshes the UI to redraw installation status badges.
      *
@@ -265,8 +279,26 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
                 holder.binding.tvInitial.setVisibility(View.GONE);
             }
 
-            if (isInstalled(lib)) {
+            // R5: Honest Live Badges (Hub priority)
+            InstallStateHub.Entry entry = InstallStateHub.getInstance().get(lib.getCoordinate());
+            if (entry != null) {
+                if (entry.state == InstallStateHub.State.SUCCESS) {
+                    holder.binding.tvStatusBadge.setVisibility(View.VISIBLE);
+                    holder.binding.tvStatusBadge.setText(R.string.lib_installed);
+                    holder.binding.tvStatusBadge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF00C853));
+                } else if (entry.state == InstallStateHub.State.FAILED) {
+                    holder.binding.tvStatusBadge.setVisibility(View.GONE);
+                } else if (entry.state != InstallStateHub.State.IDLE) {
+                    holder.binding.tvStatusBadge.setVisibility(View.VISIBLE);
+                    holder.binding.tvStatusBadge.setText("Installing…");
+                    holder.binding.tvStatusBadge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFFA000));
+                } else {
+                    holder.binding.tvStatusBadge.setVisibility(View.GONE);
+                }
+            } else if (isInstalled(lib)) {
                 holder.binding.tvStatusBadge.setVisibility(View.VISIBLE);
+                holder.binding.tvStatusBadge.setText(R.string.lib_installed);
+                holder.binding.tvStatusBadge.setBackgroundTintList(null); // Default theme
             } else {
                 holder.binding.tvStatusBadge.setVisibility(View.GONE);
             }
@@ -322,8 +354,23 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
                 holder.binding.tvInitial.setVisibility(View.GONE);
             }
 
-            if (isInstalled(lib)) {
+            // R5: Honest Live Badges
+            InstallStateHub.Entry entry = InstallStateHub.getInstance().get(lib.getCoordinate());
+            if (entry != null) {
+                if (entry.state == InstallStateHub.State.SUCCESS) {
+                    holder.binding.tvStatus.setVisibility(View.VISIBLE);
+                    holder.binding.tvStatus.setText(R.string.lib_installed);
+                } else if (entry.state == InstallStateHub.State.FAILED) {
+                    holder.binding.tvStatus.setVisibility(View.GONE);
+                } else if (entry.state != InstallStateHub.State.IDLE) {
+                    holder.binding.tvStatus.setVisibility(View.VISIBLE);
+                    holder.binding.tvStatus.setText("Installing…");
+                } else {
+                    holder.binding.tvStatus.setVisibility(View.GONE);
+                }
+            } else if (isInstalled(lib)) {
                 holder.binding.tvStatus.setVisibility(View.VISIBLE);
+                holder.binding.tvStatus.setText(R.string.lib_installed);
             } else {
                 holder.binding.tvStatus.setVisibility(View.GONE);
             }

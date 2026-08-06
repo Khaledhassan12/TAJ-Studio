@@ -137,6 +137,7 @@ public class LibraryInstallService extends Service {
                 for (String coord : coordinates) {
                     if (!pendingCoords.contains(coord)) {
                         pendingCoords.add(coord);
+                        publish(coord, InstallStateHub.State.QUEUED, 0, "Waiting…");
                         startInstallationTask(coord);
                     }
                 }
@@ -165,6 +166,10 @@ public class LibraryInstallService extends Service {
         // WHY: Ensures a clean state and stops resource usage immediately.
         executorService.shutdownNow();
         
+        for (String coord : pendingCoords) {
+            InstallStateHub.get().update(coord, InstallStateHub.State.IDLE, 0, null);
+        }
+
         synchronized (activeArtifacts) {
             for (String artifact : activeArtifacts) {
                 deleteFolderSafely(artifact);
@@ -201,6 +206,29 @@ public class LibraryInstallService extends Service {
         }
     }
 
+    private long lastPublishTime = 0;
+    private int lastProgress = -2;
+
+    /**
+     * WHAT: publish - Centralized writer for both InstallStateHub and System Notifications.
+     * WHY: [R5] Guarantees that the UI (Hub) and the Status Bar (Notification) are always in sync.
+     * (عربي) الناشر المركزي - يضمن تزامن الواجهة وشريط التنبيهات عبر مصدر حقيقة واحد.
+     */
+    private void publish(String coordinate, InstallStateHub.State state, int progress, String message) {
+        long now = System.currentTimeMillis();
+        // Throttle for progress updates
+        if (state == InstallStateHub.State.DOWNLOADING && progress >= 0) {
+            if (now - lastPublishTime < 250 && Math.abs(progress - lastProgress) < 1) {
+                return;
+            }
+        }
+        lastPublishTime = now;
+        lastProgress = progress;
+
+        InstallStateHub.get().update(coordinate, state, progress, message);
+        updateNotification();
+    }
+
     private void startInstallationTask(String coordinate) {
         executorService.execute(() -> {
             boolean[] completed = {false};
@@ -210,7 +238,7 @@ public class LibraryInstallService extends Service {
                 activeArtifacts.add(artifactId);
                 currentLibName = artifactId;
             }
-            updateNotification();
+            publish(coordinate, InstallStateHub.State.DOWNLOADING, 0, "Checking disk…");
             
             // G3: Already Installed Guard - treat re-download of existing library as silent success.
             if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
@@ -238,7 +266,7 @@ public class LibraryInstallService extends Service {
 
             try {
                 Log.d(TAG, "Mirroring working downloader for: " + coordinate);
-                updateNotification();
+                publish(coordinate, InstallStateHub.State.DOWNLOADING, 0, "Initializing…");
 
                 // G1: Mirroring ManageLocalLibraryActivity requirements (Extracting Jars)
                 BuiltInLibraries.maybeExtractAndroidJar((message, progress) -> {});
@@ -256,12 +284,33 @@ public class LibraryInstallService extends Service {
                 
                 resolver.resolveDependency(new DependencyResolver.DependencyResolverCallback() {
                     @Override
+                    public void onDownloadStart(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
+                        publish(coordinate, InstallStateHub.State.DOWNLOADING, -1, "Downloading " + dep.getArtifactId() + "…");
+                    }
+
+                    @Override
+                    public void onDownloadEnd(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
+                        publish(coordinate, InstallStateHub.State.DOWNLOADING, 100, "Downloaded " + dep.getArtifactId());
+                    }
+
+                    @Override
+                    public void unzipping(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
+                        publish(coordinate, InstallStateHub.State.EXTRACTING, -1, "Extracting " + dep.getArtifactId() + "…");
+                    }
+
+                    @Override
+                    public void dexing(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
+                        publish(coordinate, InstallStateHub.State.DEXING, -1, "Dexing " + dep.getArtifactId() + "…");
+                    }
+
+                    @Override
                     public void onTaskCompleted(@NonNull List<String> dependencies) {
                         if (completed[0]) {
                             // WHAT: lateSuccessReconciler - Correct UI state if downloader finished after timeout.
                             // WHY: Prevents contradiction between "Failed" notification and "Installed" badge.
                             pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
                             if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                publish(coordinate, InstallStateHub.State.SUCCESS, 100, "Installed");
                                 Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
                                 successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
                                 sendBroadcast(successIntent);
@@ -289,11 +338,12 @@ public class LibraryInstallService extends Service {
                     }
 
                     @Override
-                    public void onDownloadError(@NonNull Artifact dep, @NonNull Throwable e) {
+                    public void onDownloadError(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep, @NonNull Throwable e) {
                         if (completed[0]) {
                             // lateSuccessReconciler for late errors/success check
                             pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
                             if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                publish(coordinate, InstallStateHub.State.SUCCESS, 100, "Installed");
                                 Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
                                 successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
                                 sendBroadcast(successIntent);
@@ -318,17 +368,18 @@ public class LibraryInstallService extends Service {
                     }
 
                     @Override
-                    public void onArtifactNotFound(@NonNull Artifact dep) {
+                    public void onArtifactNotFound(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
                         if (completed[0]) return;
                         completed[0] = true;
-                        handleFailure(coordinate, "Artifact not found");
+                        handleFailure(coordinate, "Artifact not found: " + dep.getArtifactId());
                     }
                     
                     @Override
-                    public void dexingFailed(@NonNull Artifact dep, @NonNull Exception e) {
+                    public void dexingFailed(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep, @NonNull Exception e) {
                         if (completed[0]) {
                             pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
                             if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                publish(coordinate, InstallStateHub.State.SUCCESS, 100, "Installed");
                                 Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
                                 successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
                                 sendBroadcast(successIntent);
@@ -364,6 +415,7 @@ public class LibraryInstallService extends Service {
         lastSuccessName = artifactId;
         pendingCoords.remove(coordinate);
         completedCount++;
+        publish(coordinate, InstallStateHub.State.SUCCESS, 100, "Installed");
         pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
         broadcastUpdate();
         checkCompletion();
@@ -383,6 +435,7 @@ public class LibraryInstallService extends Service {
             failedNames.add(name);
         }
         failedCount++;
+        publish(coordinate, InstallStateHub.State.FAILED, 0, reason);
         pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
         broadcastUpdate();
         checkCompletion();
@@ -419,14 +472,23 @@ public class LibraryInstallService extends Service {
     private void updateNotification() {
         // progressChannel: Using a LOW importance channel for silent progress updates.
         // HOW: Dynamic titles and text based on total count and current artifact.
-        String title = totalCount == 1 ? "Installing " + currentLibName : "Installing libraries";
-        String text = totalCount == 1 ? currentLibName : (completedCount + "/" + totalCount);
+        
+        // R5: Sync with Hub - Use first pending coordinate for general status
+        String leadCoord = pendingCoords.isEmpty() ? "" : pendingCoords.get(0);
+        InstallStateHub.Entry entry = InstallStateHub.get().get(leadCoord);
+        
+        String stateMsg = entry != null ? entry.message : "Preparing…";
+        int progress = entry != null ? entry.progress : 0;
+        boolean indeterminate = progress == -1 || (entry != null && (entry.state == InstallStateHub.State.EXTRACTING || entry.state == InstallStateHub.State.DEXING));
+
+        String title = totalCount <= 1 ? "Installing " + currentLibName : "Installing " + totalCount + " libraries";
+        String text = totalCount <= 1 ? stateMsg : (completedCount + "/" + totalCount + " · " + currentLibName);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_PROGRESS)
                 .setSmallIcon(R.drawable.ic_mtrl_download)
                 .setContentTitle(title)
                 .setContentText(text)
-                .setProgress(totalCount, completedCount, false)
+                .setProgress(100, progress < 0 ? 0 : progress, indeterminate)
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setOnlyAlertOnce(true)

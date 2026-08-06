@@ -2,29 +2,30 @@ package pro.sketchware.marketplace.services;
 
 import android.os.Handler;
 import android.os.Looper;
-import java.util.ArrayList;
+
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * [R5] InstallStateHub - مصدر الحقيقة الوحيد لحالة تثبيت المكتبات.
- * InstallStateHub - Single Source of Truth for library installation states.
+ * [R5 State Law] Single Source of Truth for library installation states.
+ * (عربي) مصدر الحقيقة الوحيد لحالات تثبيت المكتبات.
  */
-public class InstallStateHub {
-
+public final class InstallStateHub {
     public enum State { IDLE, QUEUED, DOWNLOADING, EXTRACTING, DEXING, SUCCESS, FAILED }
 
-    public static class Entry {
+    public static final class Entry {
         public final State state;
         public final int progress;
         public final String message;
         public final long timestamp;
 
-        public Entry(State state, int progress, String message) {
-            this.state = state;
-            this.progress = progress;
-            this.message = message;
-            this.timestamp = System.currentTimeMillis();
+        Entry(State s, int p, String m) {
+            state = s;
+            progress = p;
+            message = m;
+            timestamp = System.currentTimeMillis();
         }
     }
 
@@ -32,52 +33,39 @@ public class InstallStateHub {
         void onStateChanged(String coordinate, Entry entry);
     }
 
-    private static InstallStateHub instance;
-    private final ConcurrentHashMap<String, Entry> states = new ConcurrentHashMap<>();
-    private final List<Listener> listeners = new ArrayList<>();
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private static final InstallStateHub INSTANCE = new InstallStateHub();
+
+    public static InstallStateHub get() {
+        return INSTANCE;
+    }
+
+    public static InstallStateHub getInstance() {
+        return INSTANCE;
+    }
+
+    private final Map<String, Entry> map = new ConcurrentHashMap<>();
+    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
+    private final Handler main = new Handler(Looper.getMainLooper());
 
     private InstallStateHub() {}
 
-    public static synchronized InstallStateHub getInstance() {
-        if (instance == null) instance = new InstallStateHub();
-        return instance;
-    }
-
-    /**
-     * تحديث الحالة وبث التغيير لكافة المستمعين.
-     * [R5-2] الكاتب الوحيد للحالة (يُستدعى من الخدمة).
-     */
     public void update(String coordinate, State state, int progress, String message) {
-        Entry entry = new Entry(state, progress, message);
-        states.put(coordinate, entry);
-        
-        mainHandler.post(() -> {
-            synchronized (listeners) {
-                for (Listener listener : listeners) {
-                    listener.onStateChanged(coordinate, entry);
-                }
-            }
-        });
+        Entry e = new Entry(state, progress, message);
+        map.put(coordinate, e);
+        for (Listener l : listeners) {
+            main.post(() -> l.onStateChanged(coordinate, e));
+        }
     }
 
     public Entry get(String coordinate) {
-        return states.get(coordinate);
+        return map.get(coordinate);
     }
 
-    public void addListener(Listener listener) {
-        synchronized (listeners) {
-            if (!listeners.contains(listener)) listeners.add(listener);
-        }
+    public void addListener(Listener l) {
+        listeners.add(l);
     }
 
-    public void removeListener(Listener listener) {
-        synchronized (listeners) {
-            listeners.remove(listener);
-        }
-    }
-    
-    public void clear(String coordinate) {
-        states.remove(coordinate);
+    public void removeListener(Listener l) {
+        listeners.remove(l);
     }
 }

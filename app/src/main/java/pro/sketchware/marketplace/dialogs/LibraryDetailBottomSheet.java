@@ -38,6 +38,7 @@ import dev.aldi.sayuti.editor.manage.LocalLibrary;
 import pro.sketchware.R;
 import pro.sketchware.databinding.FragmentLibraryDetailBinding;
 import pro.sketchware.marketplace.models.MarketplaceLibrary;
+import pro.sketchware.marketplace.services.InstallStateHub;
 import pro.sketchware.marketplace.services.LibraryInstallService;
 import pro.sketchware.utility.SketchwareUtil;
 
@@ -53,6 +54,12 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private ActivityResultLauncher<String> notificationPermissionLauncher;
 
+    private final InstallStateHub.Listener hubListener = (coordinate, entry) -> {
+        if (library.getCoordinate().equals(coordinate)) {
+            applyInstallUiState(entry.state, entry.progress, entry.message);
+        }
+    };
+
     private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -60,11 +67,10 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
             if (LibraryInstallService.ACTION_LIBRARY_INSTALLED.equals(action)) {
                 String installedName = intent.getStringExtra(LibraryInstallService.EXTRA_LIBRARY_NAME);
                 if (installedName != null && library.getCoordinate().contains(installedName)) {
-                    // WHAT: Visual assurance signals.
-                    // HOW: Animated button change + Green Snackbar.
                     showSuccessState();
                 }
             }
+            // Logic moved to Hub listener mostly, but keep for legacy broadcast compatibility
             checkStatusAsync();
         }
     };
@@ -113,11 +119,21 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
             parent.setBackgroundResource(R.drawable.shape_rounded_bottom_sheet);
         }
         
-        // G2: Synchronous Install Check - الفحص المتزامن والفوري عند الفتح لتجنب التأخير.
-        // G2: Synchronous Install Check - reflect status immediately on open to avoid UI lag.
-        boolean isAlreadyInstalled = pro.sketchware.marketplace.utils.MarketplaceHelper.isInstalledSync(library);
-        setupUI(isAlreadyInstalled);
+        // R5: Registry Hub Listener for live updates
+        InstallStateHub.getInstance().addListener(hubListener);
+
+        setupUI();
         
+        // R5: Immediate render from Hub (memory speed)
+        InstallStateHub.Entry entry = InstallStateHub.getInstance().get(library.getCoordinate());
+        if (entry != null && entry.state != InstallStateHub.State.IDLE) {
+            applyInstallUiState(entry.state, entry.progress, entry.message);
+        } else {
+            // Cold start: Check disk (installedCache should be fast)
+            boolean isAlreadyInstalled = pro.sketchware.marketplace.utils.MarketplaceHelper.isInstalledSync(library);
+            applyInstallUiState(isAlreadyInstalled ? InstallStateHub.State.SUCCESS : InstallStateHub.State.IDLE, 0, null);
+        }
+
         IntentFilter filter = new IntentFilter();
         filter.addAction(LibraryInstallService.ACTION_STATUS_CHANGE);
         filter.addAction(LibraryInstallService.ACTION_LIBRARY_INSTALLED);
@@ -129,15 +145,62 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
-    private void setupUI(boolean isAlreadyInstalled) {
+    private void applyInstallUiState(InstallStateHub.State state, int progress, String message) {
+        if (binding == null) return;
+
+        boolean isBusy = state == InstallStateHub.State.QUEUED || 
+                        state == InstallStateHub.State.DOWNLOADING || 
+                        state == InstallStateHub.State.EXTRACTING || 
+                        state == InstallStateHub.State.DEXING;
+
+        // Button state
+        if (isBusy) {
+            binding.btnInstall.setText("Installing…");
+            binding.btnInstall.setEnabled(false);
+            binding.btnInstall.setAlpha(0.5f);
+        } else if (state == InstallStateHub.State.SUCCESS) {
+            binding.btnInstall.setText(R.string.lib_installed);
+            binding.btnInstall.setEnabled(false);
+            binding.btnInstall.setAlpha(0.6f);
+        } else if (state == InstallStateHub.State.FAILED) {
+            binding.btnInstall.setText("Retry");
+            binding.btnInstall.setEnabled(true);
+            binding.btnInstall.setAlpha(1.0f);
+        } else {
+            binding.btnInstall.setText(R.string.lib_install);
+            binding.btnInstall.setEnabled(true);
+            binding.btnInstall.setAlpha(1.0f);
+        }
+
+        // Progress and helpers
+        binding.pbInstallHorizontal.setVisibility(isBusy ? View.VISIBLE : View.GONE);
+        if (isBusy) {
+            boolean indeterminate = state == InstallStateHub.State.EXTRACTING || state == InstallStateHub.State.DEXING || progress == 0;
+            binding.pbInstallHorizontal.setIndeterminate(indeterminate);
+            if (!indeterminate) binding.pbInstallHorizontal.setProgress(progress);
+        }
+
+        binding.btnBgTask.setVisibility(isBusy ? View.VISIBLE : View.GONE);
+        binding.btnCancelInstall.setVisibility(isBusy ? View.VISIBLE : View.GONE);
+        
+        if (state == InstallStateHub.State.SUCCESS && library.getUsageSnippet() != null) {
+            binding.layoutQuickStart.setVisibility(View.VISIBLE);
+        }
+        
+        if (message != null && !message.isEmpty()) {
+            binding.tvDetailCoordinate.setText(message); // Temporary status overlay
+        } else {
+            binding.tvDetailCoordinate.setText(library.getCoordinate());
+        }
+    }
+
+    private void setupUI() {
         binding.tvDetailName.setText(library.getDisplayName());
         binding.tvDetailCoordinate.setText(library.getCoordinate());
         binding.tvDetailDescription.setText(library.getDescription());
         binding.tvDetailVersion.setText(library.getStableVersion());
         binding.tvDetailAndroidx.setText(library.isAndroidx() ? R.string.lib_androidx_yes : R.string.lib_androidx_no);
         
-        updateInstallButton(isAlreadyInstalled);
-
         // P7: Bind new fields
         if (library.getCategory() != null) {
             binding.tvDetailCategory.setText(library.getCategory());
@@ -197,6 +260,12 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
             dismissAllowingStateLoss();
         });
 
+        binding.btnCancelInstall.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), LibraryInstallService.class);
+            intent.setAction(LibraryInstallService.ACTION_CANCEL);
+            requireContext().startService(intent);
+        });
+
         if (library.getUsageSnippet() != null) {
             binding.tvUsageSnippet.setText(library.getUsageSnippet());
             binding.btnCopy.setOnClickListener(v -> {
@@ -230,7 +299,7 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
         if (binding == null) return;
         
         executor.execute(() -> {
-            pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+            // pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache(); // Removed from here per user request
             boolean installed = pro.sketchware.marketplace.utils.MarketplaceHelper.isInstalledSync(library);
             String conflictId = getConflictId();
             
@@ -238,7 +307,10 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
                 getActivity().runOnUiThread(() -> {
                     if (binding != null) {
                         binding.pbChecking.setVisibility(View.GONE);
-                        updateInstallButton(installed);
+                        // updateInstallButton(installed); // Replaced by applyInstallUiState
+                        if (InstallStateHub.getInstance().get(library.getCoordinate()) == null) {
+                             applyInstallUiState(installed ? InstallStateHub.State.SUCCESS : InstallStateHub.State.IDLE, 0, null);
+                        }
                         showConflict(conflictId);
                     }
                 });
@@ -325,24 +397,6 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
-    private void updateInstallButton(boolean installed) {
-        if (installed) {
-            binding.btnInstall.setText(R.string.lib_installed);
-            binding.btnInstall.setEnabled(false);
-            binding.btnInstall.setAlpha(0.6f);
-            if (library.getUsageSnippet() != null) {
-                binding.layoutQuickStart.setVisibility(View.VISIBLE);
-            }
-            binding.pbInstallHorizontal.setVisibility(View.GONE);
-            binding.btnBgTask.setVisibility(View.GONE);
-        } else {
-            binding.btnInstall.setText(R.string.lib_install);
-            binding.btnInstall.setEnabled(true);
-            binding.btnInstall.setAlpha(1.0f);
-            binding.layoutQuickStart.setVisibility(View.GONE);
-            binding.btnBgTask.setVisibility(View.GONE);
-        }
-    }
 
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
@@ -355,6 +409,7 @@ public class LibraryDetailBottomSheet extends BottomSheetDialogFragment {
         super.onDestroyView();
         // WHAT: Memory leak prevention - unregistering receiver and clearing references.
         // WHY: Fragment may outlive its view; executor and context-bound receivers must be cleared.
+        InstallStateHub.getInstance().removeListener(hubListener);
         requireContext().unregisterReceiver(statusReceiver);
         executor.shutdownNow();
         onDismissListener = null;
