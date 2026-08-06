@@ -5,6 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Environment;
@@ -20,8 +21,12 @@ import org.cosmic.ide.dependency.resolver.api.Artifact;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
 import dev.aldi.sayuti.editor.manage.LocalLibrariesUtil;
@@ -63,6 +68,8 @@ public class LibraryInstallService extends Service {
     // P1: Use single thread executor to mirror the working downloader (ManageLocalLibraryActivity)
     // and avoid conflicts during jar extraction or dexing.
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static final Map<String, Future<?>> activeTasks = new ConcurrentHashMap<>();
+    private static final Set<String> cancelledCoords = ConcurrentHashMap.newKeySet();
     private NotificationManager notificationManager;
     
     private final List<String> pendingCoords = new ArrayList<>();
@@ -83,10 +90,33 @@ public class LibraryInstallService extends Service {
         createNotificationChannels();
     }
 
+    /**
+     * WHAT: cancelInstall - Static entry point for external components (Activity/Sheet).
+     * WHY: Centralizes cancellation logic for Hub, Service, and System Notifications.
+     * (عربي) وظيفة الإلغاء المركزية - تنهي المهام، تصفّر الحالة في الذاكرة، وتسقط التنبيهات.
+     */
+    public static void cancelInstall(Context context, String coordinate) {
+        cancelledCoords.add(coordinate);
+        Future<?> task = activeTasks.get(coordinate);
+        if (task != null) {
+            task.cancel(true);
+        }
+        
+        Intent cancelIntent = new Intent(context, LibraryInstallService.class);
+        cancelIntent.setAction(ACTION_CANCEL);
+        cancelIntent.putExtra(EXTRA_COORDINATE, coordinate);
+        context.startService(cancelIntent);
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && ACTION_CANCEL.equals(intent.getAction())) {
-            cancelAndCleanupPending();
+            String coordinate = intent.getStringExtra(EXTRA_COORDINATE);
+            if (coordinate != null) {
+                cancelSingle(coordinate);
+            } else {
+                cancelAndCleanupPending();
+            }
             return START_NOT_STICKY;
         }
 
@@ -160,6 +190,35 @@ public class LibraryInstallService extends Service {
         return android.app.PendingIntent.getService(this, NOTIFICATION_ID, intent, flags);
     }
 
+    private synchronized void cancelSingle(String coordinate) {
+        activeTasks.remove(coordinate);
+        pendingCoords.remove(coordinate);
+        
+        String artifactId = coordinate.contains(":") ? coordinate.split(":")[1] : coordinate;
+        activeArtifacts.remove(artifactId);
+        
+        deleteFolderSafely(artifactId);
+        publish(coordinate, InstallStateHub.State.IDLE, 0, "Canceled");
+        
+        // Single-artifact notification ID? For now we only have NOTIFICATION_ID (3001)
+        // If it was the only one, we can cancel, else we update.
+        if (pendingCoords.isEmpty()) {
+            notificationManager.cancel(NOTIFICATION_ID);
+            stopForeground(true);
+        } else {
+            updateNotification();
+        }
+        
+        pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+        
+        Intent cancelBroadcast = new Intent(ACTION_LIBRARY_INSTALL_FAILED);
+        cancelBroadcast.putExtra(EXTRA_LIBRARY_NAME, artifactId);
+        cancelBroadcast.putExtra(EXTRA_ERROR, "Installation canceled");
+        sendBroadcast(cancelBroadcast);
+        
+        checkCompletion();
+    }
+
     private synchronized void cancelAndCleanupPending() {
         // WHAT: Cancel current operations and cleanup partial folders.
         // HOW: Shutting down executor and deleting active artifacts from disk.
@@ -169,6 +228,9 @@ public class LibraryInstallService extends Service {
         for (String coord : pendingCoords) {
             InstallStateHub.get().update(coord, InstallStateHub.State.IDLE, 0, null);
         }
+        
+        activeTasks.clear();
+        cancelledCoords.clear();
 
         synchronized (activeArtifacts) {
             for (String artifact : activeArtifacts) {
@@ -230,181 +292,180 @@ public class LibraryInstallService extends Service {
     }
 
     private void startInstallationTask(String coordinate) {
-        executorService.execute(() -> {
-            boolean[] completed = {false};
-            String artifactId = coordinate.contains(":") ? coordinate.split(":")[1] : coordinate;
-            
-            synchronized (activeArtifacts) {
-                activeArtifacts.add(artifactId);
-                currentLibName = artifactId;
-            }
-            publish(coordinate, InstallStateHub.State.DOWNLOADING, 0, "Checking disk…");
-            
-            // G3: Already Installed Guard - treat re-download of existing library as silent success.
-            if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
-                Log.d(TAG, "Library already installed: " + coordinate);
-                handleSuccess(coordinate);
-                return;
-            }
-
-            // WHAT: generousInstallTimeout - Increased to 5 minutes to accommodate slow connections and heavy AndroidX dependencies.
-            // WHY: Previous 60s timeout caused false failures for larger library sets.
-            timeoutHandler.postDelayed(() -> {
-                if (!completed[0]) {
-                    Log.e(TAG, "Timeout for " + coordinate);
-                    // WHAT: Forced cache refresh for double-verification.
-                    // WHY: Cache must be fresh before checking disk in case I/O finished but wasn't indexed.
-                    pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
-                    // Double check before failing
-                    if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
-                        handleSuccess(coordinate);
-                    } else {
-                        handleFailure(coordinate, "Network timeout");
-                    }
-                }
-            }, 300000);
-
+        Future<?> future = executorService.submit(() -> {
             try {
-                Log.d(TAG, "Mirroring working downloader for: " + coordinate);
-                publish(coordinate, InstallStateHub.State.DOWNLOADING, 0, "Initializing…");
+                boolean[] completed = {false};
+                String artifactId = coordinate.contains(":") ? coordinate.split(":")[1] : coordinate;
+                
+                synchronized (activeArtifacts) {
+                    activeArtifacts.add(artifactId);
+                    currentLibName = artifactId;
+                }
+                publish(coordinate, InstallStateHub.State.DOWNLOADING, 0, "Checking disk…");
+                
+                if (cancelledCoords.contains(coordinate)) return;
 
-                // G1: Mirroring ManageLocalLibraryActivity requirements (Extracting Jars)
-                BuiltInLibraries.maybeExtractAndroidJar((message, progress) -> {});
-                BuiltInLibraries.maybeExtractCoreLambdaStubsJar();
-
-                String[] parts = coordinate.split(":");
-                if (parts.length != 3) {
-                    completed[0] = true;
-                    handleFailure(coordinate, "Invalid Maven format");
+                // G3: Already Installed Guard - treat re-download of existing library as silent success.
+                if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                    Log.d(TAG, "Library already installed: " + coordinate);
+                    handleSuccess(coordinate);
                     return;
                 }
 
-                BuildSettings buildSettings = new BuildSettings("system");
-                DependencyResolver resolver = new DependencyResolver(parts[0], parts[1], parts[2], false, buildSettings);
-                
-                resolver.resolveDependency(new DependencyResolver.DependencyResolverCallback() {
-                    @Override
-                    public void onDownloadStart(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
-                        publish(coordinate, InstallStateHub.State.DOWNLOADING, -1, "Downloading " + dep.getArtifactId() + "…");
-                    }
-
-                    @Override
-                    public void onDownloadEnd(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
-                        publish(coordinate, InstallStateHub.State.DOWNLOADING, 100, "Downloaded " + dep.getArtifactId());
-                    }
-
-                    @Override
-                    public void unzipping(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
-                        publish(coordinate, InstallStateHub.State.EXTRACTING, -1, "Extracting " + dep.getArtifactId() + "…");
-                    }
-
-                    @Override
-                    public void dexing(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
-                        publish(coordinate, InstallStateHub.State.DEXING, -1, "Dexing " + dep.getArtifactId() + "…");
-                    }
-
-                    @Override
-                    public void onTaskCompleted(@NonNull List<String> dependencies) {
-                        if (completed[0]) {
-                            // WHAT: lateSuccessReconciler - Correct UI state if downloader finished after timeout.
-                            // WHY: Prevents contradiction between "Failed" notification and "Installed" badge.
-                            pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
-                            if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
-                                publish(coordinate, InstallStateHub.State.SUCCESS, 100, "Installed");
-                                Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
-                                successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
-                                sendBroadcast(successIntent);
-                            }
-                            return;
-                        }
-                        completed[0] = true;
-                        
-                        // WHAT: Forced cache refresh before double-verification callback.
-                        // WHY: DependencyResolver finishes I/O; cache must be invalidated to see new folder.
+                // ... generousInstallTimeout ...
+                timeoutHandler.postDelayed(() -> {
+                    if (!completed[0]) {
+                        Log.e(TAG, "Timeout for " + coordinate);
                         pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
-
-                        // G4: Double Verified Badge - التأكد من وجود المجلد فعلاً قبل إرسال النجاح.
-                        if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
-                            Log.d(TAG, "Successfully installed and verified: " + coordinate);
-                            handleSuccess(coordinate);
-                            
-                            Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
-                            successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
-                            sendBroadcast(successIntent);
-                        } else {
-                            Log.e(TAG, "Callback said success but folder missing: " + coordinate);
-                            handleFailure(coordinate, "Verification failed (Folder missing)");
-                        }
-                    }
-
-                    @Override
-                    public void onDownloadError(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep, @NonNull Throwable e) {
-                        if (completed[0]) {
-                            // lateSuccessReconciler for late errors/success check
-                            pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
-                            if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
-                                publish(coordinate, InstallStateHub.State.SUCCESS, 100, "Installed");
-                                Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
-                                successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
-                                sendBroadcast(successIntent);
-                            }
-                            return;
-                        }
-                        completed[0] = true;
-                        
-                        // WHAT: Refresh cache on error callback to check if it partially or fully finished.
-                        pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
-
-                        // Check if it actually succeeded despite the error
                         if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
                             handleSuccess(coordinate);
                         } else {
-                            handleFailure(coordinate, e.getMessage());
-                            Intent failIntent = new Intent(ACTION_LIBRARY_INSTALL_FAILED);
-                            failIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
-                            failIntent.putExtra(EXTRA_ERROR, e.getMessage());
-                            sendBroadcast(failIntent);
+                            handleFailure(coordinate, "Network timeout");
                         }
                     }
+                }, 300000);
 
-                    @Override
-                    public void onArtifactNotFound(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
-                        if (completed[0]) return;
+                if (cancelledCoords.contains(coordinate)) return;
+
+                try {
+                    Log.d(TAG, "Mirroring working downloader for: " + coordinate);
+                    publish(coordinate, InstallStateHub.State.DOWNLOADING, 0, "Initializing…");
+
+                    // G1: Mirroring ManageLocalLibraryActivity requirements (Extracting Jars)
+                    BuiltInLibraries.maybeExtractAndroidJar((message, progress) -> {});
+                    BuiltInLibraries.maybeExtractCoreLambdaStubsJar();
+
+                    String[] parts = coordinate.split(":");
+                    if (parts.length != 3) {
                         completed[0] = true;
-                        handleFailure(coordinate, "Artifact not found: " + dep.getArtifactId());
+                        handleFailure(coordinate, "Invalid Maven format");
+                        return;
                     }
+
+                    if (cancelledCoords.contains(coordinate)) return;
+
+                    BuildSettings buildSettings = new BuildSettings("system");
+                    DependencyResolver resolver = new DependencyResolver(parts[0], parts[1], parts[2], false, buildSettings);
                     
-                    @Override
-                    public void dexingFailed(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep, @NonNull Exception e) {
-                        if (completed[0]) {
+                    resolver.resolveDependency(new DependencyResolver.DependencyResolverCallback() {
+                        @Override
+                        public void onDownloadStart(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
+                            if (cancelledCoords.contains(coordinate)) return;
+                            publish(coordinate, InstallStateHub.State.DOWNLOADING, -1, "Downloading " + dep.getArtifactId() + "…");
+                        }
+
+                        @Override
+                        public void onDownloadEnd(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
+                            if (cancelledCoords.contains(coordinate)) return;
+                            publish(coordinate, InstallStateHub.State.DOWNLOADING, 100, "Downloaded " + dep.getArtifactId());
+                        }
+
+                        @Override
+                        public void unzipping(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
+                            if (cancelledCoords.contains(coordinate)) return;
+                            publish(coordinate, InstallStateHub.State.EXTRACTING, -1, "Extracting " + dep.getArtifactId() + "…");
+                        }
+
+                        @Override
+                        public void dexing(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
+                            if (cancelledCoords.contains(coordinate)) return;
+                            publish(coordinate, InstallStateHub.State.DEXING, -1, "Dexing " + dep.getArtifactId() + "…");
+                        }
+
+                        @Override
+                        public void onTaskCompleted(@NonNull List<String> dependencies) {
+                            if (cancelledCoords.contains(coordinate)) return;
+                            if (completed[0]) {
+                                pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+                                if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                    publish(coordinate, InstallStateHub.State.SUCCESS, 100, "Installed");
+                                    Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
+                                    successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
+                                    sendBroadcast(successIntent);
+                                }
+                                return;
+                            }
+                            completed[0] = true;
                             pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
                             if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
-                                publish(coordinate, InstallStateHub.State.SUCCESS, 100, "Installed");
+                                Log.d(TAG, "Successfully installed and verified: " + coordinate);
+                                handleSuccess(coordinate);
                                 Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
                                 successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
                                 sendBroadcast(successIntent);
+                            } else {
+                                Log.e(TAG, "Callback said success but folder missing: " + coordinate);
+                                handleFailure(coordinate, "Verification failed (Folder missing)");
                             }
-                            return;
                         }
-                        completed[0] = true;
-                        
-                        // WHAT: Refresh cache on dexing failure to check if folder exists.
-                        pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
 
-                        if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
-                            handleSuccess(coordinate);
-                        } else {
-                            handleFailure(coordinate, "Dexing failed: " + e.getMessage());
+                        @Override
+                        public void onDownloadError(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep, @NonNull Throwable e) {
+                            if (cancelledCoords.contains(coordinate)) return;
+                            if (completed[0]) {
+                                pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+                                if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                    publish(coordinate, InstallStateHub.State.SUCCESS, 100, "Installed");
+                                    Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
+                                    successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
+                                    sendBroadcast(successIntent);
+                                }
+                                return;
+                            }
+                            completed[0] = true;
+                            pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+                            if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                handleSuccess(coordinate);
+                            } else {
+                                handleFailure(coordinate, e.getMessage());
+                                Intent failIntent = new Intent(ACTION_LIBRARY_INSTALL_FAILED);
+                                failIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
+                                failIntent.putExtra(EXTRA_ERROR, e.getMessage());
+                                sendBroadcast(failIntent);
+                            }
                         }
+
+                        @Override
+                        public void onArtifactNotFound(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep) {
+                            if (cancelledCoords.contains(coordinate) || completed[0]) return;
+                            completed[0] = true;
+                            handleFailure(coordinate, "Artifact not found: " + dep.getArtifactId());
+                        }
+                        
+                        @Override
+                        public void dexingFailed(@NonNull org.cosmic.ide.dependency.resolver.api.Artifact dep, @NonNull Exception e) {
+                            if (cancelledCoords.contains(coordinate)) return;
+                            if (completed[0]) {
+                                pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+                                if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                    publish(coordinate, InstallStateHub.State.SUCCESS, 100, "Installed");
+                                    Intent successIntent = new Intent(ACTION_LIBRARY_INSTALLED);
+                                    successIntent.putExtra(EXTRA_LIBRARY_NAME, parts[1]);
+                                    sendBroadcast(successIntent);
+                                }
+                                return;
+                            }
+                            completed[0] = true;
+                            pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
+                            if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                                handleSuccess(coordinate);
+                            } else {
+                                handleFailure(coordinate, "Dexing failed: " + e.getMessage());
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    if (!completed[0]) {
+                        completed[0] = true;
+                        handleFailure(coordinate, e.getMessage());
                     }
-                });
-            } catch (Exception e) {
-                if (!completed[0]) {
-                    completed[0] = true;
-                    handleFailure(coordinate, e.getMessage());
                 }
+            } finally {
+                activeTasks.remove(coordinate);
+                cancelledCoords.remove(coordinate);
             }
         });
+        activeTasks.put(coordinate, future);
     }
 
     private synchronized void handleSuccess(String coordinate) {
