@@ -31,6 +31,9 @@ public class GitHubUploadService extends Service {
     public static final String EXTRA_README_CONTENT = "extra_readme_content";
     public static final String EXTRA_README_ICON_PATH = "extra_readme_icon_path";
     public static final String EXTRA_ATTACHED_PATHS = "extra_attached_paths";
+    public static final String EXTRA_REPO_PRIVATE = "extra_repo_private";
+    public static final String EXTRA_TARGET_REPO_FULL_NAME = "extra_target_repo_full_name";
+    public static final String EXTRA_USE_GITIGNORE = "extra_use_gitignore";
 
     private static final String CHANNEL_PROGRESS = "github_upload_progress";
     private static final String CHANNEL_DONE = "github_upload_done";
@@ -64,15 +67,20 @@ public class GitHubUploadService extends Service {
             String readmeContent = intent.getStringExtra(EXTRA_README_CONTENT);
             String readmeIconPath = intent.getStringExtra(EXTRA_README_ICON_PATH);
             String[] attachedPaths = intent.getStringArrayExtra(EXTRA_ATTACHED_PATHS);
+            boolean isPrivate = intent.getBooleanExtra(EXTRA_REPO_PRIVATE, false);
+            String targetRepoFullName = intent.getStringExtra(EXTRA_TARGET_REPO_FULL_NAME);
+            boolean useGitignore = intent.getBooleanExtra(EXTRA_USE_GITIGNORE, true);
 
             startForeground(NOTIFICATION_ID, buildProgressNotification(0, 0, projectTitle));
-            startUpload(new File(rootPath), commitMessage, readmeContent, readmeIconPath, attachedPaths);
+            startUpload(new File(rootPath), commitMessage, readmeContent, readmeIconPath, attachedPaths, 
+                    isPrivate, targetRepoFullName, useGitignore);
         }
         return START_NOT_STICKY;
     }
 
     private void startUpload(File projectRoot, String commitMessage, String readmeContent,
-                             String readmeIconPath, String[] attachedPaths) {
+                             String readmeIconPath, String[] attachedPaths, 
+                             boolean isPrivate, String targetRepoFullName, boolean useGitignore) {
         GitHubManager manager = GitHubManager.getInstance(this);
         String rootPath = projectRoot.getAbsolutePath();
         
@@ -109,17 +117,38 @@ public class GitHubUploadService extends Service {
             }
         }
 
-        // 3. إضافة الإرفاقات (attachments/)
+        // 3. إضافة الإرفاقات (screenshots/)
         if (attachedPaths != null) {
             for (String path : attachedPaths) {
                 File file = new File(path);
                 if (file.exists()) {
-                    extraEntries.add(new GitHubManager.ExtraEntry("attachments/" + file.getName(), file));
+                    String repoPath;
+                    if (file.getName().startsWith("banner_")) {
+                        repoPath = "screenshots/banner.png";
+                    } else {
+                        repoPath = "screenshots/" + file.getName();
+                    }
+                    extraEntries.add(new GitHubManager.ExtraEntry(repoPath, file));
                 }
             }
         }
 
-        manager.uploadProject(projectTitle, projectRoot, commitMessage, extraEntries, new GitHubManager.UploadCallback() {
+        // 4. .gitignore injection
+        // [AR] حقن ملف .gitignore تلقائياً إن لم يكن موجوداً في جذر المشروع.
+        // [EN] Automatically inject .gitignore file if missing from project root.
+        if (useGitignore) {
+            File gitignore = new File(projectRoot, ".gitignore");
+            if (!gitignore.exists()) {
+                try {
+                    String content = "build/\nbin/\ngen/\nout/\n.gradle/\n.idea/\n*.apk\n*.ap_\n*.dex\n*.iml\n.upgrade_backup/\nmysc/";
+                    File tempGitignore = new File(getCacheDir(), ".gitignore_UPLOAD_" + System.currentTimeMillis());
+                    java.nio.file.Files.write(tempGitignore.toPath(), content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    extraEntries.add(new GitHubManager.ExtraEntry(".gitignore", tempGitignore));
+                } catch (Exception ignored) {}
+            }
+        }
+
+        manager.uploadProject(projectTitle, projectRoot, commitMessage, extraEntries, isPrivate, targetRepoFullName, new GitHubManager.UploadCallback() {
             @Override
             public void onProgress(int done, int total, String currentPath) {
                 notificationManager.notify(NOTIFICATION_ID, buildProgressNotification(done, total, currentPath));

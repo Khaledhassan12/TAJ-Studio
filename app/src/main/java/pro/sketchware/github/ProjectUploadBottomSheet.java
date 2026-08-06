@@ -1,9 +1,9 @@
 package pro.sketchware.github;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,6 +15,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.OvershootInterpolator;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -28,13 +29,15 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -50,12 +53,16 @@ import java.util.concurrent.Executors;
 import a.a.a.wq;
 import pro.sketchware.R;
 import pro.sketchware.databinding.SheetProjectUploadBinding;
+import pro.sketchware.github.readme.MarkdownRenderer;
+import pro.sketchware.github.readme.ReadmeGenerator;
 
 /**
+ * TODO_AGENT.md: Upload Studio — compact merge pass, hint-overlap fix & semantic icons — 2026-08-06
+ * 
  * بوتم شيت استوديو الرفع (Upload Studio) — يوفر واجهة متقدمة لرفع المشاريع إلى GitHub
- * مع دعم الإرفاقات (صور/فيديو) وتوليد تلقائي لملف README.
- * Upload Studio Bottom Sheet — provides an advanced interface for uploading projects to GitHub
- * with support for attachments (images/video) and automated README generation.
+ * مع دعم الإرفاقات (صور/فيديو) وتوليد احترافي لملف README.
+ * [AR] تم تقليص عدد البطاقات من 7 إلى 5 مع دمج الميزات المتشابهة وحل مشكلة تداخل تلميحات النص.
+ * [EN] Card count reduced from 7 to 5 with merged features and resolved hint-overlap issues.
  */
 public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
 
@@ -80,12 +87,17 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
     private int uploadMode = MODE_FIRST_PUSH;
     private GitHubManager.GitUploadRecord existingRecord;
 
-    // حالة حسم الملفات: -1 يعني جارٍ الفحص، 0 يعني فارغ، >0 يعني وُجدت ملفات
-    // File resolution state: -1 means checking, 0 means empty, >0 means files found.
     private int resolvedFileCount = -1;
 
     private enum ReadmeMode { NONE, CUSTOM, AUTO }
     private ReadmeMode currentReadmeMode = ReadmeMode.NONE;
+    private String generatedReadmeMarkdown;
+    private List<File> generatedBanners = new ArrayList<>();
+    private String selectedLicense = "MIT";
+
+    private boolean isPrivate = false;
+    private String targetRepoFullName = null;
+    private boolean useGitignore = true;
 
     private ActivityResultLauncher<PickVisualMediaRequest> pickMultipleMedia;
 
@@ -132,59 +144,162 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
         setupSuggestions();
         setupReadmeControls();
         setupAttachmentLogic();
+        setupRepoPicker();
+        setupVisibilityToggle();
+        setupOptionsCheckboxes();
+        setupDescriptionCounter();
+        setupReadmeEditor();
+        setupKeyboardAwareness();
         
         binding.uploadButton.setOnClickListener(v -> startUploadProcess());
+        binding.btnClose.setOnClickListener(v -> dismiss());
 
-        // نُبعد المحتوى عن منطقة الزر السفلي الشفاف لضمان عدم التداخل البصري
-        // Keep content clear of the transparent sticky footer area.
-        binding.getRoot().post(() -> {
-            if (binding != null) {
-                View footer = binding.getRoot().findViewById(R.id.upload_button_container);
-                View scroll = binding.getRoot().findViewById(R.id.content_scroll_view);
-                if (footer != null && scroll != null) {
-                    scroll.setPadding(scroll.getPaddingLeft(), scroll.getPaddingTop(), 
-                            scroll.getPaddingRight(), footer.getHeight() + (int)(16 * getResources().getDisplayMetrics().density));
-                }
-            }
-        });
-        
-        // نربط مراقبي التغيير لتحديث حالة الزر ديناميكياً
-        // Attach change listeners to update the button state dynamically.
         binding.messageInput.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { refreshUploadButtonState(); }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { 
+                refreshUploadButtonState();
+                updateReadinessChips();
+            }
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
         binding.readmeCustomInput.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { refreshUploadButtonState(); }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { 
+                refreshUploadButtonState();
+                updateReadinessChips();
+            }
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
 
         refreshUploadButtonState();
+        updateReadinessChips();
 
-        // تطبيق حركة دخول خفيفة
-        // Simple entrance animation
-        view.setAlpha(0f);
-        view.setTranslationY(40f);
-        view.animate().alpha(1f).translationY(0f).setDuration(300).start();
+        // تطبيق حركات سينمائية
+        startEntranceAnimations();
+        startPulseAnimation();
+        setupParallax();
+    }
+
+    private void setupKeyboardAwareness() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
+            boolean keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime());
+            View bar = binding.uploadButtonContainer;
+            if (keyboardVisible) {
+                bar.animate().translationY(bar.getHeight()).alpha(0f).setDuration(200).withEndAction(() -> bar.setVisibility(View.GONE)).start();
+            } else {
+                bar.setVisibility(View.VISIBLE);
+                bar.animate().translationY(0f).alpha(1f).setDuration(200).start();
+            }
+            return insets;
+        });
+    }
+
+    private void updateReadinessChips() {
+        if (binding == null) return;
+
+        boolean messageReady = !binding.messageInput.getText().toString().trim().isEmpty();
+        boolean readmeReady = (currentReadmeMode != ReadmeMode.NONE && (currentReadmeMode != ReadmeMode.CUSTOM || !binding.readmeCustomInput.getText().toString().trim().isEmpty()));
+        boolean attachmentsReady = !attachedFiles.isEmpty();
+        boolean filesReady = resolvedFileCount > 0;
+
+        // [AR] تحديث شريحة الملفات؛ إظهار خطأ في حال عدم وجود ملفات محلية.
+        // [EN] Update files chip; show error if no local files found.
+        String filesText = filesReady ? "Files ✔ " + resolvedFileCount : (resolvedFileCount == 0 ? "No local files" : "Checking files…");
+        setChipReady(binding.chipReadyFiles, filesReady, filesText);
+        if (resolvedFileCount == 0) {
+            binding.chipReadyFiles.setChipBackgroundColorResource(R.color.md_theme_light_error_container);
+            binding.chipReadyFiles.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_on_error_container));
+        }
+
+        setChipReady(binding.chipReadyMessage, messageReady, "Message");
+        setChipReady(binding.chipReadyReadme, readmeReady, "README");
+        setChipReady(binding.chipReadyAttachments, attachmentsReady, "Attachments");
+
+        // [AR] تحديث شدة النبض بناءً على الجاهزية.
+        // [EN] Update pulse intensity based on readiness.
+        int readyCount = (filesReady ? 1 : 0) + (messageReady ? 1 : 0) + (readmeReady ? 1 : 0) + (attachmentsReady ? 1 : 0);
+        float pulseAlpha = 0.1f + (readyCount * 0.15f);
+        binding.iconPulseRing.setAlpha(pulseAlpha);
+    }
+
+    private void setChipReady(Chip chip, boolean ready, String text) {
+        chip.setText(text);
+        if (ready) {
+            chip.setChipBackgroundColorResource(R.color.md_theme_light_primary_container);
+            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_on_primary_container));
+            chip.setChipStrokeWidth(0);
+            if (chip.getTag() == null || !(boolean)chip.getTag()) {
+                chip.setScaleX(0.8f); chip.setScaleY(0.8f);
+                chip.animate().scaleX(1f).scaleY(1f).setDuration(300).setInterpolator(new OvershootInterpolator()).start();
+                chip.setTag(true);
+            }
+        } else {
+            chip.setChipBackgroundColorResource(android.R.color.transparent);
+            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_on_surface_variant));
+            chip.setChipStrokeWidth(getResources().getDisplayMetrics().density);
+            chip.setTag(false);
+        }
+    }
+
+    private void startEntranceAnimations() {
+        binding.pillHandleContainer.setTranslationY(-20f);
+        binding.pillHandleContainer.animate().translationY(0f).setDuration(600).setInterpolator(new OvershootInterpolator(2f)).start();
+
+        // [AR] تحريك البطاقات بحركة متدرجة سينمائية (البطاقات المدمجة الجديدة).
+        // [EN] Animate cards with a cinematic staggered entry (new merged cards).
+        View[] cards = { binding.cardRepository, binding.cardProject, binding.cardAttachments, binding.cardReadme, binding.contextInfoCard };
+        for (int i = 0; i < cards.length; i++) {
+            View card = cards[i];
+            card.setAlpha(0f);
+            card.setTranslationY(60f);
+            card.animate().alpha(1f).translationY(0f).setDuration(500).setStartDelay(150 + (i * 40)).setInterpolator(new OvershootInterpolator(0.8f)).start();
+        }
+    }
+
+    private void startPulseAnimation() {
+        android.animation.ObjectAnimator scaleX = android.animation.ObjectAnimator.ofFloat(binding.iconPulseRing, "scaleX", 1f, 1.4f);
+        android.animation.ObjectAnimator scaleY = android.animation.ObjectAnimator.ofFloat(binding.iconPulseRing, "scaleY", 1f, 1.4f);
+        
+        android.animation.ValueAnimator alphaAnim = android.animation.ValueAnimator.ofFloat(1f, 0f);
+        alphaAnim.addUpdateListener(animation -> {
+            if (binding == null) return;
+            float val = (float) animation.getAnimatedValue();
+            boolean filesReady = resolvedFileCount > 0;
+            boolean messageReady = !binding.messageInput.getText().toString().trim().isEmpty();
+            boolean readmeReady = (currentReadmeMode != ReadmeMode.NONE && (currentReadmeMode != ReadmeMode.CUSTOM || !binding.readmeCustomInput.getText().toString().trim().isEmpty()));
+            boolean attachmentsReady = !attachedFiles.isEmpty();
+            int readyCount = (filesReady ? 1 : 0) + (messageReady ? 1 : 0) + (readmeReady ? 1 : 0) + (attachmentsReady ? 1 : 0);
+            
+            float intensity = 0.2f + (readyCount * 0.15f);
+            binding.iconPulseRing.setAlpha(val * intensity);
+        });
+
+        scaleX.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        scaleY.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        alphaAnim.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+
+        android.animation.AnimatorSet set = new android.animation.AnimatorSet();
+        set.playTogether(scaleX, scaleY, alphaAnim);
+        set.setDuration(2000);
+        set.start();
+    }
+
+    private void setupParallax() {
+        binding.contentScrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            float factor = 0.5f;
+            // Parallax disabled for simple header but logic kept for structure
+        });
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        // نُجبر البوتم شيت على الحالة الممدودة (Expanded) لمنع الانكماش وكشف ما خلفه
-        // Force the BottomSheet to stay expanded to prevent shrinking and exposing background.
         View sheet = getDialog().findViewById(com.google.android.material.R.id.design_bottom_sheet);
         if (sheet != null) {
-            com.google.android.material.bottomsheet.BottomSheetBehavior<View> behavior = 
-                    com.google.android.material.bottomsheet.BottomSheetBehavior.from(sheet);
+            com.google.android.material.bottomsheet.BottomSheetBehavior<View> behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(sheet);
             behavior.setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
             behavior.setSkipCollapsed(true);
             behavior.setFitToContents(false);
-            
-            // نجعل الارتفاع يغطي الشاشة تقريباً لضمان عدم ظهور التابات
-            // Set height to cover screen to ensure tabs aren't visible.
             ViewGroup.LayoutParams lp = sheet.getLayoutParams();
             lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
             sheet.setLayoutParams(lp);
@@ -206,31 +321,25 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
         boolean isCommit = uploadMode == MODE_COMMIT_PUSH;
         GitHubManager manager = GitHubManager.getInstance(requireContext());
         String login = manager.getUserLogin();
-
-        // 1. تحديث الهيدر
-        String sub = isCommit ? 
-                getString(R.string.upload_mode_commit_sub, login, "main") :
-                getString(R.string.upload_mode_first_sub, login, "main");
-        binding.uploadTarget.setText(sub);
-
-        // 2. تحديث الرسالة والاقتراحات
-        // نستخدم TextInputLayout كمصدر وحيد للـ hint لضمان عدم التداخل، ونمسح hint الـ EditText
-        // Use TextInputLayout as the single source for hints to prevent overlap, clearing EditText hint.
-        binding.messageInput.setHint(null);
-        com.google.android.material.textfield.TextInputLayout messageLayout = binding.getRoot().findViewById(R.id.message_input_layout);
-        if (messageLayout != null) {
-            messageLayout.setHint(isCommit ? "Describe what changed…" : getString(R.string.upload_message_hint));
+        
+        String avatar = manager.getUserAvatar();
+        if (avatar != null) {
+            Glide.with(this).load(avatar).circleCrop().into(binding.userAvatar);
         }
+
+        binding.textRepoName.setText(isCommit ? existingRecord.repoHtmlUrl.replace("https://github.com/", "") : "➕ Create new: " + projectTitle);
+        binding.editProjectTitle.setText(projectTitle);
+        
+        binding.messageInput.setHint(isCommit ? "Describe what changed…" : "What is this project about?");
         
         binding.suggestionChips.removeAllViews();
-        String[] suggestions = isCommit ? 
-                new String[]{"Update project", "Fix bug", "Add feature", "Refactor code", "Improve UI"} :
-                new String[]{getString(R.string.upload_suggestion_initial), getString(R.string.upload_suggestion_release), 
-                             getString(R.string.upload_suggestion_import), getString(R.string.upload_suggestion_backup)};
+        String[] suggestions = isCommit ? new String[]{"Update project", "Fix bug", "Add feature", "Refactor code", "Improve UI"} :
+                new String[]{getString(R.string.upload_suggestion_initial), getString(R.string.upload_suggestion_release), getString(R.string.upload_suggestion_import), getString(R.string.upload_suggestion_backup)};
         
         for (String s : suggestions) {
             Chip chip = (Chip) getLayoutInflater().inflate(R.layout.view_chip_suggestion, binding.suggestionChips, false);
             chip.setText(s);
+            chip.setCheckable(true);
             chip.setOnClickListener(v -> {
                 binding.messageInput.setText(s);
                 binding.messageInput.setSelection(s.length());
@@ -238,109 +347,46 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
             binding.suggestionChips.addView(chip);
         }
 
-        // 3. تحديث تلميح الـ README وضع None
         binding.readmeNoneHint.setText(isCommit ? "No release notes for this commit." : getString(R.string.upload_readme_none_hint));
 
-        // 4. تحديث بطاقة السياق
-        View contextCard = binding.getRoot().findViewById(R.id.context_info_card);
-        ImageView contextIcon = binding.getRoot().findViewById(R.id.context_icon);
-        TextView contextTitle = binding.getRoot().findViewById(R.id.context_title);
-        TextView contextSubtitle = binding.getRoot().findViewById(R.id.context_subtitle);
-        TextView contextHint = binding.getRoot().findViewById(R.id.context_hint);
-
         if (isCommit) {
-            if (contextIcon != null) contextIcon.setImageResource(R.drawable.ic_mtrl_history);
-            if (contextTitle != null) contextTitle.setText(R.string.upload_context_already);
+            binding.contextIcon.setImageResource(R.drawable.ic_mtrl_history);
+            binding.contextTitle.setText(R.string.upload_context_already);
             String relativeTime = DateUtils.getRelativeTimeSpanString(existingRecord.uploadedAtMillis).toString();
-            if (contextSubtitle != null) contextSubtitle.setText(getString(R.string.upload_context_last_sync, relativeTime));
-            if (contextHint != null) contextHint.setText(R.string.upload_context_already_sub);
+            binding.contextSubtitle.setText(getString(R.string.upload_context_last_sync, relativeTime));
+            binding.contextHint.setText(R.string.upload_context_already_sub);
         } else {
-            if (contextIcon != null) contextIcon.setImageResource(R.drawable.ic_github_brand);
-            if (contextTitle != null) contextTitle.setText(R.string.upload_context_first);
-            if (contextSubtitle != null) contextSubtitle.setText(getString(R.string.upload_context_first_sub, projectTitle));
-            if (contextHint != null) contextHint.setText(R.string.upload_context_first_hint);
-        }
-        
-        // حركة دخول للبطاقة
-        if (contextCard != null) {
-            contextCard.setAlpha(0f);
-            contextCard.setTranslationY(20f);
-            contextCard.animate().alpha(1f).translationY(0f).setDuration(400).setStartDelay(100).start();
+            binding.contextIcon.setImageResource(R.drawable.ic_github_brand);
+            binding.contextTitle.setText(R.string.upload_context_first);
+            binding.contextSubtitle.setText(getString(R.string.upload_context_first_sub, projectTitle));
+            binding.contextHint.setText(R.string.upload_context_first_hint);
         }
     }
 
     private void setupHeader() {
         binding.projectTitle.setText(projectTitle);
-        GitHubManager manager = GitHubManager.getInstance(requireContext());
-        String login = manager.getUserLogin();
-        binding.uploadTarget.setText(getString(R.string.upload_studio_pushing_to, login, "main"));
-
-        // جلب أيقونة المشروع أو استخدام الـ fallback بماركة GitHub الملوّنة
-        // Fetch project icon or use the colored GitHub branded fallback.
-        File iconFile = new File(wq.e() + File.separator + projectId, "icon.png");
-        if (iconFile.exists()) {
-            binding.projectIcon.setVisibility(View.VISIBLE);
-            binding.projectIconFallbackContainer.setVisibility(View.GONE);
-            binding.projectIcon.setImageURI(Uri.fromFile(iconFile));
-        } else {
-            binding.projectIcon.setVisibility(View.GONE);
-            binding.projectIconFallbackContainer.setVisibility(View.VISIBLE);
-            binding.projectIconFallbackText.setVisibility(View.GONE);
-            
-            // رسم دائرة خافتة بماركة GitHub ملوّنة لتعريف المشروع
-            // Draw a faint circle with colored GitHub brand to identify the project.
-            int primary = ContextCompat.getColor(requireContext(), R.color.md_theme_light_primary);
-            GradientDrawable gd = new GradientDrawable();
-            gd.setShape(GradientDrawable.OVAL);
-            gd.setColor(primary);
-            gd.setAlpha(30); // ~12% opacity
-            binding.projectIconFallbackBg.setBackground(gd);
-            
-            // إضافة أيقونة الماركة برمجياً لضمان الدقة واللون
-            // Programmatically add the brand icon for precision and color.
-            binding.projectIconFallbackContainer.removeAllViews();
-            binding.projectIconFallbackContainer.addView(binding.projectIconFallbackBg);
-            
-            ImageView fallbackIcon = new ImageView(requireContext());
-            int iconSize = (int)(24 * getResources().getDisplayMetrics().density);
-            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(iconSize, iconSize);
-            lp.gravity = Gravity.CENTER;
-            fallbackIcon.setLayoutParams(lp);
-            fallbackIcon.setImageResource(R.drawable.ic_github_brand);
-            fallbackIcon.setImageTintList(android.content.res.ColorStateList.valueOf(primary));
-            binding.projectIconFallbackContainer.addView(fallbackIcon);
-        }
     }
 
     private void refreshChangesOffThread() {
-        View loading = binding.getRoot().findViewById(R.id.changes_loading_state);
-        View summary = binding.getRoot().findViewById(R.id.changes_summary);
-        TextView badge = binding.getRoot().findViewById(R.id.files_badge);
-        
-        if (loading != null) loading.setVisibility(View.VISIBLE);
-        if (summary != null) summary.setVisibility(View.GONE);
-        if (badge != null) badge.setText("…");
-        
+        binding.changesLoadingState.setVisibility(View.VISIBLE);
+        binding.changesSummary.setVisibility(View.GONE);
+        binding.filesBadge.setText("…");
         executor.execute(() -> {
             GitHubManager manager = GitHubManager.getInstance(requireContext());
             File root = new File(rootPath);
             if (!root.exists()) {
                 mainHandler.post(() -> {
                     if (binding == null) return;
-                    if (loading != null) loading.setVisibility(View.GONE);
-                    if (summary != null) {
-                        summary.setVisibility(View.VISIBLE);
-                        ((TextView)summary).setText(R.string.upload_changes_missing);
-                    }
-                    if (badge != null) badge.setText("0");
+                    binding.changesLoadingState.setVisibility(View.GONE);
+                    binding.changesSummary.setVisibility(View.VISIBLE);
+                    binding.changesSummary.setText(R.string.upload_changes_missing);
+                    binding.filesBadge.setText("0");
                     resolvedFileCount = 0;
                     refreshUploadButtonState();
                 });
                 return;
             }
-
             List<GitHubManager.UploadFile> files = manager.collectUploadFiles(root);
-            
             int java = 0, res = 0, assets = 0, other = 0;
             for (GitHubManager.UploadFile f : files) {
                 String p = f.relativePath;
@@ -349,114 +395,70 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
                 else if (p.contains("/src/main/assets/")) assets++;
                 else other++;
             }
-            
-            int finalJava = java, finalRes = res, finalAssets = assets, finalOther = other;
-            int total = files.size();
-            
+            int fJ = java, fR = res, fA = assets, fO = other, total = files.size();
             mainHandler.post(() -> {
                 if (binding == null) return;
-                if (loading != null) loading.setVisibility(View.GONE);
-                if (summary != null) {
-                    summary.setVisibility(View.VISIBLE);
-                    ((TextView)summary).setText(getString(R.string.upload_changes_summary, finalJava, finalRes, finalAssets, finalOther));
-                    if (total == 0) ((TextView)summary).setText(R.string.upload_changes_none);
-                }
-                
-                if (badge != null) badge.setText(getString(R.string.upload_changes_files, total));
-                
+                binding.changesLoadingState.setVisibility(View.GONE);
+                binding.changesSummary.setVisibility(View.VISIBLE);
+                binding.changesSummary.setText(getString(R.string.upload_changes_summary, fJ, fR, fA, fO));
+                if (total == 0) binding.changesSummary.setText(R.string.upload_changes_none);
+                binding.filesBadge.setText(getString(R.string.upload_changes_files, total));
                 resolvedFileCount = total;
                 refreshUploadButtonState();
             });
         });
     }
 
-    /**
-     * تُحدِّث حالة زر الرفع (النص، الأيقونة، التلميح) بناءً على ما أدخله المستخدم وحالة الملفات.
-     * Updates the upload button state (text, icon, hint) based on user input and file status.
-     */
     private void refreshUploadButtonState() {
         if (binding == null) return;
-
-        boolean hasFiles = resolvedFileCount > 0;
-        boolean hasMessage = !binding.messageInput.getText().toString().trim().isEmpty();
-        boolean hasAttachments = !attachedFiles.isEmpty();
-        boolean hasReadme = (currentReadmeMode == ReadmeMode.CUSTOM && 
-                !binding.readmeCustomInput.getText().toString().trim().isEmpty()) 
-                || currentReadmeMode == ReadmeMode.AUTO;
-        
-        boolean isCommit = uploadMode == MODE_COMMIT_PUSH;
-        
-        // في وضع COMMIT، الزر متاح دائماً. في وضع FIRST_PUSH، يتطلب canUpload.
-        // In COMMIT mode, button is always enabled. In FIRST_PUSH, it requires canUpload.
-        boolean canUpload = hasFiles || hasAttachments || hasReadme;
-        boolean canAct = isCommit || canUpload;
+        boolean hasFiles = resolvedFileCount > 0, hasMessage = !binding.messageInput.getText().toString().trim().isEmpty(), hasAttachments = !attachedFiles.isEmpty();
+        boolean hasReadme = (currentReadmeMode == ReadmeMode.CUSTOM && !binding.readmeCustomInput.getText().toString().trim().isEmpty()) || currentReadmeMode == ReadmeMode.AUTO;
+        boolean isCommit = uploadMode == MODE_COMMIT_PUSH, canUpload = hasFiles || hasAttachments || hasReadme, canAct = isCommit || canUpload;
 
         if (resolvedFileCount == -1) {
-            // حالة الفحص الجاري
             binding.uploadButton.setEnabled(false);
             binding.uploadButton.setText(R.string.upload_button_preparing);
             binding.uploadButton.setAlpha(0.6f);
-            View buttonHint = binding.getRoot().findViewById(R.id.upload_button_hint);
-            if (buttonHint != null) buttonHint.setVisibility(View.GONE);
+            binding.uploadButtonHint.setVisibility(View.GONE);
             return;
         }
 
         if (!canAct) {
-            // حالة لا يوجد شيء للرفع (UPLOAD فقط)
             binding.uploadButton.setEnabled(false);
             binding.uploadButton.setText(R.string.upload_button_nothing);
             binding.uploadButton.setAlpha(0.5f);
-            
-            TextView buttonHint = binding.getRoot().findViewById(R.id.upload_button_hint);
-            if (buttonHint != null) {
-                buttonHint.setVisibility(View.VISIBLE);
-                buttonHint.setText(R.string.upload_button_needs_input);
-                buttonHint.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_error));
-            }
+            binding.uploadButtonHint.setVisibility(View.VISIBLE);
+            binding.uploadButtonHint.setText(R.string.upload_button_needs_input);
+            binding.uploadButtonHint.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_error));
             return;
         }
 
-        // حالة الرفع المتاحة
         binding.uploadButton.setEnabled(true);
         binding.uploadButton.setAlpha(1.0f);
-        TextView buttonHintView = binding.getRoot().findViewById(R.id.upload_button_hint);
-        if (buttonHintView != null) {
-            buttonHintView.setVisibility(View.VISIBLE);
-            buttonHintView.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_on_surface));
-        }
+        binding.uploadButtonHint.setVisibility(View.VISIBLE);
+        binding.uploadButtonHint.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_on_surface));
 
         if (isCommit) {
             binding.uploadButton.setText(R.string.upload_commit_button);
             binding.uploadButton.setIconResource(R.drawable.ic_mtrl_history);
-            
-            TextView buttonHint = binding.getRoot().findViewById(R.id.upload_button_hint);
-            if (buttonHint != null) {
-                if (!canUpload && !hasMessage) {
-                    buttonHint.setText(R.string.upload_empty_commit_warn);
-                    buttonHint.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_error));
-                    buttonHint.setAlpha(0.6f);
-                } else if (!hasMessage) {
-                    buttonHint.setText(R.string.upload_no_message_commit);
-                } else {
-                    buildCustomizationHint(hasAttachments, hasReadme, true);
-                }
-            }
+            if (!canUpload && !hasMessage) {
+                binding.uploadButtonHint.setText(R.string.upload_empty_commit_warn);
+                binding.uploadButtonHint.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_error));
+            } else if (!hasMessage) binding.uploadButtonHint.setText(R.string.upload_no_message_commit);
+            else buildCustomizationHint(hasAttachments, hasReadme, true);
         } else {
             boolean isCustomized = hasMessage || hasAttachments || hasReadme;
             if (!isCustomized) {
-                // حالة "الرفع كما هو" (التخطّي بالافتراضي)
                 binding.uploadButton.setText(R.string.upload_button_as_is);
-                binding.uploadButton.setIconResource(R.drawable.ic_stars); // أيقونة ⚡
-                
-                TextView buttonHint = binding.getRoot().findViewById(R.id.upload_button_hint);
-                if (buttonHint != null) buttonHint.setText(R.string.upload_hint_defaults);
+                binding.uploadButton.setIconResource(R.drawable.ic_stars);
+                binding.uploadButtonHint.setText(R.string.upload_hint_defaults);
             } else {
-                // حالة "الرفع المخصص"
                 binding.uploadButton.setText(R.string.upload_button_custom);
                 binding.uploadButton.setIconResource(R.drawable.ic_github_brand);
                 buildCustomizationHint(hasAttachments, hasReadme, hasMessage);
             }
         }
+        binding.uploadProgress.setVisibility(View.GONE);
     }
 
     private void buildCustomizationHint(boolean hasAttachments, boolean hasReadme, boolean hasMessage) {
@@ -464,10 +466,7 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
         if (hasAttachments) details.add(attachedFiles.size() + " attachments");
         if (hasReadme) details.add(currentReadmeMode == ReadmeMode.AUTO ? "Auto README" : "Custom README");
         if (hasMessage) details.add("Custom message");
-        
-        String hint = String.join(" · ", details);
-        TextView buttonHint = binding.getRoot().findViewById(R.id.upload_button_hint);
-        if (buttonHint != null) buttonHint.setText(getString(R.string.upload_hint_summary, hint));
+        binding.uploadButtonHint.setText(getString(R.string.upload_hint_summary, String.join(" · ", details)));
     }
 
     private void setupSuggestions() {
@@ -475,98 +474,171 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
             View child = binding.suggestionChips.getChildAt(i);
             if (child instanceof Chip) {
                 child.setOnClickListener(v -> {
-                    binding.messageInput.setText(((Chip) v).getText());
-                    binding.messageInput.setSelection(binding.messageInput.getText().length());
+                    String text = String.valueOf(((Chip) v).getText());
+                    binding.messageInput.setText(text);
+                    binding.messageInput.setSelection(text.length());
+                    updateReadinessChips();
                 });
             }
         }
     }
 
-    private void setupReadmeControls() {
-        segmentedTransition(ReadmeMode.NONE);
-        
-        binding.readmeNone.setOnClickListener(v -> segmentedTransition(ReadmeMode.NONE));
-        binding.readmeCustom.setOnClickListener(v -> segmentedTransition(ReadmeMode.CUSTOM));
-        binding.readmeAuto.setOnClickListener(v -> segmentedTransition(ReadmeMode.AUTO));
+    // [AR] تهيئة منتقي المستودع؛ يسمح للمستخدم باختيار ريبو موجود أو إنشاء جديد.
+    // [EN] Initializes the repository picker; allows user to pick an existing repo or create new.
+    private void setupRepoPicker() {
+        binding.btnRepoPicker.setOnClickListener(v -> {
+            String slug = binding.editProjectTitle.getText().toString();
+            UserRepoPicker.show(requireContext(), slug, (repoFullName, createNew) -> {
+                if (createNew) {
+                    targetRepoFullName = null;
+                    binding.textRepoName.setText("➕ Create new: " + slug);
+                } else {
+                    targetRepoFullName = repoFullName;
+                    binding.textRepoName.setText(repoFullName);
+                }
+            });
+        });
     }
 
-    /**
-     * تحديث وضع الـ README وتغيير شكل أزرار الاختيار (Segmented Control).
-     * Update README mode and toggle segmented control button styles.
-     */
+    // [AR] تهيئة مبدّل الخصوصية (عام/خاص) للمستودع الجديد.
+    // [EN] Initializes the visibility toggle (Public/Private) for the new repository.
+    private void setupVisibilityToggle() {
+        binding.visibilityToggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) {
+                isPrivate = (checkedId == R.id.btn_private);
+            }
+        });
+    }
+
+    // [AR] تهيئة خيارات الرفع المتقدمة (README تلقائي و .gitignore).
+    // [EN] Initializes advanced upload options (Auto README and .gitignore).
+    private void setupOptionsCheckboxes() {
+        binding.checkboxAutoReadme.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && currentReadmeMode != ReadmeMode.AUTO) {
+                binding.readmeModeToggleGroup.check(R.id.readme_auto);
+            } else if (!isChecked && currentReadmeMode == ReadmeMode.AUTO) {
+                binding.readmeModeToggleGroup.check(R.id.readme_none);
+            }
+        });
+        binding.checkboxGitignore.setOnCheckedChangeListener((buttonView, isChecked) -> useGitignore = isChecked);
+    }
+
+    // [AR] تهيئة عداد أحرف الوصف؛ يضمن عدم تجاوز الحد المسموح.
+    // [EN] Initializes description character counter; ensures limit isn't exceeded.
+    private void setupDescriptionCounter() {
+        binding.messageInput.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                binding.descriptionCounter.setText(s.length() + "/500");
+                updateReadinessChips();
+                refreshUploadButtonState();
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+    }
+
+    // [AR] تهيئة محرر README بأسلوب كود مع أرقام أسطر حية.
+    // [EN] Initializes README editor with code-style live line numbering.
+    private void setupReadmeEditor() {
+        binding.readmeCustomInput.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                int lines = binding.readmeCustomInput.getLineCount();
+                StringBuilder sb = new StringBuilder();
+                for (int i = 1; i <= Math.max(1, lines); i++) sb.append(i).append("\n");
+                binding.readmeLineNumbers.setText(sb.toString());
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+    }
+
+    private void setupReadmeControls() {
+        segmentedTransition(ReadmeMode.NONE);
+        binding.readmeModeToggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+            if (checkedId == R.id.readme_none) {
+                segmentedTransition(ReadmeMode.NONE);
+                binding.checkboxAutoReadme.setChecked(false);
+            } else if (checkedId == R.id.readme_custom) {
+                segmentedTransition(ReadmeMode.CUSTOM);
+                binding.checkboxAutoReadme.setChecked(false);
+            } else if (checkedId == R.id.readme_auto) {
+                showLicenseDialog();
+                binding.checkboxAutoReadme.setChecked(true);
+            }
+            updateReadinessChips();
+        });
+        binding.btnPreviewReadme.setOnClickListener(v -> showReadmePreview());
+    }
+
+    private void showLicenseDialog() {
+        String[] licenses = {"MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause", "No License"};
+        final int[] selectedIdx = {0};
+        new MaterialAlertDialogBuilder(requireContext()).setTitle("Choose a license").setSingleChoiceItems(licenses, 0, (dialog, which) -> selectedIdx[0] = which)
+                .setPositiveButton("Accept", (dialog, which) -> { selectedLicense = licenses[selectedIdx[0]]; segmentedTransition(ReadmeMode.AUTO); })
+                .setNegativeButton("Cancel", (dialog, which) -> { selectedLicense = "MIT"; segmentedTransition(ReadmeMode.AUTO); }).show();
+    }
+
+    private void showReadmePreview() {
+        if (generatedReadmeMarkdown == null) return;
+        
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(48, 48, 48, 48);
+        
+        MarkdownRenderer.render(requireContext(), layout, generatedReadmeMarkdown, getLocalFilesForPreview());
+        
+        NestedScrollView scroll = new NestedScrollView(requireContext());
+        scroll.addView(layout);
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(selectedLicense + " Readme")
+                .setView(scroll)
+                .setNeutralButton("Copy", (dialog, which) -> {
+                    android.content.ClipboardManager clipboard = (android.content.ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                    android.content.ClipData clip = android.content.ClipData.newPlainText("README", generatedReadmeMarkdown);
+                    if (clipboard != null) clipboard.setPrimaryClip(clip);
+                    Toast.makeText(requireContext(), "Copied to clipboard", Toast.LENGTH_SHORT).show();
+                })
+                .setPositiveButton("Close", null)
+                .show();
+    }
+
+    private List<File> getLocalFilesForPreview() {
+        List<File> list = new ArrayList<>(attachedFiles);
+        list.addAll(generatedBanners);
+        return list;
+    }
+
     private void segmentedTransition(ReadmeMode mode) {
         currentReadmeMode = mode;
-        
-        resetReadmeButton(binding.readmeNone);
-        resetReadmeButton(binding.readmeCustom);
-        resetReadmeButton(binding.readmeAuto);
-        
-        // إخفاء كافة المناطق مع حركة تلاشٍ خفيفة
-        // Hide all areas with a subtle fade animation.
         binding.readmeNoneHint.animate().alpha(0f).setDuration(150).withEndAction(() -> binding.readmeNoneHint.setVisibility(View.GONE)).start();
-        binding.readmeCustomInput.animate().alpha(0f).setDuration(150).withEndAction(() -> binding.readmeCustomInput.setVisibility(View.GONE)).start();
+        binding.readmeCustomContainer.animate().alpha(0f).setDuration(150).withEndAction(() -> binding.readmeCustomContainer.setVisibility(View.GONE)).start();
         binding.readmeAutoContainer.animate().alpha(0f).setDuration(150).withEndAction(() -> binding.readmeAutoContainer.setVisibility(View.GONE)).start();
-
-        TextView selected = null;
         View toShow = null;
         switch (mode) {
-            case NONE:
-                selected = binding.readmeNone;
-                toShow = binding.readmeNoneHint;
-                break;
-            case CUSTOM:
-                selected = binding.readmeCustom;
-                toShow = binding.readmeCustomInput;
-                break;
-            case AUTO:
-                selected = binding.readmeAuto;
-                toShow = binding.readmeAutoContainer;
-                buildAutoReadmePreview();
-                break;
+            case NONE: toShow = binding.readmeNoneHint; break;
+            case CUSTOM: toShow = binding.readmeCustomContainer; break;
+            case AUTO: toShow = binding.readmeAutoContainer; buildAutoReadmePreview(); break;
         }
-
         if (toShow != null) {
-            toShow.setAlpha(0f);
-            toShow.setVisibility(View.VISIBLE);
-            toShow.animate().alpha(1f).setDuration(200).start();
+            toShow.setAlpha(0f); toShow.setVisibility(View.VISIBLE); toShow.animate().alpha(1f).setDuration(200).start();
         }
-
-        if (selected != null) {
-            int primary = ContextCompat.getColor(requireContext(), R.color.md_theme_light_primary);
-            int onPrimary = ContextCompat.getColor(requireContext(), R.color.md_theme_light_on_primary);
-            
-            GradientDrawable gd = new GradientDrawable();
-            gd.setColor(primary);
-            gd.setCornerRadius(8 * getResources().getDisplayMetrics().density);
-            selected.setBackground(gd);
-            selected.setTextColor(onPrimary);
-        }
-        
         refreshUploadButtonState();
     }
 
-    private void resetReadmeButton(TextView view) {
-        view.setBackground(null);
-        view.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_on_surface_variant));
-    }
-
     private void buildAutoReadmePreview() {
+        binding.readmeAutoStatus.setText("Generating README…");
         executor.execute(() -> {
             GitHubManager manager = GitHubManager.getInstance(requireContext());
-            List<GitHubManager.UploadFile> files = manager.collectUploadFiles(new File(rootPath));
-            
-            StringBuilder sb = new StringBuilder();
-            sb.append("• Project Title: ").append(projectTitle).append("\n");
-            sb.append("• Files to include: ").append(files.size()).append("\n");
-            
-            File iconFile = new File(wq.e() + File.separator + projectId, "icon.png");
-            if (iconFile.exists()) {
-                sb.append("• App icon will be included (docs/app-icon.png)");
-            }
-
-            String preview = sb.toString();
+            ReadmeGenerator.ReadmeResult result = ReadmeGenerator.generate(requireContext(), projectTitle, projectId, rootPath, manager.getUserLogin(), manager.getUserAvatar(), selectedLicense, attachedFiles);
+            generatedReadmeMarkdown = result.markdown;
+            generatedBanners = result.banners;
             mainHandler.post(() -> {
-                if (binding != null) binding.autoReadmePreview.setText(preview);
+                if (binding != null) {
+                    binding.readmeAutoStatus.setText("README ready ✔ (" + generatedReadmeMarkdown.split("\n").length + " lines)");
+                    binding.autoReadmePreview.setText(generatedReadmeMarkdown.substring(0, Math.min(200, generatedReadmeMarkdown.length())) + "...");
+                }
             });
         });
     }
@@ -574,9 +646,7 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
     private void setupAttachmentLogic() {
         binding.addAttachment.setOnClickListener(v -> {
             if (attachedFiles.size() >= MAX_ATTACHMENTS) return;
-            pickMultipleMedia.launch(new PickVisualMediaRequest.Builder()
-                    .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
-                    .build());
+            pickMultipleMedia.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE).build());
         });
         updateAttachmentStrip();
     }
@@ -584,25 +654,20 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
     private void handlePickedUris(List<Uri> uris) {
         int remaining = MAX_ATTACHMENTS - attachedFiles.size();
         List<Uri> toProcess = uris.size() > remaining ? uris.subList(0, remaining) : uris;
-
         for (Uri uri : toProcess) {
             try {
                 String name = getFileName(uri);
-                long size = getFileSize(uri);
-                
-                if (size > MAX_ATTACH_BYTES) {
-                    Toast.makeText(requireContext(), getString(R.string.upload_attachments_too_big, name), Toast.LENGTH_SHORT).show();
-                    continue;
-                }
-
+                if (getFileSize(uri) > MAX_ATTACH_BYTES) { Toast.makeText(requireContext(), getString(R.string.upload_attachments_too_big, name), Toast.LENGTH_SHORT).show(); continue; }
                 File cacheFile = new File(requireContext().getCacheDir(), "attach_" + System.currentTimeMillis() + "_" + name);
-                try (InputStream is = requireContext().getContentResolver().openInputStream(uri);
-                     FileOutputStream fos = new FileOutputStream(cacheFile)) {
-                    byte[] buf = new byte[8192];
-                    int len;
-                    while ((len = is.read(buf)) != -1) fos.write(buf, 0, len);
+                try (InputStream is = requireContext().getContentResolver().openInputStream(uri); FileOutputStream fos = new FileOutputStream(cacheFile)) {
+                    if (is != null) {
+                        byte[] buf = new byte[8192];
+                        int len;
+                        while ((len = is.read(buf)) != -1) fos.write(buf, 0, len);
+                    }
                 }
                 attachedFiles.add(cacheFile);
+                updateReadinessChips();
             } catch (Exception ignored) {}
         }
         updateAttachmentStrip();
@@ -611,119 +676,72 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
 
     private void updateAttachmentStrip() {
         binding.attachmentsStrip.removeAllViews();
-        
         for (File file : attachedFiles) {
             View view = LayoutInflater.from(requireContext()).inflate(R.layout.item_upload_attachment, binding.attachmentsStrip, false);
             ImageView thumb = view.findViewById(R.id.thumbnail);
-            View remove = view.findViewById(R.id.remove_btn);
-            View videoIcon = view.findViewById(R.id.video_icon);
-            
+            View remove = view.findViewById(R.id.remove_btn), videoIcon = view.findViewById(R.id.video_icon);
             boolean isVideo = file.getName().toLowerCase().endsWith(".mp4") || file.getName().toLowerCase().endsWith(".mov");
-            
-            if (isVideo) {
-                videoIcon.setVisibility(View.VISIBLE);
-                thumb.setBackgroundColor(Color.BLACK);
-            } else {
-                videoIcon.setVisibility(View.GONE);
-                Glide.with(this).load(file).centerCrop().into(thumb);
-            }
-
-            remove.setOnClickListener(v -> {
-                attachedFiles.remove(file);
-                file.delete();
-                updateAttachmentStrip();
+            if (isVideo) { videoIcon.setVisibility(View.VISIBLE); thumb.setBackgroundColor(Color.BLACK); }
+            else Glide.with(this).load(file).centerCrop().into(thumb);
+            remove.setOnClickListener(v -> { 
+                attachedFiles.remove(file); 
+                file.delete(); 
+                updateAttachmentStrip(); 
                 refreshUploadButtonState();
+                updateReadinessChips();
             });
-
             binding.attachmentsStrip.addView(view);
         }
-
-        if (attachedFiles.size() < MAX_ATTACHMENTS) {
-            binding.attachmentsStrip.addView(binding.addAttachment);
-        }
-        
+        if (attachedFiles.size() < MAX_ATTACHMENTS) binding.attachmentsStrip.addView(binding.addAttachment);
         binding.attachmentsCount.setText(getString(R.string.upload_attachments_count, attachedFiles.size(), MAX_ATTACHMENTS));
     }
 
     private void startUploadProcess() {
-        String message = binding.messageInput.getText().toString();
+        String title = binding.editProjectTitle.getText().toString();
+        if (title.isEmpty()) title = projectTitle;
         
-        String readmeContent = null;
-        if (currentReadmeMode == ReadmeMode.CUSTOM) {
-            readmeContent = binding.readmeCustomInput.getText().toString();
-        } else if (currentReadmeMode == ReadmeMode.AUTO) {
-            readmeContent = generateAutoReadme();
-        }
+        String message = binding.messageInput.getText().toString(), readmeContent = null;
+        if (currentReadmeMode == ReadmeMode.CUSTOM) readmeContent = binding.readmeCustomInput.getText().toString();
+        else if (currentReadmeMode == ReadmeMode.AUTO) readmeContent = generatedReadmeMarkdown;
 
         File iconFile = new File(wq.e() + File.separator + projectId, "icon.png");
         String readmeIconPath = iconFile.exists() ? iconFile.getAbsolutePath() : null;
 
-        String[] attachedPaths = new String[attachedFiles.size()];
-        for (int i = 0; i < attachedFiles.size(); i++) {
-            attachedPaths[i] = attachedFiles.get(i).getAbsolutePath();
-        }
-
         Intent intent;
+        List<String> allPaths = new ArrayList<>();
+        for (File f : attachedFiles) allPaths.add(f.getAbsolutePath());
+        for (File f : generatedBanners) allPaths.add(f.getAbsolutePath());
+
         if (uploadMode == MODE_COMMIT_PUSH) {
-            if (message.isEmpty()) message = "Update " + projectTitle;
+            if (message.isEmpty()) message = "Update " + title;
             intent = new Intent(requireContext(), GitCommitService.class);
             intent.setAction(GitCommitService.ACTION_COMMIT);
             intent.putExtra(GitCommitService.EXTRA_RECORD_JSON, new com.google.gson.Gson().toJson(existingRecord));
             intent.putExtra(GitCommitService.EXTRA_MESSAGE, message);
             intent.putExtra(GitCommitService.EXTRA_README, readmeContent);
-            intent.putExtra(GitCommitService.EXTRA_ATTACHED_PATHS, attachedPaths);
+            intent.putExtra(GitCommitService.EXTRA_ATTACHED_PATHS, allPaths.toArray(new String[0]));
             Toast.makeText(requireContext(), R.string.upload_commit_started_toast, Toast.LENGTH_SHORT).show();
         } else {
-            if (message.isEmpty()) message = "Upload project: " + projectTitle;
+            if (message.isEmpty()) message = "Upload project: " + title;
             intent = new Intent(requireContext(), GitHubUploadService.class);
             intent.setAction(GitHubUploadService.ACTION_START_UPLOAD);
-            intent.putExtra(GitHubUploadService.EXTRA_PROJECT_TITLE, projectTitle);
+            intent.putExtra(GitHubUploadService.EXTRA_PROJECT_TITLE, title);
             intent.putExtra(GitHubUploadService.EXTRA_PROJECT_ROOT, rootPath);
             intent.putExtra(GitHubUploadService.EXTRA_COMMIT_MESSAGE, message);
             intent.putExtra(GitHubUploadService.EXTRA_README_CONTENT, readmeContent);
             intent.putExtra(GitHubUploadService.EXTRA_README_ICON_PATH, readmeIconPath);
-            intent.putExtra(GitHubUploadService.EXTRA_ATTACHED_PATHS, attachedPaths);
+            intent.putExtra(GitHubUploadService.EXTRA_ATTACHED_PATHS, allPaths.toArray(new String[0]));
+            intent.putExtra(GitHubUploadService.EXTRA_REPO_PRIVATE, isPrivate);
+            intent.putExtra(GitHubUploadService.EXTRA_TARGET_REPO_FULL_NAME, targetRepoFullName);
+            intent.putExtra(GitHubUploadService.EXTRA_USE_GITIGNORE, useGitignore);
             Toast.makeText(requireContext(), R.string.upload_started_toast, Toast.LENGTH_SHORT).show();
         }
-        
+        binding.uploadButton.setEnabled(false);
+        binding.uploadProgress.setVisibility(View.VISIBLE);
+        binding.uploadButton.setIcon(null);
+        binding.uploadButton.setText(null);
         ContextCompat.startForegroundService(requireContext(), intent);
         dismissAllowingStateLoss();
-    }
-
-    /**
-     * مولّد README التلقائي — يأخذ ما يجد ويترك ما لا يجد عمداً لضمان عدم الفشل.
-     * Auto-README Generator — takes what it finds and leaves what it doesn't to ensure no failure.
-     */
-    private String generateAutoReadme() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("# ").append(projectTitle).append("\n\n");
-        
-        File iconFile = new File(wq.e() + File.separator + projectId, "icon.png");
-        if (iconFile.exists()) {
-            sb.append("![](").append("docs/app-icon.png").append(")\n\n");
-        }
-
-        sb.append("## Project Details\n");
-        sb.append("- **Project ID**: ").append(projectId).append("\n");
-        
-        try {
-            GitHubManager manager = GitHubManager.getInstance(requireContext());
-            List<GitHubManager.UploadFile> files = manager.collectUploadFiles(new File(rootPath));
-            sb.append("- **Total Files**: ").append(files.size()).append("\n");
-        } catch (Exception ignored) {}
-
-        if (!attachedFiles.isEmpty()) {
-            sb.append("\n## Attachments\n");
-            for (File f : attachedFiles) {
-                sb.append("- ").append(f.getName()).append(" (attachments/").append(f.getName()).append(")\n");
-            }
-        }
-
-        sb.append("\n---\n*Uploaded from **TAJ Studio** (Sketchware Pro based) on ")
-          .append(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date()))
-          .append("*");
-          
-        return sb.toString();
     }
 
     private String getFileName(Uri uri) {

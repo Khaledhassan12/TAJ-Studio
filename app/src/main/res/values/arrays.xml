@@ -69,4 +69,9 @@
         <item>com.google.android.material.progressindicator.CircularProgressIndicator</item>
         <item>com.google.android.material.progressindicator.LinearProgressIndicator</item>
     </string-array>
+
+    <integer-array name="dash_pattern">
+        <item>8</item>
+        <item>8</item>
+    </integer-array>
 </resources>
