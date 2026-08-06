@@ -57,8 +57,6 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
             String action = intent.getAction();
             if (LibraryInstallService.ACTION_STATUS_CHANGE.equals(action) || 
                 LibraryInstallService.ACTION_LIBRARY_INSTALLED.equals(action)) {
-                // G5-E: Double Verified Badge Update - تحديث فوري للشارة عند التثبيت.
-                pro.sketchware.marketplace.utils.MarketplaceHelper.refreshCache();
                 refreshUI();
             }
         }

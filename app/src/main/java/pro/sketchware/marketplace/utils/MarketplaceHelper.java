@@ -26,10 +26,6 @@ public class MarketplaceHelper {
      * Synchronous and name-shape agnostic installation check via cache.
      */
     public static synchronized boolean isInstalledSync(MarketplaceLibrary library) {
-        if (installedCache == null) {
-            refreshCache();
-        }
-        
         String artifact = artifactOf(library.getCoordinate());
         String id = library.getId();
         
@@ -44,7 +40,9 @@ public class MarketplaceHelper {
      */
     private static boolean nameShapeAgnosticMatcher(String artifact) {
         if (artifact == null || artifact.isEmpty()) return false;
-        if (installedCache == null) refreshCache();
+        if (installedCache == null) {
+            refreshCache();
+        }
         
         String a = artifact.toLowerCase();
         for (String folder : installedCache) {
@@ -68,11 +66,9 @@ public class MarketplaceHelper {
      * WHY: isActuallyOnDisk was performing heavy I/O on every call, taxing the UI thread.
      */
     public static synchronized boolean isActuallyOnDisk(MarketplaceLibrary library) {
-        if (installedCache == null) {
-            refreshCache();
-        }
         String artifact = artifactOf(library.getCoordinate());
         String id = library.getId();
+        if (installedCache == null) refreshCache();
         
         for (String folder : installedCache) {
             if (matchesArtifact(folder, artifact, id)) return true;
@@ -85,10 +81,8 @@ public class MarketplaceHelper {
      * (عربي) نسخة إضافية للتحقق عبر الإحداثيات مباشرة، مفيدة للخدمات الخلفية.
      */
     public static synchronized boolean isActuallyOnDisk(String coordinate) {
-        if (installedCache == null) {
-            refreshCache();
-        }
         String artifact = artifactOf(coordinate);
+        if (installedCache == null) refreshCache();
         for (String folder : installedCache) {
             if (matchesArtifact(folder, artifact, null)) return true;
         }
