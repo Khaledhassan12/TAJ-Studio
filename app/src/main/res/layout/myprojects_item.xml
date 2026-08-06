@@ -60,6 +60,17 @@
         app:layout_constraintEnd_toEndOf="@id/img_icon_view"
         app:layout_constraintTop_toTopOf="parent"/>
 
+    <ImageView
+        android:id="@+id/img_lock"
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:layout_marginEnd="2dp"
+        android:visibility="gone"
+        app:srcCompat="@drawable/ic_mtrl_shield_lock"
+        app:layout_constraintEnd_toStartOf="@id/img_pin"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="?attr/colorOnSurfaceVariant" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout

@@ -2552,4 +2552,24 @@ Please try again later"</string>
     <string name="finding_build_artifact_detail">Temporary files in %1$s that can be safely deleted.</string>
     <string name="project_details_sub">%1$s • %2$s • Last modified: %3$s</string>
     <string name="project_tech_details">%1$s\nver %2$d→%3$d • %4$s • minSdk %5$d • %6$d libs</string>
+
+    <!-- Project Lock -->
+    <string name="lock_project">Lock project</string>
+    <string name="unlock_project">Unlock project</string>
+    <string name="set_project_pin">Set Project PIN</string>
+    <string name="enter_pin">Enter PIN</string>
+    <string name="confirm_pin">Confirm PIN</string>
+    <string name="pin_passphrase_hint">Passphrase (4-12 characters)</string>
+    <string name="pin_mismatch">PINs do not match</string>
+    <string name="pin_length_error">Must be 4-12 characters</string>
+    <string name="pin_lang_error">This language is not supported. Use English letters, numbers or symbols only.</string>
+    <string name="pin_attempts_remaining">Attempts remaining: %1$d</string>
+    <string name="pin_cooldown">Try again in %1$ds</string>
+    <string name="pin_lock_subtitle">Secure this project with a passphrase</string>
+    <string name="pin_unlock_subtitle">Enter your passphrase to continue</string>
+    <string name="project_locked_msg">Project locked</string>
+    <string name="incorrect_pin">Incorrect passphrase</string>
+    <string name="pin_lang_error_short">Language not supported</string>
+    <string name="unlock_button">Unlock</string>
+    <string name="set_button">Set</string>
 </resources>
