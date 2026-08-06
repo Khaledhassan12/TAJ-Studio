@@ -57,12 +57,11 @@ import pro.sketchware.github.readme.MarkdownRenderer;
 import pro.sketchware.github.readme.ReadmeGenerator;
 
 /**
- * TODO_AGENT.md: Upload Studio — compact merge pass, hint-overlap fix & semantic icons — 2026-08-06
+ * TODO_AGENT.md: Upload Studio — suggestion row removal, circular attachments & single-source readiness state — 2026-08-06
  * 
- * بوتم شيت استوديو الرفع (Upload Studio) — يوفر واجهة متقدمة لرفع المشاريع إلى GitHub
- * مع دعم الإرفاقات (صور/فيديو) وتوليد احترافي لملف README.
- * [AR] تم تقليص عدد البطاقات من 7 إلى 5 مع دمج الميزات المتشابهة وحل مشكلة تداخل تلميحات النص.
- * [EN] Card count reduced from 7 to 5 with merged features and resolved hint-overlap issues.
+ * بوتم شيت استوديو الرفع (Upload Studio) — يوفر واجهة متقدمة لرفع المشاريع إلى GitHub.
+ * [AR] تم تبسيط الواجهة بحذف مقترحات الرسائل، واعتماد المرفقات الدائرية خارج البطاقة، وتوحيد منطق الجاهزية.
+ * [EN] Simplified UI by removing message suggestions, adopting circular attachments outside cards, and unifying readiness logic.
  */
 public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
 
@@ -141,7 +140,6 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
         setupHeader();
         applyModeLanguage();
         refreshChangesOffThread();
-        setupSuggestions();
         setupReadmeControls();
         setupAttachmentLogic();
         setupRepoPicker();
@@ -157,22 +155,19 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
         binding.messageInput.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { 
-                refreshUploadButtonState();
-                updateReadinessChips();
+                refreshReadinessState();
             }
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
         binding.readmeCustomInput.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { 
-                refreshUploadButtonState();
-                updateReadinessChips();
+                refreshReadinessState();
             }
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
 
-        refreshUploadButtonState();
-        updateReadinessChips();
+        refreshReadinessState();
 
         // تطبيق حركات سينمائية
         startEntranceAnimations();
@@ -194,51 +189,76 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
         });
     }
 
-    private void updateReadinessChips() {
+    // [AR] تحديث حالة الجاهزية (Readiness State) من مصدر واحد للحقيقة.
+    // [EN] Refresh readiness state from a single source of truth.
+    private void refreshReadinessState() {
         if (binding == null) return;
 
         boolean messageReady = !binding.messageInput.getText().toString().trim().isEmpty();
-        boolean readmeReady = (currentReadmeMode != ReadmeMode.NONE && (currentReadmeMode != ReadmeMode.CUSTOM || !binding.readmeCustomInput.getText().toString().trim().isEmpty()));
+        boolean readmeReady = (currentReadmeMode != ReadmeMode.NONE && 
+                (currentReadmeMode != ReadmeMode.CUSTOM || !binding.readmeCustomInput.getText().toString().trim().isEmpty()));
+        if (currentReadmeMode == ReadmeMode.AUTO && generatedReadmeMarkdown == null) readmeReady = false;
+        
         boolean attachmentsReady = !attachedFiles.isEmpty();
-        boolean filesReady = resolvedFileCount > 0;
-
-        // [AR] تحديث شريحة الملفات؛ إظهار خطأ في حال عدم وجود ملفات محلية.
-        // [EN] Update files chip; show error if no local files found.
-        String filesText = filesReady ? "Files ✔ " + resolvedFileCount : (resolvedFileCount == 0 ? "No local files" : "Checking files…");
-        setChipReady(binding.chipReadyFiles, filesReady, filesText);
-        if (resolvedFileCount == 0) {
-            binding.chipReadyFiles.setChipBackgroundColorResource(R.color.md_theme_light_error_container);
-            binding.chipReadyFiles.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_on_error_container));
+        
+        // 1. Files Chip
+        String filesText;
+        int filesColor, filesTextAttr;
+        if (resolvedFileCount == -1) {
+            filesText = "Checking files…";
+            filesColor = com.google.android.material.R.attr.colorSurfaceContainerHigh;
+            filesTextAttr = com.google.android.material.R.attr.colorOnSurfaceVariant;
+        } else if (resolvedFileCount > 0) {
+            filesText = "Files ✔ " + resolvedFileCount;
+            filesColor = com.google.android.material.R.attr.colorPrimaryContainer;
+            filesTextAttr = com.google.android.material.R.attr.colorOnPrimaryContainer;
+        } else {
+            filesText = "No local files";
+            filesColor = com.google.android.material.R.attr.colorErrorContainer;
+            filesTextAttr = com.google.android.material.R.attr.colorOnErrorContainer;
         }
+        updateChip(binding.chipReadyFiles, filesText, filesColor, filesTextAttr, resolvedFileCount > 0);
 
-        setChipReady(binding.chipReadyMessage, messageReady, "Message");
-        setChipReady(binding.chipReadyReadme, readmeReady, "README");
-        setChipReady(binding.chipReadyAttachments, attachmentsReady, "Attachments");
+        // 2. Message Chip
+        updateChip(binding.chipReadyMessage, "Message" + (messageReady ? " ✔" : ""),
+                messageReady ? com.google.android.material.R.attr.colorPrimaryContainer : com.google.android.material.R.attr.colorSurfaceContainerHigh,
+                messageReady ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnSurfaceVariant,
+                messageReady);
 
-        // [AR] تحديث شدة النبض بناءً على الجاهزية.
-        // [EN] Update pulse intensity based on readiness.
-        int readyCount = (filesReady ? 1 : 0) + (messageReady ? 1 : 0) + (readmeReady ? 1 : 0) + (attachmentsReady ? 1 : 0);
+        // 3. README Chip
+        updateChip(binding.chipReadyReadme, "README" + (readmeReady ? " ✔" : ""),
+                readmeReady ? com.google.android.material.R.attr.colorPrimaryContainer : com.google.android.material.R.attr.colorSurfaceContainerHigh,
+                readmeReady ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnSurfaceVariant,
+                readmeReady);
+
+        // 4. Attachments Chip
+        updateChip(binding.chipReadyAttachments, "Attachments" + (attachmentsReady ? " ✔ " + attachedFiles.size() : ""),
+                attachmentsReady ? com.google.android.material.R.attr.colorPrimaryContainer : com.google.android.material.R.attr.colorSurfaceContainerHigh,
+                attachmentsReady ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnSurfaceVariant,
+                attachmentsReady);
+
+        // Pulse intensity based on readiness
+        int readyCount = (resolvedFileCount > 0 ? 1 : 0) + (messageReady ? 1 : 0) + (readmeReady ? 1 : 0) + (attachmentsReady ? 1 : 0);
         float pulseAlpha = 0.1f + (readyCount * 0.15f);
         binding.iconPulseRing.setAlpha(pulseAlpha);
+
+        refreshUploadButtonState();
     }
 
-    private void setChipReady(Chip chip, boolean ready, String text) {
+    private void updateChip(Chip chip, String text, int colorAttr, int textColorAttr, boolean ready) {
+        Context ctx = requireContext();
         chip.setText(text);
-        if (ready) {
-            chip.setChipBackgroundColorResource(R.color.md_theme_light_primary_container);
-            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_on_primary_container));
-            chip.setChipStrokeWidth(0);
-            if (chip.getTag() == null || !(boolean)chip.getTag()) {
-                chip.setScaleX(0.8f); chip.setScaleY(0.8f);
-                chip.animate().scaleX(1f).scaleY(1f).setDuration(300).setInterpolator(new OvershootInterpolator()).start();
-                chip.setTag(true);
-            }
-        } else {
-            chip.setChipBackgroundColorResource(android.R.color.transparent);
-            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.md_theme_light_on_surface_variant));
-            chip.setChipStrokeWidth(getResources().getDisplayMetrics().density);
-            chip.setTag(false);
-        }
+        int color = com.google.android.material.color.MaterialColors.getColor(ctx, colorAttr, 0);
+        int textColor = com.google.android.material.color.MaterialColors.getColor(ctx, textColorAttr, 0);
+        chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(color));
+        chip.setTextColor(textColor);
+        chip.setChipStrokeWidth(ready ? 0 : getResources().getDisplayMetrics().density);
+        
+        if (ready && (chip.getTag() == null || !(boolean)chip.getTag())) {
+            chip.setScaleX(0.8f); chip.setScaleY(0.8f);
+            chip.animate().scaleX(1f).scaleY(1f).setDuration(300).setInterpolator(new OvershootInterpolator()).start();
+            chip.setTag(true);
+        } else if (!ready) chip.setTag(false);
     }
 
     private void startEntranceAnimations() {
@@ -247,9 +267,10 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
 
         // [AR] تحريك البطاقات بحركة متدرجة سينمائية (البطاقات المدمجة الجديدة).
         // [EN] Animate cards with a cinematic staggered entry (new merged cards).
-        View[] cards = { binding.cardRepository, binding.cardProject, binding.cardAttachments, binding.cardReadme, binding.contextInfoCard };
+        View[] cards = { binding.cardRepository, binding.cardProject, binding.cardReadme, binding.contextInfoCard };
         for (int i = 0; i < cards.length; i++) {
             View card = cards[i];
+            if (card == null) continue;
             card.setAlpha(0f);
             card.setTranslationY(60f);
             card.animate().alpha(1f).translationY(0f).setDuration(500).setStartDelay(150 + (i * 40)).setInterpolator(new OvershootInterpolator(0.8f)).start();
@@ -331,21 +352,6 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
         binding.editProjectTitle.setText(projectTitle);
         
         binding.messageInput.setHint(isCommit ? "Describe what changed…" : "What is this project about?");
-        
-        binding.suggestionChips.removeAllViews();
-        String[] suggestions = isCommit ? new String[]{"Update project", "Fix bug", "Add feature", "Refactor code", "Improve UI"} :
-                new String[]{getString(R.string.upload_suggestion_initial), getString(R.string.upload_suggestion_release), getString(R.string.upload_suggestion_import), getString(R.string.upload_suggestion_backup)};
-        
-        for (String s : suggestions) {
-            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.view_chip_suggestion, binding.suggestionChips, false);
-            chip.setText(s);
-            chip.setCheckable(true);
-            chip.setOnClickListener(v -> {
-                binding.messageInput.setText(s);
-                binding.messageInput.setSelection(s.length());
-            });
-            binding.suggestionChips.addView(chip);
-        }
 
         binding.readmeNoneHint.setText(isCommit ? "No release notes for this commit." : getString(R.string.upload_readme_none_hint));
 
@@ -404,7 +410,7 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
                 if (total == 0) binding.changesSummary.setText(R.string.upload_changes_none);
                 binding.filesBadge.setText(getString(R.string.upload_changes_files, total));
                 resolvedFileCount = total;
-                refreshUploadButtonState();
+                refreshReadinessState();
             });
         });
     }
@@ -469,19 +475,8 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
         binding.uploadButtonHint.setText(getString(R.string.upload_hint_summary, String.join(" · ", details)));
     }
 
-    private void setupSuggestions() {
-        for (int i = 0; i < binding.suggestionChips.getChildCount(); i++) {
-            View child = binding.suggestionChips.getChildAt(i);
-            if (child instanceof Chip) {
-                child.setOnClickListener(v -> {
-                    String text = String.valueOf(((Chip) v).getText());
-                    binding.messageInput.setText(text);
-                    binding.messageInput.setSelection(text.length());
-                    updateReadinessChips();
-                });
-            }
-        }
-    }
+    // [AR] حذف منطق القوالب لتبسيط الواجهة.
+    // [EN] Suggestion logic removed for UI simplification.
 
     // [AR] تهيئة منتقي المستودع؛ يسمح للمستخدم باختيار ريبو موجود أو إنشاء جديد.
     // [EN] Initializes the repository picker; allows user to pick an existing repo or create new.
@@ -515,9 +510,9 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
     private void setupOptionsCheckboxes() {
         binding.checkboxAutoReadme.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked && currentReadmeMode != ReadmeMode.AUTO) {
-                binding.readmeModeToggleGroup.check(R.id.readme_auto);
+                applyReadmeMode(ReadmeMode.AUTO);
             } else if (!isChecked && currentReadmeMode == ReadmeMode.AUTO) {
-                binding.readmeModeToggleGroup.check(R.id.readme_none);
+                applyReadmeMode(ReadmeMode.NONE);
             }
         });
         binding.checkboxGitignore.setOnCheckedChangeListener((buttonView, isChecked) -> useGitignore = isChecked);
@@ -530,8 +525,7 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 binding.descriptionCounter.setText(s.length() + "/500");
-                updateReadinessChips();
-                refreshUploadButtonState();
+                refreshReadinessState();
             }
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
@@ -553,20 +547,16 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
     }
 
     private void setupReadmeControls() {
-        segmentedTransition(ReadmeMode.NONE);
+        applyReadmeMode(ReadmeMode.NONE);
         binding.readmeModeToggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
             if (checkedId == R.id.readme_none) {
-                segmentedTransition(ReadmeMode.NONE);
-                binding.checkboxAutoReadme.setChecked(false);
+                applyReadmeMode(ReadmeMode.NONE);
             } else if (checkedId == R.id.readme_custom) {
-                segmentedTransition(ReadmeMode.CUSTOM);
-                binding.checkboxAutoReadme.setChecked(false);
+                applyReadmeMode(ReadmeMode.CUSTOM);
             } else if (checkedId == R.id.readme_auto) {
                 showLicenseDialog();
-                binding.checkboxAutoReadme.setChecked(true);
             }
-            updateReadinessChips();
         });
         binding.btnPreviewReadme.setOnClickListener(v -> showReadmePreview());
     }
@@ -575,8 +565,8 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
         String[] licenses = {"MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause", "No License"};
         final int[] selectedIdx = {0};
         new MaterialAlertDialogBuilder(requireContext()).setTitle("Choose a license").setSingleChoiceItems(licenses, 0, (dialog, which) -> selectedIdx[0] = which)
-                .setPositiveButton("Accept", (dialog, which) -> { selectedLicense = licenses[selectedIdx[0]]; segmentedTransition(ReadmeMode.AUTO); })
-                .setNegativeButton("Cancel", (dialog, which) -> { selectedLicense = "MIT"; segmentedTransition(ReadmeMode.AUTO); }).show();
+                .setPositiveButton("Accept", (dialog, which) -> { selectedLicense = licenses[selectedIdx[0]]; applyReadmeMode(ReadmeMode.AUTO); })
+                .setNegativeButton("Cancel", (dialog, which) -> { selectedLicense = "MIT"; applyReadmeMode(ReadmeMode.AUTO); }).show();
     }
 
     private void showReadmePreview() {
@@ -610,21 +600,40 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
         return list;
     }
 
-    private void segmentedTransition(ReadmeMode mode) {
+    // [AR] تطبيق وضع README وتحديث كافة العناصر المرتبطة (مصدر وحيد للحقيقة).
+    // [EN] Apply README mode and update all related elements (single source of truth).
+    private void applyReadmeMode(ReadmeMode mode) {
         currentReadmeMode = mode;
+        
+        // Update Toggle Group
+        int toggleId = R.id.readme_none;
+        if (mode == ReadmeMode.CUSTOM) toggleId = R.id.readme_custom;
+        else if (mode == ReadmeMode.AUTO) toggleId = R.id.readme_auto;
+        if (binding.readmeModeToggleGroup.getCheckedButtonId() != toggleId) {
+            binding.readmeModeToggleGroup.check(toggleId);
+        }
+
+        // Update Checkbox
+        binding.checkboxAutoReadme.setChecked(mode == ReadmeMode.AUTO);
+
+        // Transitions
         binding.readmeNoneHint.animate().alpha(0f).setDuration(150).withEndAction(() -> binding.readmeNoneHint.setVisibility(View.GONE)).start();
         binding.readmeCustomContainer.animate().alpha(0f).setDuration(150).withEndAction(() -> binding.readmeCustomContainer.setVisibility(View.GONE)).start();
         binding.readmeAutoContainer.animate().alpha(0f).setDuration(150).withEndAction(() -> binding.readmeAutoContainer.setVisibility(View.GONE)).start();
+        
         View toShow = null;
         switch (mode) {
             case NONE: toShow = binding.readmeNoneHint; break;
             case CUSTOM: toShow = binding.readmeCustomContainer; break;
-            case AUTO: toShow = binding.readmeAutoContainer; buildAutoReadmePreview(); break;
+            case AUTO: 
+                toShow = binding.readmeAutoContainer; 
+                if (generatedReadmeMarkdown == null) buildAutoReadmePreview(); 
+                break;
         }
         if (toShow != null) {
             toShow.setAlpha(0f); toShow.setVisibility(View.VISIBLE); toShow.animate().alpha(1f).setDuration(200).start();
         }
-        refreshUploadButtonState();
+        refreshReadinessState();
     }
 
     private void buildAutoReadmePreview() {
@@ -638,6 +647,7 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
                 if (binding != null) {
                     binding.readmeAutoStatus.setText("README ready ✔ (" + generatedReadmeMarkdown.split("\n").length + " lines)");
                     binding.autoReadmePreview.setText(generatedReadmeMarkdown.substring(0, Math.min(200, generatedReadmeMarkdown.length())) + "...");
+                    refreshReadinessState();
                 }
             });
         });
@@ -667,11 +677,10 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
                     }
                 }
                 attachedFiles.add(cacheFile);
-                updateReadinessChips();
             } catch (Exception ignored) {}
         }
         updateAttachmentStrip();
-        refreshUploadButtonState();
+        refreshReadinessState();
     }
 
     private void updateAttachmentStrip() {
@@ -687,8 +696,7 @@ public class ProjectUploadBottomSheet extends BottomSheetDialogFragment {
                 attachedFiles.remove(file); 
                 file.delete(); 
                 updateAttachmentStrip(); 
-                refreshUploadButtonState();
-                updateReadinessChips();
+                refreshReadinessState();
             });
             binding.attachmentsStrip.addView(view);
         }
