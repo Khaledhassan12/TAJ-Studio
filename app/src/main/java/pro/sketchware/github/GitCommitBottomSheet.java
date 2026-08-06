@@ -6,6 +6,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +31,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 import a.a.a.lC;
 import a.a.a.wq;
@@ -37,10 +42,8 @@ import pro.sketchware.R;
 import pro.sketchware.databinding.SheetGitCommitBinding;
 
 /**
- * بوتم شيت احترافي لإرسال التحديثات (Commits) للمستودع.
- * يتميز بدعم إرفاق الصور، معاينة التغييرات، وتصميم Premium متفاعل مع الكيبورد.
- * Professional bottom sheet for pushing updates (Commits) to the repository.
- * Features image attachments, changes preview, and a Premium keyboard-aware design.
+ * [R5-R8 State Maintenance] GitCommitBottomSheet - Centralized state management.
+ * (عربي) بوتم شيت إرسال التحديثات - إعادة هندسة الحالة: رندر مركزي، وحماية من تداخل جلب التغييرات.
  */
 public class GitCommitBottomSheet extends BottomSheetDialogFragment {
 
@@ -49,8 +52,15 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
     private final List<File> attachedFiles = new ArrayList<>();
     private static final int MAX_ATTACHMENTS = 5;
 
-    // مشغل منتقي الصور؛ يحفظ الصور في مجلد كاش داخلي لسهولة الرفع
-    // Image picker launcher; saves images to an internal cache folder for easier upload.
+    // R5: State Model
+    private enum CommitUiState { LOADING_CHANGES, READY, COMMITTING, SUCCESS, FAILED }
+    private CommitUiState currentState = CommitUiState.LOADING_CHANGES;
+    
+    // R6: Generation token for async changes scanning
+    private final AtomicLong scanGeneration = new AtomicLong(0);
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
     private final ActivityResultLauncher<Intent> pickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(), result -> {
         if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
@@ -67,8 +77,6 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // نضبط وضع الكيبورد لضمان تكيّف الواجهة دون تشويه العناصر
-        // Set soft input mode to ensure the UI adapts without distorting elements.
         if (getDialog() != null && getDialog().getWindow() != null) {
             getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
@@ -87,7 +95,6 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
         if (record == null) { dismiss(); return; }
 
         setupIdentity();
-        setupChangesPreview();
         setupSuggestions();
         setupAttachments();
 
@@ -101,20 +108,78 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
 
         binding.btnCommitPush.setOnClickListener(v -> performCommit());
         
-        // حركة دخول ناعمة للهيدر لتعزيز شعور الـ Premium
-        // Smooth entry animation for the header to enhance the Premium feel.
+        loadChangesAsync();
+
         binding.sheetHeader.setAlpha(0);
         binding.sheetHeader.setTranslationY(20);
         binding.sheetHeader.animate().alpha(1).translationY(0).setDuration(400).start();
     }
+
+    // --- Monopoly Writers (Single Source of Truth) ---
+
+    /**
+     * WHAT: applyCommitState - The ONLY writer for commit UI.
+     * WHY: [R5] Synchronizes loading state, buttons, and progress.
+     * (عربي) الكاتب الوحيد لحالة الـ Commit - يضمن ثبات الواجهة ومنع التداخل أثناء الرفع.
+     */
+    private void applyCommitState() {
+        if (binding == null) return;
+
+        boolean loading = currentState == CommitUiState.LOADING_CHANGES;
+        boolean busy = currentState == CommitUiState.COMMITTING;
+        
+        binding.changesLoadingState.setVisibility(loading ? View.VISIBLE : View.GONE);
+        binding.btnCommitPush.setEnabled(!loading && !busy);
+        binding.btnCommitPush.setAlpha(busy ? 0.6f : 1.0f);
+        binding.btnCommitPush.setText(busy ? "Pushing…" : getString(R.string.git_commit_button));
+        
+        if (currentState == CommitUiState.READY) {
+            binding.changesCountBadge.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void loadChangesAsync() {
+        currentState = CommitUiState.LOADING_CHANGES;
+        applyCommitState();
+        
+        long currentGen = scanGeneration.incrementAndGet();
+        executor.execute(() -> {
+            GitHubManager manager = GitHubManager.getInstance(requireContext());
+            File root = new File(wq.d(record.projectId));
+            List<GitHubManager.UploadFile> files = manager.collectUploadFiles(root);
+            
+            int java = 0, res = 0, assets = 0, other = 0;
+            for (GitHubManager.UploadFile f : files) {
+                String p = f.relativePath;
+                if (p.contains("/src/main/java/")) java++;
+                else if (p.contains("/src/main/res/")) res++;
+                else if (p.contains("/src/main/assets/")) assets++;
+                else other++;
+            }
+            
+            final int fSize = files.size();
+            final int fJava = java, fRes = res, fAssets = assets, fOther = other;
+            
+            mainHandler.post(() -> {
+                if (binding == null || !isAdded() || currentGen != scanGeneration.get()) return;
+                
+                binding.changesCountBadge.setText(getString(R.string.git_commit_changes_files, fSize));
+                binding.changesSummaryText.setText(getString(R.string.git_commit_changes_summary, fJava, fRes, fAssets, fOther));
+                binding.noChangesView.setVisibility(fSize == 0 ? View.VISIBLE : View.GONE);
+                
+                currentState = CommitUiState.READY;
+                applyCommitState();
+            });
+        });
+    }
+
+    // --- Identity & Assets ---
 
     private void setupIdentity() {
         String repoName = record.repoHtmlUrl.substring(record.repoHtmlUrl.lastIndexOf("/") + 1);
         binding.repoDisplayName.setText(repoName);
         binding.pushTargetLabel.setText(getString(R.string.git_commit_pushing_to, record.login, "main"));
 
-        // تحميل أيقونة المشروع المحلية في الهيدر لتعزيز الانتماء المحلي
-        // Load the local project icon in the header to enhance local identity.
         boolean iconSet = false;
         if (record.projectId != null) {
             HashMap<String, Object> projectMap = lC.b(record.projectId);
@@ -128,31 +193,7 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
                 }
             }
         }
-        if (!iconSet) {
-            binding.projectIconView.setImageResource(R.drawable.ic_github_brand);
-        }
-    }
-
-    private void setupChangesPreview() {
-        GitHubManager manager = GitHubManager.getInstance(requireContext());
-        File root = new File(wq.d(record.projectId));
-        List<GitHubManager.UploadFile> files = manager.collectUploadFiles(root);
-        
-        int java = 0, res = 0, assets = 0, other = 0;
-        for (GitHubManager.UploadFile f : files) {
-            String p = f.relativePath;
-            if (p.contains("/src/main/java/")) java++;
-            else if (p.contains("/src/main/res/")) res++;
-            else if (p.contains("/src/main/assets/")) assets++;
-            else other++;
-        }
-        
-        binding.changesCountBadge.setText(getString(R.string.git_commit_changes_files, files.size()));
-        binding.changesSummaryText.setText(getString(R.string.git_commit_changes_summary, java, res, assets, other));
-        
-        // ملاحظة: حالياً نعرض إحصائيات عامة؛ مقارنة diff الدقيقة هي خطوة مستقبلية
-        // Note: Currently displaying general stats; precise diff comparison is a future step.
-        binding.noChangesView.setVisibility(files.isEmpty() ? View.VISIBLE : View.GONE);
+        if (!iconSet) binding.projectIconView.setImageResource(R.drawable.ic_github_brand);
     }
 
     private void setupSuggestions() {
@@ -178,21 +219,14 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
     private void handlePickerResult(Intent data) {
         List<Uri> uris = new ArrayList<>();
         if (data.getClipData() != null) {
-            for (int i = 0; i < data.getClipData().getItemCount(); i++) {
-                uris.add(data.getClipData().getItemAt(i).getUri());
-            }
-        } else if (data.getData() != null) {
-            uris.add(data.getData());
-        }
+            for (int i = 0; i < data.getClipData().getItemCount(); i++) uris.add(data.getClipData().getItemAt(i).getUri());
+        } else if (data.getData() != null) uris.add(data.getData());
 
         for (Uri uri : uris) {
             if (attachedFiles.size() >= MAX_ATTACHMENTS) break;
             File file = saveUriToCache(uri);
             if (file != null) {
-                if (file.length() > 5 * 1024 * 1024) {
-                    Toast.makeText(requireContext(), getString(R.string.git_commit_attachments_too_big, file.getName()), Toast.LENGTH_SHORT).show();
-                    continue;
-                }
+                if (file.length() > 5 * 1024 * 1024) continue;
                 attachedFiles.add(file);
             }
         }
@@ -202,16 +236,10 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
     private File saveUriToCache(Uri uri) {
         File dir = new File(requireContext().getCacheDir(), "commit_attachments");
         if (!dir.exists()) dir.mkdirs();
-        
-        String name = "img_" + System.currentTimeMillis() + "_" + uri.getLastPathSegment() + ".png";
-        File file = new File(dir, name);
-        
-        try (InputStream is = requireContext().getContentResolver().openInputStream(uri)) {
-            try (FileOutputStream os = new FileOutputStream(file)) {
-                byte[] buf = new byte[8192];
-                int len;
-                while ((len = is.read(buf)) > 0) os.write(buf, 0, len);
-            }
+        File file = new File(dir, "img_" + System.currentTimeMillis() + "_" + uri.getLastPathSegment() + ".png");
+        try (InputStream is = requireContext().getContentResolver().openInputStream(uri); FileOutputStream os = new FileOutputStream(file)) {
+            byte[] buf = new byte[8192]; int len;
+            while ((len = is.read(buf)) > 0) os.write(buf, 0, len);
             return file;
         } catch (Exception e) { return null; }
     }
@@ -224,8 +252,6 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
             ImageView img = view.findViewById(R.id.thumb_image);
             View del = view.findViewById(R.id.btn_remove);
             
-            // مصغرات سريعة لضمان عدم استهلاك الذاكرة
-            // Quick thumbnails to prevent memory exhaustion.
             BitmapFactory.Options opts = new BitmapFactory.Options();
             opts.inSampleSize = 4;
             Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath(), opts);
@@ -245,6 +271,8 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
     }
 
     private void performCommit() {
+        if (currentState == CommitUiState.COMMITTING) return;
+        
         String msg = binding.commitMessageField.getText() != null ? binding.commitMessageField.getText().toString().trim() : "";
         if (msg.isEmpty()) {
             binding.commitMessageLayout.setError(getString(R.string.git_commit_error_empty));
@@ -252,8 +280,9 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
         }
         binding.commitMessageLayout.setError(null);
 
-        // نُغلق البوتم شيت فور الضغط ونسلّم العمل للخدمة، لأن الـ commit قد يستغرق وقتاً طويلاً.
-        // We dismiss the sheet the instant the user taps push and hand the work to the service.
+        currentState = CommitUiState.COMMITTING;
+        applyCommitState();
+
         Intent intent = new Intent(requireContext(), GitCommitService.class);
         intent.setAction(GitCommitService.ACTION_COMMIT);
         intent.putExtra(GitCommitService.EXTRA_RECORD_JSON, new com.google.gson.Gson().toJson(record));
@@ -275,6 +304,7 @@ public class GitCommitBottomSheet extends BottomSheetDialogFragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        executor.shutdownNow();
         binding = null;
     }
 }
