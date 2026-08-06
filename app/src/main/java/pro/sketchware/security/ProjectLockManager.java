@@ -24,7 +24,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +38,7 @@ public class ProjectLockManager {
     public static final String KEY_LOCKED = "project_locked";
     private static final String LOCK_FILE_NAME = "project_lock.json";
 
-    private static final Set<String> unlockedSessions = new HashSet<>();
+    private static final Set<String> unlockedSessions = ConcurrentHashMap.newKeySet();
     private static final Map<String, Integer> attemptCounter = new ConcurrentHashMap<>();
     private static final Map<String, Long> cooldownTimers = new ConcurrentHashMap<>();
 
