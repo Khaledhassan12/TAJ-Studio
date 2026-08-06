@@ -10,6 +10,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -49,7 +50,7 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
     private MarketplaceAdapter searchAdapter;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    private final InstallStateHub.Listener hubListener = (coordinate, entry) -> refreshBadges();
+    private final InstallStateHub.Listener hubListener = (coordinate, entry) -> refreshBadgesFor(coordinate);
 
     private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
         @Override
@@ -72,9 +73,6 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
         setupUI();
         loadCatalogAsync();
         
-        // R5: Registry Hub Listener
-        InstallStateHub.getInstance().addListener(hubListener);
-
         IntentFilter filter = new IntentFilter();
         filter.addAction(LibraryInstallService.ACTION_STATUS_CHANGE);
         filter.addAction(LibraryInstallService.ACTION_INSTALL_STARTED);
@@ -87,6 +85,20 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
         } else {
             registerReceiver(statusReceiver, filter);
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // R5: Live synchronization
+        InstallStateHub.get().addListener(hubListener);
+        refreshUI();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        InstallStateHub.get().removeListener(hubListener);
     }
 
     private void loadCatalogAsync() {
@@ -111,18 +123,10 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        InstallStateHub.getInstance().removeListener(hubListener);
         unregisterReceiver(statusReceiver);
         executor.shutdownNow();
     }
 
-    /**
-     * يتحقق مما إذا كانت المكتبة مثبتة باستخدام المساعد الموحد الذي يعتمد على الكاش.
-     * Checks if a library is installed using the unified, cached helper.
-     */
-    private boolean isInstalled(MarketplaceLibrary library) {
-        return pro.sketchware.marketplace.utils.MarketplaceHelper.isInstalledSync(library);
-    }
 
     /**
      * تبديل مركزي بين واجهة المتجر الرئيسية ونتائج البحث.
@@ -217,18 +221,91 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
     }
 
     /**
-     * تحديث شارات الحالة فقط لضمان سلاسة الواجهة.
+     * WHAT: applyBadgeState - The single writer for Marketplace badges.
+     * WHY: [R5] Synchronizes status between main list, horizontal carousel, and search results.
+     * (عربي) الرندر الموحد للشارات - يضمن تزامن الحالة في كافة القوائم والنتائج.
      */
-    public void refreshBadges() {
-        refreshUI();
+    private void applyBadgeState(TextView badge, String coordinate) {
+        if (badge == null) return;
+        
+        String artifact = artifactOf(coordinate);
+        // Priority 1: Check artifact-wide tasks (e.g. another version installing)
+        InstallStateHub.Entry entry = InstallStateHub.get().activeEntryForArtifact(artifact);
+        // Priority 2: Check this exact coordinate
+        if (entry == null) entry = InstallStateHub.get().get(coordinate);
+
+        if (entry != null) {
+            if (entry.state == InstallStateHub.State.SUCCESS) {
+                badge.setVisibility(View.VISIBLE);
+                badge.setText(R.string.lib_installed);
+                badge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF00C853)); // Success Green
+            } else if (entry.state == InstallStateHub.State.FAILED || entry.state == InstallStateHub.State.IDLE) {
+                // Check disk as fallback for idle/failed Hub entry
+                boolean installed = pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate);
+                if (installed) {
+                    badge.setVisibility(View.VISIBLE);
+                    badge.setText(R.string.lib_installed);
+                    badge.setBackgroundTintList(null);
+                } else {
+                    badge.setVisibility(View.GONE);
+                }
+            } else {
+                // Busy states (QUEUED..DEXING)
+                badge.setVisibility(View.VISIBLE);
+                badge.setText("Installing…");
+                badge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFFA000)); // Tertiary/Warning Amber
+            }
+        } else {
+            // Cold path
+            if (pro.sketchware.marketplace.utils.MarketplaceHelper.isActuallyOnDisk(coordinate)) {
+                badge.setVisibility(View.VISIBLE);
+                badge.setText(R.string.lib_installed);
+                badge.setBackgroundTintList(null);
+            } else {
+                badge.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private String artifactOf(String coordinate) {
+        if (coordinate == null || !coordinate.contains(":")) return coordinate;
+        String[] p = coordinate.split(":");
+        return p.length >= 2 ? p[1] : coordinate;
     }
 
     /**
-     * تحديث الواجهة لإعادة رسم حالة التثبيت (Badges).
-     * Refreshes the UI to redraw installation status badges.
-     *
-     * WHAT: Direct notifyDataSetChanged() on UI thread.
-     * WHY: Status checks now use a fast cache, no need for background executor overhead here.
+     * تحديث شارات الحالة لـ coordinate محدد فقط لضمان سلاسة الواجهة.
+     */
+    public void refreshBadgesFor(String coordinate) {
+        if (allLibraries == null) return;
+        String artifact = artifactOf(coordinate);
+        
+        // 1. Most Used
+        List<MarketplaceLibrary> mostUsed = allLibraries.stream().filter(MarketplaceLibrary::isMostUsed).collect(Collectors.toList());
+        for (int i = 0; i < mostUsed.size(); i++) {
+            if (artifactOf(mostUsed.get(i).getCoordinate()).equals(artifact)) {
+                mostUsedAdapter.notifyItemChanged(i);
+            }
+        }
+        
+        // 2. All Libraries
+        for (int i = 0; i < allLibraries.size(); i++) {
+            if (artifactOf(allLibraries.get(i).getCoordinate()).equals(artifact)) {
+                allAdapter.notifyItemChanged(i);
+            }
+        }
+        
+        // 3. Search Results (if visible)
+        if (binding.rvSearchResults.getVisibility() == View.VISIBLE) {
+            // This is harder since we don't hold the filtered list easily here, 
+            // but the adapter logic will handle it if we notify positions.
+            // Simplified: refresh all search for now or find positions.
+            searchAdapter.notifyDataSetChanged(); 
+        }
+    }
+
+    /**
+     * تحديث الواجهة بالكامل.
      */
     public void refreshUI() {
         if (allLibraries == null) return;
@@ -277,29 +354,7 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
                 holder.binding.tvInitial.setVisibility(View.GONE);
             }
 
-            // R5: Honest Live Badges (Hub priority)
-            InstallStateHub.Entry entry = InstallStateHub.getInstance().get(lib.getCoordinate());
-            if (entry != null) {
-                if (entry.state == InstallStateHub.State.SUCCESS) {
-                    holder.binding.tvStatusBadge.setVisibility(View.VISIBLE);
-                    holder.binding.tvStatusBadge.setText(R.string.lib_installed);
-                    holder.binding.tvStatusBadge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF00C853));
-                } else if (entry.state == InstallStateHub.State.FAILED) {
-                    holder.binding.tvStatusBadge.setVisibility(View.GONE);
-                } else if (entry.state != InstallStateHub.State.IDLE) {
-                    holder.binding.tvStatusBadge.setVisibility(View.VISIBLE);
-                    holder.binding.tvStatusBadge.setText("Installing…");
-                    holder.binding.tvStatusBadge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFFA000));
-                } else {
-                    holder.binding.tvStatusBadge.setVisibility(View.GONE);
-                }
-            } else if (isInstalled(lib)) {
-                holder.binding.tvStatusBadge.setVisibility(View.VISIBLE);
-                holder.binding.tvStatusBadge.setText(R.string.lib_installed);
-                holder.binding.tvStatusBadge.setBackgroundTintList(null); // Default theme
-            } else {
-                holder.binding.tvStatusBadge.setVisibility(View.GONE);
-            }
+            applyBadgeState(holder.binding.tvStatusBadge, lib.getCoordinate());
 
             holder.binding.getRoot().setOnClickListener(v -> showDetails(lib));
         }
@@ -352,26 +407,7 @@ public class LibraryMarketplaceActivity extends BaseAppCompatActivity {
                 holder.binding.tvInitial.setVisibility(View.GONE);
             }
 
-            // R5: Honest Live Badges
-            InstallStateHub.Entry entry = InstallStateHub.getInstance().get(lib.getCoordinate());
-            if (entry != null) {
-                if (entry.state == InstallStateHub.State.SUCCESS) {
-                    holder.binding.tvStatus.setVisibility(View.VISIBLE);
-                    holder.binding.tvStatus.setText(R.string.lib_installed);
-                } else if (entry.state == InstallStateHub.State.FAILED) {
-                    holder.binding.tvStatus.setVisibility(View.GONE);
-                } else if (entry.state != InstallStateHub.State.IDLE) {
-                    holder.binding.tvStatus.setVisibility(View.VISIBLE);
-                    holder.binding.tvStatus.setText("Installing…");
-                } else {
-                    holder.binding.tvStatus.setVisibility(View.GONE);
-                }
-            } else if (isInstalled(lib)) {
-                holder.binding.tvStatus.setVisibility(View.VISIBLE);
-                holder.binding.tvStatus.setText(R.string.lib_installed);
-            } else {
-                holder.binding.tvStatus.setVisibility(View.GONE);
-            }
+            applyBadgeState(holder.binding.tvStatus, lib.getCoordinate());
 
             holder.binding.getRoot().setOnClickListener(v -> showDetails(lib));
         }
