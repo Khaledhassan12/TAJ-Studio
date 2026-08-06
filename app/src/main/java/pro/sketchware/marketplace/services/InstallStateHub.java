@@ -61,6 +61,23 @@ public final class InstallStateHub {
         return map.get(coordinate);
     }
 
+    /**
+     * WHAT: activeEntryForArtifact - Finds any active task for a specific artifact.
+     * WHY: Prevents B1 desync where one version is installed but another is downloading.
+     * (عربي) البحث عن أي مهمة نشطة للأرتيفاكت؛ يمنع تضارب الشارات بين الإصدارات المختلفة.
+     */
+    public Entry activeEntryForArtifact(String artifact) {
+        if (artifact == null || artifact.isEmpty()) return null;
+        for (Map.Entry<String, Entry> e : map.entrySet()) {
+            if (e.getKey().contains(":" + artifact + ":")) {
+                if (e.getValue().state != State.IDLE && e.getValue().state != State.FAILED) {
+                    return e.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
     public void addListener(Listener l) {
         listeners.add(l);
     }

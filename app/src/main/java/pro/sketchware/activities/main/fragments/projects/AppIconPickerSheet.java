@@ -38,10 +38,8 @@ import pro.sketchware.databinding.ItemInstalledAppBinding;
 import pro.sketchware.databinding.SheetAppIconPickerBinding;
 
 /**
- * WHAT: UI-only picker. List from InstalledAppsRepository, icons from AppIconLoader
- *      (prefetch-warmed), tap applies instantly from cache. Whole tile is tappable.
- * (عربي) واجهة فقط: القائمة من المستودع، الأيقونات مسخّنة مسبقاً، والضغط على أي
- *      مكان في البطاقة يطبّق الأيقونة فوراً من الكاش.
+ * [R5-R8 State Maintenance] AppIconPickerSheet - Centralized state management.
+ * (عربي) منتقي أيقونة التطبيق - إعادة هندسة الحالة: كتّاب مركزيون، مصدر وحيد للحقيقة، وحماية النقر المزدوج.
  */
 public class AppIconPickerSheet extends BottomSheetDialogFragment {
 
@@ -49,16 +47,16 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
     private String scId;
     private String projectTitle;
     private AppsAdapter adapter;
-    private volatile boolean isApplying = false;
-    private final ExecutorService applyExecutor = Executors.newSingleThreadExecutor();
-    private final ExecutorService filterExecutor = Executors.newSingleThreadExecutor();
     private int tilePx = 160;
 
-    /**
-     * WHAT: projectIconPreviewCache - Static cache for project icons.
-     * WHY: Makes reopening the sheet instantaneous for the same project.
-     * (عربي) كاش أيقونة المشروع: يضمن فتح النافذة فوراً لنفس المشروع دون إعادة المعالجة.
-     */
+    // R5: Single Source of Truth (SSOT) Model
+    private enum ContentState { LOADING, LIST, EMPTY, NO_RESULTS }
+    private String selectedPkg = null;
+    private volatile boolean isApplying = false;
+    
+    private final ExecutorService applyExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService filterExecutor = Executors.newSingleThreadExecutor();
+
     private static final android.util.LruCache<String, Bitmap> projectIconPreviewCache = 
             new android.util.LruCache<>(20);
 
@@ -105,30 +103,79 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle s) {
         super.onViewCreated(v, s);
-        // WHAT: loadingStateGuard - Ensure states are reset before loading.
-        // (عربي) حارس الحالة: تصفير حالات الفراغ قبل البدء بالتحميل لضمان عدم التداخل.
-        binding.emptyState.setVisibility(View.GONE);
-        
         tilePx = (int) (96 * getResources().getDisplayMetrics().density);
         binding.projectNamePreview.setText(projectTitle);
-        loadCurrentIcon();
+        
         setupGrid();
         setupListeners();
+        
+        loadCurrentIcon();
         loadApps();
     }
 
-    private void loadApps() {
-        binding.loadingState.setVisibility(View.VISIBLE);
-        binding.emptyState.setVisibility(View.GONE);
-        binding.installedAppsGrid.setVisibility(View.GONE);
+    // --- Monopoly Writers (Single Source of Truth) ---
 
+    /**
+     * WHAT: applyContentState - The ONLY writer for grid/loading/empty visibility.
+     * (عربي) الكاتب الوحيد لحالة المحتوى: يدير ظهور الشبكة والتحميل والفراغ بدقة.
+     */
+    private void applyContentState(ContentState state) {
+        if (binding == null) return;
+        binding.loadingState.setVisibility(state == ContentState.LOADING ? View.VISIBLE : View.GONE);
+        binding.emptyState.setVisibility(state == ContentState.EMPTY || state == ContentState.NO_RESULTS ? View.VISIBLE : View.GONE);
+        binding.installedAppsGrid.setVisibility(state == ContentState.LIST ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * WHAT: applySelection - Updates the SSOT and notifies adapter of changes.
+     * (عربي) الكاتب الوحيد للتحديد: يحدّث مصدر الحقيقة ويخطر المحول بالمواضع المتغيرة فقط.
+     */
+    private void applySelection(String pkg) {
+        String old = selectedPkg;
+        selectedPkg = pkg;
+        if (adapter != null) {
+            adapter.notifyItemChangedForPackage(old);
+            adapter.notifyItemChangedForPackage(selectedPkg);
+        }
+    }
+
+    /**
+     * WHAT: applyPreview - Centralized renderer for the project icon preview.
+     * (عربي) الكاتب الوحيد للمعاينة: المسؤول الوحيد عن تحديث أيقونة المعاينة مع الأنيميشن.
+     */
+    private void applyPreview(@Nullable Bitmap b) {
+        if (binding == null) return;
+        if (b == null) {
+            binding.iconPreview.setImageResource(R.drawable.default_icon);
+            return;
+        }
+        binding.iconPreviewFrame.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100)
+                .withEndAction(() -> {
+                    if (binding != null) {
+                        binding.iconPreview.setImageBitmap(b);
+                        binding.iconPreviewFrame.animate().scaleX(1f).scaleY(1f).setDuration(100).start();
+                    }
+                }).start();
+    }
+
+    /**
+     * WHAT: setApplying - Centralized blocker for concurrent apply tasks.
+     * (عربي) حارس التنفيذ: يمنع العمليات المتوازية ويحمي الواجهة أثناء الحفظ.
+     */
+    private void setApplying(boolean applying) {
+        isApplying = applying;
+        if (binding == null) return;
+        binding.getRoot().setAlpha(applying ? 0.7f : 1.0f);
+    }
+
+    // --- Business Logic ---
+
+    private void loadApps() {
+        applyContentState(ContentState.LOADING);
         InstalledAppsRepository.load(requireContext(), apps -> {
             if (binding == null || !isAdded()) return;
-            binding.loadingState.setVisibility(View.GONE);
-            binding.emptyState.setVisibility(apps.isEmpty() ? View.VISIBLE : View.GONE);
-            binding.installedAppsGrid.setVisibility(apps.isEmpty() ? View.GONE : View.VISIBLE);
+            applyContentState(apps.isEmpty() ? ContentState.EMPTY : ContentState.LIST);
             adapter.setApps(apps);
-            // WHAT: prefetch warm-up - warm the cache for the whole list off-main.
             List<String> pkgs = new ArrayList<>();
             for (InstalledAppsRepository.App a : apps) pkgs.add(a.packageName);
             AppIconLoader.get().prefetch(requireContext(), pkgs, tilePx);
@@ -136,11 +183,9 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
     }
 
     private void loadCurrentIcon() {
-        // WHAT: projectIconPreviewCache hit check.
-        // (عربي) فحص الكاش: استخدام النسخة المخزنة لأيقونة المشروع إن وجدت.
         Bitmap hit = projectIconPreviewCache.get(scId);
         if (hit != null) {
-            binding.iconPreview.setImageBitmap(hit);
+            applyPreview(hit);
             return;
         }
 
@@ -151,12 +196,11 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
                 Bitmap b = decodeFile(path, 256);
                 Activity act = getActivity();
                 if (act == null || !isAdded() || b == null) return;
-                
                 projectIconPreviewCache.put(scId, b);
-                act.runOnUiThread(() -> { if (binding != null) binding.iconPreview.setImageBitmap(b); });
+                act.runOnUiThread(() -> { if (binding != null) applyPreview(b); });
             });
         } else {
-            binding.iconPreview.setImageResource(R.drawable.default_icon);
+            applyPreview(null);
         }
     }
 
@@ -180,9 +224,6 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
 
     private void filterApps(String q) {
         if (binding == null || !isAdded()) return;
-        // WHAT: Background Filtering - Offload string search to executor.
-        // WHY: Smooth typing experience even with 500+ apps.
-        // (عربي) بحث خلفي: تنفيذ البحث في خيط مستقل لضمان سلاسة الكتابة.
         filterExecutor.execute(() -> {
             List<InstalledAppsRepository.App> all = InstalledAppsRepository.cached();
             if (all == null) return;
@@ -194,8 +235,7 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
             if (act != null) {
                 act.runOnUiThread(() -> {
                     if (binding != null && isAdded()) {
-                        binding.emptyState.setVisibility(out.isEmpty() ? View.VISIBLE : View.GONE);
-                        binding.installedAppsGrid.setVisibility(out.isEmpty() ? View.GONE : View.VISIBLE);
+                        applyContentState(out.isEmpty() && !q.isEmpty() ? ContentState.NO_RESULTS : (out.isEmpty() ? ContentState.EMPTY : ContentState.LIST));
                         adapter.setApps(out);
                     }
                 });
@@ -203,20 +243,18 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
         });
     }
 
-    /**
-     * WHAT: instantTapApply - preview + file from cache; high-res decode off-main.
-     * (عربي) تطبيق فوري: المعاينة والملف من الكاش، والفك عالي الدقة في الخلفية.
-     */
     private void applyPickedIconToProject(@Nullable InstalledAppsRepository.App app) {
         if (isApplying) return;
-        isApplying = true;
+        setApplying(true);
         final Activity act = getActivity();
-        if (act == null || !isAdded()) { isApplying = false; return; }
+        if (act == null || !isAdded()) { setApplying(false); return; }
+        
         final String pkg = (app != null) ? app.packageName : null;
+        applySelection(pkg);
 
         if (pkg != null) {
             Bitmap preview = AppIconLoader.get().cached(pkg);
-            if (preview != null) updatePreview(preview);
+            if (preview != null) applyPreview(preview);
         }
 
         applyExecutor.execute(() -> {
@@ -235,18 +273,18 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
                     iconFile.delete();
                 }
                 
-                // WHAT: Heavy Data Write - update project metadata off-main.
                 HashMap<String, Object> map = lC.b(scId);
                 if (map != null) { map.put("custom_icon", high != null); lC.b(scId, map); }
 
-                final Bitmap preview2 = high;
+                final Bitmap finalBmp = high;
                 act.runOnUiThread(() -> {
-                    if (!isAdded() || binding == null) { isApplying = false; return; }
-                    if (preview2 != null) {
-                        updatePreview(preview2);
-                        projectIconPreviewCache.put(scId, preview2);
+                    if (!isAdded() || binding == null) { setApplying(false); return; }
+                    
+                    if (finalBmp != null) {
+                        applyPreview(finalBmp);
+                        projectIconPreviewCache.put(scId, finalBmp);
                     } else {
-                        binding.iconPreview.setImageResource(R.drawable.default_icon);
+                        applyPreview(null);
                         projectIconPreviewCache.remove(scId);
                     }
                     
@@ -260,27 +298,16 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
                         if (a instanceof pro.sketchware.activities.main.activities.MainActivity) {
                             ((pro.sketchware.activities.main.activities.MainActivity) a).lightweightProjectIconRefresh(scId);
                         }
-                        isApplying = false;
+                        setApplying(false);
                     }, 180);
                 });
             } catch (Exception e) {
                 act.runOnUiThread(() -> {
-                    isApplying = false;
+                    setApplying(false);
                     if (isAdded()) Toast.makeText(act, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         });
-    }
-
-    private void updatePreview(Bitmap b) {
-        if (binding == null) return;
-        binding.iconPreviewFrame.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100)
-                .withEndAction(() -> {
-                    if (binding != null) {
-                        binding.iconPreview.setImageBitmap(b);
-                        binding.iconPreviewFrame.animate().scaleX(1f).scaleY(1f).setDuration(100).start();
-                    }
-                }).start();
     }
 
     private Bitmap decodeFile(String path, int req) {
@@ -310,12 +337,21 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
     private class AppsAdapter extends RecyclerView.Adapter<AppsAdapter.VH> {
         private List<InstalledAppsRepository.App> apps = new ArrayList<>();
         private final OnAppSelected listener;
-        private int selectedPosition = -1;
 
         AppsAdapter(OnAppSelected l) { listener = l; }
 
         void setApps(List<InstalledAppsRepository.App> list) {
-            apps = list; selectedPosition = -1; notifyDataSetChanged();
+            apps = list; notifyDataSetChanged();
+        }
+
+        void notifyItemChangedForPackage(String pkg) {
+            if (pkg == null) return;
+            for (int i = 0; i < apps.size(); i++) {
+                if (pkg.equals(apps.get(i).packageName)) {
+                    notifyItemChanged(i);
+                    return;
+                }
+            }
         }
 
         @NonNull @Override
@@ -344,27 +380,16 @@ public class AppIconPickerSheet extends BottomSheetDialogFragment {
                 });
             }
 
-            boolean sel = (selectedPosition == position);
+            boolean sel = (selectedPkg != null && selectedPkg.equals(app.packageName));
             holder.binding.tileContainer.setActivated(sel);
             holder.binding.selectionBadge.setVisibility(sel ? View.VISIBLE : View.GONE);
 
-            // WHAT: Tap-to-apply guard.
-            // (عربي) حارس النقر: تجنب إعادة الربط غير الضرورية.
             View.OnClickListener cl = v -> {
                 if (isApplying) return;
-                int pos = holder.getBindingAdapterPosition();
-                if (selectedPosition == pos) {
-                    listener.onAppSelected(app);
-                    return;
-                }
-
+                
                 v.animate().scaleX(0.9f).scaleY(0.9f).setDuration(90)
                         .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(90).start()).start();
                 
-                int old = selectedPosition;
-                selectedPosition = pos;
-                if (old >= 0) notifyItemChanged(old);
-                notifyItemChanged(selectedPosition);
                 listener.onAppSelected(app);
             };
             holder.binding.tileContainer.setOnClickListener(cl);
