@@ -94,6 +94,11 @@ public class GitHubManager {
         void onResult(boolean removed, int code, String detail);
     }
 
+    public interface RepoListCallback {
+        void onSuccess(List<JsonObject> repos);
+        void onError(String error);
+    }
+
     public interface AvatarBitmapCallback {
         void onBitmap(Bitmap bitmap);
         void onFailed();
@@ -283,6 +288,39 @@ public class GitHubManager {
                 }
             } catch (Exception e) {
                 mainHandler.post(() -> cb.onResult(false, -1, e.toString()));
+            }
+        });
+    }
+
+    // [AR] يجلب قائمة المستودعات الخاصة بالمستخدم مرتبة حسب آخر دفع.
+    // [EN] Fetches the user's repositories ordered by latest push.
+    public void listUserRepos(RepoListCallback cb) {
+        executor.execute(() -> {
+            String token = getAccessToken();
+            if (token == null) {
+                mainHandler.post(() -> cb.onError("Not signed in."));
+                return;
+            }
+
+            String url = "https://api.github.com/user/repos?per_page=100&sort=pushed";
+            Request request = buildRequest(url).get().build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String body = response.body().string();
+                    JsonArray array = gson.fromJson(body, JsonArray.class);
+                    List<JsonObject> repos = new ArrayList<>();
+                    if (array != null) {
+                        for (int i = 0; i < array.size(); i++) {
+                            repos.add(array.get(i).getAsJsonObject());
+                        }
+                    }
+                    mainHandler.post(() -> cb.onSuccess(repos));
+                } else {
+                    mainHandler.post(() -> cb.onError("Failed to fetch repos: " + response.code()));
+                }
+            } catch (Exception e) {
+                mainHandler.post(() -> cb.onError(e.toString()));
             }
         });
     }
@@ -525,8 +563,15 @@ public class GitHubManager {
                         // الإرفاقات ثنائية دائماً
                         String sha = tryCreateBlob(repoUrl, file, true, stages);
                         if (sha != null) {
+                            String fileRepoPath;
+                            if (file.getName().startsWith("banner_")) {
+                                fileRepoPath = "screenshots/banner.png";
+                            } else {
+                                fileRepoPath = "screenshots/" + file.getName();
+                            }
+                            
                             JsonObject treeElement = new JsonObject();
-                            treeElement.addProperty("path", "attachments/" + file.getName());
+                            treeElement.addProperty("path", fileRepoPath);
                             treeElement.addProperty("mode", "100644");
                             treeElement.addProperty("type", "blob");
                             treeElement.addProperty("sha", sha);
@@ -780,15 +825,18 @@ public class GitHubManager {
     }
 
     public void uploadProject(String projectTitle, File projectRootParam, UploadCallback callback) {
-        uploadProject(projectTitle, projectRootParam, null, null, callback);
+        uploadProject(projectTitle, projectRootParam, null, null, false, null, callback);
     }
 
-    /**
-     * نسخة موسّعة من رفع المشروع تقبل رسالة commit مخصصة ومدخلات إضافية (مثل README والإرفاقات).
-     * Extended version of project upload that accepts a custom commit message and extra entries.
-     */
     public void uploadProject(String projectTitle, File projectRootParam, String commitMessage,
                               List<ExtraEntry> extraEntries, UploadCallback callback) {
+        uploadProject(projectTitle, projectRootParam, commitMessage, extraEntries, false, null, callback);
+    }
+
+    // [AR] نسخة موسّعة من رفع المشروع تقبل رسالة commit مخصصة ومدخلات إضافية، مع دعم الخصوصية واستهداف مستودع محدد.
+    // [EN] Extended version of project upload accepting custom commit message, extra entries, privacy, and target repo.
+    public void uploadProject(String projectTitle, File projectRootParam, String commitMessage,
+                              List<ExtraEntry> extraEntries, boolean isPrivate, String targetRepoFullName, UploadCallback callback) {
         executor.execute(() -> {
             String token = getAccessToken();
             String login = getUserLogin();
@@ -834,8 +882,12 @@ public class GitHubManager {
                     return;
                 }
 
-                String repoName = sanitizeRepoName(projectTitle);
-                String repoUrl = "https://api.github.com/repos/" + login + "/" + repoName;
+                String repoName = targetRepoFullName != null ? 
+                        targetRepoFullName.substring(targetRepoFullName.indexOf("/") + 1) : sanitizeRepoName(projectTitle);
+                String repoOwner = targetRepoFullName != null ? 
+                        targetRepoFullName.substring(0, targetRepoFullName.indexOf("/")) : login;
+                
+                String repoUrl = "https://api.github.com/repos/" + repoOwner + "/" + repoName;
                 
                 mainHandler.post(() -> callback.onProgress(0, filesToUpload.size(), "Checking repository…"));
                 
@@ -844,10 +896,15 @@ public class GitHubManager {
                 try (Response response = client.newCall(getRepoRequest).execute()) {
                     stages.append("repo_get=").append(response.code()).append(" ");
                     if (response.code() == 404) {
+                        if (targetRepoFullName != null) {
+                            mainHandler.post(() -> callback.onError("Target repository not found: " + targetRepoFullName, stages.toString()));
+                            return;
+                        }
+                        
                         mainHandler.post(() -> callback.onProgress(0, filesToUpload.size(), "Creating repository…"));
                         JsonObject createRepoBody = new JsonObject();
                         createRepoBody.addProperty("name", repoName);
-                        createRepoBody.addProperty("private", false);
+                        createRepoBody.addProperty("private", isPrivate);
                         createRepoBody.addProperty("auto_init", true); // تهيئة الـ backend بـ commit أولي => يمنع 409 على blob
 
                         Request createRepoRequest = buildRequest("https://api.github.com/user/repos")
@@ -1085,7 +1142,7 @@ public class GitHubManager {
                     }
                 }
 
-                String finalHtmlUrl = "https://github.com/" + login + "/" + repoName;
+                String finalHtmlUrl = "https://github.com/" + repoOwner + "/" + repoName;
                 mainHandler.post(() -> callback.onSuccess(finalHtmlUrl, stages.toString()));
 
             } catch (Exception e) {
