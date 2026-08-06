@@ -112,6 +112,13 @@
                                 android:textColor="?attr/colorPrimary"
                                 android:textStyle="bold" />
 
+                            <ProgressBar
+                                android:id="@+id/changes_loading_state"
+                                style="?android:attr/progressBarStyleSmall"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:visibility="gone" />
+
                             <TextView
                                 android:id="@+id/changes_count_badge"
                                 android:layout_width="wrap_content"
@@ -121,7 +128,9 @@
                                 android:paddingVertical="2dp"
                                 android:textAppearance="?attr/textAppearanceLabelSmall"
                                 android:textColor="?attr/colorPrimary"
-                                tools:text="54 files" />
+                                android:visibility="gone"
+                                tools:text="54 files"
+                                tools:visibility="visible" />
                         </LinearLayout>
 
                         <TextView
