@@ -4,9 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -17,17 +14,20 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import pro.sketchware.R;
 import pro.sketchware.databinding.FragmentUpgradeCenterBinding;
 
 /**
  * Smart Upgrade Center Fragment - Handles UI for project upgrades.
- * It provides a central place to analyze legacy projects and apply modern standards safely.
+ * Optimized with report caching, scan generation tracking, and double-tap protection.
  * (عربي) واجهة مركز الترقيات الذكي - تدير شاشة ترقية المشاريع.
- * توفر مكاناً مركزياً لتحليل المشاريع القديمة وتطبيق المعايير الحديثة بأمان.
+ * مصممة مع تخزين مؤقت للتقارير، تتبع أجيال الفحص، وحماية ضد النقر المزدوج.
  */
 public class UpgradeCenterFragment extends Fragment {
 
@@ -38,6 +38,15 @@ public class UpgradeCenterFragment extends Fragment {
     private SafeFixApplier fixApplier;
     private UpgradableProjectAdapter adapter;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+
+    // G5: Static cache for immediate UI restoration
+    private static volatile List<UpgradeReport> CACHED_REPORTS;
+    
+    // G6: Scan generation token to prevent race conditions from overlapping scans
+    private final AtomicLong scanGeneration = new AtomicLong(0);
+    
+    // G7: Double-tap guard for active upgrades
+    private final Set<String> applyingIds = new HashSet<>();
 
     @Nullable
     @Override
@@ -56,6 +65,9 @@ public class UpgradeCenterFragment extends Fragment {
         fixApplier = new SafeFixApplier();
         
         adapter = new UpgradableProjectAdapter(report -> {
+            // G7: Check if upgrade is already in progress
+            if (applyingIds.contains(report.scId)) return;
+            
             MaterialAlertDialogBuilder confirmBuilder = new MaterialAlertDialogBuilder(requireContext());
             confirmBuilder.setTitle(R.string.upgrade_confirm_title);
             
@@ -67,6 +79,7 @@ public class UpgradeCenterFragment extends Fragment {
             }
             confirmBuilder.setMessage(getString(R.string.upgrade_confirm_msg, report.appName, itemsText.toString()));
             confirmBuilder.setPositiveButton("Upgrade", (dialog, which) -> {
+                applyingIds.add(report.scId);
                 applier.applyUpgrades(report, new SafeUpgradeApplier.UpgradeCallback() {
                     @Override
                     public void onUpgradeStarted() {
@@ -75,6 +88,7 @@ public class UpgradeCenterFragment extends Fragment {
 
                     @Override
                     public void onUpgradeFinished(boolean success, String message) {
+                        applyingIds.remove(report.scId);
                         if (isAdded()) {
                             Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
                             if (success) performScan();
@@ -86,15 +100,25 @@ public class UpgradeCenterFragment extends Fragment {
             confirmBuilder.show();
         }, this::showReportDialog);
         
+        binding.recyclerUpgrades.setHasFixedSize(true);
         binding.recyclerUpgrades.setAdapter(adapter);
         
         binding.btnRecheck.setOnClickListener(v -> performScan());
+        
+        // G5: Show cached reports immediately if available
+        if (CACHED_REPORTS != null && !CACHED_REPORTS.isEmpty()) {
+            binding.emptyState.setVisibility(View.GONE);
+            binding.recyclerUpgrades.setVisibility(View.VISIBLE);
+            adapter.setReports(CACHED_REPORTS);
+        }
         
         performScan();
     }
 
     private void performScan() {
         if (!isAdded()) return;
+        
+        long currentGen = scanGeneration.incrementAndGet();
         
         scanner.scan(new ProjectUpgradeScanner.ScanCallback() {
             @Override
@@ -105,13 +129,15 @@ public class UpgradeCenterFragment extends Fragment {
 
             @Override
             public void onScanFinished(List<UpgradeReport> reports) {
-                if (!isAdded()) return;
+                // G6: Ignore results if a newer scan has been started
+                if (!isAdded() || currentGen != scanGeneration.get()) return;
+                
+                CACHED_REPORTS = reports;
                 
                 binding.btnRecheck.setVisibility(View.VISIBLE);
                 binding.progressRecheck.setVisibility(View.GONE);
                 binding.lastChecked.setText(getString(R.string.last_checked, dateFormat.format(new Date())));
                 
-                // G7: Summary logic
                 int scanned = reports.size();
                 int upgradable = 0;
                 int clean = 0;
@@ -123,8 +149,6 @@ public class UpgradeCenterFragment extends Fragment {
                 String summary = getString(R.string.scan_summary_text, scanned, upgradable, clean);
                 binding.summaryText.setText(summary);
                 
-                com.google.android.material.snackbar.Snackbar.make(binding.getRoot(), summary, com.google.android.material.snackbar.Snackbar.LENGTH_LONG).show();
-
                 if (reports.isEmpty()) {
                     binding.emptyState.setVisibility(View.VISIBLE);
                     binding.recyclerUpgrades.setVisibility(View.GONE);
@@ -137,10 +161,6 @@ public class UpgradeCenterFragment extends Fragment {
         });
     }
 
-    /**
-     * WHAT: showReportDialog - Displays a comprehensive project doctor report.
-     * (عربي) إظهار حوار التقرير - يعرض تقرير "طبيب المشروع" الشامل.
-     */
     private void showReportDialog(UpgradeReport report) {
         doctor.runHealthCheck(report.scId, new ProjectDoctorOrchestrator.DoctorCallback() {
             @Override
@@ -171,7 +191,7 @@ public class UpgradeCenterFragment extends Fragment {
                                         .setPositiveButton("OK", null)
                                         .show();
                                     
-                                    performScan(); // Refresh lists
+                                    performScan();
                                 } else {
                                     Toast.makeText(requireContext(), "Failed to apply fixes", Toast.LENGTH_LONG).show();
                                 }

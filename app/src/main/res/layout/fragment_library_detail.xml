@@ -241,6 +241,21 @@
                 app:icon="@drawable/ic_mtrl_update"
                 tools:visibility="visible" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancel_install"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:layout_marginStart="12dp"
+                android:text="Cancel"
+                android:visibility="gone"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_mtrl_close"
+                app:backgroundTint="?attr/colorErrorContainer"
+                app:iconTint="?attr/colorOnErrorContainer"
+                android:textColor="?attr/colorOnErrorContainer"
+                tools:visibility="visible" />
+
         </LinearLayout>
 
         <ProgressBar
