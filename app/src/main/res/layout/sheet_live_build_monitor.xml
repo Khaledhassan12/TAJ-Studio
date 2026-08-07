@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bg_bottom_sheet_rounded"
+    android:backgroundTint="?attr/colorSurfaceContainerHigh">
+
+    <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+        android:id="@+id/sheet_drag_handle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:alpha="0.4" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="24dp"
+                android:paddingBottom="16dp">
+
+                <TextView
+                    android:id="@+id/tv_project_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textStyle="bold"
+                    tools:text="Project Name" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_phase"
+                    style="@style/Widget.Material3.Chip.Assist.Elevated"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="12dp"
+                    app:chipMinHeight="32dp"
+                    tools:text="COMPILATION" />
+
+                <TextView
+                    android:id="@+id/tv_timer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:fontFamily="monospace"
+                    tools:text="00:15" />
+            </LinearLayout>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:dividerColor="?attr/colorOutlineVariant" />
+
+            <!-- Log Area -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_logs"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:paddingVertical="8dp"
+                android:scrollbarStyle="outsideOverlay"
+                android:scrollbars="vertical" />
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:dividerColor="?attr/colorOutlineVariant" />
+
+            <!-- Terminal Summary Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_terminal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="?attr/colorSurfaceContainerLowest"
+                app:cardCornerRadius="16dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:id="@+id/img_terminal_icon"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        tools:src="@drawable/ic_mtrl_check" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_terminal_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textStyle="bold"
+                            tools:text="Build succeeded" />
+
+                        <TextView
+                            android:id="@+id/tv_terminal_sub"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:ellipsize="middle"
+                            android:singleLine="true"
+                            tools:text="/path/to/apk" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btn_terminal_action"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        tools:text="Install" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+        <!-- Jump to Latest -->
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/fab_jump_latest"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="80dp"
+            android:text="Jump to latest"
+            android:visibility="gone"
+            app:icon="@drawable/ic_mtrl_arrow_down"
+            tools:visibility="visible" />
+
+    </RelativeLayout>
+</LinearLayout>
