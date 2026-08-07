@@ -146,18 +146,5 @@
 
         </LinearLayout>
 
-        <!-- Jump to Latest -->
-        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/fab_jump_latest"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:layout_marginBottom="80dp"
-            android:text="Jump to latest"
-            android:visibility="gone"
-            app:icon="@drawable/ic_mtrl_arrow_down"
-            tools:visibility="visible" />
-
     </RelativeLayout>
 </LinearLayout>
