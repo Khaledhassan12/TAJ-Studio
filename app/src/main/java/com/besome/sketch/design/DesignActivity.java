@@ -58,6 +58,12 @@ import com.besome.sketch.editor.manage.view.ManageViewActivity;
 import com.besome.sketch.lib.base.BaseAppCompatActivity;
 import com.besome.sketch.lib.ui.CustomViewPager;
 import com.besome.sketch.tools.CompileLogActivity;
+import com.google.android.material.chip.Chip;
+
+import pro.sketchware.build.BuildLogHub;
+import pro.sketchware.build.LiveBuildMonitorSheet;
+import pro.sketchware.databinding.SheetLiveBuildMonitorBinding;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
@@ -143,6 +149,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     private PopupMenu bottomPopupMenu;
     private MaterialButton btnRun;
     private MaterialButton btnOptions;
+    private Chip chipBuildRunning;
+    private LiveBuildMonitorSheet buildMonitor;
     private ProjectFileBean projectFile;
     private TextView fileName;
     private String currentJavaFileName;
@@ -196,7 +204,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             refresh();
         }
     });
-    private BuildTask currentBuildTask;
+    BuildTask currentBuildTask;
     private final BroadcastReceiver buildCancelReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -347,6 +355,22 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         }
     }
 
+    public boolean isCurrentBuildRunning() {
+        return currentBuildTask != null && !currentBuildTask.canceled && !currentBuildTask.isBuildFinished;
+    }
+
+    public void setBuildRunningChipVisible(boolean visible) {
+        if (chipBuildRunning != null) {
+            chipBuildRunning.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void showBuildMonitor() {
+        if (buildMonitor != null) {
+            buildMonitor.show();
+        }
+    }
+
     /**
      * Opens the debug APK to install.
      */
@@ -462,6 +486,19 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
         coordinatorLayout = findViewById(R.id.layout_coordinator);
         fileName = findViewById(R.id.file_name);
+        chipBuildRunning = findViewById(R.id.chip_build_running);
+        chipBuildRunning.setOnClickListener(v -> showBuildMonitor());
+
+        TextView progressText = findViewById(R.id.progress_text);
+        LinearLayout progressContainer = findViewById(R.id.progress_container);
+        progressContainer.setOnClickListener(v -> showBuildMonitor());
+
+        buildMonitor = new LiveBuildMonitorSheet(
+                SheetLiveBuildMonitorBinding.bind(findViewById(R.id.build_monitor_sheet)),
+                "", 
+                this::installBuiltApk,
+                progressText
+        );
 
         findViewById(R.id.file_name_container).setOnClickListener(this);
 
@@ -472,9 +509,11 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                 return;
             }
 
+            BuildLogHub.getInstance().newSession();
             BuildTask buildTask = new BuildTask(this);
             currentBuildTask = buildTask;
             buildTask.execute();
+            showBuildMonitor();
         });
 
         btnOptions = findViewById(R.id.btn_options);
@@ -644,8 +683,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         k();
 
         HashMap<String, Object> projectInfo = lC.b(sc_id);
-        getSupportActionBar().setTitle(yB.c(projectInfo, "my_ws_name"));
+        String wsName = yB.c(projectInfo, "my_ws_name");
+        getSupportActionBar().setTitle(wsName);
         q = new yq(getApplicationContext(), wq.d(sc_id), projectInfo);
+
+        if (buildMonitor != null) {
+            buildMonitor.setProjectName(wsName);
+        }
 
         try {
             ProjectLoader projectLoader = new ProjectLoader(this, savedInstanceState);
@@ -1049,7 +1093,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         private final TextView progressText;
         private final LinearProgressIndicator progressBar;
         public volatile boolean canceled;
-        private volatile boolean isBuildFinished;
+        public volatile boolean isBuildFinished;
         private boolean isShowingNotification = false;
 
         public BuildTask(DesignActivity activity) {
@@ -1197,10 +1241,12 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                     return;
                 }
 
+                BuildLogHub.getInstance().publish(BuildLogHub.Phase.SUCCESS, q.finalToInstallApkPath);
                 activity.installBuiltApk();
                 isBuildFinished = true;
             } catch (MissingFileException e) {
                 isBuildFinished = true;
+                BuildLogHub.getInstance().publish(BuildLogHub.Phase.FAILURE, "Missing file: " + e.getMissingFile().getAbsolutePath());
                 activity.runOnUiThread(() -> {
                     boolean isMissingDirectory = e.isMissingDirectory();
 
@@ -1227,9 +1273,11 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                 });
             } catch (zy zy) {
                 isBuildFinished = true;
+                BuildLogHub.getInstance().publish(BuildLogHub.Phase.FAILURE, zy.getMessage());
                 activity.indicateCompileErrorOccurred(zy.getMessage());
             } catch (Throwable tr) {
                 isBuildFinished = true;
+                BuildLogHub.getInstance().publish(BuildLogHub.Phase.FAILURE, Log.getStackTraceString(tr));
                 LogUtil.e("DesignActivity$BuildTask", "Failed to build project", tr);
                 activity.indicateCompileErrorOccurred(Log.getStackTraceString(tr));
             } finally {
@@ -1243,6 +1291,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
             DesignActivity activity = getActivity();
             if (activity == null) return;
+
+            BuildLogHub.getInstance().publish(progress);
 
             activity.runOnUiThread(() -> {
                 progressBar.setIndeterminate(step == -1);
@@ -1267,6 +1317,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                         isShowingNotification = false;
                     }
                     updateRunButton(false);
+                    activity.setBuildRunningChipVisible(false);
                     activity.updateBottomMenu();
                     activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                 }
@@ -1275,6 +1326,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
         public void cancelBuild() {
             canceled = true;
+            BuildLogHub.getInstance().publish(BuildLogHub.Phase.CANCELED, "Build canceled by user");
             onProgress("Canceling build...", -1);
             if (isShowingNotification) {
                 notificationManager.cancel(notificationId);
