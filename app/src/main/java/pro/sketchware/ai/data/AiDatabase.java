@@ -86,13 +86,13 @@ public class AiDatabase extends SQLiteOpenHelper {
                     "id TEXT PRIMARY KEY, " +
                     "conversationId TEXT, " +
                     "messageId TEXT, " +
-                    "action TEXT, " +
+                    "\"action\" TEXT, " +
                     "payloadJson TEXT, " +
                     "createdAt INTEGER)");
 
             // kv: general purpose key-value storage for AI settings
             db.execSQL("CREATE TABLE IF NOT EXISTS kv (" +
-                    "key TEXT PRIMARY KEY, " +
+                    "\"key\" TEXT PRIMARY KEY, " +
                     "value TEXT, " +
                     "updatedAt INTEGER)");
 
@@ -105,6 +105,5 @@ public class AiDatabase extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.d(TAG, "Upgrading AI database from " + oldVersion + " to " + newVersion);
-        // Migration hook for future versions
     }
 }

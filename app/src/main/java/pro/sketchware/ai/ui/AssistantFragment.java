@@ -24,21 +24,30 @@ public class AssistantFragment extends Fragment {
         rail.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.rail_models) {
-                replacePane(new ModelsFragment());
-                return true;
+                showPane(new ModelsFragment());
+            } else if (id == R.id.rail_session) {
+                showPane(new SessionFragment());
+            } else if (id == R.id.rail_assistant) {
+                showPane(AiPlaceholderFragment.newInstance("Assistant", "Personality tuning arrives in P4.", R.drawable.ic_mtrl_team));
+            } else if (id == R.id.rail_skills) {
+                showPane(AiPlaceholderFragment.newInstance("Skills", "Skill integration arrives in P5.", R.drawable.ic_mtrl_star));
+            } else if (id == R.id.rail_tools) {
+                showPane(AiPlaceholderFragment.newInstance("Tools", "Agent tools arrive in P5.", R.drawable.ic_mtrl_tune));
+            } else if (id == R.id.rail_workspace) {
+                showPane(AiPlaceholderFragment.newInstance("Workspace", "Project context arrives in P4.", R.drawable.ic_mtrl_folder));
+            } else if (id == R.id.rail_conversations) {
+                showPane(AiPlaceholderFragment.newInstance("History", "Chat history arrives in P2.", R.drawable.ic_mtrl_history));
             }
-            // Other rail items placeholders
             return true;
         });
 
-        // Default pane
         if (savedInstanceState == null) {
-            rail.setSelectedItemId(R.id.rail_models);
-            replacePane(new ModelsFragment());
+            rail.setSelectedItemId(R.id.rail_session);
+            showPane(new SessionFragment());
         }
     }
 
-    private void replacePane(Fragment fragment) {
+    private void showPane(Fragment fragment) {
         getChildFragmentManager().beginTransaction()
                 .replace(R.id.content_pane, fragment)
                 .commit();

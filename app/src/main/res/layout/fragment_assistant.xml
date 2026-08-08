@@ -5,7 +5,6 @@
     android:background="?attr/colorSurface"
     android:orientation="horizontal">
 
-    <!-- Left Rail -->
     <com.google.android.material.navigationrail.NavigationRailView
         android:id="@+id/rail"
         android:layout_width="wrap_content"
@@ -17,7 +16,6 @@
         android:layout_height="match_parent"
         app:dividerColor="?attr/colorOutlineVariant" />
 
-    <!-- Content Pane -->
     <FrameLayout
         android:id="@+id/content_pane"
         android:layout_width="0dp"

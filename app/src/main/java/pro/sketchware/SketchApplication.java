@@ -22,6 +22,13 @@ public class SketchApplication extends Application {
     @Override
     public void onCreate() {
         mApplicationContext = getApplicationContext();
+        String processName = pro.sketchware.utility.ProcessUtil.getProcessName(this);
+        if (processName != null && processName.endsWith(":ai_runtime")) {
+            Log.d("SketchApplication", "Isolated process :ai_runtime detected. Skipping heavy init.");
+            super.onCreate();
+            return;
+        }
+
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(@NonNull Thread thread, @NonNull Throwable throwable) {

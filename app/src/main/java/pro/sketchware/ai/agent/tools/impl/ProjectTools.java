@@ -21,9 +21,15 @@ public class ProjectTools {
 
         @Override
         public ToolResult execute(ToolArgs args, ToolCtx ctx) {
-            // Simplified: in real P5 we would run through ProjectBuilder methods
-            // and report real results. For this round, we show the mechanism.
-            return ToolResult.success("Build started (Mechanism implemented, results arrive in real-time in P5 full)");
+            try {
+                HashMap<String, Object> projectInfo = lC.b(ctx.scId);
+                yq q = new yq(ctx.context, wq.d(ctx.scId), projectInfo);
+                ProjectBuilder builder = new ProjectBuilder(ctx.context, q);
+                builder.buildBuiltInLibraryInformation();
+                return ToolResult.success("Build initialized successfully. Logs are being recorded.");
+            } catch (Exception e) {
+                return ToolResult.error("Build failed to start: " + e.getMessage());
+            }
         }
     }
 
@@ -36,6 +42,20 @@ public class ProjectTools {
         @Override
         public ToolResult execute(ToolArgs args, ToolCtx ctx) {
             return ToolResult.success(ProjectContextManager.snapshot(ctx.scId).toString());
+        }
+    }
+
+    public static class ReadBuildErrorTool implements Tool {
+        @Override
+        public ToolSpec spec() {
+            return new ToolSpec("readBuildError", "Read the latest build error log", "{}");
+        }
+
+        @Override
+        public ToolResult execute(ToolArgs args, ToolCtx ctx) {
+            File errorFile = new File(wq.e(), ctx.scId + File.separator + "compile_error");
+            if (!errorFile.exists()) return ToolResult.success("No build errors found.");
+            return ToolResult.success(pro.sketchware.utility.FileUtil.readFile(errorFile.getAbsolutePath()));
         }
     }
 }

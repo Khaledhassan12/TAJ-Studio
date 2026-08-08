@@ -12,19 +12,24 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
 import java.util.List;
 import pro.sketchware.R;
-import pro.sketchware.ai.bus.AiEventHub;
+import pro.sketchware.ai.download.ModelDownloader;
+import pro.sketchware.ai.hf.HfClient;
+import pro.sketchware.ai.hf.HfFile;
 import pro.sketchware.ai.hf.HfModelSummary;
-import pro.sketchware.ai.models.ModelManager;
 
-public class HfSearchSheet extends BottomSheetDialogFragment implements AiEventHub.Listener {
+public class HfSearchSheet extends BottomSheetDialogFragment {
 
-    private EditText edSearch;
-    private View loading, tvEmpty;
-    private ResultAdapter adapter;
-    private ModelManager manager;
+    private HfClient client;
+    private ModelDownloader downloader;
+    private ResultAdapter resultAdapter;
+    private FileAdapter fileAdapter;
+    private RecyclerView recycler;
+    private View loading;
+    private String currentRepoId;
 
     @Nullable
     @Override
@@ -34,86 +39,105 @@ public class HfSearchSheet extends BottomSheetDialogFragment implements AiEventH
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        manager = ModelManager.get(requireContext());
-        edSearch = view.findViewById(R.id.ed_search);
+        client = new HfClient(requireContext());
+        downloader = new ModelDownloader(requireContext());
+        recycler = view.findViewById(R.id.recycler_results);
         loading = view.findViewById(R.id.loading);
-        tvEmpty = view.findViewById(R.id.tv_empty);
-        RecyclerView recycler = view.findViewById(R.id.recycler_results);
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new ResultAdapter();
-        recycler.setAdapter(adapter);
+        
+        resultAdapter = new ResultAdapter();
+        fileAdapter = new FileAdapter();
+        recycler.setAdapter(resultAdapter);
 
-        view.findViewById(R.id.ti_search).setEndIconOnClickListener(v -> {
-            String q = edSearch.getText().toString();
-            if (!q.isEmpty()) manager.search(q);
-        });
-
-        AiEventHub.get().addListener(this);
+        EditText etSearch = view.findViewById(R.id.et_search);
+        TextInputLayout tiSearch = view.findViewById(R.id.ti_search);
+        tiSearch.setEndIconOnClickListener(v -> search(etSearch.getText().toString()));
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        AiEventHub.get().removeListener(this);
-    }
-
-    @Override
-    public void onAiEvent(AiEventHub.Entry entry) {
-        if (entry.event == AiEventHub.Event.SEARCHING) {
-            loading.setVisibility(View.VISIBLE);
-            tvEmpty.setVisibility(View.GONE);
-            adapter.setResults(new ArrayList<>());
-        } else if (entry.event == AiEventHub.Event.SEARCH_DONE) {
-            loading.setVisibility(View.GONE);
-            List<HfModelSummary> results = (List<HfModelSummary>) entry.payload;
-            adapter.setResults(results);
-            tvEmpty.setVisibility(results.isEmpty() ? View.VISIBLE : View.GONE);
-        } else if (entry.event == AiEventHub.Event.ERROR) {
-            loading.setVisibility(View.GONE);
-            Toast.makeText(requireContext(), (String) entry.payload, Toast.LENGTH_SHORT).show();
-        }
+    private void search(String q) {
+        if (q.isEmpty()) return;
+        loading.setVisibility(View.VISIBLE);
+        new Thread(() -> {
+            try {
+                List<HfModelSummary> results = client.searchModels(q, 20);
+                requireActivity().runOnUiThread(() -> {
+                    loading.setVisibility(View.GONE);
+                    recycler.setAdapter(resultAdapter);
+                    resultAdapter.setItems(results);
+                });
+            } catch (Exception e) {
+                requireActivity().runOnUiThread(() -> {
+                    loading.setVisibility(View.GONE);
+                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
     }
 
     private class ResultAdapter extends RecyclerView.Adapter<ResultAdapter.ViewHolder> {
-        private final List<HfModelSummary> results = new ArrayList<>();
-
-        public void setResults(List<HfModelSummary> newResults) {
-            results.clear();
-            results.addAll(newResults);
-            notifyDataSetChanged();
+        private final List<HfModelSummary> items = new ArrayList<>();
+        public void setItems(List<HfModelSummary> list) { items.clear(); items.addAll(list); notifyDataSetChanged(); }
+        @NonNull @Override public ViewHolder onCreateViewHolder(@NonNull ViewGroup p, int vt) {
+            return new ViewHolder(LayoutInflater.from(p.getContext()).inflate(R.layout.item_hf_result, p, false));
         }
-
-        @NonNull
-        @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_2, parent, false));
+        @Override public void onBindViewHolder(@NonNull ViewHolder h, int p) {
+            HfModelSummary item = items.get(p);
+            h.id.setText(item.id);
+            h.stats.setText(item.downloads + " downloads • " + item.likes + " likes");
+            h.itemView.setOnClickListener(v -> loadFiles(item.id));
         }
+        @Override public int getItemCount() { return items.size(); }
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView id, stats;
+            ViewHolder(View v) { super(v); id = v.findViewById(R.id.tv_id); stats = v.findViewById(R.id.tv_stats); }
+        }
+    }
 
-        @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            HfModelSummary s = results.get(position);
-            holder.t1.setText(s.id);
-            holder.t2.setText(s.downloads + " downloads • " + s.likes + " likes");
-            holder.itemView.setOnClickListener(v -> {
-                // For P1, we just trigger a hardcoded "resolve and download" the first GGUF found
-                // In a real P1, we should show another list of files, but here we simplify or start download directly
-                manager.download(s.id, "model.gguf"); // Placeholder fileName, real one needs listGgufFiles
+    private void loadFiles(String repoId) {
+        currentRepoId = repoId;
+        loading.setVisibility(View.VISIBLE);
+        new Thread(() -> {
+            try {
+                List<HfFile> files = client.listGgufFiles(repoId);
+                requireActivity().runOnUiThread(() -> {
+                    loading.setVisibility(View.GONE);
+                    recycler.setAdapter(fileAdapter);
+                    fileAdapter.setItems(files);
+                });
+            } catch (Exception e) {
+                requireActivity().runOnUiThread(() -> {
+                    loading.setVisibility(View.GONE);
+                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
+    }
+
+    private class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
+        private final List<HfFile> items = new ArrayList<>();
+        public void setItems(List<HfFile> list) { items.clear(); items.addAll(list); notifyDataSetChanged(); }
+        @NonNull @Override public ViewHolder onCreateViewHolder(@NonNull ViewGroup p, int vt) {
+            return new ViewHolder(LayoutInflater.from(p.getContext()).inflate(R.layout.item_hf_file, p, false));
+        }
+        @Override public void onBindViewHolder(@NonNull ViewHolder h, int p) {
+            HfFile item = items.get(p);
+            h.path.setText(item.path);
+            h.size.setText((item.size / 1024 / 1024) + " MB");
+            h.itemView.setOnClickListener(v -> {
+                String modelId = currentRepoId.replace("/", "__") + "__" + item.path;
+                downloader.download(currentRepoId, item.path, modelId, new ModelDownloader.DownloadListener() {
+                    @Override public void onProgress(String id, long b, Long t) { /* Implementation logic */ }
+                    @Override public void onStateChange(String id, String s, String e) {
+                        if ("DONE".equals(s)) Toast.makeText(getContext(), "Success!", Toast.LENGTH_SHORT).show();
+                    }
+                });
                 dismiss();
             });
         }
-
-        @Override
-        public int getItemCount() {
-            return results.size();
-        }
-
-        private class ViewHolder extends RecyclerView.ViewHolder {
-            TextView t1, t2;
-            public ViewHolder(View v) {
-                super(v);
-                t1 = v.findViewById(android.R.id.text1);
-                t2 = v.findViewById(android.R.id.text2);
-            }
+        @Override public int getItemCount() { return items.size(); }
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView path, size;
+            ViewHolder(View v) { super(v); path = v.findViewById(R.id.tv_path); size = v.findViewById(R.id.tv_size); }
         }
     }
 }

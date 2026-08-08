@@ -69,7 +69,7 @@ public class ModelManager {
                 m.filePath = cursor.getString(cursor.getColumnIndexOrThrow("filePath"));
                 m.sizeBytes = new File(m.filePath).length();
                 m.installedAt = cursor.getLong(cursor.getColumnIndexOrThrow("installedAt"));
-                m.isActive = "true".equals(storage.kvGet("active_model_id_" + m.id)); // Simplified active check
+                m.isActive = m.id.equals(getActiveId());
                 models.add(m);
             }
         }
@@ -85,11 +85,11 @@ public class ModelManager {
             try {
                 String url = hfClient.resolveDownloadUrl(repoId, fileName);
                 hfClient.downloadToFile(url, temp, (bytes, total) -> {
-                    hub.publish(AiEventHub.Event.DOWNLOAD_PROGRESS, new long[]{bytes, total});
+                    hub.publish(AiEventHub.Event.DOWNLOAD_PROGRESS, new long[]{bytes, total != null ? total : -1});
                 }, new CancelFlag());
 
-                ValidationResult vr = GgufValidator.validate(temp);
-                if (vr.success) {
+                pro.sketchware.ai.validate.GgufInfo vr = GgufValidator.validate(temp);
+                if (vr.valid) {
                     if (temp.renameTo(dest)) {
                         ContentValues cv = new ContentValues();
                         cv.put("id", modelId);
@@ -106,11 +106,42 @@ public class ModelManager {
                     }
                 } else {
                     temp.delete();
-                    hub.publish(AiEventHub.Event.DOWNLOAD_FAILED, "Invalid GGUF: " + vr.reason);
+                    hub.publish(AiEventHub.Event.DOWNLOAD_FAILED, "Invalid GGUF: " + vr.error);
                 }
             } catch (IOException e) {
                 temp.delete();
                 hub.publish(AiEventHub.Event.DOWNLOAD_FAILED, e.getMessage());
+            }
+        });
+    }
+
+    public void importLocal(File file) {
+        executor.execute(() -> {
+            pro.sketchware.ai.validate.GgufInfo vr = GgufValidator.validate(file);
+            if (vr.valid) {
+                String modelId = "local__" + file.getName() + "__" + System.currentTimeMillis();
+                File dest = Paths.modelFile(modelId);
+                try {
+                    // In real app, use FileUtil or channel copy. 
+                    // For P1, we assume it's moved or copied.
+                    if (file.renameTo(dest)) {
+                        ContentValues cv = new ContentValues();
+                        cv.put("id", modelId);
+                        cv.put("kind", AiModel.Kind.LOCAL.name());
+                        cv.put("provider", "local");
+                        cv.put("name", file.getName());
+                        cv.put("filePath", dest.getAbsolutePath());
+                        cv.put("installedAt", System.currentTimeMillis());
+                        storage.insertModel(cv);
+                        hub.publish(AiEventHub.Event.MODELS_CHANGED, null);
+                    } else {
+                        hub.publish(AiEventHub.Event.ERROR, "Failed to move file to models directory");
+                    }
+                } catch (Exception e) {
+                    hub.publish(AiEventHub.Event.ERROR, e.getMessage());
+                }
+            } else {
+                hub.publish(AiEventHub.Event.ERROR, "Invalid GGUF: " + vr.error);
             }
         });
     }
@@ -121,10 +152,21 @@ public class ModelManager {
                 if (c.moveToFirst()) {
                     String path = c.getString(c.getColumnIndexOrThrow("filePath"));
                     new File(path).delete();
-                    // storage.deleteModel(modelId); // Need to add to AiStorage
+                    storage.deleteModel(modelId);
                     hub.publish(AiEventHub.Event.MODELS_CHANGED, null);
                 }
             }
         });
+    }
+
+    public void setActive(String modelId) {
+        executor.execute(() -> {
+            storage.kvPut("active_local_model", modelId);
+            hub.publish(AiEventHub.Event.MODELS_CHANGED, null);
+        });
+    }
+
+    public String getActiveId() {
+        return storage.kvGet("active_local_model");
     }
 }

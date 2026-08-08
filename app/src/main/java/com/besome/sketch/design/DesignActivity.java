@@ -140,6 +140,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     private boolean B;
     private int currentTabNumber;
     private CustomViewPager viewPager;
+    private View bottomBar;
     private CoordinatorLayout coordinatorLayout;
     private DrawerLayout drawer;
     private yq q;
@@ -502,6 +503,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
         findViewById(R.id.file_name_container).setOnClickListener(this);
 
+        bottomBar = findViewById(R.id.bottom_bar);
         btnRun = findViewById(R.id.btn_run);
         btnRun.setOnClickListener(v -> {
             if (currentBuildTask != null && !currentBuildTask.canceled && !currentBuildTask.isBuildFinished) {
@@ -575,45 +577,12 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
             @Override
             public void onPageSelected(int position) {
-                if (currentTabNumber == 1) {
-                    if (eventTabAdapter != null) {
-                        eventTabAdapter.c();
-                    }
-                } else if (currentTabNumber == 2 && componentTabAdapter != null) {
-                    componentTabAdapter.unselectAll();
-                }
-                if (position == 0) {
-                    bottomMenu.findItem(7).setVisible(true);
-                    if (viewTabAdapter != null) {
-                        viewTabAdapter.showHidePropertyView(true);
-                        xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_screen);
-                    }
-                } else if (position == 1) {
-                    bottomMenu.findItem(7).setVisible(false);
-                    if (viewTabAdapter != null) {
-                        xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_code);
-                        viewTabAdapter.showHidePropertyView(false);
-                        if (eventTabAdapter != null) {
-                            eventTabAdapter.refreshEvents();
-                        }
-                    }
-                } else {
-                    bottomMenu.findItem(7).setVisible(false);
-                    if (viewTabAdapter != null) {
-                        xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_code);
-                        viewTabAdapter.showHidePropertyView(false);
-                        if (componentTabAdapter != null) {
-                            componentTabAdapter.refreshData();
-                        }
-                    }
-                }
-                refresh();
-                currentTabNumber = position;
-                invalidateOptionsMenu();
+                applyActiveTab(position);
             }
         });
         viewPager.getAdapter().notifyDataSetChanged();
         ((TabLayout) findViewById(R.id.tab_layout)).setupWithViewPager(viewPager);
+        applyActiveTab(0);
 
         IntentFilter filter = new IntentFilter(BuildTask.ACTION_CANCEL_BUILD);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -1551,6 +1520,60 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         }
     }
 
+    private void applyActiveTab(int position) {
+        if (currentTabNumber == 1 && eventTabAdapter != null) {
+            eventTabAdapter.c();
+        } else if (currentTabNumber == 2 && componentTabAdapter != null) {
+            componentTabAdapter.unselectAll();
+        }
+
+        currentTabNumber = position;
+
+        // SINGLE WRITER for UI visibility
+        if (position == 3) { // Assistant
+            bottomBar.setVisibility(View.GONE);
+            View fab = findViewById(R.id.fab);
+            if (fab != null) fab.setVisibility(View.GONE);
+        } else {
+            bottomBar.setVisibility(View.VISIBLE);
+            View fab = findViewById(R.id.fab);
+            if (fab != null) {
+                // Restore FAB only on Event/Component (1 and 2)
+                fab.setVisibility((position == 1 || position == 2) ? View.VISIBLE : View.GONE);
+            }
+        }
+
+        if (position == 0) { // View
+            if (bottomMenu != null) bottomMenu.findItem(7).setVisible(true);
+            if (viewTabAdapter != null) {
+                viewTabAdapter.showHidePropertyView(true);
+                xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_screen);
+            }
+        } else if (position == 1) { // Event
+            if (bottomMenu != null) bottomMenu.findItem(7).setVisible(false);
+            if (viewTabAdapter != null) {
+                xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_code);
+                viewTabAdapter.showHidePropertyView(false);
+                eventTabAdapter.refreshEvents();
+            }
+        } else if (position == 2) { // Component
+            if (bottomMenu != null) bottomMenu.findItem(7).setVisible(false);
+            if (viewTabAdapter != null) {
+                xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_code);
+                viewTabAdapter.showHidePropertyView(false);
+                componentTabAdapter.refreshData();
+            }
+        } else if (position == 3) { // Assistant
+            if (bottomMenu != null) bottomMenu.findItem(7).setVisible(false);
+            if (viewTabAdapter != null) {
+                viewTabAdapter.showHidePropertyView(false);
+            }
+        }
+
+        refresh();
+        invalidateOptionsMenu();
+    }
+
     private class ViewPagerAdapter extends FragmentPagerAdapter {
         private final String[] labels;
 
@@ -1559,12 +1582,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             labels = new String[]{
                     Helper.getResString(R.string.design_tab_title_view),
                     Helper.getResString(R.string.design_tab_title_event),
-                    Helper.getResString(R.string.design_tab_title_component)};
+                    Helper.getResString(R.string.design_tab_title_component),
+                    Helper.getResString(R.string.design_tab_title_assistant)};
         }
 
         @Override
         public int getCount() {
-            return 3;
+            return 4;
         }
 
         @Override
@@ -1580,7 +1604,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                 viewTabAdapter = (ViewEditorFragment) fragment;
             } else if (position == 1) {
                 eventTabAdapter = (rs) fragment;
-            } else {
+            } else if (position == 2) {
                 componentTabAdapter = (br) fragment;
             }
 
@@ -1590,11 +1614,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         @Override
         @NonNull
         public Fragment getItem(int position) {
-            if (position == 0) {
-                return new ViewEditorFragment();
-            } else {
-                return position == 1 ? new rs() : new br();
-            }
+            return switch (position) {
+                case 0 -> new ViewEditorFragment();
+                case 1 -> new rs();
+                case 2 -> new br();
+                case 3 -> new pro.sketchware.ai.ui.AssistantFragment();
+                default -> throw new IllegalStateException("Unexpected position: " + position);
+            };
         }
     }
 }

@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * [WHAT] Loads raw prompt resources and caches them in memory.
+ */
 public class PromptLoader {
     private final Context context;
     private final Map<PromptAsset, String> cache = new HashMap<>();

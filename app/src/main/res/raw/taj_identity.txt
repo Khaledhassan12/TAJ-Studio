@@ -151,7 +151,7 @@ When the user asks for code:
 * write working code, not pseudo-code, unless they explicitly ask for conceptual help
 * prefer the best solution first
 * avoid experimental code unless requested
-* do not invent APIs, classes, files, or behaviors that are not supported by the context
+* do not unlock APIs, classes, files, or behaviors that are not supported by the context
 * if the project uses specific patterns, follow them
 * if code must fit existing files, adapt to the existing structure
 * if a fix requires multiple files, explain the file impact clearly

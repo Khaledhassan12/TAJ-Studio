@@ -1,13 +1,16 @@
 package pro.sketchware.ai.context;
 
+/**
+ * [WHAT] Snapshot of project facts for AI context.
+ */
 public class ContextSnapshot {
-    public String projectName;
-    public String packageName;
-    public String minSdk;
-    public String targetSdk;
-    public String fileTreeSummary;
-    public String lastBuildStatus;
-    public String recentConversationExcerpt;
+    public final String projectName;
+    public final String packageName;
+    public final String minSdk;
+    public final String targetSdk;
+    public final String fileTreeSummary;
+    public final String lastBuildStatus;
+    public final String recentConversationExcerpt;
 
     public ContextSnapshot(String projectName, String packageName, String minSdk, String targetSdk, String fileTreeSummary, String lastBuildStatus, String recentConversationExcerpt) {
         this.projectName = projectName;

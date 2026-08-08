@@ -4,8 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.ByteOrder;
 
 /**
  * [WHAT] Validator for GGUF model files.
@@ -16,32 +15,40 @@ public class GgufValidator {
 
     private static final int GGUF_MAGIC = 0x46475547; // "GGUF" in little-endian
 
-    public static ValidationResult validate(File file) {
-        if (!file.exists()) return new ValidationResult(false, "File not found", null);
+    public static GgufInfo validate(File file) {
+        if (!file.exists()) return GgufInfo.invalid("File not found");
 
         try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] headerBytes = new byte[32]; // Read first 32 bytes for basic header
-            if (fis.read(headerBytes) < 32) return new ValidationResult(false, "Header truncated", null);
+            // Read magic and version
+            byte[] basicHeader = new byte[12];
+            if (fis.read(basicHeader) < 12) return GgufInfo.invalid("Header truncated");
 
-            ByteBuffer bb = ByteBuffer.wrap(headerBytes);
-            bb.order(java.nio.ByteOrder.LITTLE_ENDIAN);
-
+            ByteBuffer bb = ByteBuffer.wrap(basicHeader).order(ByteOrder.LITTLE_ENDIAN);
             int magic = bb.getInt();
-            if (magic != GGUF_MAGIC) return new ValidationResult(false, "Invalid magic", null);
-
-            int version = bb.getInt();
-            long tensorCount = bb.getLong();
-            long metadataCount = bb.getLong();
-
-            // Minimal metadata parsing (extracting name and arch)
-            // Note: Real parsing would require walking the file, which we do best-effort here.
-            // For now, we report success if magic matches and we can read basic counts.
+            if (magic != GGUF_MAGIC) return GgufInfo.invalid("Invalid magic");
             
-            GgufInfo info = new GgufInfo(true, "unknown", file.getName(), "unknown", "unknown", 0, file.length());
-            return new ValidationResult(true, null, info);
+            int version = bb.getInt(); // u32
+            long tensorCount = readU64(fis); // u64
+            long kvCount = readU64(fis); // u64
+
+            String arch = "unknown";
+            String name = file.getName();
+            String quant = "unknown";
+            long contextLength = 0;
+
+            // In a real implementation, we would walk the KV pairs here.
+            // For P1, we confirm the magic and basic structure.
+            
+            return new GgufInfo(true, arch, name, quant, contextLength, file.length(), null);
 
         } catch (IOException e) {
-            return new ValidationResult(false, "Read error: " + e.getMessage(), null);
+            return GgufInfo.invalid("Read error: " + e.getMessage());
         }
+    }
+
+    private static long readU64(FileInputStream fis) throws IOException {
+        byte[] buf = new byte[8];
+        if (fis.read(buf) < 8) throw new IOException("Unexpected EOF");
+        return ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN).getLong();
     }
 }

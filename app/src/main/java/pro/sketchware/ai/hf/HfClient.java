@@ -1,28 +1,28 @@
 package pro.sketchware.ai.hf;
 
 import android.content.Context;
+import android.util.Log;
+import okhttp3.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import pro.sketchware.ai.data.SecureKeyStore;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import pro.sketchware.ai.data.SecureKeyStore;
 
 /**
- * [WHAT] Client for interacting with HuggingFace API.
- * [WHY] Allows searching and downloading GGUF models.
- * [HOW] Uses OkHttp for network calls. Public endpoints by default, optional token from SecureKeyStore.
+ * [WHAT] Client for HuggingFace API.
+ * [WHY] Handles searching, listing, and downloading GGUF models.
+ * [HOW] Uses OkHttp with Bearer token from SecureKeyStore. Supports Range resume.
  */
 public class HfClient {
 
+    private static final String TAG = "HfClient";
     private final OkHttpClient client;
     private final SecureKeyStore keyStore;
 
@@ -35,15 +35,11 @@ public class HfClient {
     }
 
     public List<HfModelSummary> searchModels(String query, int limit) throws IOException {
-        String url = "https://huggingface.co/api/models?search=" + query + "&limit=" + limit + "&filter=gguf";
-        Request.Builder requestBuilder = new Request.Builder().url(url);
-        addAuthHeader(requestBuilder);
+        String url = "https://huggingface.co/api/models?search=" + query + "&limit=" + limit;
+        Request request = buildRequest(url).build();
 
-        try (Response response = client.newCall(requestBuilder.build()).execute()) {
-            if (!response.isSuccessful()) {
-                if (response.code() == 429) throw new IOException("Rate limited by HuggingFace");
-                throw new IOException("Unexpected code " + response);
-            }
+        try (Response response = client.newCall(request).execute()) {
+            handleErrorResponses(response);
             String body = response.body().string();
             JSONArray arr = new JSONArray(body);
             List<HfModelSummary> results = new ArrayList<>();
@@ -58,22 +54,23 @@ public class HfClient {
                         obj.getString("id"),
                         obj.optInt("downloads", 0),
                         obj.optInt("likes", 0),
-                        tags
+                        tags,
+                        obj.optString("pipeline_tag", null)
                 ));
             }
             return results;
         } catch (Exception e) {
+            if (e instanceof IOException) throw (IOException) e;
             throw new IOException("Search failed: " + e.getMessage());
         }
     }
 
     public List<HfFile> listGgufFiles(String repoId) throws IOException {
-        String url = "https://huggingface.co/api/models/" + repoId + "/tree/main";
-        Request.Builder requestBuilder = new Request.Builder().url(url);
-        addAuthHeader(requestBuilder);
+        String url = "https://huggingface.co/api/models/" + repoId + "/tree/main?recursive=true";
+        Request request = buildRequest(url).build();
 
-        try (Response response = client.newCall(requestBuilder.build()).execute()) {
-            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+        try (Response response = client.newCall(request).execute()) {
+            handleErrorResponses(response);
             String body = response.body().string();
             JSONArray arr = new JSONArray(body);
             List<HfFile> files = new ArrayList<>();
@@ -86,6 +83,7 @@ public class HfClient {
             }
             return files;
         } catch (Exception e) {
+            if (e instanceof IOException) throw (IOException) e;
             throw new IOException("Listing files failed: " + e.getMessage());
         }
     }
@@ -94,37 +92,53 @@ public class HfClient {
         return "https://huggingface.co/" + repoId + "/resolve/main/" + fileName;
     }
 
-    public void downloadToFile(String url, File dest, ProgressCallback cb, CancelFlag flag) throws IOException {
-        Request.Builder requestBuilder = new Request.Builder().url(url);
-        addAuthHeader(requestBuilder);
+    public void downloadToFile(String url, File destPart, ProgressCallback cb, CancelFlag flag) throws IOException {
+        long existingLength = destPart.exists() ? destPart.length() : 0;
+        Request.Builder rb = buildRequest(url);
+        if (existingLength > 0) {
+            rb.addHeader("Range", "bytes=" + existingLength + "-");
+        }
 
-        try (Response response = client.newCall(requestBuilder.build()).execute()) {
-            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+        try (Response response = client.newCall(rb.build()).execute()) {
+            handleErrorResponses(response);
             ResponseBody body = response.body();
-            if (body == null) throw new IOException("Empty response body");
+            if (body == null) throw new IOException("Empty body");
 
-            long totalBytes = body.contentLength();
+            long totalContent = body.contentLength();
+            Long totalSize = (totalContent == -1) ? null : totalContent + existingLength;
+
             try (InputStream is = body.byteStream();
-                 FileOutputStream fos = new FileOutputStream(dest)) {
+                 RandomAccessFile raf = new RandomAccessFile(destPart, "rw")) {
+                raf.seek(existingLength);
                 byte[] buffer = new byte[8192];
                 int read;
-                long downloaded = 0;
+                long totalRead = existingLength;
                 while ((read = is.read(buffer)) != -1) {
-                    if (flag != null && flag.isCancelled) {
-                        throw new IOException("Download cancelled");
+                    if (flag != null && flag.isCancelled()) {
+                        throw new IOException("Cancelled");
                     }
-                    fos.write(buffer, 0, read);
-                    downloaded += read;
-                    if (cb != null) cb.onProgress(downloaded, totalBytes);
+                    raf.write(buffer, 0, read);
+                    totalRead += read;
+                    if (cb != null) cb.onProgress(totalRead, totalSize);
                 }
             }
         }
     }
 
-    private void addAuthHeader(Request.Builder builder) {
+    private Request.Builder buildRequest(String url) {
+        Request.Builder rb = new Request.Builder().url(url);
         String token = keyStore.getHfToken();
         if (token != null && !token.isEmpty()) {
-            builder.addHeader("Authorization", "Bearer " + token);
+            rb.addHeader("Authorization", "Bearer " + token);
+        }
+        return rb;
+    }
+
+    private void handleErrorResponses(Response response) throws IOException {
+        if (!response.isSuccessful()) {
+            if (response.code() == 429) throw new IOException("Rate limited by HuggingFace");
+            if (response.code() == 401 || response.code() == 403) throw new IOException("Auth failure");
+            throw new IOException("HTTP " + response.code() + ": " + response.message());
         }
     }
 }

@@ -9,7 +9,7 @@
         android:title="Models" />
     <item
         android:id="@+id/rail_assistant"
-        android:icon="@drawable/swassist_logo"
+        android:icon="@drawable/ic_mtrl_team"
         android:title="Assistant" />
     <item
         android:id="@+id/rail_skills"

@@ -11,10 +11,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * [WHAT] Google Gemini API provider.
+ * [WHY] Enables cloud AI features using Gemini models.
+ * [HOW] Uses OkHttp for SSE streaming. Maps internal AiRequest to Gemini's contents/parts format.
+ */
 public class GeminiProvider implements AiProvider {
 
-    private final OkHttpClient client;
     private final String apiKey;
+    private final OkHttpClient client;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public GeminiProvider(String apiKey) {
@@ -35,7 +40,6 @@ public class GeminiProvider implements AiProvider {
 
     @Override
     public StreamHandle stream(AiRequest req, AiStreamCallback cb) {
-        MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
         JSONObject body = new JSONObject();
         try {
             JSONArray contents = new JSONArray();
@@ -49,7 +53,8 @@ public class GeminiProvider implements AiProvider {
             body.put("contents", contents);
 
             if (req.systemPrompt != null && !req.systemPrompt.isEmpty()) {
-                body.put("systemInstruction", new JSONObject().put("parts", new JSONArray().put(new JSONObject().put("text", req.systemPrompt))));
+                body.put("systemInstruction", new JSONObject()
+                        .put("parts", new JSONArray().put(new JSONObject().put("text", req.systemPrompt))));
             }
 
             JSONObject genConfig = new JSONObject();
@@ -64,57 +69,52 @@ public class GeminiProvider implements AiProvider {
         String url = "https://generativelanguage.googleapis.com/v1beta/models/" + req.modelId + ":streamGenerateContent?alt=sse&key=" + apiKey;
         Request request = new Request.Builder()
                 .url(url)
-                .post(RequestBody.create(body.toString(), mediaType))
+                .post(RequestBody.create(body.toString(), MediaType.get("application/json")))
                 .build();
 
         Call call = client.newCall(request);
-        new Thread(() -> executeCall(call, cb)).start();
+        new Thread(() -> {
+            try (Response response = call.execute()) {
+                if (!response.isSuccessful()) {
+                    AiError error = mapError(response);
+                    mainHandler.post(() -> cb.onError(error));
+                    return;
+                }
+                ResponseBody responseBody = response.body();
+                if (responseBody == null) {
+                    mainHandler.post(() -> cb.onError(new AiError(AiError.Type.Provider, "Empty response")));
+                    return;
+                }
 
-        return call::cancel;
-    }
-
-    private void executeCall(Call call, AiStreamCallback cb) {
-        try (Response response = call.execute()) {
-            if (!response.isSuccessful()) {
-                AiError error = mapError(response);
-                mainHandler.post(() -> cb.onError(error));
-                return;
-            }
-
-            ResponseBody responseBody = response.body();
-            if (responseBody == null) {
-                mainHandler.post(() -> cb.onError(new AiError(AiError.Type.Provider, "Empty response")));
-                return;
-            }
-
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody.byteStream()))) {
-                String line;
-                StringBuilder fullContent = new StringBuilder();
-                while ((line = reader.readLine()) != null) {
-                    if (line.startsWith("data: ")) {
-                        String data = line.substring(6).trim();
-                        try {
-                            JSONObject json = new JSONObject(data);
-                            JSONArray candidates = json.getJSONArray("candidates");
-                            if (candidates.length() > 0) {
-                                JSONObject content = candidates.getJSONObject(0).getJSONObject("content");
-                                JSONArray parts = content.getJSONArray("parts");
-                                if (parts.length() > 0) {
-                                    String token = parts.getJSONObject(0).getString("text");
-                                    fullContent.append(token);
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody.byteStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.startsWith("data: ")) {
+                            String data = line.substring(6).trim();
+                            try {
+                                JSONObject json = new JSONObject(data);
+                                String token = json.getJSONArray("candidates")
+                                        .getJSONObject(0)
+                                        .getJSONObject("content")
+                                        .getJSONArray("parts")
+                                        .getJSONObject(0)
+                                        .optString("text", "");
+                                if (!token.isEmpty()) {
                                     mainHandler.post(() -> cb.onToken(token));
                                 }
-                            }
-                        } catch (Exception ignored) {}
+                            } catch (Exception ignored) {}
+                        }
                     }
                 }
-                mainHandler.post(() -> cb.onDone(new AiResponse(fullContent.toString(), "stop", 0, 0)));
+                mainHandler.post(() -> cb.onDone(new AiResponse("", "stop", 0, 0)));
+            } catch (IOException e) {
+                if (!call.isCanceled()) {
+                    mainHandler.post(() -> cb.onError(new AiError(AiError.Type.Network, e.getMessage())));
+                }
             }
-        } catch (IOException e) {
-            if (!call.isCanceled()) {
-                mainHandler.post(() -> cb.onError(new AiError(AiError.Type.Network, e.getMessage())));
-            }
-        }
+        }).start();
+
+        return call::cancel;
     }
 
     private AiError mapError(Response response) {

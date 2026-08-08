@@ -1,9 +1,12 @@
 package pro.sketchware.ai.prompt;
 
+/**
+ * [WHAT] Request to compose a system prompt.
+ */
 public class ComposeRequest {
-    public boolean agentMode;
-    public String scId;
-    public String userMessage;
+    public final String scId;
+    public final String userMessage;
+    public final boolean agentMode;
 
     public ComposeRequest(String scId, String userMessage, boolean agentMode) {
         this.scId = scId;

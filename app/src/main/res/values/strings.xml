@@ -2572,4 +2572,5 @@ Please try again later"</string>
     <string name="pin_lang_error_short">Language not supported</string>
     <string name="unlock_button">Unlock</string>
     <string name="set_button">Set</string>
+    <string name="design_tab_title_assistant">Assistant</string>
 </resources>

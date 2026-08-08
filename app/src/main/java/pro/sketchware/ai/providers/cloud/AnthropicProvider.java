@@ -11,10 +11,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * [WHAT] Anthropic Messages API provider.
+ * [WHY] Enables cloud AI features using Claude models.
+ * [HOW] Uses OkHttp for SSE events. Maps system prompt to top-level field as required by Anthropic.
+ */
 public class AnthropicProvider implements AiProvider {
 
-    private final OkHttpClient client;
     private final String apiKey;
+    private final OkHttpClient client;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public AnthropicProvider(String apiKey) {
@@ -35,19 +40,22 @@ public class AnthropicProvider implements AiProvider {
 
     @Override
     public StreamHandle stream(AiRequest req, AiStreamCallback cb) {
-        MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
         JSONObject body = new JSONObject();
         try {
             body.put("model", req.modelId);
             body.put("stream", true);
             if (req.maxTokens > 0) body.put("max_tokens", req.maxTokens);
+            else body.put("max_tokens", 4096);
+
             if (req.systemPrompt != null && !req.systemPrompt.isEmpty()) {
                 body.put("system", req.systemPrompt);
             }
 
             JSONArray messages = new JSONArray();
             for (AiMessage m : req.messages) {
-                messages.put(new JSONObject().put("role", m.role.name()).put("content", m.content));
+                if (m.role == AiMessage.Role.user || m.role == AiMessage.Role.assistant) {
+                    messages.put(new JSONObject().put("role", m.role.name()).put("content", m.content));
+                }
             }
             body.put("messages", messages);
         } catch (Exception e) {
@@ -57,61 +65,57 @@ public class AnthropicProvider implements AiProvider {
 
         Request request = new Request.Builder()
                 .url("https://api.anthropic.com/v1/messages")
-                .post(RequestBody.create(body.toString(), mediaType))
+                .post(RequestBody.create(body.toString(), MediaType.get("application/json")))
                 .addHeader("x-api-key", apiKey)
                 .addHeader("anthropic-version", "2023-06-01")
                 .build();
 
         Call call = client.newCall(request);
-        new Thread(() -> executeCall(call, cb)).start();
+        new Thread(() -> {
+            try (Response response = call.execute()) {
+                if (!response.isSuccessful()) {
+                    AiError error = mapError(response);
+                    mainHandler.post(() -> cb.onError(error));
+                    return;
+                }
+                ResponseBody responseBody = response.body();
+                if (responseBody == null) {
+                    mainHandler.post(() -> cb.onError(new AiError(AiError.Type.Provider, "Empty response")));
+                    return;
+                }
 
-        return call::cancel;
-    }
-
-    private void executeCall(Call call, AiStreamCallback cb) {
-        try (Response response = call.execute()) {
-            if (!response.isSuccessful()) {
-                AiError error = mapError(response);
-                mainHandler.post(() -> cb.onError(error));
-                return;
-            }
-
-            ResponseBody responseBody = response.body();
-            if (responseBody == null) {
-                mainHandler.post(() -> cb.onError(new AiError(AiError.Type.Provider, "Empty response")));
-                return;
-            }
-
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody.byteStream()))) {
-                String line;
-                StringBuilder fullContent = new StringBuilder();
-                while ((line = reader.readLine()) != null) {
-                    if (line.startsWith("event: ")) {
-                        String event = line.substring(7).trim();
-                        String dataLine = reader.readLine();
-                        if (dataLine != null && dataLine.startsWith("data: ")) {
-                            String data = dataLine.substring(6).trim();
-                            if ("content_block_delta".equals(event)) {
-                                JSONObject json = new JSONObject(data);
-                                JSONObject delta = json.getJSONObject("delta");
-                                if (delta.has("text")) {
-                                    String token = delta.getString("text");
-                                    fullContent.append(token);
-                                    mainHandler.post(() -> cb.onToken(token));
-                                }
-                            } else if ("message_stop".equals(event)) {
-                                mainHandler.post(() -> cb.onDone(new AiResponse(fullContent.toString(), "stop", 0, 0)));
-                                break;
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody.byteStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.startsWith("event: ")) {
+                            String event = line.substring(7).trim();
+                            String dataLine = reader.readLine();
+                            if (dataLine != null && dataLine.startsWith("data: ")) {
+                                String data = dataLine.substring(6).trim();
+                                try {
+                                    if ("content_block_delta".equals(event)) {
+                                        JSONObject json = new JSONObject(data);
+                                        String token = json.getJSONObject("delta").optString("text", "");
+                                        if (!token.isEmpty()) {
+                                            mainHandler.post(() -> cb.onToken(token));
+                                        }
+                                    } else if ("message_stop".equals(event)) {
+                                        mainHandler.post(() -> cb.onDone(new AiResponse("", "stop", 0, 0)));
+                                        break;
+                                    }
+                                } catch (org.json.JSONException ignored) {}
                             }
                         }
                     }
                 }
+            } catch (IOException e) {
+                if (!call.isCanceled()) {
+                    mainHandler.post(() -> cb.onError(new AiError(AiError.Type.Network, e.getMessage())));
+                }
             }
-        } catch (IOException e) {
-            if (!call.isCanceled()) {
-                mainHandler.post(() -> cb.onError(new AiError(AiError.Type.Network, e.getMessage())));
-            }
-        }
+        }).start();
+
+        return call::cancel;
     }
 
     private AiError mapError(Response response) {

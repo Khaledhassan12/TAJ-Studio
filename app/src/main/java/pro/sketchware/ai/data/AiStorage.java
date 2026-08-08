@@ -34,7 +34,7 @@ public class AiStorage {
 
     public String kvGet(String key) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        try (Cursor cursor = db.query("kv", new String[]{"value"}, "`key` = ?", new String[]{key}, null, null, null)) {
+        try (Cursor cursor = db.query("kv", new String[]{"value"}, "\"key\" = ?", new String[]{key}, null, null, null)) {
             if (cursor.moveToFirst()) {
                 return cursor.getString(0);
             }
@@ -45,7 +45,7 @@ public class AiStorage {
     public void kvPut(String key, String value) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues cv = new ContentValues();
-        cv.put("`key`", key);
+        cv.put("key", key);
         cv.put("value", value);
         cv.put("updatedAt", System.currentTimeMillis());
         db.insertWithOnConflict("kv", null, cv, SQLiteDatabase.CONFLICT_REPLACE);
@@ -67,6 +67,10 @@ public class AiStorage {
 
     public Cursor findModel(String id) {
         return dbHelper.getReadableDatabase().query("models", null, "id = ?", new String[]{id}, null, null, null);
+    }
+
+    public void deleteModel(String id) {
+        dbHelper.getWritableDatabase().delete("models", "id = ?", new String[]{id});
     }
 
     // --- Downloads ---
@@ -97,6 +101,10 @@ public class AiStorage {
 
     public void insertMessage(ContentValues values) {
         dbHelper.getWritableDatabase().insertWithOnConflict("messages", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    public void updateMessage(String id, ContentValues values) {
+        dbHelper.getWritableDatabase().update("messages", values, "id = ?", new String[]{id});
     }
 
     public Cursor listMessages(String conversationId) {

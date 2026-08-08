@@ -1,0 +1,7 @@
+[
+{
+  "directory": "C:/Users/khale/StudioProjects/TAJ-Studio/app/.cxx/Debug/164cr2w5/arm64-v8a",
+  "command": "C:\\Users\\khale\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android26 --sysroot=C:/Users/khale/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dllama_jni_EXPORTS -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -o CMakeFiles\\llama-jni.dir\\llama_jni.cpp.o -c C:\\Users\\khale\\StudioProjects\\TAJ-Studio\\app\\src\\main\\cpp\\llama_jni.cpp",
+  "file": "C:\\Users\\khale\\StudioProjects\\TAJ-Studio\\app\\src\\main\\cpp\\llama_jni.cpp"
+}
+]

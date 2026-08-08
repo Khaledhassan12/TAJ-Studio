@@ -333,6 +333,11 @@
             android:value="true" />
 
         <service
+            android:name="pro.sketchware.ai.runtime.LlamaRuntimeService"
+            android:process=":ai_runtime"
+            android:exported="false" />
+
+        <service
             android:name="pro.sketchware.marketplace.services.LibraryInstallService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />

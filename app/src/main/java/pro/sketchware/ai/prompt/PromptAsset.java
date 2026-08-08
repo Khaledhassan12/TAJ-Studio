@@ -2,6 +2,9 @@ package pro.sketchware.ai.prompt;
 
 import pro.sketchware.R;
 
+/**
+ * [WHAT] Registry of system prompt assets.
+ */
 public enum PromptAsset {
     IDENTITY("identity", R.raw.taj_identity, Layer.IDENTITY, 100),
     ANDROID_ENGINEERING("engineering", R.raw.taj_android_engineering, Layer.ENGINEERING, 200),

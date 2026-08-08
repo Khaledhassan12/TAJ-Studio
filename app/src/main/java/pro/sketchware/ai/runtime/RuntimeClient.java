@@ -25,6 +25,7 @@ public class RuntimeClient {
     private Messenger serviceMessenger;
     private boolean isBound = false;
     private final Messenger replyMessenger;
+    private String loadedModelPath = null;
 
     public interface Callback {
         void onToken(String token);
@@ -51,6 +52,7 @@ public class RuntimeClient {
         public void onServiceDisconnected(ComponentName name) {
             serviceMessenger = null;
             isBound = false;
+            loadedModelPath = null;
             Log.d(TAG, "Service disconnected");
         }
     };
@@ -75,6 +77,7 @@ public class RuntimeClient {
             return;
         }
         this.activeCallback = cb;
+        this.loadedModelPath = path;
         Message msg = Message.obtain(null, LlamaRuntimeService.MSG_LOAD);
         Bundle data = new Bundle();
         data.putString("path", path);
@@ -102,6 +105,18 @@ public class RuntimeClient {
             serviceMessenger.send(msg);
         } catch (RemoteException e) {
             cb.onError(e.getMessage());
+        }
+    }
+
+    public void ensureModelAndComplete(String modelPath, String prompt, Callback cb) {
+        if (modelPath.equals(loadedModelPath)) {
+            complete(prompt, cb);
+        } else {
+            loadModel(modelPath, new Callback() {
+                @Override public void onToken(String token) {}
+                @Override public void onDone() { complete(prompt, cb); }
+                @Override public void onError(String error) { cb.onError(error); }
+            });
         }
     }
 

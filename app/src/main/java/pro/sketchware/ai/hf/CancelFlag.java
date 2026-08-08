@@ -1,5 +1,16 @@
 package pro.sketchware.ai.hf;
 
+/**
+ * [WHAT] Thread-safe flag to signal cancellation.
+ */
 public class CancelFlag {
-    public volatile boolean isCancelled = false;
+    private volatile boolean cancelled = false;
+
+    public void cancel() {
+        cancelled = true;
+    }
+
+    public boolean isCancelled() {
+        return cancelled;
+    }
 }

@@ -69,10 +69,79 @@ public class FileTools {
             if (f.exists()) {
                 backup(ctx.scId, f);
             } else {
-                f.getParentFile().mkdirs();
+                if (f.getParentFile() != null) f.getParentFile().mkdirs();
             }
             FileUtil.writeFile(f.getAbsolutePath(), content);
             return ToolResult.success("Written: " + path);
+        }
+    }
+
+    public static class CreateFileTool implements Tool {
+        @Override
+        public ToolSpec spec() {
+            return new ToolSpec("createFile", "Create a new file", "{\"path\": \"string\", \"content\": \"string\"}");
+        }
+
+        @Override
+        public ToolResult execute(ToolArgs args, ToolCtx ctx) {
+            String path = args.getString("path");
+            String content = args.getString("content", "");
+            if (path == null) return ToolResult.error("Path required");
+            
+            File f = resolve(ctx.scId, path);
+            if (f.exists()) return ToolResult.error("File already exists");
+            
+            if (f.getParentFile() != null) f.getParentFile().mkdirs();
+            FileUtil.writeFile(f.getAbsolutePath(), content);
+            return ToolResult.success("Created: " + path);
+        }
+    }
+
+    public static class PatchFileTool implements Tool {
+        @Override
+        public ToolSpec spec() {
+            return new ToolSpec("patchFile", "Patch an existing file by replacing oldText with newText", 
+                "{\"path\": \"string\", \"oldText\": \"string\", \"newText\": \"string\"}");
+        }
+
+        @Override
+        public ToolResult execute(ToolArgs args, ToolCtx ctx) {
+            String path = args.getString("path");
+            String oldText = args.getString("oldText");
+            String newText = args.getString("newText");
+            if (path == null || oldText == null || newText == null) return ToolResult.error("Args required");
+
+            File f = resolve(ctx.scId, path);
+            if (!f.exists()) return ToolResult.error("File not found: " + path);
+
+            String content = FileUtil.readFile(f.getAbsolutePath());
+            if (!content.contains(oldText)) return ToolResult.error("Old text not found in file");
+
+            backup(ctx.scId, f);
+            String patched = content.replace(oldText, newText);
+            FileUtil.writeFile(f.getAbsolutePath(), patched);
+            return ToolResult.success("Patched: " + path);
+        }
+    }
+
+    public static class DeleteFileTool implements Tool {
+        @Override
+        public ToolSpec spec() {
+            return new ToolSpec("deleteFile", "Delete a project file (requires confirmation)", "{\"path\": \"string\"}");
+        }
+
+        @Override
+        public ToolResult execute(ToolArgs args, ToolCtx ctx) {
+            if (!ctx.confirmDestructive()) return ToolResult.error("Destructive action requires confirmation");
+            String path = args.getString("path");
+            if (path == null) return ToolResult.error("Path required");
+
+            File f = resolve(ctx.scId, path);
+            if (!f.exists()) return ToolResult.error("File not found");
+
+            backup(ctx.scId, f);
+            if (f.delete()) return ToolResult.success("Deleted: " + path);
+            return ToolResult.error("Failed to delete: " + path);
         }
     }
 

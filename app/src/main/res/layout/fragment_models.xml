@@ -1,6 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -16,15 +15,16 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="AI Models"
+            android:text="Local Models"
             android:textAppearance="?attr/textAppearanceTitleLarge" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_search_hf"
-            style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_search_hf"
+            style="@style/Widget.Material3.FloatingActionButton.Tertiary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:icon="@drawable/ic_mtrl_search" />
+            app:fabSize="mini"
+            app:srcCompat="@drawable/ic_mtrl_search" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -32,8 +32,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
-        android:layout_weight="1"
-        tools:listitem="@layout/item_ai_model" />
+        android:layout_weight="1" />
 
     <LinearLayout
         android:id="@+id/empty_state"
@@ -41,8 +40,7 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:orientation="vertical"
-        android:visibility="gone"
-        tools:visibility="visible">
+        android:visibility="gone">
 
         <ImageView
             android:layout_width="80dp"
@@ -54,7 +52,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="No local models found"
+            android:text="No models installed"
             android:textAppearance="?attr/textAppearanceBodyLarge"
             android:textColor="?attr/colorOutline" />
     </LinearLayout>
