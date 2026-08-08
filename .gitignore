@@ -69,4 +69,4 @@ app/release/
 .artifacts/
 TODO_AGENT.md
 .kilo
-AI_MANAGER_LEDGER.md
+/app/src/main/java/pro/sketchware/ai/AI_MANAGER_LEDGER.md
