@@ -1,0 +1,30 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/rail_session"
+        android:icon="@drawable/ic_mtrl_chat"
+        android:title="Session" />
+    <item
+        android:id="@+id/rail_models"
+        android:icon="@drawable/ic_mtrl_box"
+        android:title="Models" />
+    <item
+        android:id="@+id/rail_assistant"
+        android:icon="@drawable/swassist_logo"
+        android:title="Assistant" />
+    <item
+        android:id="@+id/rail_skills"
+        android:icon="@drawable/ic_mtrl_star"
+        android:title="Skills" />
+    <item
+        android:id="@+id/rail_tools"
+        android:icon="@drawable/ic_mtrl_tune"
+        android:title="Tools" />
+    <item
+        android:id="@+id/rail_workspace"
+        android:icon="@drawable/ic_mtrl_folder"
+        android:title="Workspace" />
+    <item
+        android:id="@+id/rail_conversations"
+        android:icon="@drawable/ic_mtrl_history"
+        android:title="History" />
+</menu>
