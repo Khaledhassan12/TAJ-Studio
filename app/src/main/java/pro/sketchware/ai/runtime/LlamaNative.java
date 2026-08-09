@@ -25,7 +25,17 @@ public class LlamaNative {
 
     public static native void nativeCancel(long handle);
 
+    public static native void nativeReset(long handle);
+
     public static native void nativeFree(long handle);
+
+    public static native boolean nativeLoadMmproj(long handle, String path);
+
+    public static native void nativeUnloadMmproj(long handle);
+
+    public static native boolean nativeHasMmproj(long handle);
+
+    public static native String nativeApplyTemplate(long handle, String[] roles, String[] contents, boolean addAssistant);
 
     public interface TokenCallback {
         /**

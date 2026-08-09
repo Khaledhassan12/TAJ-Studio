@@ -13,6 +13,8 @@ import pro.sketchware.ai.providers.ProviderRegistry;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,6 +44,39 @@ public class GeminiProvider implements AiProvider {
 
     @Override public String id() { return id; }
     @Override public String name() { return name; }
+
+    /**
+     * [Step 1] Real fetchModelIds() implementation.
+     * google  GET {baseUrl}/models?key=<key> -> models[].name (strip "models/")
+     */
+    public List<String> fetchModelIds() throws Exception {
+        String baseUrl = ProviderRegistry.get(context).getBaseUrl(id);
+        String apiKey = SecureKeyStore.get(context).getKeyForUse(id, fixedKeyId);
+
+        if (apiKey == null || baseUrl == null) throw new Exception("AuthException: API Key or Base URL not configured");
+
+        String cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        String url = cleanBaseUrl + "/models?key=" + apiKey;
+        Request request = new Request.Builder().url(url).get().build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (response.code() == 401 || response.code() == 403) throw new Exception("AuthException: Invalid key");
+            if (response.code() == 429) throw new Exception("RateLimitException: Too many requests");
+            if (!response.isSuccessful()) throw new Exception("Provider error: HTTP " + response.code());
+
+            JSONObject json = new JSONObject(response.body().string());
+            JSONArray models = json.getJSONArray("models");
+            List<String> ids = new ArrayList<>();
+            for (int i = 0; i < models.length(); i++) {
+                String modelName = models.getJSONObject(i).getString("name");
+                if (modelName.startsWith("models/")) {
+                    modelName = modelName.substring(7);
+                }
+                ids.add(modelName);
+            }
+            return ids;
+        }
+    }
 
     @Override
     public CapabilityProfile caps() {
@@ -108,25 +143,40 @@ public class GeminiProvider implements AiProvider {
 
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody.byteStream()))) {
                     String line;
+                    AiResponse finalResponse = new AiResponse("", "stop", 0, 0);
                     while ((line = reader.readLine()) != null) {
                         if (line.startsWith("data: ")) {
                             String data = line.substring(6).trim();
                             try {
                                 JSONObject json = new JSONObject(data);
-                                String token = json.getJSONArray("candidates")
-                                        .getJSONObject(0)
-                                        .getJSONObject("content")
-                                        .getJSONArray("parts")
-                                        .getJSONObject(0)
-                                        .optString("text", "");
-                                if (!token.isEmpty()) {
-                                    mainHandler.post(() -> cb.onToken(token));
+                                JSONArray candidates = json.optJSONArray("candidates");
+                                if (candidates != null && candidates.length() > 0) {
+                                    JSONObject candidate = candidates.getJSONObject(0);
+                                    JSONObject content = candidate.optJSONObject("content");
+                                    if (content != null) {
+                                        JSONArray parts = content.optJSONArray("parts");
+                                        if (parts != null && parts.length() > 0) {
+                                            String token = parts.getJSONObject(0).optString("text", "");
+                                            if (!token.isEmpty()) {
+                                                mainHandler.post(() -> cb.onToken(token));
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (json.has("usageMetadata")) {
+                                    JSONObject usage = json.getJSONObject("usageMetadata");
+                                    finalResponse.promptTokens = usage.optInt("promptTokenCount");
+                                    finalResponse.completionTokens = usage.optInt("candidatesTokenCount");
+                                    finalResponse.totalTokens = usage.optInt("totalTokenCount");
+                                    finalResponse.inputTokens = finalResponse.promptTokens;
+                                    finalResponse.outputTokens = finalResponse.completionTokens;
                                 }
                             } catch (Exception ignored) {}
                         }
                     }
+                    mainHandler.post(() -> cb.onDone(finalResponse));
                 }
-                mainHandler.post(() -> cb.onDone(new AiResponse("", "stop", 0, 0)));
             } catch (IOException e) {
                 if (!call.isCanceled()) {
                     mainHandler.post(() -> cb.onError(new AiError(AiError.Type.Network, e.getMessage())));

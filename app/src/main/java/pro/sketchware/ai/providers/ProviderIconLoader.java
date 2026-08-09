@@ -10,7 +10,7 @@ import coil.request.ErrorResult;
 import coil.request.ImageRequest;
 import coil.request.SuccessResult;
 import pro.sketchware.R;
-import pro.sketchware.utility.ThemeUtils;
+import androidx.core.content.ContextCompat;
 
 /**
  * [WHAT] Singleton for loading provider icons (SVGs or Vectors).
@@ -49,7 +49,7 @@ public class ProviderIconLoader {
                     @Override
                     public void onError(@NonNull ImageRequest request, @NonNull ErrorResult result) {
                         imageView.setImageResource(getFallbackVector(providerId));
-                        imageView.setColorFilter(ThemeUtils.getColor(imageView.getContext(), R.attr.colorPrimary));
+                        imageView.setColorFilter(ContextCompat.getColor(imageView.getContext(), R.color.taj_ai_primary));
                     }
                 })
                 .build();

@@ -4,7 +4,7 @@ package pro.sketchware.ai.agent;
  * [WHAT] A single step in the agent's reasoning loop.
  */
 public class AgentStep {
-    public enum Kind { THINK, TOOL_CALL, TOOL_RESULT, TEXT, ERROR }
+    public enum Kind { THOUGHT, TOOL_CALL, TOOL_RESULT, TEXT, ERROR }
 
     public final Kind kind;
     public final String payload;

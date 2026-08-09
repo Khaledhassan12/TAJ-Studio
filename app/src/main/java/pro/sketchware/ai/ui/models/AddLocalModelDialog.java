@@ -26,7 +26,7 @@ import java.util.UUID;
 
 import pro.sketchware.R;
 import pro.sketchware.ai.data.Paths;
-import pro.sketchware.ai.models.LocalModelConfig;
+import pro.sketchware.ai.models.LocalChatModelConfig;
 import pro.sketchware.ai.models.ModelManager;
 import pro.sketchware.ai.validate.GgufInfo;
 import pro.sketchware.ai.validate.GgufValidator;
@@ -47,7 +47,7 @@ public class AddLocalModelDialog extends BottomSheetDialogFragment {
 
     private File ggufSource;
     private File tempMmproj;
-    private LocalModelConfig existingConfig;
+    private LocalChatModelConfig existingConfig;
 
     public static AddLocalModelDialog newInstance(@Nullable File ggufSource, @Nullable String existingModelId) {
         AddLocalModelDialog fragment = new AddLocalModelDialog();
@@ -112,14 +112,14 @@ public class AddLocalModelDialog extends BottomSheetDialogFragment {
         btnAdd.setOnClickListener(v -> save());
     }
 
-    private void prefill(LocalModelConfig config) {
+    private void prefill(LocalChatModelConfig config) {
         etModelId.setText(config.modelId);
         etAlias.setText(config.alias);
-        etCtx.setText(String.valueOf(config.contextSize));
+        etCtx.setText(String.valueOf(config.nCtx));
         etMaxTokens.setText(String.valueOf(config.maxTokens));
         etTemp.setText(String.valueOf(config.temperature));
         etTopP.setText(String.valueOf(config.topP));
-        if (config.mmprojPath != null) {
+        if (config.mmprojPath != null && !config.mmprojPath.isEmpty()) {
             tvVisionFile.setText(new File(config.mmprojPath).getName());
             tvVisionFile.setVisibility(View.VISIBLE);
         }
@@ -180,14 +180,20 @@ public class AddLocalModelDialog extends BottomSheetDialogFragment {
     private void save() {
         if (!validateFields()) return;
 
-        LocalModelConfig config = new LocalModelConfig();
-        config.modelId = etModelId.getText().toString().trim();
-        config.alias = etAlias.getText().toString().trim();
-        config.contextSize = Integer.parseInt(etCtx.getText().toString());
-        config.maxTokens = Integer.parseInt(etMaxTokens.getText().toString());
-        config.temperature = Float.parseFloat(etTemp.getText().toString());
-        config.topP = Float.parseFloat(etTopP.getText().toString());
-        if (existingConfig != null) config.mmprojPath = existingConfig.mmprojPath;
+        String modelId = etModelId.getText().toString().trim();
+        String alias = etAlias.getText().toString().trim();
+        int ctx = Integer.parseInt(etCtx.getText().toString());
+        int maxTokens = Integer.parseInt(etMaxTokens.getText().toString());
+        float temp = Float.parseFloat(etTemp.getText().toString());
+        float topP = Float.parseFloat(etTopP.getText().toString());
+        
+        String ggufPath = ggufSource != null ? Paths.modelFile(modelId).getAbsolutePath() : (existingConfig != null ? existingConfig.localFilePath : "");
+        String mmproj = existingConfig != null ? existingConfig.mmprojPath : "";
+
+        LocalChatModelConfig config = new LocalChatModelConfig(
+                existingConfig != null ? existingConfig.id : null,
+                modelId, alias, ggufPath, mmproj, ctx, temp, topP, maxTokens
+        );
 
         ModelManager.get(getContext()).addOrUpdateLocalModel(config, ggufSource, tempMmproj);
         dismiss();

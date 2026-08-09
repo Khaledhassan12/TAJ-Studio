@@ -13,6 +13,8 @@ import pro.sketchware.ai.providers.ProviderRegistry;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,6 +45,41 @@ public class OpenAiProvider implements AiProvider {
     @Override public String id() { return id; }
     @Override public String name() { return name; }
 
+    /**
+     * [Step 1] Real fetchModelIds() implementation.
+     * Endpoints (openai-wire compatible):
+     * openai     GET {baseUrl}/models -> data[].id
+     * openrouter GET {baseUrl}/models -> data[].id
+     * deepseek   GET {baseUrl}/models -> data[].id
+     * qwen       GET {baseUrl}/models -> data[].id
+     * groq       GET {baseUrl}/models -> data[].id
+     * ollama     GET {baseUrl}/models -> data[].id
+     */
+    public List<String> fetchModelIds() throws Exception {
+        String baseUrl = ProviderRegistry.get(context).getBaseUrl(id);
+        String apiKey = SecureKeyStore.get(context).getKeyForUse(id, fixedKeyId);
+        
+        if (baseUrl == null) throw new Exception("Base URL not configured");
+
+        String endpoint = baseUrl.endsWith("/") ? baseUrl + "models" : baseUrl + "/models";
+        Request.Builder rb = new Request.Builder().url(endpoint).get();
+        if (apiKey != null) rb.addHeader("Authorization", "Bearer " + apiKey);
+        
+        try (Response response = client.newCall(rb.build()).execute()) {
+            if (response.code() == 401 || response.code() == 403) throw new Exception("AuthException: Invalid key");
+            if (response.code() == 429) throw new Exception("RateLimitException: Too many requests");
+            if (!response.isSuccessful()) throw new Exception("Provider error: HTTP " + response.code());
+            
+            JSONObject json = new JSONObject(response.body().string());
+            JSONArray data = json.getJSONArray("data");
+            List<String> ids = new ArrayList<>();
+            for (int i = 0; i < data.length(); i++) {
+                ids.add(data.getJSONObject(i).getString("id"));
+            }
+            return ids;
+        }
+    }
+
     @Override
     public CapabilityProfile caps() {
         boolean isNativeOpenAi = "openai".equals(id);
@@ -64,6 +101,7 @@ public class OpenAiProvider implements AiProvider {
         try {
             body.put("model", req.modelId);
             body.put("stream", true);
+            body.put("stream_options", new JSONObject().put("include_usage", true));
             body.put("temperature", req.temperature);
             if (req.maxTokens > 0) body.put("max_tokens", req.maxTokens);
 
@@ -103,21 +141,34 @@ public class OpenAiProvider implements AiProvider {
 
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody.byteStream()))) {
                     String line;
+                    AiResponse finalResponse = new AiResponse("", "stop", 0, 0);
                     while ((line = reader.readLine()) != null) {
                         if (line.startsWith("data: ")) {
                             String data = line.substring(6).trim();
                             if ("[DONE]".equals(data)) {
-                                mainHandler.post(() -> cb.onDone(new AiResponse("", "stop", 0, 0)));
+                                mainHandler.post(() -> cb.onDone(finalResponse));
                                 break;
                             }
                             try {
                                 JSONObject json = new JSONObject(data);
-                                String token = json.getJSONArray("choices")
-                                        .getJSONObject(0)
-                                        .getJSONObject("delta")
-                                        .optString("content", "");
-                                if (!token.isEmpty()) {
-                                    mainHandler.post(() -> cb.onToken(token));
+                                if (json.has("usage") && !json.isNull("usage")) {
+                                    JSONObject usage = json.getJSONObject("usage");
+                                    finalResponse.promptTokens = usage.optInt("prompt_tokens");
+                                    finalResponse.completionTokens = usage.optInt("completion_tokens");
+                                    finalResponse.totalTokens = usage.optInt("total_tokens");
+                                    finalResponse.inputTokens = finalResponse.promptTokens;
+                                    finalResponse.outputTokens = finalResponse.completionTokens;
+                                }
+
+                                JSONArray choices = json.optJSONArray("choices");
+                                if (choices != null && choices.length() > 0) {
+                                    JSONObject delta = choices.getJSONObject(0).optJSONObject("delta");
+                                    if (delta != null) {
+                                        String token = delta.optString("content", "");
+                                        if (!token.isEmpty()) {
+                                            mainHandler.post(() -> cb.onToken(token));
+                                        }
+                                    }
                                 }
                             } catch (Exception ignored) {}
                         }

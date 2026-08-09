@@ -20,6 +20,7 @@ import pro.sketchware.ai.download.ModelDownloader;
 import pro.sketchware.ai.hf.HfClient;
 import pro.sketchware.ai.hf.HfFile;
 import pro.sketchware.ai.hf.HfModelSummary;
+import android.content.Context;
 
 public class HfSearchSheet extends BottomSheetDialogFragment {
 
@@ -30,6 +31,13 @@ public class HfSearchSheet extends BottomSheetDialogFragment {
     private RecyclerView recycler;
     private View loading;
     private String currentRepoId;
+    private Context appContext;
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        appContext = context.getApplicationContext();
+    }
 
     @Nullable
     @Override
@@ -39,11 +47,11 @@ public class HfSearchSheet extends BottomSheetDialogFragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        client = new HfClient(requireContext());
-        downloader = new ModelDownloader(requireContext());
+        client = new HfClient(appContext);
+        downloader = new ModelDownloader(appContext);
         recycler = view.findViewById(R.id.recycler_results);
         loading = view.findViewById(R.id.loading);
-        recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recycler.setLayoutManager(new LinearLayoutManager(appContext));
         
         resultAdapter = new ResultAdapter();
         fileAdapter = new FileAdapter();
@@ -60,15 +68,17 @@ public class HfSearchSheet extends BottomSheetDialogFragment {
         new Thread(() -> {
             try {
                 List<HfModelSummary> results = client.searchModels(q, 20);
-                requireActivity().runOnUiThread(() -> {
+                if (!isAdded() || getActivity() == null || getActivity().isFinishing()) return;
+                getActivity().runOnUiThread(() -> {
                     loading.setVisibility(View.GONE);
                     recycler.setAdapter(resultAdapter);
                     resultAdapter.setItems(results);
                 });
             } catch (Exception e) {
-                requireActivity().runOnUiThread(() -> {
+                if (!isAdded() || getActivity() == null || getActivity().isFinishing()) return;
+                getActivity().runOnUiThread(() -> {
                     loading.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
@@ -99,15 +109,17 @@ public class HfSearchSheet extends BottomSheetDialogFragment {
         new Thread(() -> {
             try {
                 List<HfFile> files = client.listGgufFiles(repoId);
-                requireActivity().runOnUiThread(() -> {
+                if (!isAdded() || getActivity() == null || getActivity().isFinishing()) return;
+                getActivity().runOnUiThread(() -> {
                     loading.setVisibility(View.GONE);
                     recycler.setAdapter(fileAdapter);
                     fileAdapter.setItems(files);
                 });
             } catch (Exception e) {
-                requireActivity().runOnUiThread(() -> {
+                if (!isAdded() || getActivity() == null || getActivity().isFinishing()) return;
+                getActivity().runOnUiThread(() -> {
                     loading.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
@@ -128,7 +140,11 @@ public class HfSearchSheet extends BottomSheetDialogFragment {
                 downloader.download(currentRepoId, item.path, modelId, new ModelDownloader.DownloadListener() {
                     @Override public void onProgress(String id, long b, Long t) { /* Implementation logic */ }
                     @Override public void onStateChange(String id, String s, String e) {
-                        if ("DONE".equals(s)) Toast.makeText(getContext(), "Success!", Toast.LENGTH_SHORT).show();
+                        if ("DONE".equals(s)) {
+                            if (appContext != null) {
+                                Toast.makeText(appContext, "Success!", Toast.LENGTH_SHORT).show();
+                            }
+                        }
                     }
                 });
                 dismiss();

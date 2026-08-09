@@ -33,6 +33,8 @@ import pro.sketchware.ai.providers.cloud.OpenAiProvider;
 import pro.sketchware.ai.providers.local.LlamaProvider;
 import pro.sketchware.ai.runtime.RuntimeClient;
 import pro.sketchware.utility.ThemeUtils;
+import android.content.Context;
+import androidx.core.content.ContextCompat;
 
 /**
  * [WHAT] Unified chat interface for both local and cloud AI.
@@ -56,11 +58,21 @@ public class SessionFragment extends Fragment {
     private String activeModelId;
     private StreamHandle activeStream;
     private pro.sketchware.ai.agent.AgentManager agentManager;
+    private Context appContext;
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        appContext = context.getApplicationContext();
+    }
 
     private static class ChatMessage {
         String id;
         String role;
         String content;
+        String thought = "";
+        Integer totalTokens;
+
         ChatMessage(String role, String content) { 
             this.id = UUID.randomUUID().toString();
             this.role = role; 
@@ -101,9 +113,9 @@ public class SessionFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         scId = com.besome.sketch.design.DesignActivity.sc_id;
-        runtimeClient = new RuntimeClient(requireContext());
+        runtimeClient = new RuntimeClient(appContext);
         runtimeClient.bind();
-        agentManager = new pro.sketchware.ai.agent.AgentManager(requireContext());
+        agentManager = new pro.sketchware.ai.agent.AgentManager(appContext);
 
         recycler = view.findViewById(R.id.recycler_messages);
         edMessage = view.findViewById(R.id.ed_message);
@@ -121,7 +133,7 @@ public class SessionFragment extends Fragment {
         String forcedConvId = getArguments() != null ? getArguments().getString("conversation_id") : null;
         if (forcedConvId != null) {
             conversationId = forcedConvId;
-            AiStorage.get(requireContext()).kvPut("active_conv_" + scId, conversationId);
+            AiStorage.get(appContext).kvPut("active_conv_" + scId, conversationId);
         }
 
         initConversation();
@@ -154,7 +166,7 @@ public class SessionFragment extends Fragment {
     }
 
     private void initConversation() {
-        AiStorage storage = AiStorage.get(requireContext());
+        AiStorage storage = AiStorage.get(appContext);
         conversationId = storage.kvGet("active_conv_" + scId);
         if (conversationId == null) {
             conversationId = UUID.randomUUID().toString();
@@ -165,15 +177,33 @@ public class SessionFragment extends Fragment {
             cv.put("createdAt", System.currentTimeMillis());
             storage.insertConversation(cv);
             storage.kvPut("active_conv_" + scId, conversationId);
+
+            // Preselect default model (Step 4)
+            pro.sketchware.ai.models.ModelCatalog.ModelEntry def = pro.sketchware.ai.models.ModelCatalog.get(appContext).getDefaultModel();
+            if (def != null) {
+                activeModelId = def.modelId;
+                if (def.isLocal) {
+                    activeProvider = new pro.sketchware.ai.providers.local.LlamaProvider(runtimeClient);
+                } else {
+                    pro.sketchware.ai.providers.ProviderConfig cfg = pro.sketchware.ai.providers.ProviderRegistry.get(appContext).findById(def.providerId);
+                    if (cfg != null) {
+                        activeProvider = pro.sketchware.ai.providers.ProviderRegistry.get(appContext).providerFor(cfg, null);
+                    }
+                }
+                if (activeProvider != null) {
+                    storage.kvPut("conv_provider_" + conversationId, activeProvider.id());
+                    storage.kvPut("conv_model_" + conversationId, activeModelId);
+                }
+            }
         } else {
             String pId = storage.kvGet("conv_provider_" + conversationId);
             if (pId != null) {
                 if ("local-llama".equals(pId)) {
                     activeProvider = new pro.sketchware.ai.providers.local.LlamaProvider(runtimeClient);
                 } else {
-                    pro.sketchware.ai.providers.ProviderConfig cfg = pro.sketchware.ai.providers.ProviderRegistry.get(requireContext()).findById(pId);
+                    pro.sketchware.ai.providers.ProviderConfig cfg = pro.sketchware.ai.providers.ProviderRegistry.get(appContext).findById(pId);
                     if (cfg != null) {
-                        activeProvider = pro.sketchware.ai.providers.ProviderRegistry.get(requireContext()).providerFor(cfg, null);
+                        activeProvider = pro.sketchware.ai.providers.ProviderRegistry.get(appContext).providerFor(cfg, null);
                     }
                 }
             }
@@ -190,42 +220,31 @@ public class SessionFragment extends Fragment {
     }
 
     private void showProviderMenu(View v) {
-        PopupMenu popup = new PopupMenu(requireContext(), v);
-        
-        // 1. Built-in and Custom with keys
-        List<pro.sketchware.ai.providers.ProviderConfig> configs = pro.sketchware.ai.providers.ProviderRegistry.get(requireContext()).loadAll();
-        for (pro.sketchware.ai.providers.ProviderConfig cfg : configs) {
-            // Include if has key OR ollama (works without key)
-            if (cfg.keyCount > 0 || "ollama".equals(cfg.id)) {
-                popup.getMenu().add(1, configs.indexOf(cfg), 0, cfg.displayName);
-            }
-        }
-        
-        // 2. Local if models exist
-        int localModelCount = 0;
-        try (Cursor c = AiStorage.get(requireContext()).listModels()) {
-            if (c != null) localModelCount = c.getCount();
-        }
-        if (localModelCount > 0) {
-            popup.getMenu().add(2, 0, 100, "Local (llama.cpp)");
+        PopupMenu popup = new PopupMenu(appContext, v);
+        List<pro.sketchware.ai.models.ModelCatalog.ModelEntry> usable = pro.sketchware.ai.models.ModelCatalog.get(appContext).usableModels();
+
+        for (int i = 0; i < usable.size(); i++) {
+            pro.sketchware.ai.models.ModelCatalog.ModelEntry e = usable.get(i);
+            popup.getMenu().add(0, i, 0, e.alias + " (" + e.providerId + ")");
         }
 
         popup.setOnMenuItemClickListener(item -> {
-            if (item.getGroupId() == 1) {
-                pro.sketchware.ai.providers.ProviderConfig cfg = configs.get(item.getItemId());
-                activeProvider = pro.sketchware.ai.providers.ProviderRegistry.get(requireContext()).providerFor(cfg, null);
-                // Hardcoded default models if not selected
-                if ("openai".equals(cfg.id)) activeModelId = "gpt-4o";
-                else if ("anthropic".equals(cfg.id)) activeModelId = "claude-3-5-sonnet-20240620";
-                else if ("google".equals(cfg.id)) activeModelId = "gemini-1.5-flash";
-                else activeModelId = "default";
-            } else {
+            pro.sketchware.ai.models.ModelCatalog.ModelEntry e = usable.get(item.getItemId());
+            activeModelId = e.modelId;
+
+            if (e.isLocal) {
                 activeProvider = new pro.sketchware.ai.providers.local.LlamaProvider(runtimeClient);
-                activeModelId = pro.sketchware.ai.models.ModelManager.get(requireContext()).getActiveId();
+            } else {
+                pro.sketchware.ai.providers.ProviderConfig cfg = pro.sketchware.ai.providers.ProviderRegistry.get(appContext).findById(e.providerId);
+                if (cfg != null) {
+                    activeProvider = pro.sketchware.ai.providers.ProviderRegistry.get(appContext).providerFor(cfg, null);
+                }
             }
-            
-            AiStorage.get(requireContext()).kvPut("conv_provider_" + conversationId, activeProvider.id());
-            AiStorage.get(requireContext()).kvPut("conv_model_" + conversationId, activeModelId);
+
+            if (activeProvider != null) {
+                AiStorage.get(appContext).kvPut("conv_provider_" + conversationId, activeProvider.id());
+                AiStorage.get(appContext).kvPut("conv_model_" + conversationId, activeModelId);
+            }
             renderActiveSelection();
             return true;
         });
@@ -233,7 +252,7 @@ public class SessionFragment extends Fragment {
     }
 
     private void loadHistory() {
-        AiStorage storage = AiStorage.get(requireContext());
+        AiStorage storage = AiStorage.get(appContext);
         adapter.clear();
         try (Cursor c = storage.listMessages(conversationId)) {
             while (c.moveToNext()) {
@@ -265,7 +284,7 @@ public class SessionFragment extends Fragment {
 
     private void sendMessage() {
         if (activeProvider == null || activeModelId == null) {
-            Toast.makeText(requireContext(), "Select provider and model", Toast.LENGTH_SHORT).show();
+            Toast.makeText(appContext, "Select provider and model", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -285,24 +304,55 @@ public class SessionFragment extends Fragment {
         agentManager.runTurn(scId, conversationId, text, activeProvider, activeModelId, new pro.sketchware.ai.agent.AgentManager.AgentListener() {
             @Override
             public void onStep(pro.sketchware.ai.agent.AgentStep step) {
+                if (!isAdded() || getActivity() == null || getActivity().isFinishing()) return;
                 if (step.kind == pro.sketchware.ai.agent.AgentStep.Kind.TEXT) {
                     assistantMsg.content += step.payload;
                     adapter.notifyItemChanged(adapter.getItemCount() - 1);
+                } else if (step.kind == pro.sketchware.ai.agent.AgentStep.Kind.THOUGHT) {
+                    assistantMsg.thought += step.payload;
+                    adapter.notifyItemChanged(adapter.getItemCount() - 1);
                 } else if (step.kind == pro.sketchware.ai.agent.AgentStep.Kind.ERROR) {
-                    assistantMsg.content = "Error: " + step.payload;
+                    String err = step.payload;
+                    if (err != null && err.startsWith("LOCAL_CONTEXT_EXCEEDED:")) {
+                        assistantMsg.content = mapContextError(err);
+                    } else {
+                        assistantMsg.content = "Error: " + err;
+                    }
                     adapter.notifyItemChanged(adapter.getItemCount() - 1);
                 }
-                // Persistent steps to AiStorage would happen here in full P5
             }
 
             @Override
-            public void onDone() {
+            public void onDone(AiResponse usage) {
+                if (usage != null) assistantMsg.totalTokens = usage.totalTokens;
                 persistMessage(assistantMsg);
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> applyChatState("idle"));
-                }
+                if (!isAdded() || getActivity() == null || getActivity().isFinishing()) return;
+                getActivity().runOnUiThread(() -> {
+                    applyChatState("idle");
+                    // Trigger title generation (Change 6)
+                    new pro.sketchware.ai.conversations.ConversationTitleGenerator(appContext)
+                            .maybeGenerateTitle(scId, conversationId, getAiHistory());
+                });
             }
         });
+    }
+
+    private List<AiMessage> getAiHistory() {
+        List<AiMessage> history = new ArrayList<>();
+        for (ChatMessage m : adapter.getMessages()) {
+            history.add(m.toAiMessage());
+        }
+        return history;
+    }
+
+    private String mapContextError(String raw) {
+        try {
+            String[] parts = raw.split(":");
+            if (parts.length >= 3) {
+                return "Local context exceeded (Prompt: " + parts[1] + ", Model limit: " + parts[2] + " tokens). Try reducing history or increasing context size.";
+            }
+        } catch (Exception ignored) {}
+        return "Local context limit exceeded. Please shorten your prompt or history.";
     }
 
     private void cancelGeneration() {
@@ -322,7 +372,8 @@ public class SessionFragment extends Fragment {
     }
 
     private void persistMessage(ChatMessage msg) {
-        AiStorage storage = AiStorage.get(requireContext());
+        if (appContext == null) return;
+        AiStorage storage = AiStorage.get(appContext);
         ContentValues cv = new ContentValues();
         cv.put("id", msg.id);
         cv.put("conversationId", conversationId);
@@ -358,15 +409,37 @@ public class SessionFragment extends Fragment {
             ChatMessage m = messages.get(position);
             holder.text.setText(m.content);
             
+            if (m.thought != null && !m.thought.isEmpty()) {
+                holder.thoughtContainer.setVisibility(View.VISIBLE);
+                holder.thoughtText.setText(m.thought);
+                holder.thoughtText.setVisibility(View.GONE); // Initially collapsed
+                holder.thoughtHeader.setOnClickListener(v -> {
+                    boolean visible = holder.thoughtText.getVisibility() == View.VISIBLE;
+                    holder.thoughtText.setVisibility(visible ? View.GONE : View.VISIBLE);
+                    holder.thoughtHeader.setText(visible ? "Thinking... (show)" : "Thinking (hide)");
+                });
+            } else {
+                holder.thoughtContainer.setVisibility(View.GONE);
+            }
+
+            if (m.totalTokens != null) {
+                holder.meta.setVisibility(View.VISIBLE);
+                holder.meta.setText("· " + m.totalTokens + " tok");
+            } else {
+                holder.meta.setVisibility(View.GONE);
+            }
+
             LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) holder.card.getLayoutParams();
             if ("user".equals(m.role)) {
                 holder.root.setGravity(Gravity.END);
-                holder.card.setStrokeColor(ThemeUtils.getColor(requireContext(), R.attr.colorPrimary));
+                holder.card.setStrokeColor(ContextCompat.getColor(appContext, R.color.taj_ai_primary));
                 lp.gravity = Gravity.END;
+                holder.thoughtContainer.setGravity(Gravity.END);
             } else {
                 holder.root.setGravity(Gravity.START);
-                holder.card.setStrokeColor(ThemeUtils.getColor(requireContext(), R.attr.colorAccent));
+                holder.card.setStrokeColor(ContextCompat.getColor(appContext, R.color.taj_ai_accent));
                 lp.gravity = Gravity.START;
+                holder.thoughtContainer.setGravity(Gravity.START);
             }
             holder.card.setLayoutParams(lp);
         }
@@ -375,12 +448,17 @@ public class SessionFragment extends Fragment {
         public int getItemCount() { return messages.size(); }
 
         class ViewHolder extends RecyclerView.ViewHolder {
-            TextView text;
+            TextView text, thoughtText, thoughtHeader, meta;
+            LinearLayout thoughtContainer;
             MaterialCardView card;
             LinearLayout root;
             ViewHolder(View v) {
                 super(v);
                 text = v.findViewById(R.id.tv_message);
+                thoughtText = v.findViewById(R.id.tv_thought);
+                thoughtHeader = v.findViewById(R.id.tv_thought_header);
+                thoughtContainer = (LinearLayout) v.findViewById(R.id.thought_container);
+                meta = v.findViewById(R.id.tv_meta);
                 card = v.findViewById(R.id.card_bubble);
                 root = (LinearLayout) v.findViewById(R.id.chat_bubble_root);
             }

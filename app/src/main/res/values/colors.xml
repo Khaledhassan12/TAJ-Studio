@@ -88,4 +88,11 @@
     <color name="splash_bg_color">@color/md_theme_light_background</color>
     <color name="splash_content_color">@color/md_theme_light_on_background</color>
 
+    <!-- TAJ AI Solid Colors (Fixed for non-Material themes) -->
+    <color name="taj_ai_primary">#ff008dcd</color>
+    <color name="taj_ai_accent">#ff008dcd</color>
+    <color name="taj_ai_surface">#ffffffff</color>
+    <color name="taj_ai_on_surface">#ff000000</color>
+    <color name="taj_ai_error">#ffde0000</color>
+
 </resources>

@@ -31,6 +31,7 @@ import pro.sketchware.ai.data.SecureKeyStore;
 import pro.sketchware.ai.providers.ProviderConfig;
 import pro.sketchware.ai.providers.ProviderRegistry;
 import pro.sketchware.databinding.SheetProviderEditBinding;
+import android.content.Context;
 
 /**
  * [WHAT] Bottom sheet for editing AI provider configuration.
@@ -46,6 +47,13 @@ public class ProviderEditSheet extends BottomSheetDialogFragment {
     private ProviderConfig config;
     private final OkHttpClient client = new OkHttpClient();
     private Call activeCall;
+    private Context appContext;
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        appContext = context.getApplicationContext();
+    }
 
     public static ProviderEditSheet newInstance(@Nullable String configId) {
         ProviderEditSheet sheet = new ProviderEditSheet();
@@ -160,7 +168,8 @@ public class ProviderEditSheet extends BottomSheetDialogFragment {
         activeCall.enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                if (isAdded()) requireActivity().runOnUiThread(() -> onTestResult(false, "Network error: " + e.getMessage()));
+                if (!isAdded() || getActivity() == null || getActivity().isFinishing()) return;
+                getActivity().runOnUiThread(() -> onTestResult(false, "Network error: " + e.getMessage()));
             }
 
             @Override
@@ -168,7 +177,8 @@ public class ProviderEditSheet extends BottomSheetDialogFragment {
                 boolean success = response.isSuccessful();
                 String error = success ? null : "Error " + response.code();
                 response.close();
-                if (isAdded()) requireActivity().runOnUiThread(() -> onTestResult(success, error));
+                if (!isAdded() || getActivity() == null || getActivity().isFinishing()) return;
+                getActivity().runOnUiThread(() -> onTestResult(success, error));
             }
         });
     }

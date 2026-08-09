@@ -39,7 +39,7 @@ import pro.sketchware.ai.bus.AiEventHub;
 import pro.sketchware.ai.data.AiStorage;
 import pro.sketchware.ai.data.Paths;
 import pro.sketchware.ai.models.AiModel;
-import pro.sketchware.ai.models.LocalModelConfig;
+import pro.sketchware.ai.models.LocalChatModelConfig;
 import pro.sketchware.ai.models.ModelManager;
 import pro.sketchware.ai.validate.GgufInfo;
 import pro.sketchware.ai.validate.GgufValidator;
@@ -188,14 +188,10 @@ public class LocalModelsActivity extends BaseAppCompatActivity implements AiEven
                 return;
             }
 
-            LocalModelConfig config = new LocalModelConfig();
-            config.modelId = modelId;
-            config.alias = stripExtension(name);
-            config.contextSize = 2048;
-            config.temperature = 0.7f;
-            config.topP = 0.9f;
-            config.maxTokens = 4096;
-            config.mmprojPath = null;
+            LocalChatModelConfig config = new LocalChatModelConfig(
+                null, modelId, stripExtension(name), dest.getAbsolutePath(), 
+                null, 2048, 0.7f, 0.9f, 4096
+            );
 
             ContentValues cv = new ContentValues();
             cv.put("id", modelId);
@@ -313,9 +309,9 @@ public class LocalModelsActivity extends BaseAppCompatActivity implements AiEven
             holder.name.setText(entry.localConfig != null ? entry.localConfig.alias : entry.name);
 
             if (entry.localConfig != null) {
-                holder.chipCtx.setText("Context=" + entry.localConfig.contextSize);
+                holder.chipCtx.setText("Context=" + entry.localConfig.nCtx);
                 holder.chipTemp.setText("T=" + entry.localConfig.temperature);
-                holder.chipVision.setVisibility(entry.localConfig.mmprojPath != null ? View.VISIBLE : View.GONE);
+                holder.chipVision.setVisibility(entry.localConfig.mmprojPath != null && !entry.localConfig.mmprojPath.isEmpty() ? View.VISIBLE : View.GONE);
             }
 
             holder.btnMenu.setOnClickListener(v -> {

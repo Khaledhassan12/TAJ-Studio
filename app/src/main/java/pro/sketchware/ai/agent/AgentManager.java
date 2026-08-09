@@ -20,7 +20,7 @@ public class AgentManager {
 
     public interface AgentListener {
         void onStep(AgentStep step);
-        void onDone();
+        void onDone(AiResponse usage);
     }
 
     private final Context context;
@@ -41,7 +41,17 @@ public class AgentManager {
         
         // 2. Prepare request with tools
         List<AiMessage> messages = new ArrayList<>();
-        messages.add(new AiMessage(AiMessage.Role.user, userMessage));
+        // Load history from DB
+        try (android.database.Cursor c = storage.listMessages(conversationId)) {
+            while (c != null && c.moveToNext()) {
+                String roleStr = c.getString(c.getColumnIndexOrThrow("role"));
+                String content = c.getString(c.getColumnIndexOrThrow("content"));
+                messages.add(new AiMessage(AiMessage.Role.valueOf(roleStr), content));
+            }
+        } catch (Exception ignored) {}
+        
+        // Add current user message if not already there (it was added to adapter in SessionFragment, but maybe not to DB yet)
+        // SessionFragment calls persistMessage(userMsg) before runTurn.
         
         String systemWithTools = composed.systemText + "\n\nAvailable Tools:\n" + getToolSchemas();
         
@@ -70,11 +80,18 @@ public class AgentManager {
             }
 
             @Override
+            public void onThought(String thought) {
+                AgentStep step = new AgentStep(AgentStep.Kind.THOUGHT, thought);
+                persistStep(conversationId, step);
+                listener.onStep(step);
+            }
+
+            @Override
             public void onDone(AiResponse response) {
                 if (response.content.contains("{\"tool\":")) {
-                    executeToolCall(scId, conversationId, response.content, provider, modelId, listener);
+                    executeToolCall(scId, conversationId, response, provider, modelId, listener);
                 } else {
-                    mainHandler.post(listener::onDone);
+                    mainHandler.post(() -> listener.onDone(response));
                 }
             }
 
@@ -83,12 +100,13 @@ public class AgentManager {
                 AgentStep step = new AgentStep(AgentStep.Kind.ERROR, error.message);
                 persistStep(conversationId, step);
                 listener.onStep(step);
-                mainHandler.post(listener::onDone);
+                mainHandler.post(() -> listener.onDone(null));
             }
         });
     }
 
-    private void executeToolCall(String scId, String conversationId, String json, AiProvider provider, String modelId, AgentListener listener) {
+    private void executeToolCall(String scId, String conversationId, AiResponse response, AiProvider provider, String modelId, AgentListener listener) {
+        String json = response.content;
         try {
             org.json.JSONObject obj = new org.json.JSONObject(json);
             String name = obj.getString("tool");
@@ -100,10 +118,6 @@ public class AgentManager {
                 persistStep(conversationId, callStep);
                 listener.onStep(callStep);
                 
-                boolean isDestructive = name.equals("deleteFile") || name.equals("writeFile") || name.equals("patchFile");
-                
-                // In full P5, we pause loop here if not confirmed. 
-                // For this round, we auto-confirm to show the tool success.
                 ToolResult res = tool.execute(new ToolArgs(argsJson), new ToolCtx(context, scId, true));
                 
                 AgentStep resStep = new AgentStep(AgentStep.Kind.TOOL_RESULT, res.content);
@@ -111,7 +125,7 @@ public class AgentManager {
                 listener.onStep(resStep);
             }
         } catch (Exception ignored) {}
-        mainHandler.post(listener::onDone);
+        mainHandler.post(() -> listener.onDone(response));
     }
 
     private void persistStep(String conversationId, AgentStep step) {

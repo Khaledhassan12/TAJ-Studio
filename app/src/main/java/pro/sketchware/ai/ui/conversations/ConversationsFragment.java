@@ -37,6 +37,13 @@ public class ConversationsFragment extends Fragment {
     private AiStorage storage;
     private final List<ConversationEntry> conversations = new ArrayList<>();
     private ConversationsAdapter adapter;
+    private android.content.Context appContext;
+
+    @Override
+    public void onAttach(@NonNull android.content.Context context) {
+        super.onAttach(context);
+        appContext = context.getApplicationContext();
+    }
 
     private static class ConversationEntry {
         String id;
@@ -62,6 +69,12 @@ public class ConversationsFragment extends Fragment {
 
         binding.fabNew.setOnClickListener(v -> createNewConversation());
 
+        loadConversations();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         loadConversations();
     }
 
@@ -99,7 +112,8 @@ public class ConversationsFragment extends Fragment {
     }
 
     private void deleteConversation(ConversationEntry entry) {
-        new AlertDialog.Builder(requireContext())
+        if (!isAdded() || getActivity() == null || getActivity().isFinishing()) return;
+        new AlertDialog.Builder(getActivity())
                 .setTitle("Delete Chat")
                 .setMessage("Delete this conversation and all its history?")
                 .setPositiveButton("Delete", (d, w) -> {

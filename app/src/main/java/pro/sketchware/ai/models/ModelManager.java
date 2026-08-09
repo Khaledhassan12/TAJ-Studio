@@ -72,7 +72,7 @@ public class ModelManager {
                 m.isActive = m.id.equals(getActiveId());
                 
                 String metadata = cursor.getString(cursor.getColumnIndexOrThrow("metadataJson"));
-                m.localConfig = LocalModelConfig.fromJson(metadata);
+                m.localConfig = LocalChatModelConfig.fromJson(metadata);
                 
                 models.add(m);
             }
@@ -80,16 +80,26 @@ public class ModelManager {
         return models;
     }
 
-    public LocalModelConfig getModelConfig(String modelId) {
+    public List<LocalChatModelConfig> listLocalConfigs() {
+        List<LocalChatModelConfig> configs = new ArrayList<>();
+        try (Cursor cursor = storage.listModels()) {
+            while (cursor.moveToNext()) {
+                String metadata = cursor.getString(cursor.getColumnIndexOrThrow("metadataJson"));
+                LocalChatModelConfig cfg = LocalChatModelConfig.fromJson(metadata);
+                if (cfg != null) configs.add(cfg);
+            }
+        }
+        return configs;
+    }
+
+    public LocalChatModelConfig getModelConfig(String modelId) {
         try (Cursor c = storage.findModel(modelId)) {
             if (c.moveToFirst()) {
                 String metadata = c.getString(c.getColumnIndexOrThrow("metadataJson"));
-                LocalModelConfig config = LocalModelConfig.fromJson(metadata);
-                config.modelId = modelId;
-                return config;
+                return LocalChatModelConfig.fromJson(metadata);
             }
         }
-        return new LocalModelConfig();
+        return null;
     }
 
     public void download(String repoId, String fileName) {
@@ -142,11 +152,11 @@ public class ModelManager {
         });
     }
 
-    public void addOrUpdateLocalModel(LocalModelConfig config, File ggufSource, File mmprojSource) {
+    public void addOrUpdateLocalModel(LocalChatModelConfig config, File ggufSource, File mmprojSource) {
         executor.execute(() -> {
             try {
                 String modelId = config.modelId;
-                File destGguf = Paths.modelFile(modelId);
+                File destGguf = new File(config.localFilePath);
                 
                 // Finalize GGUF
                 if (ggufSource != null) {
@@ -157,23 +167,29 @@ public class ModelManager {
                 }
                 
                 // Finalize Vision projector
+                String finalMmprojPath = config.mmprojPath;
                 if (mmprojSource != null) {
                     File destMmproj = new File(Paths.modelsDir(), modelId + ".mmproj");
                     if (copyFile(mmprojSource, destMmproj)) {
-                        config.mmprojPath = destMmproj.getAbsolutePath();
+                        finalMmprojPath = destMmproj.getAbsolutePath();
                     } else {
                         hub.publish(AiEventHub.Event.ERROR, "Failed to copy Vision projector");
                         return;
                     }
                 }
                 
+                LocalChatModelConfig finalConfig = new LocalChatModelConfig(
+                    config.id, config.modelId, config.alias, config.localFilePath,
+                    finalMmprojPath, config.nCtx, config.temperature, config.topP, config.maxTokens
+                );
+                
                 ContentValues cv = new ContentValues();
                 cv.put("id", modelId);
                 cv.put("kind", AiModel.Kind.LOCAL.name());
                 cv.put("provider", "local");
-                cv.put("name", config.alias);
+                cv.put("name", finalConfig.alias);
                 cv.put("filePath", destGguf.getAbsolutePath());
-                cv.put("metadataJson", config.toJson());
+                cv.put("metadataJson", finalConfig.toJson());
                 cv.put("installedAt", System.currentTimeMillis());
                 
                 storage.insertModel(cv);
@@ -204,10 +220,12 @@ public class ModelManager {
                 if (c.moveToFirst()) {
                     String path = c.getString(c.getColumnIndexOrThrow("filePath"));
                     String metadata = c.getString(c.getColumnIndexOrThrow("metadataJson"));
-                    LocalModelConfig config = LocalModelConfig.fromJson(metadata);
+                    LocalChatModelConfig config = LocalChatModelConfig.fromJson(metadata);
                     
                     new File(path).delete();
-                    if (config.mmprojPath != null) new File(config.mmprojPath).delete();
+                    if (config != null && config.mmprojPath != null && !config.mmprojPath.isEmpty()) {
+                        new File(config.mmprojPath).delete();
+                    }
                     
                     storage.deleteModel(modelId);
                     hub.publish(AiEventHub.Event.MODELS_CHANGED, null);

@@ -7,6 +7,33 @@
     android:paddingHorizontal="16dp"
     android:paddingVertical="8dp">
 
+    <LinearLayout
+        android:id="@+id/thought_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="4dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tv_thought_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thinking..."
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textColor="?attr/colorOutline"
+            android:paddingStart="4dp" />
+
+        <TextView
+            android:id="@+id/tv_thought"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alpha="0.6"
+            android:padding="8dp"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOutline" />
+    </LinearLayout>
+
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_bubble"
         android:layout_width="wrap_content"
@@ -23,5 +50,15 @@
             android:textAppearance="?attr/textAppearanceBodyMedium" />
 
     </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/tv_meta"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:paddingHorizontal="4dp"
+        android:textAppearance="?attr/textAppearanceLabelSmall"
+        android:textColor="?attr/colorOutline"
+        android:visibility="gone" />
 
 </LinearLayout>

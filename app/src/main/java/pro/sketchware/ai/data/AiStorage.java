@@ -99,6 +99,19 @@ public class AiStorage {
         dbHelper.getWritableDatabase().insertWithOnConflict("conversations", null, values, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
+    public void updateConversation(String id, ContentValues values) {
+        dbHelper.getWritableDatabase().update("conversations", values, "id = ?", new String[]{id});
+    }
+
+    public boolean updateTitleIfPlaceholder(String id, String newTitle, String placeholder) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("title", newTitle);
+        cv.put("updatedAt", System.currentTimeMillis());
+        int rows = db.update("conversations", cv, "id = ? AND title = ?", new String[]{id, placeholder});
+        return rows > 0;
+    }
+
     public Cursor listConversations(String scId) {
         return dbHelper.getReadableDatabase().query("conversations", null, "scId = ?", new String[]{scId}, null, null, "updatedAt DESC");
     }

@@ -16,7 +16,7 @@ public class AiModel {
     public long lastUsedAt;
     public boolean isActive;
 
-    public LocalModelConfig localConfig;
+    public LocalChatModelConfig localConfig;
 
     public AiModel() {}
 

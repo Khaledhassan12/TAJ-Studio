@@ -3,7 +3,7 @@ package pro.sketchware.ai.core;
 import java.util.List;
 
 public class AiMessage {
-    public enum Role { system, user, assistant, tool }
+    public enum Role { system, user, assistant, tool, error }
 
     public Role role;
     public String content;
