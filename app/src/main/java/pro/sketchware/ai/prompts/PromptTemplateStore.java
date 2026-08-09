@@ -94,9 +94,45 @@ public class PromptTemplateStore {
         });
     }
 
-    private PromptTemplate createDefaultSeed() {
-        PromptTemplate t = new PromptTemplate("Default", true);
-        t.id = "default";
+    public void addTemplate(PromptTemplate t) {
+        List<PromptTemplate> all = loadAll();
+        all.add(t);
+        saveAll(all);
+    }
+
+    public void updateTemplate(PromptTemplate t) {
+        List<PromptTemplate> all = loadAll();
+        for (int i = 0; i < all.size(); i++) {
+            if (all.get(i).id.equals(t.id)) {
+                all.set(i, t);
+                break;
+            }
+        }
+        saveAll(all);
+    }
+
+    public void deleteTemplate(String id) {
+        List<PromptTemplate> all = loadAll();
+        for (int i = 0; i < all.size(); i++) {
+            if (all.get(i).id.equals(id)) {
+                all.remove(i);
+                break;
+            }
+        }
+        if (getActiveId().equals(id)) setActiveId("default");
+        saveAll(all);
+    }
+
+    public PromptTemplate getById(String id) {
+        for (PromptTemplate t : loadAll()) {
+            if (t.id.equals(id)) return t;
+        }
+        return null;
+    }
+
+    public PromptTemplate createDefaultSeed(String title, boolean builtIn) {
+        PromptTemplate t = new PromptTemplate(title, builtIn);
+        if (builtIn) t.id = "default";
         
         t.system.add(new PromptTemplate.Item(PromptTemplate.ItemType.TEXT, 
             "You are a helpful assistant in TAJ Studio.\n" +
@@ -126,5 +162,9 @@ public class PromptTemplateStore {
         t.suffix.add(new PromptTemplate.Item(PromptTemplate.ItemType.TEXT, "</taj_user_message>"));
         
         return t;
+    }
+
+    private PromptTemplate createDefaultSeed() {
+        return createDefaultSeed("Default", true);
     }
 }

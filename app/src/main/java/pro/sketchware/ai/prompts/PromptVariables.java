@@ -41,9 +41,9 @@ public class PromptVariables {
         List<Variable> list = new ArrayList<>();
         list.add(new Variable("time", "Time", R.drawable.ic_mtrl_clock));
         list.add(new Variable("date", "Date", R.drawable.ic_mtrl_calendar));
-        list.add(new Variable("sent_time", "Sent Time", R.drawable.ic_mtrl_history));
+        list.add(new Variable("sent_time", "Sent Time", R.drawable.history_24px));
         list.add(new Variable("sent_date", "Sent Date", R.drawable.ic_mtrl_calendar));
-        list.add(new Variable("active_memory", "Active Memory", R.drawable.ic_mtrl_chip_close_circle)); // ic_mtrl_chip_close_circle is closest to 'chip'
+        list.add(new Variable("active_memory", "Active Memory", R.drawable.ic_mcp));
         list.add(new Variable("model_id", "Model ID", R.drawable.ic_mtrl_info));
         return list;
     }

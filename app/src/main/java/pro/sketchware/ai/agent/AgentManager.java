@@ -35,11 +35,24 @@ public class AgentManager {
     }
 
     public void runTurn(String scId, String conversationId, String userMessage, AiProvider provider, String modelId, AgentListener listener) {
+        // 0. Resolve Template (P1-H)
+        pro.sketchware.ai.prompts.PromptTemplate template = pro.sketchware.ai.prompts.PromptTemplateStore.get(context).getActiveTemplate();
+        pro.sketchware.ai.prompts.PromptVariables.ResolveCtx ctx = new pro.sketchware.ai.prompts.PromptVariables.ResolveCtx(System.currentTimeMillis(), modelId);
+        
+        String resolvedSystem = pro.sketchware.ai.prompts.PromptVariables.resolveList(template.system, ctx, storage);
+        String resolvedPrefix = pro.sketchware.ai.prompts.PromptVariables.resolveList(template.prefix, ctx, storage);
+        String resolvedSuffix = pro.sketchware.ai.prompts.PromptVariables.resolveList(template.suffix, ctx, storage);
+
         // 1. Compose
         ComposeRequest req = new ComposeRequest(scId, userMessage, true);
+        req.templateSystemText = resolvedSystem;
+        req.userPrefixText = resolvedPrefix;
+        req.userSuffixText = resolvedSuffix;
+        req.toolSchemas = getToolSchemas();
+
         ComposedPrompt composed = promptManager.compose(req, provider.caps().contextSize);
         
-        // 2. Prepare request with tools
+        // 2. Prepare request
         List<AiMessage> messages = new ArrayList<>();
         // Load history from DB
         try (android.database.Cursor c = storage.listMessages(conversationId)) {
@@ -50,10 +63,14 @@ public class AgentManager {
             }
         } catch (Exception ignored) {}
         
-        // Add current user message if not already there (it was added to adapter in SessionFragment, but maybe not to DB yet)
-        // SessionFragment calls persistMessage(userMsg) before runTurn.
-        
-        String systemWithTools = composed.systemText + "\n\nAvailable Tools:\n" + getToolSchemas();
+        // Wrap current message in the list
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            AiMessage m = messages.get(i);
+            if (m.role == AiMessage.Role.user && m.content.equals(userMessage)) {
+                m.content = resolvedPrefix + m.content + resolvedSuffix;
+                break; 
+            }
+        }
         
         // P1-D: pull real per-model settings from LocalModelConfig (no hardcoded sampling)
         pro.sketchware.ai.models.LocalModelConfig cfg = null;
@@ -65,7 +82,7 @@ public class AgentManager {
         }
         if (cfg == null) cfg = new pro.sketchware.ai.models.LocalModelConfig();
         
-        AiRequest aiReq = new AiRequest(messages, systemWithTools, cfg.maxTokens, cfg.temperature, modelId);
+        AiRequest aiReq = new AiRequest(messages, composed.systemText, cfg.maxTokens, cfg.temperature, modelId);
         aiReq.topP = cfg.topP;
         aiReq.contextSize = cfg.contextSize;
         aiReq.mmprojPath = cfg.mmprojPath;

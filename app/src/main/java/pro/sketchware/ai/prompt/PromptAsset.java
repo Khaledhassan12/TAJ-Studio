@@ -13,7 +13,7 @@ public enum PromptAsset {
     PROJECT_CONTEXT_PLACEHOLDER("context", 0, Layer.CONTEXT, 500);
 
     public enum Layer {
-        IDENTITY, ENGINEERING, AGENT, TOOLS, CONTEXT, TASK
+        IDENTITY, ENGINEERING, TEMPLATE, AGENT, TOOLS, CONTEXT, TASK
     }
 
     public final String id;

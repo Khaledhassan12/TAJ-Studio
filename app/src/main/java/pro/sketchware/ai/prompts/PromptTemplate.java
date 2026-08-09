@@ -1,5 +1,7 @@
 package pro.sketchware.ai.prompts;
 
+import com.google.gson.Gson;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,5 +43,9 @@ public class PromptTemplate {
         this();
         this.title = title;
         this.builtIn = builtIn;
+    }
+
+    public PromptTemplate deepCopy() {
+        return new Gson().fromJson(new Gson().toJson(this), PromptTemplate.class);
     }
 }

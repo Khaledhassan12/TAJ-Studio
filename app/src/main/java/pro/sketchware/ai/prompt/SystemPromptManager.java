@@ -34,7 +34,26 @@ public class SystemPromptManager {
         sb.append(engineering).append("\n\n");
         layers.add(PromptAsset.Layer.ENGINEERING);
 
-        // 3. Project Context
+        // 3. Template System
+        if (req.templateSystemText != null && !req.templateSystemText.isEmpty()) {
+            sb.append(req.templateSystemText).append("\n\n");
+            layers.add(PromptAsset.Layer.TEMPLATE);
+        }
+
+        // 4. Tools / Agent
+        if (req.agentMode) {
+            String protocol = loader.load(PromptAsset.AGENT_PROTOCOL);
+            if (protocol != null && !protocol.isEmpty()) {
+                sb.append(protocol).append("\n\n");
+                layers.add(PromptAsset.Layer.AGENT);
+            }
+            if (req.toolSchemas != null && !req.toolSchemas.isEmpty()) {
+                sb.append("# AVAILABLE TOOLS\n").append(req.toolSchemas).append("\n\n");
+                layers.add(PromptAsset.Layer.TOOLS);
+            }
+        }
+
+        // 5. Project Context
         ContextSnapshot snapshot = ProjectContextManager.snapshot(req.scId);
         String contextText = snapshot.toString();
         
