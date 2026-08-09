@@ -13,6 +13,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import pro.sketchware.ai.core.AiProvider;
 import pro.sketchware.ai.data.AiStorage;
@@ -59,6 +61,14 @@ public class ModelCatalog {
     private final Gson gson = new Gson();
     private final List<Listener> listeners = new ArrayList<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final ExecutorService persistenceExecutor = Executors.newSingleThreadExecutor();
+
+    // Cache (SSOT in memory)
+    private final Map<String, List<String>> fetchedCache = new HashMap<>();
+    private final Set<String> enabledSet = new HashSet<>();
+    private final Map<String, String> aliasMap = new HashMap<>();
+    private final List<CustomModel> customList = new ArrayList<>();
+    private boolean isLoaded = false;
 
     public static synchronized ModelCatalog get(Context context) {
         if (instance == null) {
@@ -70,6 +80,59 @@ public class ModelCatalog {
     private ModelCatalog(Context context) {
         this.context = context;
         this.storage = AiStorage.get(context);
+    }
+
+    public void load(Runnable onDone) {
+        persistenceExecutor.execute(() -> {
+            synchronized (this) {
+                if (isLoaded) {
+                    if (onDone != null) mainHandler.post(onDone);
+                    return;
+                }
+                
+                // Load Enabled
+                String enabledJson = storage.kvGet("enabled_models");
+                if (enabledJson != null) {
+                    try {
+                        Set<String> set = gson.fromJson(enabledJson, new TypeToken<Set<String>>(){}.getType());
+                        if (set != null) enabledSet.addAll(set);
+                    } catch (Exception ignored) {}
+                }
+
+                // Load Aliases
+                String aliasJson = storage.kvGet("model_aliases");
+                if (aliasJson != null) {
+                    try {
+                        Map<String, String> map = gson.fromJson(aliasJson, new TypeToken<Map<String, String>>(){}.getType());
+                        if (map != null) aliasMap.putAll(map);
+                    } catch (Exception ignored) {}
+                }
+
+                // Load Custom
+                String customJson = storage.kvGet("custom_models");
+                if (customJson != null) {
+                    try {
+                        List<CustomModel> list = gson.fromJson(customJson, new TypeToken<List<CustomModel>>(){}.getType());
+                        if (list != null) customList.addAll(list);
+                    } catch (Exception ignored) {}
+                }
+
+                // Load Fetched per provider
+                List<ProviderConfig> configs = ProviderRegistry.get(context).loadAll();
+                for (ProviderConfig cfg : configs) {
+                    String json = storage.kvGet("fetched_" + cfg.id);
+                    if (json != null) {
+                        try {
+                            List<String> ids = gson.fromJson(json, new TypeToken<List<String>>(){}.getType());
+                            if (ids != null) fetchedCache.put(cfg.id, ids);
+                        } catch (Exception ignored) {}
+                    }
+                }
+
+                isLoaded = true;
+                if (onDone != null) mainHandler.post(onDone);
+            }
+        });
     }
 
     public void addListener(Listener l) { listeners.add(l); }
@@ -84,9 +147,10 @@ public class ModelCatalog {
     // --- Fetched Cache ---
 
     public List<String> getFetchedModels(String providerId) {
-        String json = storage.kvGet("fetched_" + providerId);
-        if (json == null) return new ArrayList<>();
-        return gson.fromJson(json, new TypeToken<List<String>>(){}.getType());
+        synchronized (this) {
+            List<String> list = fetchedCache.get(providerId);
+            return list != null ? new ArrayList<>(list) : new ArrayList<>();
+        }
     }
 
     public int syncProvider(String providerId) throws Exception {
@@ -105,7 +169,14 @@ public class ModelCatalog {
             throw new Exception("Sync not supported for " + providerId);
         }
 
-        storage.kvPut("fetched_" + providerId, gson.toJson(ids));
+        synchronized (this) {
+            fetchedCache.put(providerId, ids);
+        }
+        
+        persistenceExecutor.execute(() -> {
+            storage.kvPut("fetched_" + providerId, gson.toJson(ids));
+        });
+        
         notifyChanged();
         return ids.size();
     }
@@ -129,48 +200,51 @@ public class ModelCatalog {
     // --- Enabled Models ---
 
     public void setEnabled(String providerId, String modelId, boolean enabled) {
-        Set<String> set = getEnabledKeys();
         String key = providerId + ":" + modelId;
-        if (enabled) set.add(key);
-        else set.remove(key);
-        storage.kvPut("enabled_models", gson.toJson(set));
-        
-        // Clear default if disabled
-        if (!enabled) {
-            String def = storage.kvGet("default_model");
-            if (key.equals(def)) storage.kvPut("default_model", null);
+        synchronized (this) {
+            if (enabled) enabledSet.add(key);
+            else enabledSet.remove(key);
         }
+        
+        persistenceExecutor.execute(() -> {
+            synchronized (this) {
+                storage.kvPut("enabled_models", gson.toJson(new HashSet<>(enabledSet)));
+                // Clear default if disabled
+                if (!enabled) {
+                    String def = storage.kvGet("default_model");
+                    if (key.equals(def)) storage.kvPut("default_model", null);
+                }
+            }
+        });
         notifyChanged();
     }
 
     public boolean isEnabled(String providerId, String modelId) {
-        return getEnabledKeys().contains(providerId + ":" + modelId);
-    }
-
-    private Set<String> getEnabledKeys() {
-        String json = storage.kvGet("enabled_models");
-        if (json == null) return new HashSet<>();
-        return gson.fromJson(json, new TypeToken<Set<String>>(){}.getType());
+        synchronized (this) {
+            return enabledSet.contains(providerId + ":" + modelId);
+        }
     }
 
     // --- Aliases ---
 
     public void setAlias(String providerId, String modelId, String alias) {
-        Map<String, String> map = getAliases();
-        map.put(providerId + ":" + modelId, alias);
-        storage.kvPut("model_aliases", gson.toJson(map));
+        String key = providerId + ":" + modelId;
+        synchronized (this) {
+            aliasMap.put(key, alias);
+        }
+        persistenceExecutor.execute(() -> {
+            synchronized (this) {
+                storage.kvPut("model_aliases", gson.toJson(new HashMap<>(aliasMap)));
+            }
+        });
         notifyChanged();
     }
 
     public String getAlias(String providerId, String modelId) {
-        String alias = getAliases().get(providerId + ":" + modelId);
-        return alias != null ? alias : modelId;
-    }
-
-    private Map<String, String> getAliases() {
-        String json = storage.kvGet("model_aliases");
-        if (json == null) return new HashMap<>();
-        return gson.fromJson(json, new TypeToken<Map<String, String>>(){}.getType());
+        synchronized (this) {
+            String alias = aliasMap.get(providerId + ":" + modelId);
+            return alias != null ? alias : modelId;
+        }
     }
 
     // --- Custom Models ---
@@ -185,53 +259,63 @@ public class ModelCatalog {
         if (provider == null || provider.isEmpty() || modelId == null || modelId.isEmpty()) {
             throw new Exception("Provider and Model ID required");
         }
-        List<CustomModel> list = getCustomModels();
-        for (CustomModel cm : list) {
-            if (cm.provider.equals(provider) && cm.modelId.equals(modelId)) {
-                throw new Exception("Custom model already exists");
+        
+        synchronized (this) {
+            for (CustomModel cm : customList) {
+                if (cm.provider.equals(provider) && cm.modelId.equals(modelId)) {
+                    throw new Exception("Custom model already exists");
+                }
             }
+            CustomModel nm = new CustomModel();
+            nm.provider = provider;
+            nm.modelId = modelId;
+            nm.alias = alias;
+            customList.add(nm);
         }
-        CustomModel nm = new CustomModel();
-        nm.provider = provider;
-        nm.modelId = modelId;
-        nm.alias = alias;
-        list.add(nm);
-        storage.kvPut("custom_models", gson.toJson(list));
+        
+        persistenceExecutor.execute(() -> {
+            synchronized (this) {
+                storage.kvPut("custom_models", gson.toJson(new ArrayList<>(customList)));
+            }
+        });
         notifyChanged();
     }
 
     public void deleteCustom(String provider, String modelId) {
-        List<CustomModel> list = getCustomModels();
         boolean removed = false;
-        for (int i = 0; i < list.size(); i++) {
-            CustomModel cm = list.get(i);
-            if (cm.provider.equals(provider) && cm.modelId.equals(modelId)) {
-                list.remove(i);
-                removed = true;
-                break;
+        synchronized (this) {
+            for (int i = 0; i < customList.size(); i++) {
+                CustomModel cm = customList.get(i);
+                if (cm.provider.equals(provider) && cm.modelId.equals(modelId)) {
+                    customList.remove(i);
+                    removed = true;
+                    break;
+                }
             }
         }
         if (removed) {
-            storage.kvPut("custom_models", gson.toJson(list));
-            setEnabled(provider, modelId, false); // Also disables
-            notifyChanged();
+            persistenceExecutor.execute(() -> {
+                synchronized (this) {
+                    storage.kvPut("custom_models", gson.toJson(new ArrayList<>(customList)));
+                }
+            });
+            setEnabled(provider, modelId, false); // Also disables and notifies
         }
     }
 
     public List<CustomModel> getCustomModels() {
-        String json = storage.kvGet("custom_models");
-        if (json == null) return new ArrayList<>();
-        return gson.fromJson(json, new TypeToken<List<CustomModel>>(){}.getType());
+        synchronized (this) {
+            return new ArrayList<>(customList);
+        }
     }
 
     // --- Default Model ---
 
     public void setDefault(String providerId, String modelId) {
-        if (providerId == null || modelId == null) {
-            storage.kvPut("default_model", null);
-        } else {
-            storage.kvPut("default_model", providerId + ":" + modelId);
-        }
+        String val = (providerId == null || modelId == null) ? null : providerId + ":" + modelId;
+        persistenceExecutor.execute(() -> {
+            storage.kvPut("default_model", val);
+        });
         notifyChanged();
     }
 
@@ -247,7 +331,10 @@ public class ModelCatalog {
 
     public List<ModelEntry> usableModels() {
         List<ModelEntry> usable = new ArrayList<>();
-        Set<String> enabled = getEnabledKeys();
+        Set<String> enabled;
+        synchronized (this) {
+            enabled = new HashSet<>(enabledSet);
+        }
 
         // 1. Fetched
         List<ProviderConfig> configs = ProviderRegistry.get(context).loadAll();

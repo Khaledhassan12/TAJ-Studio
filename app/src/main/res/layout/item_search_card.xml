@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="?attr/materialCardViewStyle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginBottom="12dp">
+    <EditText
+        android:id="@+id/et_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:hint="Search models..."
+        android:padding="16dp"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:drawableStart="@drawable/ic_mtrl_search"
+        android:drawablePadding="12dp"
+        android:drawableTint="?attr/colorOnSurfaceVariant"
+        android:inputType="text"/>
+</com.google.android.material.card.MaterialCardView>

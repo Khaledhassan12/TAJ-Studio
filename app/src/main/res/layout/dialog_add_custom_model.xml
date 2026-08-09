@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -10,19 +11,46 @@
         android:layout_height="wrap_content"
         android:text="Provider"
         android:textAppearance="?attr/textAppearanceLabelLarge"
-        android:layout_marginBottom="4dp"/>
+        android:layout_marginBottom="8dp"/>
 
-    <Spinner
-        android:id="@+id/spinner_provider"
+    <!-- Custom Provider Selector (Mockup parity) -->
+    <LinearLayout
+        android:id="@+id/provider_selector_box"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginBottom="16dp"
-        android:background="?attr/selectableItemBackground" />
+        android:layout_height="56dp"
+        android:background="@drawable/bg_outlined_selector"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:layout_marginBottom="20dp">
+
+        <ImageView
+            android:id="@+id/iv_selected_provider_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp" />
+
+        <TextView
+            android:id="@+id/tv_selected_provider_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_mtrl_arrow_down"
+            app:tint="?attr/colorOnSurfaceVariant" />
+    </LinearLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:hint="Model ID">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_model_id"
@@ -34,6 +62,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:hint="Alias (optional)">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_alias"
