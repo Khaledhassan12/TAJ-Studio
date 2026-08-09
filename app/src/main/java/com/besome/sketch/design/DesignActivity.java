@@ -582,6 +582,11 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         });
         viewPager.getAdapter().notifyDataSetChanged();
         ((TabLayout) findViewById(R.id.tab_layout)).setupWithViewPager(viewPager);
+        TabLayout tl = findViewById(R.id.tab_layout);
+        if (tl.getTabAt(0) != null) tl.getTabAt(0).setIcon(R.drawable.ic_mtrl_center);
+        if (tl.getTabAt(1) != null) tl.getTabAt(1).setIcon(R.drawable.ic_mtrl_click);
+        if (tl.getTabAt(2) != null) tl.getTabAt(2).setIcon(R.drawable.ic_mtrl_component);
+        if (tl.getTabAt(3) != null) tl.getTabAt(3).setIcon(R.drawable.ic_mtrl_bulb); // D9: semantic AI icon
         applyActiveTab(0);
 
         IntentFilter filter = new IntentFilter(BuildTask.ACTION_CANCEL_BUILD);
@@ -1223,7 +1228,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                     if (isMissingDirectory) {
                         dialog.setTitle("Missing directory detected");
                         dialog.setMessage("A directory important for building is missing. " +
-                                "Sketchware Pro can try creating " + e.getMissingFile().getAbsolutePath() +
+                                "TAJ Studio can try creating " + e.getMissingFile().getAbsolutePath() +
                                 " if you'd like to.");
                         dialog.setNeutralButton("Create", (v, which) -> {
                             v.dismiss();

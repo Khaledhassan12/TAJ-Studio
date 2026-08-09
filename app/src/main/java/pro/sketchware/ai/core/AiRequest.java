@@ -7,6 +7,9 @@ public class AiRequest {
     public String systemPrompt;
     public int maxTokens;
     public double temperature;
+    public double topP;
+    public int contextSize;
+    public String mmprojPath;
     public String modelId;
 
     public AiRequest(List<AiMessage> messages, String systemPrompt, int maxTokens, double temperature, String modelId) {
@@ -14,6 +17,9 @@ public class AiRequest {
         this.systemPrompt = systemPrompt;
         this.maxTokens = maxTokens;
         this.temperature = temperature;
+        this.topP = 0.9;
+        this.contextSize = 2048;
+        this.mmprojPath = null;
         this.modelId = modelId;
     }
 }

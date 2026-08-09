@@ -8,6 +8,12 @@ import androidx.security.crypto.MasterKey;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 /**
  * [WHAT] Secure storage for AI API keys and tokens.
  * [WHY] Protects sensitive credentials (OpenAI, Anthropic, Gemini, HF) from plaintext exposure (RISK-4).
@@ -25,6 +31,28 @@ public class SecureKeyStore {
     private static SecureKeyStore instance;
     private SharedPreferences prefs;
     private boolean isUnavailable = false;
+    private final Gson gson = new Gson();
+
+    public static class KeyEntry {
+        public String id;
+        public String name;
+        public String key;
+
+        public KeyEntry(String id, String name, String key) {
+            this.id = id;
+            this.name = name;
+            this.key = key;
+        }
+    }
+
+    public static class KeyInfo {
+        public String id;
+        public String name;
+        public KeyInfo(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+    }
 
     public static synchronized SecureKeyStore get(Context context) {
         if (instance == null) {
@@ -52,6 +80,69 @@ public class SecureKeyStore {
         }
     }
 
+    // --- Multi-key Support ---
+
+    public void addKey(String provider, String name, String key) {
+        if (isUnavailable) return;
+        List<KeyEntry> keys = loadKeys(provider);
+        keys.add(new KeyEntry(UUID.randomUUID().toString(), name, key));
+        saveKeys(provider, keys);
+    }
+
+    public List<KeyInfo> listKeyNames(String provider) {
+        List<KeyInfo> infos = new ArrayList<>();
+        if (isUnavailable) return infos;
+        for (KeyEntry entry : loadKeys(provider)) {
+            infos.add(new KeyInfo(entry.id, entry.name));
+        }
+        return infos;
+    }
+
+    public String getKeyForUse(String provider, String keyIdOrNull) {
+        if (isUnavailable) return null;
+        List<KeyEntry> keys = loadKeys(provider);
+        if (keys.isEmpty()) {
+            // Fallback to legacy single key if migration hasn't happened
+            return getKey(provider);
+        }
+        if (keyIdOrNull == null) return keys.get(0).key;
+        for (KeyEntry entry : keys) {
+            if (entry.id.equals(keyIdOrNull)) return entry.key;
+        }
+        return null;
+    }
+
+    public void removeKey(String provider, String keyId) {
+        if (isUnavailable) return;
+        List<KeyEntry> keys = loadKeys(provider);
+        for (int i = 0; i < keys.size(); i++) {
+            if (keys.get(i).id.equals(keyId)) {
+                keys.remove(i);
+                break;
+            }
+        }
+        saveKeys(provider, keys);
+    }
+
+    public int keyCount(String provider) {
+        if (isUnavailable) return 0;
+        List<KeyEntry> keys = loadKeys(provider);
+        if (keys.isEmpty() && hasKey(provider)) return 1; // Count legacy key
+        return keys.size();
+    }
+
+    private List<KeyEntry> loadKeys(String provider) {
+        String json = prefs.getString("keys_" + provider, null);
+        if (json == null) return new ArrayList<>();
+        return gson.fromJson(json, new TypeToken<List<KeyEntry>>(){}.getType());
+    }
+
+    private void saveKeys(String provider, List<KeyEntry> keys) {
+        prefs.edit().putString("keys_" + provider, gson.toJson(keys)).apply();
+    }
+
+    // --- Legacy Single Key (still encrypted, keep working for migration) ---
+
     public void putKey(String provider, String key) {
         if (isUnavailable) {
             Log.w(TAG, "SecureKeyStore unavailable. putKey ignored for provider: " + provider);
@@ -76,7 +167,8 @@ public class SecureKeyStore {
 
     public boolean hasKey(String provider) {
         if (isUnavailable) return false;
-        return prefs.contains("key_" + provider);
+        // Check both legacy and multi-key
+        return prefs.contains("key_" + provider) || !loadKeys(provider).isEmpty();
     }
 
     public void putHfToken(String token) {

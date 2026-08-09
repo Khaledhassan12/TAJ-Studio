@@ -1,3 +1,7 @@
 # ninja log v5
 1	1549	8079141240203067	CMakeFiles/llama-jni.dir/llama_jni.cpp.o	e7c45000880ce05b
 1585	1742	8079141242153032	C:/Users/khale/StudioProjects/TAJ-Studio/app/build/intermediates/cxx/Debug/164cr2w5/obj/arm64-v8a/libllama-jni.so	f4c9a718bc8767f8
+21	2820	8079373586905401	CMakeFiles/llama-jni.dir/llama_jni.cpp.o	e7c45000880ce05b
+2822	3428	8079373593177825	C:/Users/khale/StudioProjects/TAJ-Studio/app/build/intermediates/cxx/Debug/164cr2w5/obj/arm64-v8a/libllama-jni.so	f4c9a718bc8767f8
+23	4913	8079386994476301	CMakeFiles/llama-jni.dir/llama_jni.cpp.o	e7c45000880ce05b
+4914	5174	8079386997196312	C:/Users/khale/StudioProjects/TAJ-Studio/app/build/intermediates/cxx/Debug/164cr2w5/obj/arm64-v8a/libllama-jni.so	f4c9a718bc8767f8

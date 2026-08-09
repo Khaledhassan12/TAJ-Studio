@@ -1,11 +1,15 @@
 package pro.sketchware.ai.providers.cloud;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import okhttp3.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import pro.sketchware.ai.core.*;
+import pro.sketchware.ai.data.SecureKeyStore;
+import pro.sketchware.ai.providers.ProviderRegistry;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,22 +22,18 @@ import java.util.concurrent.TimeUnit;
  */
 public class OpenAiProvider implements AiProvider {
 
+    private final Context context;
     private final String id;
     private final String name;
-    private final String apiKey;
-    private final String baseUrl;
+    private final String fixedKeyId;
     private final OkHttpClient client;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    public OpenAiProvider(String apiKey) {
-        this("openai", "OpenAI", apiKey, "https://api.openai.com/v1");
-    }
-
-    public OpenAiProvider(String id, String name, String apiKey, String baseUrl) {
+    public OpenAiProvider(Context context, String id, String name, String fixedKeyId) {
+        this.context = context.getApplicationContext();
         this.id = id;
         this.name = name;
-        this.apiKey = apiKey;
-        this.baseUrl = baseUrl;
+        this.fixedKeyId = fixedKeyId;
         this.client = new OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(60, TimeUnit.SECONDS)
@@ -45,12 +45,21 @@ public class OpenAiProvider implements AiProvider {
 
     @Override
     public CapabilityProfile caps() {
-        // Real OpenAI caps: supports streaming, tools, and large context.
-        return new CapabilityProfile(true, true, 128000, CapabilityProfile.SystemPromptStyle.MESSAGE);
+        boolean isNativeOpenAi = "openai".equals(id);
+        return new CapabilityProfile(true, isNativeOpenAi, 128000, CapabilityProfile.SystemPromptStyle.MESSAGE);
     }
 
     @Override
     public StreamHandle stream(AiRequest req, AiStreamCallback cb) {
+        // Resolve at call time (Step 1)
+        String baseUrl = ProviderRegistry.get(context).getBaseUrl(id);
+        String apiKey = SecureKeyStore.get(context).getKeyForUse(id, fixedKeyId);
+
+        if (apiKey == null || baseUrl == null) {
+            cb.onError(new AiError(AiError.Type.Auth, "API Key or Base URL not configured"));
+            return () -> {};
+        }
+
         JSONObject body = new JSONObject();
         try {
             body.put("model", req.modelId);
@@ -71,8 +80,9 @@ public class OpenAiProvider implements AiProvider {
             return () -> {};
         }
 
+        String endpoint = baseUrl.endsWith("/") ? baseUrl + "chat/completions" : baseUrl + "/chat/completions";
         Request request = new Request.Builder()
-                .url(baseUrl + "/chat/completions")
+                .url(endpoint)
                 .post(RequestBody.create(body.toString(), MediaType.get("application/json")))
                 .addHeader("Authorization", "Bearer " + apiKey)
                 .build();

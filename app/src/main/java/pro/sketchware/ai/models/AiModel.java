@@ -16,6 +16,8 @@ public class AiModel {
     public long lastUsedAt;
     public boolean isActive;
 
+    public LocalModelConfig localConfig;
+
     public AiModel() {}
 
     public AiModel(String id, Kind kind, String provider, String name, String arch, String quant, long contextLength, String filePath, long sizeBytes, long installedAt, long lastUsedAt, boolean isActive) {

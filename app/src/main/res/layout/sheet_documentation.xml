@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Official Documentation"
+        android:textAppearance="?attr/textAppearanceTitleLarge" />
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:columnCount="2"
+        android:useDefaultMargins="true">
+
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_google" style="?attr/borderlessButtonStyle" android:text="Gemini" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_openai" style="?attr/borderlessButtonStyle" android:text="OpenAI" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_anthropic" style="?attr/borderlessButtonStyle" android:text="Anthropic" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_deepseek" style="?attr/borderlessButtonStyle" android:text="DeepSeek" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_qwen" style="?attr/borderlessButtonStyle" android:text="Qwen" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_groq" style="?attr/borderlessButtonStyle" android:text="Groq" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_ollama" style="?attr/borderlessButtonStyle" android:text="Ollama" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_openrouter" style="?attr/borderlessButtonStyle" android:text="OpenRouter" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_llama_cpp" style="?attr/borderlessButtonStyle" android:text="llama.cpp" />
+
+    </GridLayout>
+</LinearLayout>

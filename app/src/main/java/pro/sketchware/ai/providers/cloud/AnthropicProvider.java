@@ -1,11 +1,15 @@
 package pro.sketchware.ai.providers.cloud;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import okhttp3.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import pro.sketchware.ai.core.*;
+import pro.sketchware.ai.data.SecureKeyStore;
+import pro.sketchware.ai.providers.ProviderRegistry;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,20 +22,26 @@ import java.util.concurrent.TimeUnit;
  */
 public class AnthropicProvider implements AiProvider {
 
-    private final String apiKey;
+    private final Context context;
+    private final String id;
+    private final String name;
+    private final String fixedKeyId;
     private final OkHttpClient client;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    public AnthropicProvider(String apiKey) {
-        this.apiKey = apiKey;
+    public AnthropicProvider(Context context, String id, String name, String fixedKeyId) {
+        this.context = context.getApplicationContext();
+        this.id = id;
+        this.name = name;
+        this.fixedKeyId = fixedKeyId;
         this.client = new OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(60, TimeUnit.SECONDS)
                 .build();
     }
 
-    @Override public String id() { return "anthropic"; }
-    @Override public String name() { return "Anthropic"; }
+    @Override public String id() { return id; }
+    @Override public String name() { return name; }
 
     @Override
     public CapabilityProfile caps() {
@@ -40,6 +50,15 @@ public class AnthropicProvider implements AiProvider {
 
     @Override
     public StreamHandle stream(AiRequest req, AiStreamCallback cb) {
+        // Resolve at call time (Step 1)
+        String baseUrl = ProviderRegistry.get(context).getBaseUrl(id);
+        String apiKey = SecureKeyStore.get(context).getKeyForUse(id, fixedKeyId);
+
+        if (apiKey == null || baseUrl == null) {
+            cb.onError(new AiError(AiError.Type.Auth, "API Key or Base URL not configured"));
+            return () -> {};
+        }
+
         JSONObject body = new JSONObject();
         try {
             body.put("model", req.modelId);
@@ -63,8 +82,9 @@ public class AnthropicProvider implements AiProvider {
             return () -> {};
         }
 
+        String cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         Request request = new Request.Builder()
-                .url("https://api.anthropic.com/v1/messages")
+                .url(cleanBaseUrl + "/messages")
                 .post(RequestBody.create(body.toString(), MediaType.get("application/json")))
                 .addHeader("x-api-key", apiKey)
                 .addHeader("anthropic-version", "2023-06-01")

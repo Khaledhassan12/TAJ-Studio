@@ -45,7 +45,20 @@ public class AgentManager {
         
         String systemWithTools = composed.systemText + "\n\nAvailable Tools:\n" + getToolSchemas();
         
-        AiRequest aiReq = new AiRequest(messages, systemWithTools, 4096, 0.7, modelId);
+        // P1-D: pull real per-model settings from LocalModelConfig (no hardcoded sampling)
+        pro.sketchware.ai.models.LocalModelConfig cfg = null;
+        try (android.database.Cursor c = storage.findModel(modelId)) {
+            if (c.moveToFirst()) {
+                String metadata = c.getString(c.getColumnIndexOrThrow("metadataJson"));
+                cfg = pro.sketchware.ai.models.LocalModelConfig.fromJson(metadata);
+            }
+        }
+        if (cfg == null) cfg = new pro.sketchware.ai.models.LocalModelConfig();
+        
+        AiRequest aiReq = new AiRequest(messages, systemWithTools, cfg.maxTokens, cfg.temperature, modelId);
+        aiReq.topP = cfg.topP;
+        aiReq.contextSize = cfg.contextSize;
+        aiReq.mmprojPath = cfg.mmprojPath;
         
         // 3. Start loop
         provider.stream(aiReq, new AiStreamCallback() {

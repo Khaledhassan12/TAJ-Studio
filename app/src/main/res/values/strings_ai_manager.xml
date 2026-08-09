@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ai_manager_title">Artificial Intelligence Manager</string>
+    <string name="ai_manager_title_ar">مدير الذكاء الاصطناعي</string>
+
+    <!-- Categories -->
+    <string name="ai_cat_services">Services</string>
+    <string name="ai_cat_services_ar">الخدمات</string>
+    <string name="ai_cat_responses">Responses</string>
+    <string name="ai_cat_responses_ar">الردود</string>
+    <string name="ai_cat_multimodal">Multimodal</string>
+    <string name="ai_cat_multimodal_ar">متعدد الوسائط</string>
+    <string name="ai_cat_tools">Tools</string>
+    <string name="ai_cat_tools_ar">الأدوات</string>
+    <string name="ai_cat_network">Network</string>
+    <string name="ai_cat_network_ar">الشبكة</string>
+    <string name="ai_cat_memory">Memory &amp; Data</string>
+    <string name="ai_cat_memory_ar">الذاكرة والبيانات</string>
+
+    <!-- Rows -->
+    <string name="ai_row_providers">Providers</string>
+    <string name="ai_row_providers_ar">المزوّدون</string>
+    <string name="ai_row_providers_sub">Manage API keys and local engines</string>
+    <string name="ai_row_providers_sub_ar">إدارة مفاتيح API والمحركات المحلية</string>
+
+    <string name="ai_row_models">Models</string>
+    <string name="ai_row_models_ar">النماذج</string>
+    <string name="ai_row_models_sub">Select and configure AI models</string>
+    <string name="ai_row_models_sub_ar">اختيار وتكوين نماذج الذكاء الاصطناعي</string>
+
+    <string name="ai_row_prompts">System Prompts</string>
+    <string name="ai_row_prompts_ar">موجهات النظام</string>
+    <string name="ai_row_prompts_sub">Define behavior and identity templates</string>
+    <string name="ai_row_prompts_sub_ar">تحديد قوالب السلوك والهوية</string>
+
+    <string name="ai_row_generation">Generation</string>
+    <string name="ai_row_generation_ar">التوليد</string>
+    <string name="ai_row_generation_sub">Text completion parameters</string>
+    <string name="ai_row_generation_sub_ar">معلمات إكمال النص</string>
+
+    <string name="ai_row_titles">Title Generation</string>
+    <string name="ai_row_titles_ar">توليد العناوين</string>
+    <string name="ai_row_titles_sub">Automatic chat naming</string>
+    <string name="ai_row_titles_sub_ar">تسمية المحادثات تلقائيًا</string>
+
+    <string name="ai_row_ocr">Image OCR</string>
+    <string name="ai_row_ocr_ar">نسخ الصور</string>
+    <string name="ai_row_ocr_sub">Extract text from screenshots</string>
+    <string name="ai_row_ocr_sub_ar">استخراج النص من لقطات الشاشة</string>
+
+    <string name="ai_row_img_gen">Image Generation</string>
+    <string name="ai_row_img_gen_ar">توليد الصور</string>
+    <string name="ai_row_img_gen_sub">DALL-E / Midjourney integration</string>
+    <string name="ai_row_img_gen_sub_ar">تكامل DALL-E / Midjourney</string>
+
+    <string name="ai_row_web_search">Web Search</string>
+    <string name="ai_row_web_search_ar">بحث الويب</string>
+    <string name="ai_row_web_search_sub">Real-time information access</string>
+    <string name="ai_row_web_search_sub_ar">الوصول إلى المعلومات في الوقت الفعلي</string>
+
+    <string name="ai_row_chat_search">Chat Search</string>
+    <string name="ai_row_chat_search_ar">بحث المحادثات</string>
+    <string name="ai_row_chat_search_sub">Find history across projects</string>
+    <string name="ai_row_chat_search_sub_ar">البحث في السجل عبر المشاريع</string>
+
+    <string name="ai_row_shell">Shell</string>
+    <string name="ai_row_shell_ar">الصدفة</string>
+    <string name="ai_row_shell_sub">Terminal and command execution</string>
+    <string name="ai_row_shell_sub_ar">المحطة وتنفيذ الأوامر</string>
+
+    <string name="ai_row_mcp">MCP</string>
+    <string name="ai_row_mcp_ar">MCP</string>
+    <string name="ai_row_mcp_sub">Model Context Protocol tools</string>
+    <string name="ai_row_mcp_sub_ar">أدوات بروتوكول سياق النموذج</string>
+
+    <string name="ai_row_automation">Automation</string>
+    <string name="ai_row_automation_ar">الأتمتة</string>
+    <string name="ai_row_automation_sub">Task scheduling and agents</string>
+    <string name="ai_row_automation_sub_ar">جدولة المهام والوكلاء</string>
+
+    <string name="ai_row_proxy">Proxy</string>
+    <string name="ai_row_proxy_ar">الوكيل</string>
+    <string name="ai_row_proxy_sub">Network and traffic routing</string>
+    <string name="ai_row_proxy_sub_ar">الشبكة وتوجيه حركة المرور</string>
+
+    <string name="ai_row_memory">Memory</string>
+    <string name="ai_row_memory_ar">الذاكرة</string>
+    <string name="ai_row_memory_sub">Vector DB and long-term recall</string>
+    <string name="ai_row_memory_sub_ar">قاعدة بيانات المتجهات والاستدعاء طويل المدى</string>
+
+    <string name="ai_row_data_control">Data Control</string>
+    <string name="ai_row_data_control_ar">التحكم في البيانات</string>
+    <string name="ai_row_data_control_sub">Export, import, and wipe</string>
+    <string name="ai_row_data_control_sub_ar">التصدير والاستيراد والمسح</string>
+
+    <!-- Providers Screen -->
+    <string name="ai_providers_title">Providers</string>
+    <string name="ai_providers_title_ar">المزوّدون</string>
+    <string name="ai_btn_add_provider">Add Provider</string>
+    <string name="ai_btn_add_provider_ar">إضافة مزود</string>
+    <string name="ai_status_configured">Configured</string>
+    <string name="ai_status_configured_ar">تم التكوين</string>
+    <string name="ai_status_not_configured">Not Configured</string>
+    <string name="ai_status_not_configured_ar">لم يتم التكوين</string>
+    <string name="ai_hint_provider_name">Display Name (e.g. My OpenAI)</string>
+    <string name="ai_hint_provider_name_ar">اسم العرض (مثلاً OpenAI الخاص بي)</string>
+    <string name="ai_hint_api_key">API Key</string>
+    <string name="ai_hint_api_key_ar">مفتاح API</string>
+    <string name="ai_hint_base_url">Base URL (optional)</string>
+    <string name="ai_hint_base_url_ar">عنوان URL الأساسي (اختياري)</string>
+
+    <!-- Models Screen -->
+    <string name="ai_models_title">Models</string>
+    <string name="ai_models_title_ar">النماذج</string>
+    <string name="ai_cat_local">Local Models</string>
+    <string name="ai_cat_local_ar">النماذج المحلية</string>
+    <string name="ai_cat_cloud">Cloud Models</string>
+    <string name="ai_cat_cloud_ar">نماذج السحابة</string>
+
+    <!-- Prompts Screen -->
+    <string name="ai_prompts_title">System Prompts</string>
+    <string name="ai_prompts_title_ar">موجهات النظام</string>
+    <string name="ai_btn_create_prompt">Create Prompt</string>
+    <string name="ai_btn_create_prompt_ar">إنشاء موجه</string>
+    <string name="ai_hint_prompt_name">Prompt Name</string>
+    <string name="ai_hint_prompt_name_ar">اسم الموجه</string>
+    <string name="ai_hint_prompt_content">Prompt Content...</string>
+    <string name="ai_hint_prompt_content_ar">محتوى الموجه...</string>
+
+    <!-- General -->
+    <string name="ai_msg_coming_soon">Coming in %s</string>
+    <string name="ai_msg_coming_soon_ar">قادم في %s</string>
+    <string name="ai_btn_save">Save</string>
+    <string name="ai_btn_save_ar">حفظ</string>
+    <string name="ai_btn_cancel">Cancel</string>
+    <string name="ai_btn_cancel_ar">إلغاء</string>
+    <string name="ai_btn_test">Test</string>
+    <string name="ai_btn_test_ar">اختبار</string>
+    <string name="ai_msg_save_failed">Failed to save settings</string>
+    <string name="ai_msg_save_failed_ar">فشل حفظ الإعدادات</string>
+    <string name="ai_msg_test_success">Connection successful!</string>
+    <string name="ai_msg_test_success_ar">الاتصال ناجح!</string>
+    <string name="ai_msg_test_failed">Connection failed: %s</string>
+    <string name="ai_msg_test_failed_ar">فشل الاتصال: %s</string>
+    <string name="ai_dialog_confirm_delete">Are you sure you want to delete this?</string>
+    <string name="ai_dialog_confirm_delete_ar">هل أنت متأكد أنك تريد حذف هذا؟</string>
+</resources>

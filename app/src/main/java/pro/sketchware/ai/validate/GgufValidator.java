@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Locale;
 
 /**
  * [WHAT] Validator for GGUF model files.
@@ -13,21 +14,26 @@ import java.nio.ByteOrder;
  */
 public class GgufValidator {
 
-    private static final int GGUF_MAGIC = 0x46475547; // "GGUF" in little-endian
-
     public static GgufInfo validate(File file) {
         if (!file.exists()) return GgufInfo.invalid("File not found");
 
         try (FileInputStream fis = new FileInputStream(file)) {
-            // Read magic and version
-            byte[] basicHeader = new byte[12];
-            if (fis.read(basicHeader) < 12) return GgufInfo.invalid("Header truncated");
+            // Read magic
+            byte[] magicBytes = new byte[4];
+            if (fis.read(magicBytes) < 4) return GgufInfo.invalid("Header truncated (magic)");
 
-            ByteBuffer bb = ByteBuffer.wrap(basicHeader).order(ByteOrder.LITTLE_ENDIAN);
-            int magic = bb.getInt();
-            if (magic != GGUF_MAGIC) return GgufInfo.invalid("Invalid magic");
+            // FIX: byte-by-byte comparison to "GGUF" (0x47 0x47 0x55 0x46)
+            // This avoids endianness confusion with int comparisons.
+            if (magicBytes[0] != 0x47 || magicBytes[1] != 0x47 || magicBytes[2] != 0x55 || magicBytes[3] != 0x46) {
+                return GgufInfo.invalid(String.format(Locale.US, "Invalid magic (read 0x%02X 0x%02X 0x%02X 0x%02X)", 
+                        magicBytes[0], magicBytes[1], magicBytes[2], magicBytes[3]));
+            }
             
-            int version = bb.getInt(); // u32
+            // Read version
+            byte[] versionBytes = new byte[4];
+            if (fis.read(versionBytes) < 4) return GgufInfo.invalid("Header truncated (version)");
+            int version = ByteBuffer.wrap(versionBytes).order(ByteOrder.LITTLE_ENDIAN).getInt();
+
             long tensorCount = readU64(fis); // u64
             long kvCount = readU64(fis); // u64
 
@@ -37,7 +43,6 @@ public class GgufValidator {
             long contextLength = 0;
 
             // In a real implementation, we would walk the KV pairs here.
-            // For P1, we confirm the magic and basic structure.
             
             return new GgufInfo(true, arch, name, quant, contextLength, file.length(), null);
 
@@ -48,7 +53,7 @@ public class GgufValidator {
 
     private static long readU64(FileInputStream fis) throws IOException {
         byte[] buf = new byte[8];
-        if (fis.read(buf) < 8) throw new IOException("Unexpected EOF");
+        if (fis.read(buf) < 8) throw new IOException("Unexpected EOF while reading U64");
         return ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN).getLong();
     }
 }

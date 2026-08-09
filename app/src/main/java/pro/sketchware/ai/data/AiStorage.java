@@ -17,6 +17,7 @@ import android.database.sqlite.SQLiteDatabase;
 public class AiStorage {
 
     private static AiStorage instance;
+    private final Context context;
     private final AiDatabase dbHelper;
 
     public static synchronized AiStorage get(Context context) {
@@ -27,7 +28,12 @@ public class AiStorage {
     }
 
     private AiStorage(Context context) {
+        this.context = context.getApplicationContext();
         this.dbHelper = AiDatabase.get(context);
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     // --- KV Storage ---
@@ -119,5 +125,9 @@ public class AiStorage {
 
     public Cursor listAgentSteps(String conversationId) {
         return dbHelper.getReadableDatabase().query("agent_steps", null, "conversationId = ?", new String[]{conversationId}, null, null, "createdAt ASC");
+    }
+
+    public Cursor listAgentStepsByRecent(int limit) {
+        return dbHelper.getReadableDatabase().query("agent_steps", null, null, null, null, null, "createdAt DESC", String.valueOf(limit));
     }
 }

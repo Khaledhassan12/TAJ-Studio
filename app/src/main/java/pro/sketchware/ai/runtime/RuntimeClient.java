@@ -71,7 +71,7 @@ public class RuntimeClient {
         }
     }
 
-    public void loadModel(String path, Callback cb) {
+    public void loadModel(String path, int nCtx, String mmprojPath, Callback cb) {
         if (!isBound) {
             cb.onError("Service not bound");
             return;
@@ -81,6 +81,8 @@ public class RuntimeClient {
         Message msg = Message.obtain(null, LlamaRuntimeService.MSG_LOAD);
         Bundle data = new Bundle();
         data.putString("path", path);
+        data.putInt("nCtx", nCtx);
+        if (mmprojPath != null) data.putString("mmprojPath", mmprojPath);
         msg.setData(data);
         msg.replyTo = replyMessenger;
         try {
@@ -90,7 +92,11 @@ public class RuntimeClient {
         }
     }
 
-    public void complete(String prompt, Callback cb) {
+    public void loadModel(String path, int nCtx, Callback cb) {
+        loadModel(path, nCtx, null, cb);
+    }
+
+    public void complete(String prompt, float temp, float topP, int maxTokens, Callback cb) {
         if (!isBound) {
             cb.onError("Service not bound");
             return;
@@ -99,6 +105,9 @@ public class RuntimeClient {
         Message msg = Message.obtain(null, LlamaRuntimeService.MSG_COMPLETE);
         Bundle data = new Bundle();
         data.putString("prompt", prompt);
+        data.putFloat("temperature", temp);
+        data.putFloat("topP", topP);
+        data.putInt("maxTokens", maxTokens);
         msg.setData(data);
         msg.replyTo = replyMessenger;
         try {
@@ -108,16 +117,22 @@ public class RuntimeClient {
         }
     }
 
-    public void ensureModelAndComplete(String modelPath, String prompt, Callback cb) {
+    public void ensureModelAndComplete(String modelPath, int nCtx, String mmprojPath, String prompt, 
+                                     float temp, float topP, int maxTokens, Callback cb) {
         if (modelPath.equals(loadedModelPath)) {
-            complete(prompt, cb);
+            complete(prompt, temp, topP, maxTokens, cb);
         } else {
-            loadModel(modelPath, new Callback() {
+            loadModel(modelPath, nCtx, mmprojPath, new Callback() {
                 @Override public void onToken(String token) {}
-                @Override public void onDone() { complete(prompt, cb); }
+                @Override public void onDone() { complete(prompt, temp, topP, maxTokens, cb); }
                 @Override public void onError(String error) { cb.onError(error); }
             });
         }
+    }
+
+    public void ensureModelAndComplete(String modelPath, int nCtx, String prompt, 
+                                     float temp, float topP, int maxTokens, Callback cb) {
+        ensureModelAndComplete(modelPath, nCtx, null, prompt, temp, topP, maxTokens, cb);
     }
 
     public void cancel() {

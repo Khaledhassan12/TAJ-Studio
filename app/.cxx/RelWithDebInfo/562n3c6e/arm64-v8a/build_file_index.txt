@@ -1,0 +1,1 @@
+C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\cpp\CMakeLists.txt

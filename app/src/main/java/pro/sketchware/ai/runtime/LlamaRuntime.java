@@ -14,19 +14,24 @@ public class LlamaRuntime {
     private long handle = 0;
 
     public synchronized void loadModel(File file, int nCtx, int nThreads) throws Exception {
+        loadModel(file, nCtx, nThreads, null);
+    }
+
+    public synchronized void loadModel(File file, int nCtx, int nThreads, String mmprojPath) throws Exception {
         if (handle != 0) unload();
         
         Log.d(TAG, "Loading model: " + file.getAbsolutePath());
-        handle = LlamaNative.nativeLoad(file.getAbsolutePath(), nCtx, nThreads);
+        handle = LlamaNative.nativeLoad(file.getAbsolutePath(), nCtx, nThreads, mmprojPath);
         
         if (handle == 0) {
             throw new Exception("Failed to load native model handle");
         }
     }
 
-    public synchronized void complete(String prompt, LlamaNative.TokenCallback callback) throws Exception {
+    public synchronized void complete(String prompt, float temperature, float topP, int maxTokens, 
+                                    LlamaNative.TokenCallback callback) throws Exception {
         if (handle == 0) throw new Exception("Model not loaded");
-        LlamaNative.nativeComplete(handle, prompt, callback);
+        LlamaNative.nativeComplete(handle, prompt, temperature, topP, maxTokens, callback);
     }
 
     public synchronized void cancel() {

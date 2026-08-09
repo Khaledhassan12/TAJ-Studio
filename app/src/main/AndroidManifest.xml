@@ -270,6 +270,40 @@
         <activity
             android:name="pro.sketchware.activities.about.AboutActivity"
             android:configChanges="orientation|screenSize" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.AiManagerActivity"
+            android:exported="false"
+            android:label="Artificial Intelligence Manager"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.providers.ProvidersActivity"
+            android:exported="false"
+            android:label="Providers"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.providers.ProviderDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.models.LocalModelsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.models.ModelsActivity"
+            android:exported="false"
+            android:label="@string/ai_models_title"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.prompts.SystemPromptsActivity"
+            android:exported="false"
+            android:label="@string/ai_prompts_title"
+            android:theme="@style/Theme.SketchwarePro" />
         <activity android:name="mod.jbk.editor.manage.library.ExcludeBuiltInLibrariesActivity" />
         <activity
             android:name="com.besome.sketch.editor.manage.view.PresetSettingActivity"

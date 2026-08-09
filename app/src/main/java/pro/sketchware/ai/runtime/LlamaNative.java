@@ -17,9 +17,11 @@ public class LlamaNative {
         }
     }
 
-    public static native long nativeLoad(String path, int nCtx, int nThreads);
+    public static native long nativeLoad(String path, int nCtx, int nThreads, String mmprojPath);
 
-    public static native void nativeComplete(long handle, String prompt, TokenCallback callback);
+    public static native void nativeComplete(long handle, String prompt, 
+                                           float temperature, float topP, int maxTokens,
+                                           TokenCallback callback);
 
     public static native void nativeCancel(long handle);
 

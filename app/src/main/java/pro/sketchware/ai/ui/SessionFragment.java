@@ -82,6 +82,22 @@ public class SessionFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_session, container, false);
     }
 
+    public static SessionFragment newInstance(String initialMessage) {
+        SessionFragment fragment = new SessionFragment();
+        Bundle args = new Bundle();
+        args.putString("initial_message", initialMessage);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static SessionFragment newInstanceWithHistory(String conversationId) {
+        SessionFragment fragment = new SessionFragment();
+        Bundle args = new Bundle();
+        args.putString("conversation_id", conversationId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         scId = com.besome.sketch.design.DesignActivity.sc_id;
@@ -101,6 +117,13 @@ public class SessionFragment extends Fragment {
         recycler.setAdapter(adapter);
 
         initProviders();
+        
+        String forcedConvId = getArguments() != null ? getArguments().getString("conversation_id") : null;
+        if (forcedConvId != null) {
+            conversationId = forcedConvId;
+            AiStorage.get(requireContext()).kvPut("active_conv_" + scId, conversationId);
+        }
+
         initConversation();
         loadHistory();
         renderActiveSelection();
@@ -108,24 +131,26 @@ public class SessionFragment extends Fragment {
         btnSend.setOnClickListener(v -> sendMessage());
         btnCancel.setOnClickListener(v -> cancelGeneration());
         btnProviderSelect.setOnClickListener(this::showProviderMenu);
+
+        String initial = getArguments() != null ? getArguments().getString("initial_message") : null;
+        if (initial != null) {
+            edMessage.setText(initial);
+            sendMessage();
+            getArguments().remove("initial_message");
+        }
+    }
+
+    public void sendSystemBiasedMessage(String message) {
+        edMessage.setText(message);
+        sendMessage();
     }
 
     private void initProviders() {
-        ProviderRegistry.clear();
-        ProviderRegistry.register(new LlamaProvider(runtimeClient));
+        // No longer clearing or manually registering cloud providers here.
+        // We use ProviderRegistry.get(context) as the SSOT.
         
-        pro.sketchware.ai.data.SecureKeyStore ks = pro.sketchware.ai.data.SecureKeyStore.get(requireContext());
-        String openai = ks.getKey("openai");
-        if (openai != null) ProviderRegistry.register(new OpenAiProvider(openai));
-        
-        String anthropic = ks.getKey("anthropic");
-        if (anthropic != null) ProviderRegistry.register(new AnthropicProvider(anthropic));
-        
-        String gemini = ks.getKey("gemini");
-        if (gemini != null) ProviderRegistry.register(new GeminiProvider(gemini));
-
-        // Default
-        activeProvider = ProviderRegistry.get("local-llama");
+        // Local llama provider still needs the runtimeClient
+        activeProvider = new pro.sketchware.ai.providers.local.LlamaProvider(runtimeClient);
     }
 
     private void initConversation() {
@@ -142,10 +167,19 @@ public class SessionFragment extends Fragment {
             storage.kvPut("active_conv_" + scId, conversationId);
         } else {
             String pId = storage.kvGet("conv_provider_" + conversationId);
-            if (pId != null) activeProvider = ProviderRegistry.get(pId);
+            if (pId != null) {
+                if ("local-llama".equals(pId)) {
+                    activeProvider = new pro.sketchware.ai.providers.local.LlamaProvider(runtimeClient);
+                } else {
+                    pro.sketchware.ai.providers.ProviderConfig cfg = pro.sketchware.ai.providers.ProviderRegistry.get(requireContext()).findById(pId);
+                    if (cfg != null) {
+                        activeProvider = pro.sketchware.ai.providers.ProviderRegistry.get(requireContext()).providerFor(cfg, null);
+                    }
+                }
+            }
             activeModelId = storage.kvGet("conv_model_" + conversationId);
         }
-        if (activeProvider == null) activeProvider = ProviderRegistry.get("local-llama");
+        if (activeProvider == null) activeProvider = new pro.sketchware.ai.providers.local.LlamaProvider(runtimeClient);
     }
 
     private void renderActiveSelection() {
@@ -157,20 +191,39 @@ public class SessionFragment extends Fragment {
 
     private void showProviderMenu(View v) {
         PopupMenu popup = new PopupMenu(requireContext(), v);
-        List<AiProvider> list = ProviderRegistry.list();
-        for (int i = 0; i < list.size(); i++) {
-            popup.getMenu().add(0, i, 0, list.get(i).name());
-        }
-        popup.setOnMenuItemClickListener(item -> {
-            activeProvider = list.get(item.getItemId());
-            if ("local-llama".equals(activeProvider.id())) {
-                activeModelId = ModelManager.get(requireContext()).getActiveId();
-            } else {
-                // Hardcoded default models for P3 tests
-                if ("openai".equals(activeProvider.id())) activeModelId = "gpt-4o";
-                else if ("anthropic".equals(activeProvider.id())) activeModelId = "claude-3-5-sonnet-20240620";
-                else if ("gemini".equals(activeProvider.id())) activeModelId = "gemini-1.5-flash";
+        
+        // 1. Built-in and Custom with keys
+        List<pro.sketchware.ai.providers.ProviderConfig> configs = pro.sketchware.ai.providers.ProviderRegistry.get(requireContext()).loadAll();
+        for (pro.sketchware.ai.providers.ProviderConfig cfg : configs) {
+            // Include if has key OR ollama (works without key)
+            if (cfg.keyCount > 0 || "ollama".equals(cfg.id)) {
+                popup.getMenu().add(1, configs.indexOf(cfg), 0, cfg.displayName);
             }
+        }
+        
+        // 2. Local if models exist
+        int localModelCount = 0;
+        try (Cursor c = AiStorage.get(requireContext()).listModels()) {
+            if (c != null) localModelCount = c.getCount();
+        }
+        if (localModelCount > 0) {
+            popup.getMenu().add(2, 0, 100, "Local (llama.cpp)");
+        }
+
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getGroupId() == 1) {
+                pro.sketchware.ai.providers.ProviderConfig cfg = configs.get(item.getItemId());
+                activeProvider = pro.sketchware.ai.providers.ProviderRegistry.get(requireContext()).providerFor(cfg, null);
+                // Hardcoded default models if not selected
+                if ("openai".equals(cfg.id)) activeModelId = "gpt-4o";
+                else if ("anthropic".equals(cfg.id)) activeModelId = "claude-3-5-sonnet-20240620";
+                else if ("google".equals(cfg.id)) activeModelId = "gemini-1.5-flash";
+                else activeModelId = "default";
+            } else {
+                activeProvider = new pro.sketchware.ai.providers.local.LlamaProvider(runtimeClient);
+                activeModelId = pro.sketchware.ai.models.ModelManager.get(requireContext()).getActiveId();
+            }
+            
             AiStorage.get(requireContext()).kvPut("conv_provider_" + conversationId, activeProvider.id());
             AiStorage.get(requireContext()).kvPut("conv_model_" + conversationId, activeModelId);
             renderActiveSelection();

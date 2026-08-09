@@ -70,10 +70,26 @@ public class ModelManager {
                 m.sizeBytes = new File(m.filePath).length();
                 m.installedAt = cursor.getLong(cursor.getColumnIndexOrThrow("installedAt"));
                 m.isActive = m.id.equals(getActiveId());
+                
+                String metadata = cursor.getString(cursor.getColumnIndexOrThrow("metadataJson"));
+                m.localConfig = LocalModelConfig.fromJson(metadata);
+                
                 models.add(m);
             }
         }
         return models;
+    }
+
+    public LocalModelConfig getModelConfig(String modelId) {
+        try (Cursor c = storage.findModel(modelId)) {
+            if (c.moveToFirst()) {
+                String metadata = c.getString(c.getColumnIndexOrThrow("metadataJson"));
+                LocalModelConfig config = LocalModelConfig.fromJson(metadata);
+                config.modelId = modelId;
+                return config;
+            }
+        }
+        return new LocalModelConfig();
     }
 
     public void download(String repoId, String fileName) {
@@ -119,31 +135,67 @@ public class ModelManager {
         executor.execute(() -> {
             pro.sketchware.ai.validate.GgufInfo vr = GgufValidator.validate(file);
             if (vr.valid) {
-                String modelId = "local__" + file.getName() + "__" + System.currentTimeMillis();
-                File dest = Paths.modelFile(modelId);
-                try {
-                    // In real app, use FileUtil or channel copy. 
-                    // For P1, we assume it's moved or copied.
-                    if (file.renameTo(dest)) {
-                        ContentValues cv = new ContentValues();
-                        cv.put("id", modelId);
-                        cv.put("kind", AiModel.Kind.LOCAL.name());
-                        cv.put("provider", "local");
-                        cv.put("name", file.getName());
-                        cv.put("filePath", dest.getAbsolutePath());
-                        cv.put("installedAt", System.currentTimeMillis());
-                        storage.insertModel(cv);
-                        hub.publish(AiEventHub.Event.MODELS_CHANGED, null);
-                    } else {
-                        hub.publish(AiEventHub.Event.ERROR, "Failed to move file to models directory");
-                    }
-                } catch (Exception e) {
-                    hub.publish(AiEventHub.Event.ERROR, e.getMessage());
-                }
+                hub.publish(AiEventHub.Event.MODEL_IMPORT_VALIDATED, file);
             } else {
                 hub.publish(AiEventHub.Event.ERROR, "Invalid GGUF: " + vr.error);
             }
         });
+    }
+
+    public void addOrUpdateLocalModel(LocalModelConfig config, File ggufSource, File mmprojSource) {
+        executor.execute(() -> {
+            try {
+                String modelId = config.modelId;
+                File destGguf = Paths.modelFile(modelId);
+                
+                // Finalize GGUF
+                if (ggufSource != null) {
+                    if (!copyFile(ggufSource, destGguf)) {
+                        hub.publish(AiEventHub.Event.ERROR, "Failed to copy GGUF model");
+                        return;
+                    }
+                }
+                
+                // Finalize Vision projector
+                if (mmprojSource != null) {
+                    File destMmproj = new File(Paths.modelsDir(), modelId + ".mmproj");
+                    if (copyFile(mmprojSource, destMmproj)) {
+                        config.mmprojPath = destMmproj.getAbsolutePath();
+                    } else {
+                        hub.publish(AiEventHub.Event.ERROR, "Failed to copy Vision projector");
+                        return;
+                    }
+                }
+                
+                ContentValues cv = new ContentValues();
+                cv.put("id", modelId);
+                cv.put("kind", AiModel.Kind.LOCAL.name());
+                cv.put("provider", "local");
+                cv.put("name", config.alias);
+                cv.put("filePath", destGguf.getAbsolutePath());
+                cv.put("metadataJson", config.toJson());
+                cv.put("installedAt", System.currentTimeMillis());
+                
+                storage.insertModel(cv);
+                hub.publish(AiEventHub.Event.MODELS_CHANGED, null);
+            } catch (Exception e) {
+                hub.publish(AiEventHub.Event.ERROR, "Persistence failed: " + e.getMessage());
+            }
+        });
+    }
+
+    private boolean copyFile(File src, File dst) {
+        try (java.io.InputStream in = new java.io.FileInputStream(src);
+             java.io.OutputStream out = new java.io.FileOutputStream(dst)) {
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public void delete(String modelId) {
@@ -151,7 +203,12 @@ public class ModelManager {
             try (Cursor c = storage.findModel(modelId)) {
                 if (c.moveToFirst()) {
                     String path = c.getString(c.getColumnIndexOrThrow("filePath"));
+                    String metadata = c.getString(c.getColumnIndexOrThrow("metadataJson"));
+                    LocalModelConfig config = LocalModelConfig.fromJson(metadata);
+                    
                     new File(path).delete();
+                    if (config.mmprojPath != null) new File(config.mmprojPath).delete();
+                    
                     storage.deleteModel(modelId);
                     hub.publish(AiEventHub.Event.MODELS_CHANGED, null);
                 }

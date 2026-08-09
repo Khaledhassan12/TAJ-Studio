@@ -79,10 +79,11 @@ public class LlamaRuntimeService extends Service {
         String path = data.getString("path");
         int nCtx = data.getInt("nCtx", 2048);
         int nThreads = data.getInt("nThreads", 4);
+        String mmprojPath = data.getString("mmprojPath");
         Messenger replyTo = msg.replyTo;
 
         try {
-            runtime.loadModel(new File(path), nCtx, nThreads);
+            runtime.loadModel(new File(path), nCtx, nThreads, mmprojPath);
             sendReply(replyTo, MSG_DONE, null);
         } catch (Exception e) {
             sendReply(replyTo, MSG_ERROR, e.getMessage());
@@ -92,10 +93,13 @@ public class LlamaRuntimeService extends Service {
     private void handleComplete(Message msg) {
         Bundle data = msg.getData();
         String prompt = data.getString("prompt");
+        float temp = data.getFloat("temperature", 0.7f);
+        float topP = data.getFloat("topP", 0.9f);
+        int maxTokens = data.getInt("maxTokens", 4096);
         Messenger replyTo = msg.replyTo;
 
         try {
-            runtime.complete(prompt, token -> {
+            runtime.complete(prompt, temp, topP, maxTokens, token -> {
                 sendReply(replyTo, MSG_TOKEN, token);
                 return true; // Continue
             });
