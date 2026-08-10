@@ -310,6 +310,24 @@
             android:exported="false"
             android:label="Edit System Prompt"
             android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.settings.TitleGenerationActivity"
+            android:exported="false"
+            android:label="Title Generation"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.settings.ImageTranscriptionActivity"
+            android:exported="false"
+            android:label="Image Transcription"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.GenerationActivity"
+            android:exported="false"
+            android:label="Generation"
+            android:theme="@style/Theme.SketchwarePro" />
         <activity android:name="mod.jbk.editor.manage.library.ExcludeBuiltInLibrariesActivity" />
         <activity
             android:name="com.besome.sketch.editor.manage.view.PresetSettingActivity"

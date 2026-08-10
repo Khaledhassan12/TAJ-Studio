@@ -79,12 +79,12 @@ public class AiManagerActivity extends BaseAppCompatActivity {
         // الردود (Responses)
         items.add(new Category(getString(R.string.ai_cat_responses), getString(R.string.ai_cat_responses_ar)));
         items.add(new SettingRow(R.drawable.ic_mtrl_article, R.string.ai_row_prompts, R.string.ai_row_prompts_ar, R.string.ai_row_prompts_sub, R.string.ai_row_prompts_sub_ar, () -> startActivity(new Intent(this, SystemPromptsActivity.class))));
-        items.add(new SettingRow(R.drawable.ic_mtrl_tune, R.string.ai_row_generation, R.string.ai_row_generation_ar, R.string.ai_row_generation_sub, R.string.ai_row_generation_sub_ar, () -> showComingSoon(getString(R.string.ai_row_generation))));
-        items.add(new SettingRow(R.drawable.ic_mtrl_label, R.string.ai_row_titles, R.string.ai_row_titles_ar, R.string.ai_row_titles_sub, R.string.ai_row_titles_sub_ar, () -> showComingSoon(getString(R.string.ai_row_titles))));
+        items.add(new SettingRow(R.drawable.ic_mtrl_tune, R.string.ai_row_generation, R.string.ai_row_generation_ar, R.string.ai_row_generation_sub, R.string.ai_row_generation_sub_ar, () -> startActivity(new Intent(this, GenerationActivity.class))));
+        items.add(new SettingRow(R.drawable.ic_mtrl_label, R.string.ai_row_titles, R.string.ai_row_titles_ar, R.string.ai_row_titles_sub, R.string.ai_row_titles_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.TitleGenerationActivity.class))));
 
         // متعدد الوسائط (Multimodal)
         items.add(new Category(getString(R.string.ai_cat_multimodal), getString(R.string.ai_cat_multimodal_ar)));
-        items.add(new SettingRow(R.drawable.ic_mtrl_image, R.string.ai_row_ocr, R.string.ai_row_ocr_ar, R.string.ai_row_ocr_sub, R.string.ai_row_ocr_sub_ar, () -> showComingSoon(getString(R.string.ai_row_ocr))));
+        items.add(new SettingRow(R.drawable.ic_mtrl_image, R.string.ai_row_ocr, R.string.ai_row_ocr_ar, R.string.ai_row_ocr_sub, R.string.ai_row_ocr_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.ImageTranscriptionActivity.class))));
         items.add(new SettingRow(R.drawable.ic_cat_image, R.string.ai_row_img_gen, R.string.ai_row_img_gen_ar, R.string.ai_row_img_gen_sub, R.string.ai_row_img_gen_sub_ar, () -> showComingSoon(getString(R.string.ai_row_img_gen))));
 
         // الأدوات (Tools)

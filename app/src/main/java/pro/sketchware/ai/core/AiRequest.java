@@ -5,19 +5,20 @@ import java.util.List;
 public class AiRequest {
     public List<AiMessage> messages;
     public String systemPrompt;
-    public int maxTokens;
-    public double temperature;
-    public double topP;
-    public int contextSize;
+    public Integer maxTokens;
+    public Float temperature;
+    public Float topP;
+    public Integer contextSize;
     public String mmprojPath;
     public String modelId;
+    public List<String> imagePaths;
 
-    public AiRequest(List<AiMessage> messages, String systemPrompt, int maxTokens, double temperature, String modelId) {
+    public AiRequest(List<AiMessage> messages, String systemPrompt, Integer maxTokens, Float temperature, String modelId) {
         this.messages = messages;
         this.systemPrompt = systemPrompt;
         this.maxTokens = maxTokens;
         this.temperature = temperature;
-        this.topP = 0.9;
+        this.topP = 0.9f;
         this.contextSize = 2048;
         this.mmprojPath = null;
         this.modelId = modelId;

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="?attr/colorPrimaryContainer" />
+        </shape>
+    </item>
+    <item
+        android:drawable="@drawable/ic_mtrl_chevron_left_24"
+        android:gravity="center"
+        android:fillColor="?attr/colorControlNormal"
+        android:pathData="M15.41,7.41L14,6l-6,6l6,6l1.41,-1.41L10.83,12L15.41,7.41z" />
+</layer-list>

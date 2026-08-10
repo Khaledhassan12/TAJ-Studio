@@ -301,7 +301,7 @@ public class SessionFragment extends Fragment {
         
         applyChatState("streaming");
 
-        agentManager.runTurn(scId, conversationId, text, activeProvider, activeModelId, new pro.sketchware.ai.agent.AgentManager.AgentListener() {
+        agentManager.runTurn(scId, conversationId, text, null, activeProvider, activeModelId, new pro.sketchware.ai.agent.AgentManager.AgentListener() {
             @Override
             public void onStep(pro.sketchware.ai.agent.AgentStep step) {
                 if (!isAdded() || getActivity() == null || getActivity().isFinishing()) return;
@@ -409,6 +409,19 @@ public class SessionFragment extends Fragment {
             ChatMessage m = messages.get(position);
             holder.text.setText(m.content);
             
+            // Visualization (Step 6)
+            pro.sketchware.ai.generation.GenerationDefaults gd = pro.sketchware.ai.generation.GenerationDefaults.get(appContext);
+            if (gd.isVisualizeRollout()) {
+                int ctxWindow = gd.getContextWindow();
+                if (position < messages.size() - ctxWindow) {
+                    holder.itemView.setAlpha(0.45f);
+                } else {
+                    holder.itemView.setAlpha(1f);
+                }
+            } else {
+                holder.itemView.setAlpha(1f);
+            }
+
             if (m.thought != null && !m.thought.isEmpty()) {
                 holder.thoughtContainer.setVisibility(View.VISIBLE);
                 holder.thoughtText.setText(m.thought);

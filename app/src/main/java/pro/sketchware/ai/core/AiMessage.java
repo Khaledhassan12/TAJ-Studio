@@ -9,6 +9,7 @@ public class AiMessage {
     public String content;
     public String toolCallId;
     public String toolCallsJson;
+    public List<String> imagePaths;
 
     public AiMessage(Role role, String content) {
         this.role = role;

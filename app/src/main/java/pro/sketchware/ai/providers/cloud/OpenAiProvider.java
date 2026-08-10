@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import pro.sketchware.ai.core.*;
 import pro.sketchware.ai.data.SecureKeyStore;
 import pro.sketchware.ai.providers.ProviderRegistry;
+import pro.sketchware.ai.generation.GenerationDefaults;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -99,18 +100,53 @@ public class OpenAiProvider implements AiProvider {
 
         JSONObject body = new JSONObject();
         try {
+            GenerationDefaults gd = GenerationDefaults.get(context);
+
             body.put("model", req.modelId);
             body.put("stream", true);
             body.put("stream_options", new JSONObject().put("include_usage", true));
-            body.put("temperature", req.temperature);
-            if (req.maxTokens > 0) body.put("max_tokens", req.maxTokens);
+            
+            // Parameters (Honest omission when null)
+            if (req.temperature != null) body.put("temperature", req.temperature);
+            if (req.maxTokens != null) body.put("max_tokens", req.maxTokens);
+            if (req.topP != null) body.put("top_p", req.topP);
+
+            if (gd.getFreqPenalty() != null) body.put("frequency_penalty", gd.getFreqPenalty());
+            if (gd.getPresPenalty() != null) body.put("presence_penalty", gd.getPresPenalty());
+
+            // Reasoning effort (P1-O: EFFORT mode only)
+            if (GenerationDefaults.THINKING_EFFORT.equals(gd.getThinkingMode()) && "openai".equals(id)) {
+                String[] effortLabels = {"low", "medium", "high", "xhigh"};
+                body.put("reasoning_effort", effortLabels[gd.getThinkingEffort()]);
+            }
+
+            // Service Tier
+            if (gd.isServiceTierEnabled() && "openai".equals(id)) {
+                String[] tiers = {"auto", "default", "flex", "priority"};
+                body.put("service_tier", tiers[gd.getServiceTier()]);
+            }
 
             JSONArray messages = new JSONArray();
             if (req.systemPrompt != null && !req.systemPrompt.isEmpty()) {
                 messages.put(new JSONObject().put("role", "system").put("content", req.systemPrompt));
             }
             for (AiMessage m : req.messages) {
-                messages.put(new JSONObject().put("role", m.role.name()).put("content", m.content));
+                JSONObject msg = new JSONObject().put("role", m.role.name());
+                if (m.imagePaths != null && !m.imagePaths.isEmpty()) {
+                    JSONArray contentArray = new JSONArray();
+                    contentArray.put(new JSONObject().put("type", "text").put("text", m.content));
+                    for (String path : m.imagePaths) {
+                        String base64 = pro.sketchware.ai.transcription.ImageTranscriptionEngine.encodeImageToBase64(path);
+                        if (base64 != null) {
+                            JSONObject imgUrl = new JSONObject().put("url", "data:image/jpeg;base64," + base64);
+                            contentArray.put(new JSONObject().put("type", "image_url").put("image_url", imgUrl));
+                        }
+                    }
+                    msg.put("content", contentArray);
+                } else {
+                    msg.put("content", m.content);
+                }
+                messages.put(msg);
             }
             body.put("messages", messages);
         } catch (Exception e) {

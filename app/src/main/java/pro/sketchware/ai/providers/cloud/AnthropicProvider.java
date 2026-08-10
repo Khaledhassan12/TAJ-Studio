@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import pro.sketchware.ai.core.*;
 import pro.sketchware.ai.data.SecureKeyStore;
 import pro.sketchware.ai.providers.ProviderRegistry;
+import pro.sketchware.ai.generation.GenerationDefaults;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -96,10 +97,25 @@ public class AnthropicProvider implements AiProvider {
 
         JSONObject body = new JSONObject();
         try {
+            GenerationDefaults gd = GenerationDefaults.get(context);
+
             body.put("model", req.modelId);
             body.put("stream", true);
-            if (req.maxTokens > 0) body.put("max_tokens", req.maxTokens);
+
+            // Parameters (Honest omission when null)
+            if (req.temperature != null) body.put("temperature", req.temperature);
+            if (req.maxTokens != null) body.put("max_tokens", req.maxTokens);
             else body.put("max_tokens", 4096);
+
+            if (req.topP != null) body.put("top_p", req.topP);
+
+            // Thinking (P1-O: BUDGET mode only)
+            if (GenerationDefaults.THINKING_BUDGET.equals(gd.getThinkingMode())) {
+                JSONObject thinking = new JSONObject();
+                thinking.put("type", "enabled");
+                thinking.put("budget_tokens", gd.getThinkingBudget());
+                body.put("thinking", thinking);
+            }
 
             if (req.systemPrompt != null && !req.systemPrompt.isEmpty()) {
                 body.put("system", req.systemPrompt);
@@ -108,7 +124,25 @@ public class AnthropicProvider implements AiProvider {
             JSONArray messages = new JSONArray();
             for (AiMessage m : req.messages) {
                 if (m.role == AiMessage.Role.user || m.role == AiMessage.Role.assistant) {
-                    messages.put(new JSONObject().put("role", m.role.name()).put("content", m.content));
+                    JSONObject msg = new JSONObject().put("role", m.role.name());
+                    if (m.role == AiMessage.Role.user && m.imagePaths != null && !m.imagePaths.isEmpty()) {
+                        JSONArray contentArray = new JSONArray();
+                        contentArray.put(new JSONObject().put("type", "text").put("text", m.content));
+                        for (String path : m.imagePaths) {
+                            String base64 = pro.sketchware.ai.transcription.ImageTranscriptionEngine.encodeImageToBase64(path);
+                            if (base64 != null) {
+                                JSONObject source = new JSONObject()
+                                        .put("type", "base64")
+                                        .put("media_type", "image/jpeg")
+                                        .put("data", base64);
+                                contentArray.put(new JSONObject().put("type", "image").put("source", source));
+                            }
+                        }
+                        msg.put("content", contentArray);
+                    } else {
+                        msg.put("content", m.content);
+                    }
+                    messages.put(msg);
                 }
             }
             body.put("messages", messages);

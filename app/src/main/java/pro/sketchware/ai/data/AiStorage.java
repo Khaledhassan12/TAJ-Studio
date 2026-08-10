@@ -16,6 +16,17 @@ import android.database.sqlite.SQLiteDatabase;
  */
 public class AiStorage {
 
+    public static final String KEY_TITLE_GEN_ENABLED = "title_gen_enabled";
+    public static final String KEY_TITLE_GEN_MODEL = "ai_title_model";
+    public static final String KEY_TITLE_GEN_PROMPT = "title_gen_prompt";
+    public static final String KEY_TITLE_GEN_NOTIFICATIONS = "title_gen_notifications";
+
+    public static final String KEY_TRANSCRIPTION_ENABLED = "transcription_enabled";
+    public static final String KEY_TRANSCRIPTION_MODEL = "transcription_model";
+    public static final String KEY_TRANSCRIPTION_ENABLED_MODELS = "transcription_enabled_models";
+    public static final String KEY_TRANSCRIPTION_PROMPT = "transcription_prompt";
+    public static final String KEY_TRANSCRIPTION_BATCH_SIZE = "transcription_batch_size";
+
     private static AiStorage instance;
     private final Context context;
     private final AiDatabase dbHelper;
@@ -34,6 +45,88 @@ public class AiStorage {
 
     public Context getContext() {
         return context;
+    }
+
+    public boolean isTitleGenEnabled() {
+        String val = kvGet(KEY_TITLE_GEN_ENABLED);
+        return val != null && Boolean.parseBoolean(val);
+    }
+
+    public void setTitleGenEnabled(boolean enabled) {
+        kvPut(KEY_TITLE_GEN_ENABLED, String.valueOf(enabled));
+    }
+
+    public String getTitleGenModel() {
+        return kvGet(KEY_TITLE_GEN_MODEL);
+    }
+
+    public void setTitleGenModel(String modelId) {
+        kvPut(KEY_TITLE_GEN_MODEL, modelId);
+    }
+
+    public String getTitleGenPrompt() {
+        String val = kvGet(KEY_TITLE_GEN_PROMPT);
+        return val != null ? val : "You are a title generator. Output only a short title in the same language as the conversation.";
+    }
+
+    public void setTitleGenPrompt(String prompt) {
+        kvPut(KEY_TITLE_GEN_PROMPT, prompt);
+    }
+
+    public boolean isTitleGenNotificationsEnabled() {
+        String val = kvGet(KEY_TITLE_GEN_NOTIFICATIONS);
+        return val != null && Boolean.parseBoolean(val);
+    }
+
+    public void setTitleGenNotificationsEnabled(boolean enabled) {
+        kvPut(KEY_TITLE_GEN_NOTIFICATIONS, String.valueOf(enabled));
+    }
+
+    public boolean isTranscriptionEnabled() {
+        return Boolean.parseBoolean(kvGet(KEY_TRANSCRIPTION_ENABLED));
+    }
+
+    public void setTranscriptionEnabled(boolean enabled) {
+        kvPut(KEY_TRANSCRIPTION_ENABLED, String.valueOf(enabled));
+    }
+
+    public String getTranscriptionModel() {
+        return kvGet(KEY_TRANSCRIPTION_MODEL);
+    }
+
+    public void setTranscriptionModel(String modelId) {
+        kvPut(KEY_TRANSCRIPTION_MODEL, modelId);
+    }
+
+    public String getTranscriptionEnabledModelsJson() {
+        String val = kvGet(KEY_TRANSCRIPTION_ENABLED_MODELS);
+        return val != null ? val : "[]";
+    }
+
+    public void setTranscriptionEnabledModelsJson(String json) {
+        kvPut(KEY_TRANSCRIPTION_ENABLED_MODELS, json);
+    }
+
+    public String getTranscriptionPrompt() {
+        String val = kvGet(KEY_TRANSCRIPTION_PROMPT);
+        return val != null ? val : "Please describe this image in detail. Include all visible text, data, charts, layout, and visual elements. Preserve the original language of any text shown.";
+    }
+
+    public void setTranscriptionPrompt(String prompt) {
+        kvPut(KEY_TRANSCRIPTION_PROMPT, prompt);
+    }
+
+    public int getTranscriptionBatchSize() {
+        String val = kvGet(KEY_TRANSCRIPTION_BATCH_SIZE);
+        try {
+            return val != null ? Integer.parseInt(val) : 3;
+        } catch (NumberFormatException e) {
+            return 3;
+        }
+    }
+
+    public void setTranscriptionBatchSize(int size) {
+        kvPut(KEY_TRANSCRIPTION_BATCH_SIZE, String.valueOf(size));
     }
 
     // --- KV Storage ---

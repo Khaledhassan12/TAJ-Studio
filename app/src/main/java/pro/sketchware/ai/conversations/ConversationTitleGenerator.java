@@ -1,10 +1,20 @@
 package pro.sketchware.ai.conversations;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
+
+import androidx.core.app.NotificationCompat;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import pro.sketchware.R;
+import pro.sketchware.activities.main.activities.MainActivity;
 import pro.sketchware.ai.core.*;
 import pro.sketchware.ai.data.AiStorage;
 import pro.sketchware.ai.providers.ProviderRegistry;
@@ -27,6 +37,8 @@ public class ConversationTitleGenerator {
     }
 
     public synchronized void maybeGenerateTitle(String scId, String conversationId, List<AiMessage> history) {
+        if (!storage.isTitleGenEnabled()) return;
+
         // Trigger condition
         String currentTitle = storage.kvGet("conv_title_" + conversationId);
         if (currentTitle == null) currentTitle = DEFAULT_PLACEHOLDER;
@@ -54,7 +66,11 @@ public class ConversationTitleGenerator {
         String modelId = resolveModelId(conversationId, provider);
         if (provider == null || modelId == null) return;
 
-        String prompt = "Generate a short title (5 words maximum) for this conversation:\n\n"
+        if (storage.isTitleGenNotificationsEnabled()) {
+            postNotification("Generating Title...", "Analyzing conversation context...", false);
+        }
+
+        String prompt = storage.getTitleGenPrompt() + "\n\n"
                 + "User: " + userText + "\nAssistant: " + (assistantText.length() > 500 ? assistantText.substring(0, 500) : assistantText)
                 + "\n\nRespond with ONLY the title text, no quotes, no punctuation, no explanation.";
 
@@ -75,6 +91,7 @@ public class ConversationTitleGenerator {
 
     private synchronized void finalizeTitle(String conversationId, String generated, String fallbackText) {
         String title = generated.replaceAll("\\s+", " ").trim();
+        boolean success = !title.isEmpty();
         if (title.isEmpty()) {
             title = fallbackText.replaceAll("\\s+", " ").trim();
         }
@@ -87,8 +104,32 @@ public class ConversationTitleGenerator {
         if (DEFAULT_PLACEHOLDER.equals(currentTitle)) {
             if (storage.updateTitleIfPlaceholder(conversationId, title, DEFAULT_PLACEHOLDER)) {
                 storage.kvPut("conv_title_" + conversationId, title);
+                if (storage.isTitleGenNotificationsEnabled()) {
+                    if (success) postNotification("Title Generated", title, true);
+                    else postNotification("Title Generation Failed", "Used user message snippet instead.", true);
+                }
             }
         }
+    }
+
+    private void postNotification(String title, String body, boolean autoCancel) {
+        String channelId = "fcm_default_channel";
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        
+        NotificationChannel channel = new NotificationChannel(channelId, "Sketchware Pro Notifications", NotificationManager.IMPORTANCE_LOW);
+        nm.createNotificationChannel(channel);
+
+        Intent intent = new Intent(context, MainActivity.class);
+        PendingIntent pi = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder b = new NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(R.drawable.ic_sketchware_24)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setAutoCancel(autoCancel)
+                .setContentIntent(pi);
+
+        nm.notify(9911, b.build());
     }
 
     private AiProvider resolveProvider(String conversationId) {
@@ -100,7 +141,7 @@ public class ConversationTitleGenerator {
     }
 
     private String resolveModelId(String conversationId, AiProvider provider) {
-        String mId = storage.kvGet("ai_title_model");
+        String mId = storage.getTitleGenModel();
         if (mId != null) return mId;
         return storage.kvGet("conv_model_" + conversationId);
     }

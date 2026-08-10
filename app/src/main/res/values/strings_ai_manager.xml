@@ -43,10 +43,10 @@
     <string name="ai_row_titles_sub">Automatic chat naming</string>
     <string name="ai_row_titles_sub_ar">تسمية المحادثات تلقائيًا</string>
 
-    <string name="ai_row_ocr">Image OCR</string>
-    <string name="ai_row_ocr_ar">نسخ الصور</string>
-    <string name="ai_row_ocr_sub">Extract text from screenshots</string>
-    <string name="ai_row_ocr_sub_ar">استخراج النص من لقطات الشاشة</string>
+    <string name="ai_row_ocr">Image Transcription</string>
+    <string name="ai_row_ocr_ar">تفريغ الصور</string>
+    <string name="ai_row_ocr_sub">Describe images via a vision model</string>
+    <string name="ai_row_ocr_sub_ar">وصف الصور عبر نموذج رؤية</string>
 
     <string name="ai_row_img_gen">Image Generation</string>
     <string name="ai_row_img_gen_ar">توليد الصور</string>

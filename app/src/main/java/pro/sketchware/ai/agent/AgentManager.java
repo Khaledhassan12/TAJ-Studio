@@ -35,6 +35,30 @@ public class AgentManager {
     }
 
     public void runTurn(String scId, String conversationId, String userMessage, AiProvider provider, String modelId, AgentListener listener) {
+        runTurn(scId, conversationId, userMessage, null, provider, modelId, listener);
+    }
+
+    public void runTurn(String scId, String conversationId, String userMessage, List<String> imagePaths, AiProvider provider, String modelId, AgentListener listener) {
+        // 0. Transcribe images if needed (P2-IT)
+        new pro.sketchware.ai.transcription.ImageTranscriptionEngine(context).maybeTranscribe(imagePaths, modelId, new pro.sketchware.ai.transcription.ImageTranscriptionEngine.Callback() {
+            @Override
+            public void onResult(String transcription) {
+                String finalUserMessage = userMessage;
+                if (transcription != null && !transcription.isEmpty()) {
+                    finalUserMessage = "[Image Transcription]\n" + transcription + "\n\n[User Message]\n" + userMessage;
+                }
+                continueRunTurn(scId, conversationId, finalUserMessage, imagePaths, provider, modelId, listener);
+            }
+
+            @Override
+            public void onError(String error) {
+                // Log and continue without transcription
+                continueRunTurn(scId, conversationId, userMessage, imagePaths, provider, modelId, listener);
+            }
+        });
+    }
+
+    private void continueRunTurn(String scId, String conversationId, String userMessage, List<String> imagePaths, AiProvider provider, String modelId, AgentListener listener) {
         // 0. Resolve Template (P1-H)
         pro.sketchware.ai.prompts.PromptTemplate template = pro.sketchware.ai.prompts.PromptTemplateStore.get(context).getActiveTemplate();
         pro.sketchware.ai.prompts.PromptVariables.ResolveCtx ctx = new pro.sketchware.ai.prompts.PromptVariables.ResolveCtx(System.currentTimeMillis(), modelId);
@@ -54,12 +78,19 @@ public class AgentManager {
         
         // 2. Prepare request
         List<AiMessage> messages = new ArrayList<>();
-        // Load history from DB
+        // Load history from DB (Trimming per P1-M)
+        int ctxWindow = pro.sketchware.ai.generation.GenerationDefaults.get(context).getContextWindow();
+        
         try (android.database.Cursor c = storage.listMessages(conversationId)) {
-            while (c != null && c.moveToNext()) {
-                String roleStr = c.getString(c.getColumnIndexOrThrow("role"));
-                String content = c.getString(c.getColumnIndexOrThrow("content"));
-                messages.add(new AiMessage(AiMessage.Role.valueOf(roleStr), content));
+            if (c != null) {
+                int startPos = Math.max(0, c.getCount() - ctxWindow);
+                if (c.moveToPosition(startPos - 1)) { // Move to just before the desired window
+                    while (c.moveToNext()) {
+                        String roleStr = c.getString(c.getColumnIndexOrThrow("role"));
+                        String content = c.getString(c.getColumnIndexOrThrow("content"));
+                        messages.add(new AiMessage(AiMessage.Role.valueOf(roleStr), content));
+                    }
+                }
             }
         } catch (Exception ignored) {}
         
@@ -74,18 +105,42 @@ public class AgentManager {
         
         // P1-D: pull real per-model settings from LocalModelConfig (no hardcoded sampling)
         pro.sketchware.ai.models.LocalModelConfig cfg = null;
+        boolean isLocal = "local-llama".equals(provider.id());
+        
         try (android.database.Cursor c = storage.findModel(modelId)) {
             if (c.moveToFirst()) {
                 String metadata = c.getString(c.getColumnIndexOrThrow("metadataJson"));
                 cfg = pro.sketchware.ai.models.LocalModelConfig.fromJson(metadata);
             }
         }
-        if (cfg == null) cfg = new pro.sketchware.ai.models.LocalModelConfig();
         
-        AiRequest aiReq = new AiRequest(messages, composed.systemText, cfg.maxTokens, cfg.temperature, modelId);
-        aiReq.topP = cfg.topP;
-        aiReq.contextSize = cfg.contextSize;
-        aiReq.mmprojPath = cfg.mmprojPath;
+        // Resolution order (P1-M): Local model config WINS; Generation defaults fill nulls.
+        pro.sketchware.ai.generation.GenerationDefaults gd = pro.sketchware.ai.generation.GenerationDefaults.get(context);
+        
+        Float temp = null;
+        Float topP = null;
+        Integer maxTokens = null;
+        int contextSize = 2048;
+        String mmproj = "";
+        
+        if (cfg != null) {
+            temp = cfg.temperature;
+            topP = cfg.topP;
+            maxTokens = cfg.maxTokens;
+            contextSize = cfg.contextSize;
+            mmproj = cfg.mmprojPath;
+        } else if (!isLocal) {
+            // Cloud: Use defaults from GenerationDefaults if set
+            temp = gd.getTemperature();
+            topP = gd.getTopP();
+            maxTokens = gd.getMaxTokens();
+        }
+        
+        AiRequest aiReq = new AiRequest(messages, composed.systemText, maxTokens, temp, modelId);
+        aiReq.topP = topP != null ? topP : 0.9f;
+        aiReq.contextSize = contextSize;
+        aiReq.mmprojPath = mmproj;
+        aiReq.imagePaths = imagePaths;
         
         // 3. Start loop
         provider.stream(aiReq, new AiStreamCallback() {

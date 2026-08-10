@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import pro.sketchware.ai.core.*;
 import pro.sketchware.ai.data.SecureKeyStore;
 import pro.sketchware.ai.providers.ProviderRegistry;
+import pro.sketchware.ai.generation.GenerationDefaults;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -98,10 +99,24 @@ public class GeminiProvider implements AiProvider {
         try {
             JSONArray contents = new JSONArray();
             for (AiMessage m : req.messages) {
-                JSONObject part = new JSONObject().put("text", m.content);
+                JSONArray parts = new JSONArray();
+                parts.put(new JSONObject().put("text", m.content));
+                
+                if (m.role == AiMessage.Role.user && m.imagePaths != null && !m.imagePaths.isEmpty()) {
+                    for (String path : m.imagePaths) {
+                        String base64 = pro.sketchware.ai.transcription.ImageTranscriptionEngine.encodeImageToBase64(path);
+                        if (base64 != null) {
+                            JSONObject inlineData = new JSONObject()
+                                    .put("mime_type", "image/jpeg")
+                                    .put("data", base64);
+                            parts.put(new JSONObject().put("inline_data", inlineData));
+                        }
+                    }
+                }
+
                 JSONObject content = new JSONObject()
                         .put("role", m.role == AiMessage.Role.assistant ? "model" : "user")
-                        .put("parts", new JSONArray().put(part));
+                        .put("parts", parts);
                 contents.put(content);
             }
             body.put("contents", contents);
@@ -112,8 +127,20 @@ public class GeminiProvider implements AiProvider {
             }
 
             JSONObject genConfig = new JSONObject();
-            if (req.maxTokens > 0) genConfig.put("maxOutputTokens", req.maxTokens);
-            genConfig.put("temperature", req.temperature);
+            GenerationDefaults gd = GenerationDefaults.get(context);
+
+            if (req.maxTokens != null) genConfig.put("maxOutputTokens", req.maxTokens);
+            if (req.temperature != null) genConfig.put("temperature", req.temperature);
+            if (req.topP != null) genConfig.put("topP", req.topP);
+            
+            // Thinking (P1-O: BUDGET mode only)
+            if (GenerationDefaults.THINKING_BUDGET.equals(gd.getThinkingMode())) {
+                JSONObject thinkingConfig = new JSONObject();
+                thinkingConfig.put("includeThoughts", true);
+                thinkingConfig.put("thinkingBudget", gd.getThinkingBudget());
+                genConfig.put("thinkingConfig", thinkingConfig);
+            }
+
             body.put("generationConfig", genConfig);
         } catch (Exception e) {
             cb.onError(new AiError(AiError.Type.Unknown, e.getMessage()));
