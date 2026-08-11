@@ -13,7 +13,9 @@ public enum PromptAsset {
     PROJECT_CONTEXT_PLACEHOLDER("context", 0, Layer.CONTEXT, 500);
 
     public enum Layer {
-        IDENTITY, ENGINEERING, TEMPLATE, AGENT, TOOLS, CONTEXT, TASK
+        IDENTITY, ENGINEERING, TEMPLATE, AGENT, TOOLS, CONTEXT, TASK,
+        /** [P2-MEM] Active Memory block (D18), appended after the template. */
+        MEMORY
     }
 
     public final String id;

@@ -22,6 +22,7 @@ import pro.sketchware.R;
 import pro.sketchware.ai.agent.tools.ToolRegistry;
 import pro.sketchware.ai.mcp.McpServerConfig;
 import pro.sketchware.ai.mcp.McpStore;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 
 /**
  * [WHAT] MCP servers list screen (P2-MCP, D16).
@@ -45,6 +46,7 @@ public class McpServersActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mcp);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         store = McpStore.get(this);
         initUi();

@@ -21,6 +21,7 @@ import com.google.android.material.snackbar.Snackbar;
 import pro.sketchware.R;
 import pro.sketchware.ai.agent.tools.ToolRegistry;
 import pro.sketchware.ai.automation.AutomationSettings;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 
 /**
  * [WHAT] Automation settings screen (P2-AU, D17).
@@ -62,6 +63,7 @@ public class AutomationActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_automation);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         settings = AutomationSettings.get(this);
         root = findViewById(R.id.automation_root);

@@ -49,6 +49,8 @@ public class AiManagerActivity extends BaseAppCompatActivity {
         binding = ActivityAiManagerBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        AiHeaderInsets.apply(binding.toolbar);
+
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -64,11 +66,12 @@ public class AiManagerActivity extends BaseAppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        // P2-IG/WS/MCP/AU: re-check conditional tool registration on hub return.
+        // P2-IG/WS/MCP/AU/MEM: re-check conditional tool registration on hub return.
         pro.sketchware.ai.agent.tools.ToolRegistry.syncImageGen(this);
         pro.sketchware.ai.agent.tools.ToolRegistry.syncWebSearch(this);
         pro.sketchware.ai.agent.tools.ToolRegistry.syncMcp(this);
         pro.sketchware.ai.agent.tools.ToolRegistry.syncAutomation(this);
+        pro.sketchware.ai.agent.tools.ToolRegistry.syncMemory(this);
     }
 
     private void initList() {
@@ -111,8 +114,8 @@ public class AiManagerActivity extends BaseAppCompatActivity {
 
         // الذاكرة والبيانات (Memory & Data)
         items.add(new Category(getString(R.string.ai_cat_memory), getString(R.string.ai_cat_memory_ar)));
-        items.add(new SettingRow(R.drawable.ic_mtrl_time, R.string.ai_row_memory, R.string.ai_row_memory_ar, R.string.ai_row_memory_sub, R.string.ai_row_memory_sub_ar, () -> showComingSoon(getString(R.string.ai_row_memory))));
-        items.add(new SettingRow(R.drawable.ic_mtrl_settings_applications, R.string.ai_row_data_control, R.string.ai_row_data_control_ar, R.string.ai_row_data_control_sub, R.string.ai_row_data_control_sub_ar, () -> showComingSoon(getString(R.string.ai_row_data_control))));
+        items.add(new SettingRow(R.drawable.ic_mtrl_memory, R.string.ai_row_memory, R.string.ai_row_memory_ar, R.string.ai_row_memory_sub, R.string.ai_row_memory_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.MemoryActivity.class))));
+        items.add(new SettingRow(R.drawable.ic_mtrl_settings_applications, R.string.ai_row_data_control, R.string.ai_row_data_control_ar, R.string.ai_row_data_control_sub, R.string.ai_row_data_control_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.DataControlActivity.class))));
 
         adapter.notifyDataSetChanged();
     }

@@ -29,6 +29,7 @@ import pro.sketchware.R;
 import pro.sketchware.ai.agent.tools.ToolRegistry;
 import pro.sketchware.ai.images.ImageGenSettings;
 import pro.sketchware.ai.models.ModelCatalog;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 
 /**
  * [WHAT] Settings screen for Image Generation.
@@ -67,6 +68,7 @@ public class ImageGenerationActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_generation);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         settings = ImageGenSettings.get(this);
         catalog = ModelCatalog.get(this);

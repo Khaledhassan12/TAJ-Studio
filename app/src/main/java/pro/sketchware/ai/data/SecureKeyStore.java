@@ -10,6 +10,8 @@ import java.security.GeneralSecurityException;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.json.JSONException;
+import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -188,4 +190,39 @@ public class SecureKeyStore {
         if (isUnavailable) return;
         prefs.edit().remove("hf_token").apply();
     }
+
+    // --- Backup/Restore (P2-DC) ---
+
+    public String dumpKeys() {
+        if (isUnavailable) return "{}";
+        JSONObject json = new JSONObject();
+        try {
+            for (String key : prefs.getAll().keySet()) {
+                Object val = prefs.getAll().get(key);
+                if (val != null) json.put(key, val);
+            }
+        } catch (JSONException ignored) {}
+        return json.toString();
+    }
+
+    public void restoreKeys(String json) {
+        if (isUnavailable || json == null) return;
+        try {
+            JSONObject obj = new JSONObject(json);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.clear();
+            java.util.Iterator<String> keys = obj.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                Object val = obj.opt(key);
+                if (val instanceof String) editor.putString(key, (String) val);
+                else if (val instanceof Boolean) editor.putBoolean(key, (Boolean) val);
+                else if (val instanceof Integer) editor.putInt(key, (Integer) val);
+                else if (val instanceof Long) editor.putLong(key, (Long) val);
+            }
+            editor.apply();
+        } catch (JSONException ignored) {}
+    }
 }
+
+

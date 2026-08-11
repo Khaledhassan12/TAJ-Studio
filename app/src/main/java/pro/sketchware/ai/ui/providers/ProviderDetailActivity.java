@@ -23,6 +23,7 @@ import java.util.List;
 
 import pro.sketchware.R;
 import pro.sketchware.ai.data.SecureKeyStore;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 import pro.sketchware.ai.providers.ProviderConfig;
 import pro.sketchware.ai.providers.ProviderRegistry;
 
@@ -45,6 +46,7 @@ public class ProviderDetailActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_provider_detail);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         providerId = getIntent().getStringExtra("provider_id");
         registry = ProviderRegistry.get(this);

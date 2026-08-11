@@ -20,6 +20,7 @@ import java.util.List;
 
 import pro.sketchware.R;
 import pro.sketchware.ai.data.AiStorage;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 import pro.sketchware.ai.providers.AiIconLoader;
 import pro.sketchware.ai.providers.ProviderConfig;
 import pro.sketchware.ai.providers.ProviderRegistry;
@@ -45,6 +46,7 @@ public class ProvidersActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_providers);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         registry = ProviderRegistry.get(this);
 

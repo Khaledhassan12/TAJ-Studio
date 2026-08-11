@@ -19,6 +19,7 @@ import java.util.List;
 import pro.sketchware.R;
 import pro.sketchware.ai.data.AiStorage;
 import pro.sketchware.ai.models.ModelCatalog;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 
 /**
  * [WHAT] Settings screen for Title Generation.
@@ -42,6 +43,7 @@ public class TitleGenerationActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_title_generation);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         storage = AiStorage.get(this);
         catalog = ModelCatalog.get(this);

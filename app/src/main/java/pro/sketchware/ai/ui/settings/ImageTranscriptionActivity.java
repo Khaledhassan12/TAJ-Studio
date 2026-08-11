@@ -24,6 +24,7 @@ import pro.sketchware.R;
 import pro.sketchware.ai.models.ModelCatalog;
 import pro.sketchware.ai.providers.ProviderIconLoader;
 import pro.sketchware.ai.transcription.TranscriptionSettings;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 import pro.sketchware.ai.ui.TajSlider;
 
 /**
@@ -53,6 +54,7 @@ public class ImageTranscriptionActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_transcription);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         settings = TranscriptionSettings.get(this);
         catalog = ModelCatalog.get(this);

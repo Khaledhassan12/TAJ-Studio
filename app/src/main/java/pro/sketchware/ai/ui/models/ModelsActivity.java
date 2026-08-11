@@ -48,6 +48,7 @@ import java.util.concurrent.Executors;
 
 import pro.sketchware.R;
 import pro.sketchware.ai.models.ModelCatalog;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 import pro.sketchware.ai.providers.AiIconLoader;
 import pro.sketchware.ai.providers.ProviderConfig;
 import pro.sketchware.ai.providers.ProviderRegistry;
@@ -80,6 +81,7 @@ public class ModelsActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_models);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         catalog = ModelCatalog.get(this);
         registry = ProviderRegistry.get(this);

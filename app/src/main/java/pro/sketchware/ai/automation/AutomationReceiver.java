@@ -5,7 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import pro.sketchware.ai.data.TajBackupManager;
+
 /**
+
  * [WHAT] Alarm broadcast entry for Tasks & Loops (P2-AU, D17).
  * [WHY] Manifest-registered, not exported. Extends the broadcast lifetime
  * with goAsync() and routes the fire to TaskManager / LoopRunner on a worker
@@ -17,7 +20,21 @@ public class AutomationReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent == null || intent.getAction() == null) return;
         final String action = intent.getAction();
+        
+        if ("pro.sketchware.ai.BACKUP_FIRE".equals(action)) {
+            final PendingResult pending = goAsync();
+            new Thread(() -> {
+                try {
+                    TajBackupManager.get(context).runAutoBackupIfDue();
+                } finally {
+                    pending.finish();
+                }
+            }).start();
+            return;
+        }
+
         final String id = intent.getStringExtra(AlarmScheduler.EXTRA_ID);
+
         if (id == null || id.isEmpty()) return;
 
         final PendingResult pending = goAsync();

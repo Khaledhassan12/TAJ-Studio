@@ -48,4 +48,13 @@ public class PromptTemplate {
     public PromptTemplate deepCopy() {
         return new Gson().fromJson(new Gson().toJson(this), PromptTemplate.class);
     }
+
+    public String serialize() {
+        return new Gson().toJson(this);
+    }
+
+    public static PromptTemplate deserialize(String json) {
+        return new Gson().fromJson(json, PromptTemplate.class);
+    }
 }
+

@@ -34,6 +34,7 @@ import java.util.List;
 import pro.sketchware.R;
 import pro.sketchware.ai.prompts.PromptTemplate;
 import pro.sketchware.ai.prompts.PromptTemplateStore;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 
 /**
  * [WHAT] System Prompts list management.
@@ -52,6 +53,7 @@ public class SystemPromptsActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_system_prompts);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         store = PromptTemplateStore.get(this);
         

@@ -48,8 +48,10 @@ public class SketchApplication extends Application {
         try {
             pro.sketchware.ai.automation.TaskManager.rescheduleAll(this);
             pro.sketchware.ai.automation.LoopRunner.rescheduleAll(this);
+            pro.sketchware.ai.data.TajBackupManager.get(this).rescheduleAutoBackup();
         } catch (Exception e) {
-            Log.e("SketchApplication", "automation reschedule failed at app start", e);
+            Log.e("SketchApplication", "automation/backup reschedule failed at app start", e);
         }
     }
 }
+

@@ -28,6 +28,14 @@ public class ToolRegistry {
     public static final String DELETE_TASK_TOOL = "delete_task";
     public static final String START_LOOP_TOOL = "start_loop";
     public static final String STOP_LOOP_TOOL = "stop_loop";
+    // [P2-MEM] TAJ Memory tools (D18): savedAccess gates the 5 CRUD tools,
+    // activeAccess gates update_active_memory (and prompt injection).
+    public static final String LIST_MEMORIES_TOOL = "list_memories";
+    public static final String READ_MEMORY_TOOL = "read_memory";
+    public static final String CREATE_MEMORY_TOOL = "create_memory";
+    public static final String EDIT_MEMORY_TOOL = "edit_memory";
+    public static final String DELETE_MEMORY_TOOL = "delete_memory";
+    public static final String UPDATE_ACTIVE_MEMORY_TOOL = "update_active_memory";
 
     private static final Map<String, Tool> tools = new HashMap<>();
 
@@ -117,6 +125,42 @@ public class ToolRegistry {
             tools.remove(STOP_LOOP_TOOL);
         }
         Log.i(TAG, "syncAutomation: automation tools " + (enabled ? "REGISTERED" : "NOT REGISTERED") + " (enabled=" + enabled + ")");
+    }
+
+    /**
+     * [P2-MEM] Registers the TAJ Memory tools per the TWO gates (D18):
+     * mem_saved_access ON => the 5 CRUD tools; mem_active_access ON =>
+     * update_active_memory. OFF gates remove the tools from the specs.
+     * Re-checked on AiManager resume and before every agent turn.
+     */
+    public static synchronized void syncMemory(Context context) {
+        pro.sketchware.ai.memory.MemoryStore store = pro.sketchware.ai.memory.MemoryStore.get(context);
+        boolean saved = store.isSavedAccessEnabled();
+        boolean active = store.isActiveAccessEnabled();
+
+        if (saved && !tools.containsKey(LIST_MEMORIES_TOOL)) {
+            register(new ListMemoriesTool());
+            register(new ReadMemoryTool());
+            register(new CreateMemoryTool());
+            register(new EditMemoryTool());
+            register(new DeleteMemoryTool());
+        } else if (!saved) {
+            tools.remove(LIST_MEMORIES_TOOL);
+            tools.remove(READ_MEMORY_TOOL);
+            tools.remove(CREATE_MEMORY_TOOL);
+            tools.remove(EDIT_MEMORY_TOOL);
+            tools.remove(DELETE_MEMORY_TOOL);
+        }
+
+        if (active && !tools.containsKey(UPDATE_ACTIVE_MEMORY_TOOL)) {
+            register(new UpdateActiveMemoryTool());
+        } else if (!active) {
+            tools.remove(UPDATE_ACTIVE_MEMORY_TOOL);
+        }
+
+        Log.i(TAG, "syncMemory: saved-memory tools " + (saved ? "REGISTERED" : "NOT REGISTERED")
+                + ", " + UPDATE_ACTIVE_MEMORY_TOOL + " " + (active ? "REGISTERED" : "NOT REGISTERED")
+                + " (saved=" + saved + ", active=" + active + ")");
     }
 
     /**

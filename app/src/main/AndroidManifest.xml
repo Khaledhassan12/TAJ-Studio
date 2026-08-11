@@ -17,6 +17,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".SketchApplication"
@@ -359,6 +360,19 @@
             android:name="pro.sketchware.ai.ui.settings.AutomationActivity"
             android:exported="false"
             android:label="@string/automation_title"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.settings.MemoryActivity"
+            android:exported="false"
+            android:label="@string/mem_title"
+            android:theme="@style/Theme.SketchwarePro"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.settings.DataControlActivity"
+            android:exported="false"
+            android:label="@string/ai_row_data_control"
             android:theme="@style/Theme.SketchwarePro" />
 
         <activity

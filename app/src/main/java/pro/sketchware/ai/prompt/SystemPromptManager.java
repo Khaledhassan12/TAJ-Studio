@@ -13,9 +13,11 @@ import pro.sketchware.ai.context.ProjectContextManager;
  */
 public class SystemPromptManager {
 
+    private final Context context;
     private final PromptLoader loader;
 
     public SystemPromptManager(Context context) {
+        this.context = context.getApplicationContext();
         this.loader = new PromptLoader(context);
     }
 
@@ -38,6 +40,17 @@ public class SystemPromptManager {
         if (req.templateSystemText != null && !req.templateSystemText.isEmpty()) {
             sb.append(req.templateSystemText).append("\n\n");
             layers.add(PromptAsset.Layer.TEMPLATE);
+        }
+
+        // 3.5 Active Memory (P2-MEM, D18): user-pinned facts included in EVERY
+        // call IFF active access is ON and the content is non-empty.
+        pro.sketchware.ai.memory.MemoryStore memoryStore = pro.sketchware.ai.memory.MemoryStore.get(context);
+        if (memoryStore.isActiveAccessEnabled()) {
+            String activeMemory = memoryStore.getActiveContent();
+            if (activeMemory != null && !activeMemory.trim().isEmpty()) {
+                sb.append("# ACTIVE MEMORY\n").append(activeMemory.trim()).append("\n\n");
+                layers.add(PromptAsset.Layer.MEMORY);
+            }
         }
 
         // 4. Tools / Agent

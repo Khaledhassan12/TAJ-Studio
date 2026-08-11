@@ -32,6 +32,7 @@ import pro.sketchware.ai.agent.tools.ToolRegistry;
 import pro.sketchware.ai.mcp.McpClient;
 import pro.sketchware.ai.mcp.McpServerConfig;
 import pro.sketchware.ai.mcp.McpStore;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 import pro.sketchware.ai.ui.PillTabSwitcher;
 
 /**
@@ -77,6 +78,7 @@ public class McpServerEditorActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mcp_server_editor);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         store = McpStore.get(this);
         String serverId = getIntent().getStringExtra(EXTRA_SERVER_ID);

@@ -45,6 +45,7 @@ import pro.sketchware.ai.data.Paths;
 import pro.sketchware.ai.search.ConversationSearchSettings;
 import pro.sketchware.ai.search.LocalEmbeddingEngine;
 import pro.sketchware.ai.search.EmbeddingEngines;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 import pro.sketchware.ai.ui.TajSlider;
 import pro.sketchware.ai.ui.TajSwitch;
 import pro.sketchware.ai.validate.GgufInfo;
@@ -80,6 +81,7 @@ public class ConversationSearchActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversation_search);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         settings = ConversationSearchSettings.get(this);
 

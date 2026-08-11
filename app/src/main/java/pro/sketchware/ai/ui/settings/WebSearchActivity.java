@@ -23,6 +23,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import pro.sketchware.R;
 import pro.sketchware.ai.agent.tools.ToolRegistry;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 import pro.sketchware.ai.ui.TajSlider;
 import pro.sketchware.ai.ui.TajSwitch;
 import pro.sketchware.ai.websearch.WebSearchSettings;
@@ -58,6 +59,7 @@ public class WebSearchActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web_search);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         settings = WebSearchSettings.get(this);
 

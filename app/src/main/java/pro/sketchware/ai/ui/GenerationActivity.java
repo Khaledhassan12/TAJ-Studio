@@ -74,10 +74,13 @@ public class GenerationActivity extends BaseAppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_generation);
 
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
+
         defaults = GenerationDefaults.get(this);
         initUi();
         applyGenerationScreen();
-        handleInsetts(findViewById(R.id.root_container));
+        // BaseAppCompatActivity.handleInsetts for navigation bars
+        super.handleInsetts(findViewById(R.id.root_container));
     }
 
     @Override

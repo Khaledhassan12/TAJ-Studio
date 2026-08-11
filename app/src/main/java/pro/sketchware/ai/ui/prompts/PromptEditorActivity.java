@@ -41,6 +41,7 @@ import pro.sketchware.ai.models.ModelCatalog;
 import pro.sketchware.ai.prompts.PromptTemplate;
 import pro.sketchware.ai.prompts.PromptTemplateStore;
 import pro.sketchware.ai.prompts.PromptVariables;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 
 /**
  * [WHAT] Multi-section prompt template editor.
@@ -69,6 +70,7 @@ public class PromptEditorActivity extends BaseAppCompatActivity {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_prompt_editor);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         store = PromptTemplateStore.get(this);
         

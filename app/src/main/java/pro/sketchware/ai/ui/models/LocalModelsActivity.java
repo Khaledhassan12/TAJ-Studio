@@ -36,6 +36,7 @@ import java.util.Locale;
 
 import pro.sketchware.R;
 import pro.sketchware.ai.bus.AiEventHub;
+import pro.sketchware.ai.ui.AiHeaderInsets;
 import pro.sketchware.ai.data.AiStorage;
 import pro.sketchware.ai.data.Paths;
 import pro.sketchware.ai.models.AiModel;
@@ -68,6 +69,7 @@ public class LocalModelsActivity extends BaseAppCompatActivity implements AiEven
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_local_models);
+        AiHeaderInsets.apply(findViewById(R.id.app_bar));
 
         manager = ModelManager.get(this);
         AiEventHub.get().addListener(this);
