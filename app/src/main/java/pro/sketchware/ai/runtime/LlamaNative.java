@@ -37,6 +37,17 @@ public class LlamaNative {
 
     public static native String nativeApplyTemplate(long handle, String[] roles, String[] contents, boolean addAssistant);
 
+    // P2-CS2 (D10-amended): embedding surface — INDEPENDENT of the chat handle.
+
+    /** Loads an embedding model; returns 0 on failure (not a GGUF / unreadable). */
+    public static native long nativeEmbedInit(String modelPath, int nCtx, int nThreads);
+
+    /** Embeds text into an L2-normalized float[]; null on unknown handle/OOM. */
+    public static native float[] nativeEmbed(long handle, String text);
+
+    /** Frees an embedding handle. */
+    public static native void nativeEmbedFree(long handle);
+
     public interface TokenCallback {
         /**
          * @param token The generated token string.

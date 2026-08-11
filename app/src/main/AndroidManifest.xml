@@ -16,6 +16,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:name=".SketchApplication"
@@ -336,6 +337,31 @@
             android:theme="@style/Theme.SketchwarePro" />
 
         <activity
+            android:name="pro.sketchware.ai.ui.settings.ConversationSearchActivity"
+            android:exported="false"
+            android:label="Conversation Search"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.settings.McpServersActivity"
+            android:exported="false"
+            android:label="MCP"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.settings.McpServerEditorActivity"
+            android:exported="false"
+            android:label="MCP Server"
+            android:theme="@style/Theme.SketchwarePro"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.settings.AutomationActivity"
+            android:exported="false"
+            android:label="@string/automation_title"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
             android:name="pro.sketchware.ai.ui.GenerationActivity"
             android:exported="false"
             android:label="Generation"
@@ -405,6 +431,10 @@
         <service
             android:name="pro.sketchware.ai.runtime.LlamaRuntimeService"
             android:process=":ai_runtime"
+            android:exported="false" />
+
+        <receiver
+            android:name="pro.sketchware.ai.automation.AutomationReceiver"
             android:exported="false" />
 
         <service

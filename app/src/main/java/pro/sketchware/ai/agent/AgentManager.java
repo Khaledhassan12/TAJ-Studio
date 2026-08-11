@@ -59,9 +59,11 @@ public class AgentManager {
     }
 
     private void continueRunTurn(String scId, String conversationId, String userMessage, List<String> imagePaths, AiProvider provider, String modelId, AgentListener listener) {
-        // P2-IG/WS: re-check conditional tool registration before composing schemas.
+        // P2-IG/WS/MCP/AU: re-check conditional tool registration before composing schemas.
         ToolRegistry.syncImageGen(context);
         ToolRegistry.syncWebSearch(context);
+        ToolRegistry.syncMcp(context);
+        ToolRegistry.syncAutomation(context);
 
         // 0. Resolve Template (P1-H)
         pro.sketchware.ai.prompts.PromptTemplate template = pro.sketchware.ai.prompts.PromptTemplateStore.get(context).getActiveTemplate();
@@ -76,7 +78,7 @@ public class AgentManager {
         req.templateSystemText = resolvedSystem;
         req.userPrefixText = resolvedPrefix;
         req.userSuffixText = resolvedSuffix;
-        req.toolSchemas = getToolSchemas();
+        req.toolSchemas = getToolSchemas(provider);
 
         ComposedPrompt composed = promptManager.compose(req, provider.caps().contextSize);
         
@@ -194,7 +196,7 @@ public class AgentManager {
                 persistStep(conversationId, callStep);
                 listener.onStep(callStep);
                 
-                ToolResult res = tool.execute(new ToolArgs(argsJson), new ToolCtx(context, scId, true));
+                ToolResult res = tool.execute(new ToolArgs(argsJson), new ToolCtx(context, scId, conversationId, true));
                 
                 AgentStep resStep = new AgentStep(AgentStep.Kind.TOOL_RESULT, res.content);
                 persistStep(conversationId, resStep);
@@ -214,9 +216,12 @@ public class AgentManager {
         storage.insertAgentStep(cv);
     }
 
-    private String getToolSchemas() {
+    private String getToolSchemas(AiProvider provider) {
+        // P2-MCP (D5/RISK-5): providers without tool-calling omit MCP tools — honestly.
+        boolean supportsTools = provider != null && provider.caps().supportsNativeTools;
         StringBuilder sb = new StringBuilder();
         for (Tool t : ToolRegistry.list()) {
+            if (t.spec().name.startsWith(ToolRegistry.MCP_TOOL_PREFIX) && !supportsTools) continue;
             sb.append("- ").append(t.spec().name).append(": ").append(t.spec().description).append("\n");
             sb.append("  Schema: ").append(t.spec().jsonSchema).append("\n");
         }

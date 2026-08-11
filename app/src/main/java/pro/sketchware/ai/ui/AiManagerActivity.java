@@ -64,9 +64,11 @@ public class AiManagerActivity extends BaseAppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        // P2-IG/WS: re-check conditional tool registration on hub return.
+        // P2-IG/WS/MCP/AU: re-check conditional tool registration on hub return.
         pro.sketchware.ai.agent.tools.ToolRegistry.syncImageGen(this);
         pro.sketchware.ai.agent.tools.ToolRegistry.syncWebSearch(this);
+        pro.sketchware.ai.agent.tools.ToolRegistry.syncMcp(this);
+        pro.sketchware.ai.agent.tools.ToolRegistry.syncAutomation(this);
     }
 
     private void initList() {
@@ -98,10 +100,10 @@ public class AiManagerActivity extends BaseAppCompatActivity {
         // الأدوات (Tools)
         items.add(new Category(getString(R.string.ai_cat_tools), getString(R.string.ai_cat_tools_ar)));
         items.add(new SettingRow(R.drawable.ic_mtrl_web, R.string.ai_row_web_search, R.string.ai_row_web_search_ar, R.string.ai_row_web_search_sub, R.string.ai_row_web_search_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.WebSearchActivity.class))));
-        items.add(new SettingRow(R.drawable.ic_mtrl_search, R.string.ai_row_chat_search, R.string.ai_row_chat_search_ar, R.string.ai_row_chat_search_sub, R.string.ai_row_chat_search_sub_ar, () -> showComingSoon(getString(R.string.ai_row_chat_search))));
-        items.add(new SettingRow(R.drawable.ic_log_terminal, R.string.ai_row_shell, R.string.ai_row_shell_ar, R.string.ai_row_shell_sub, R.string.ai_row_shell_sub_ar, () -> showComingSoon(getString(R.string.ai_row_shell))));
-        items.add(new SettingRow(R.drawable.ic_mtrl_puzzle, R.string.ai_row_mcp, R.string.ai_row_mcp_ar, R.string.ai_row_mcp_sub, R.string.ai_row_mcp_sub_ar, () -> showComingSoon(getString(R.string.ai_row_mcp))));
-        items.add(new SettingRow(R.drawable.ic_mtrl_sync, R.string.ai_row_automation, R.string.ai_row_automation_ar, R.string.ai_row_automation_sub, R.string.ai_row_automation_sub_ar, () -> showComingSoon(getString(R.string.ai_row_automation))));
+        items.add(new SettingRow(R.drawable.ic_mtrl_search, R.string.ai_row_chat_search, R.string.ai_row_chat_search_ar, R.string.ai_row_chat_search_sub, R.string.ai_row_chat_search_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.ConversationSearchActivity.class))));
+        // D16: Shell slot REMOVED permanently (owner decision). MCP adopted instead.
+        items.add(new SettingRow(R.drawable.ic_mtrl_puzzle, R.string.ai_row_mcp, R.string.ai_row_mcp_ar, R.string.ai_row_mcp_sub, R.string.ai_row_mcp_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.McpServersActivity.class))));
+        items.add(new SettingRow(R.drawable.ic_mtrl_sync, R.string.ai_row_automation, R.string.ai_row_automation_ar, R.string.ai_row_automation_sub, R.string.ai_row_automation_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.AutomationActivity.class))));
 
         // الشبكة (Network)
         items.add(new Category(getString(R.string.ai_cat_network), getString(R.string.ai_cat_network_ar)));

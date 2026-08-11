@@ -26,6 +26,9 @@ public class LlamaRuntimeService extends Service {
     public static final int MSG_COMPLETE = 2;
     public static final int MSG_CANCEL = 3;
     public static final int MSG_UNLOAD = 4;
+    // P2-CS2: embedding RPC (independent of chat handle).
+    public static final int MSG_EMBED = 5;
+    public static final int MSG_EMBED_UNLOAD = 6;
 
     // Change 3: Reply constants (Bundle-only) - EXACT AGORA PORT
     public static final int MSG_TEXT = 1;
@@ -33,6 +36,11 @@ public class LlamaRuntimeService extends Service {
     public static final int MSG_USAGE = 3;
     public static final int MSG_ERROR = 4;
     public static final int MSG_DONE = 5;
+    // P2-CS2: embedding reply (Bundle carries float[] ONLY — RISK-13).
+    public static final int MSG_EMBED_RESULT = 6;
+
+    /** Idle-unload delay for the embedding handle to protect memory (RISK-19). */
+    private static final long EMBED_IDLE_UNLOAD_MS = 60_000L;
 
     private final LlamaRuntime runtime = new LlamaRuntime();
     private Messenger messenger;
@@ -41,6 +49,10 @@ public class LlamaRuntimeService extends Service {
 
     private String loadedModelPath = null;
     private final java.util.concurrent.locks.ReentrantLock samplingLock = new java.util.concurrent.locks.ReentrantLock();
+    private final Runnable embedIdleUnload = () -> {
+        Log.d(TAG, "Embedding idle-unload after " + EMBED_IDLE_UNLOAD_MS + "ms");
+        runtime.unloadEmbed();
+    };
 
     @Override
     public void onCreate() {
@@ -58,6 +70,8 @@ public class LlamaRuntimeService extends Service {
 
     @Override
     public void onDestroy() {
+        workerHandler.removeCallbacks(embedIdleUnload);
+        runtime.unloadEmbed();
         runtime.unload();
         workerThread.quitSafely();
         super.onDestroy();
@@ -78,8 +92,71 @@ public class LlamaRuntimeService extends Service {
                 runtime.unload();
                 loadedModelPath = null;
                 return true;
+            case MSG_EMBED:
+                handleEmbed(msg);
+                return true;
+            case MSG_EMBED_UNLOAD:
+                workerHandler.removeCallbacks(embedIdleUnload);
+                runtime.unloadEmbed();
+                return true;
         }
         return false;
+    }
+
+    /**
+     * P2-CS2: embed RPC. Bundle in: path, texts (String[]), nCtx, nThreads.
+     * Bundle out: MSG_EMBED_RESULT with flattened float[] "vectors" + "dim" +
+     * "count" (primitive-safe, RISK-13), or MSG_ERROR with typed codes
+     * (EMBED_LOAD_FAILED / EMBED_OOM / EMBED_NOT_EMBEDDING_MODEL).
+     */
+    private void handleEmbed(Message msg) {
+        Bundle data = msg.getData();
+        String path = data.getString("path");
+        String[] texts = data.getStringArray("texts");
+        int nCtx = data.getInt("nCtx", 512);
+        int nThreads = data.getInt("nThreads", 4);
+        Messenger replyTo = msg.replyTo;
+
+        if (path == null || texts == null || texts.length == 0) {
+            sendReply(replyTo, MSG_ERROR, "EMBED_LOAD_FAILED: missing path or texts", 0);
+            return;
+        }
+
+        // Reset the idle-unload timer on every request (RISK-19).
+        workerHandler.removeCallbacks(embedIdleUnload);
+
+        try {
+            float[][] result = new float[texts.length][];
+            for (int i = 0; i < texts.length; i++) {
+                result[i] = runtime.embed(path, texts[i] != null ? texts[i] : "", nCtx, nThreads);
+            }
+
+            int dim = result[0].length;
+            float[] flat = new float[result.length * dim];
+            for (int i = 0; i < result.length; i++) {
+                System.arraycopy(result[i], 0, flat, i * dim, dim);
+            }
+
+            Message reply = Message.obtain();
+            reply.what = MSG_EMBED_RESULT;
+            Bundle out = new Bundle();
+            out.putFloatArray("vectors", flat);
+            out.putInt("dim", dim);
+            out.putInt("count", result.length);
+            reply.setData(out);
+            try {
+                if (replyTo != null) replyTo.send(reply);
+            } catch (RemoteException e) {
+                Log.w(TAG, "embed reply target gone");
+            }
+        } catch (OutOfMemoryError oom) {
+            runtime.unloadEmbed();
+            sendReply(replyTo, MSG_ERROR, "EMBED_OOM: " + oom.getMessage(), 0);
+        } catch (Exception e) {
+            sendReply(replyTo, MSG_ERROR, e.getMessage() != null ? e.getMessage() : "EMBED_LOAD_FAILED: unknown", 0);
+        } finally {
+            workerHandler.postDelayed(embedIdleUnload, EMBED_IDLE_UNLOAD_MS);
+        }
     }
 
     private void handleLoad(Message msg) {

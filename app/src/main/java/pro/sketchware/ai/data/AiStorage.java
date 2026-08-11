@@ -38,6 +38,9 @@ public class AiStorage {
     public static final String KEY_WEB_SEARCH_SEARXNG_URL = "ws_searxng_url";
     public static final String KEY_WEB_SEARCH_NUM_RESULTS = "ws_num_results";
 
+    public static final String KEY_AUTO_TASKS_LOOPS = "auto_tasks_loops";
+    public static final String KEY_AUTO_EXACT_ALARMS = "auto_exact_alarms";
+
     private static AiStorage instance;
     private final Context context;
     private final AiDatabase dbHelper;
@@ -233,6 +236,26 @@ public class AiStorage {
         kvPut(KEY_WEB_SEARCH_NUM_RESULTS, String.valueOf(num));
     }
 
+    // --- Automation (P2-AU) ---
+
+    public boolean isAutoTasksLoopsEnabled() {
+        String val = kvGet(KEY_AUTO_TASKS_LOOPS);
+        return val != null && Boolean.parseBoolean(val);
+    }
+
+    public void setAutoTasksLoopsEnabled(boolean enabled) {
+        kvPut(KEY_AUTO_TASKS_LOOPS, String.valueOf(enabled));
+    }
+
+    public boolean isAutoExactAlarmsEnabled() {
+        String val = kvGet(KEY_AUTO_EXACT_ALARMS);
+        return val != null && Boolean.parseBoolean(val);
+    }
+
+    public void setAutoExactAlarmsEnabled(boolean enabled) {
+        kvPut(KEY_AUTO_EXACT_ALARMS, String.valueOf(enabled));
+    }
+
     // --- KV Storage ---
 
     public String kvGet(String key) {
@@ -327,6 +350,11 @@ public class AiStorage {
         return dbHelper.getReadableDatabase().query("messages", null, "conversationId = ?", new String[]{conversationId}, null, null, "createdAt ASC");
     }
 
+    /** P2-CS2: single-message lookup for semantic search hit enrichment. */
+    public Cursor findMessageById(String messageId) {
+        return dbHelper.getReadableDatabase().query("messages", null, "id = ?", new String[]{messageId}, null, null, null);
+    }
+
     // --- Agent Steps ---
 
     public void insertAgentStep(ContentValues values) {
@@ -339,5 +367,22 @@ public class AiStorage {
 
     public Cursor listAgentStepsByRecent(int limit) {
         return dbHelper.getReadableDatabase().query("agent_steps", null, null, null, null, null, "createdAt DESC", String.valueOf(limit));
+    }
+
+    // --- Embeddings (P2-CS) ---
+
+    public void insertEmbedding(ContentValues values) {
+        dbHelper.getWritableDatabase().insertWithOnConflict("conversation_embeddings", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    /** P2-CS2: all vectors stored for one project under one embedding model. */
+    public Cursor listEmbeddings(String scId, String modelRef) {
+        return dbHelper.getReadableDatabase().query("conversation_embeddings", null,
+                "scId = ? AND modelRef = ?", new String[]{scId, modelRef}, null, null, "ts ASC");
+    }
+
+    /** P2-CS2: cascade delete — removing a model removes its index vectors. */
+    public int deleteEmbeddingsByModelRef(String modelRef) {
+        return dbHelper.getWritableDatabase().delete("conversation_embeddings", "modelRef = ?", new String[]{modelRef});
     }
 }

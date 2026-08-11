@@ -42,5 +42,14 @@ public class SketchApplication extends Application {
         });
         super.onCreate();
         ThemeManager.applyTheme(this, ThemeManager.getCurrentTheme(this));
+
+        // P2-AU (D17): re-arm persisted Tasks & Loops after app kill/restart.
+        // Never let automation rescheduling crash app startup.
+        try {
+            pro.sketchware.ai.automation.TaskManager.rescheduleAll(this);
+            pro.sketchware.ai.automation.LoopRunner.rescheduleAll(this);
+        } catch (Exception e) {
+            Log.e("SketchApplication", "automation reschedule failed at app start", e);
+        }
     }
 }

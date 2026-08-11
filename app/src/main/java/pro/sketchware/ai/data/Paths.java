@@ -26,6 +26,13 @@ public class Paths {
         return f;
     }
 
+    /** P2-CS2: dedicated directory for local embedding GGUF models. */
+    public static File embeddingsDir() {
+        File f = new File(modelsDir(), "embeddings");
+        if (!f.exists()) f.mkdirs();
+        return f;
+    }
+
     public static File projectsDir() {
         File f = new File(base(), "projects");
         if (!f.exists()) f.mkdirs();

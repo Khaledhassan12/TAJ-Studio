@@ -23,4 +23,9 @@ public class ToolArgs {
     public boolean getBoolean(String key, boolean def) {
         return args.optBoolean(key, def);
     }
+
+    /** P2-MCP: raw JSON passthrough for tools with free-form schemas (MCP tools/call). */
+    public String getRaw() {
+        return args.toString();
+    }
 }

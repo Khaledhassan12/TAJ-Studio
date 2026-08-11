@@ -35,7 +35,15 @@ public class RuntimeClient {
         void onError(String error);
     }
 
+    /** P2-CS2: embedding RPC callback (vectors arrive as float[][], main thread). */
+    public interface EmbedCallback {
+        void onVectors(float[][] vectors);
+        void onError(String error);
+    }
+
     private Callback activeCallback;
+    private EmbedCallback activeEmbedCallback;
+    private final Object boundLock = new Object();
 
     public RuntimeClient(Context context) {
         this.context = context.getApplicationContext();
@@ -48,6 +56,9 @@ public class RuntimeClient {
             serviceMessenger = new Messenger(service);
             isBound = true;
             Log.d(TAG, "Service connected");
+            synchronized (boundLock) {
+                boundLock.notifyAll();
+            }
         }
 
         @Override
@@ -180,9 +191,93 @@ public class RuntimeClient {
         }
     }
 
+    // --- Embedding RPC (P2-CS2) ---
+
+    /**
+     * Blocks (off-main-thread callers only) until the service is bound.
+     *
+     * @return true if bound within the timeout.
+     */
+    public boolean ensureBound(long timeoutMs) {
+        if (isBound) return true;
+        bind();
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        synchronized (boundLock) {
+            while (!isBound) {
+                long remaining = deadline - System.currentTimeMillis();
+                if (remaining <= 0) return false;
+                try {
+                    boundLock.wait(remaining);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Embeds {@code texts} with the GGUF model at {@code modelPath} via
+     * :ai_runtime. On-demand load + idle unload are handled by the service.
+     */
+    public void embed(String modelPath, String[] texts, EmbedCallback cb) {
+        if (!isBound) {
+            cb.onError("EMBED_LOAD_FAILED: runtime service not bound");
+            return;
+        }
+        this.activeEmbedCallback = cb;
+        Message msg = Message.obtain(null, LlamaRuntimeService.MSG_EMBED);
+        Bundle data = new Bundle();
+        data.putString("path", modelPath);
+        data.putStringArray("texts", texts);
+        msg.setData(data);
+        msg.replyTo = replyMessenger;
+        try {
+            serviceMessenger.send(msg);
+        } catch (RemoteException e) {
+            cb.onError("EMBED_LOAD_FAILED: " + e.getMessage());
+        }
+    }
+
+    /** Explicitly releases the embedding handle (idle unload also covers this). */
+    public void unloadEmbed() {
+        if (isBound) {
+            try {
+                serviceMessenger.send(Message.obtain(null, LlamaRuntimeService.MSG_EMBED_UNLOAD));
+            } catch (RemoteException ignored) {}
+        }
+    }
+
     private boolean handleReply(Message msg) {
-        if (activeCallback == null) return false;
         Bundle b = msg.getData();
+        // P2-CS2: embedding replies are routed independently of the chat
+        // callback so the two flows can never clobber each other.
+        if (msg.what == LlamaRuntimeService.MSG_EMBED_RESULT) {
+            if (activeEmbedCallback != null) {
+                float[] flat = b.getFloatArray("vectors");
+                int dim = b.getInt("dim");
+                int count = b.getInt("count");
+                if (flat == null || dim <= 0 || count <= 0) {
+                    activeEmbedCallback.onError("EMBED_OOM: empty embedding reply");
+                } else {
+                    float[][] vectors = new float[count][dim];
+                    for (int i = 0; i < count; i++) {
+                        System.arraycopy(flat, i * dim, vectors[i], 0, dim);
+                    }
+                    activeEmbedCallback.onVectors(vectors);
+                }
+            }
+            return true;
+        }
+        if (msg.what == LlamaRuntimeService.MSG_ERROR) {
+            String err = b.getString("text");
+            if (err != null && err.startsWith("EMBED_") && activeEmbedCallback != null) {
+                activeEmbedCallback.onError(err);
+                return true;
+            }
+        }
+        if (activeCallback == null) return false;
         switch (msg.what) {
             case LlamaRuntimeService.MSG_TEXT:
                 activeCallback.onToken(b.getString("text"));

@@ -18,7 +18,7 @@ public class AiDatabase extends SQLiteOpenHelper {
 
     private static final String TAG = "AiDatabase";
     private static final String DATABASE_NAME = "taj_ai.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 3;
 
     private static AiDatabase instance;
 
@@ -96,6 +96,16 @@ public class AiDatabase extends SQLiteOpenHelper {
                     "value TEXT, " +
                     "updatedAt INTEGER)");
 
+            // conversation_embeddings: vector index for semantic search (P2-CS)
+            db.execSQL("CREATE TABLE IF NOT EXISTS conversation_embeddings (" +
+                    "id TEXT PRIMARY KEY, " +
+                    "scId TEXT, " +
+                    "messageId TEXT, " +
+                    "modelRef TEXT, " +
+                    "vector TEXT, " +
+                    "text TEXT, " +
+                    "ts INTEGER)");
+
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -105,5 +115,23 @@ public class AiDatabase extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.d(TAG, "Upgrading AI database from " + oldVersion + " to " + newVersion);
+        if (oldVersion < 2) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS conversation_embeddings (" +
+                    "id TEXT PRIMARY KEY, " +
+                    "scId TEXT, " +
+                    "messageId TEXT, " +
+                    "modelRef TEXT, " +
+                    "vector TEXT, " +
+                    "ts INTEGER)");
+        }
+        if (oldVersion < 3) {
+            // P2-CS2: store the embedded text alongside the vector so semantic
+            // hits render without extra joins. Existing rows keep text NULL.
+            try {
+                db.execSQL("ALTER TABLE conversation_embeddings ADD COLUMN text TEXT");
+            } catch (Exception e) {
+                Log.d(TAG, "conversation_embeddings.text already present");
+            }
+        }
     }
 }

@@ -35,6 +35,8 @@ import pro.sketchware.ai.runtime.RuntimeClient;
 import pro.sketchware.utility.ThemeUtils;
 import android.content.Context;
 import androidx.core.content.ContextCompat;
+import java.net.URL;
+import java.net.HttpURLConnection;
 
 /**
  * [WHAT] Unified chat interface for both local and cloud AI.
@@ -59,6 +61,7 @@ public class SessionFragment extends Fragment {
     private StreamHandle activeStream;
     private pro.sketchware.ai.agent.AgentManager agentManager;
     private Context appContext;
+    private final java.util.concurrent.ExecutorService cacheExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -381,6 +384,46 @@ public class SessionFragment extends Fragment {
         cv.put("content", msg.content);
         cv.put("createdAt", System.currentTimeMillis());
         storage.insertMessage(cv);
+        
+        maybeCacheMessage(msg);
+    }
+
+    private void maybeCacheMessage(ChatMessage msg) {
+        pro.sketchware.ai.search.ConversationSearchSettings settings = pro.sketchware.ai.search.ConversationSearchSettings.get(appContext);
+        if (!settings.isAutoCacheEnabled() || "thought".equals(msg.role)) return;
+
+        List<pro.sketchware.ai.search.ConversationSearchSettings.EmbeddingModel> models = settings.getEmbeddingModels();
+        if (models.isEmpty()) return;
+
+        // P2-CS2: engine selected by config.type — first configured model,
+        // remote (HTTP) or local (RPC via :ai_runtime).
+        final pro.sketchware.ai.search.ConversationSearchSettings.EmbeddingModel targetModel = models.get(0);
+        cacheExecutor.execute(() -> {
+            try {
+                pro.sketchware.ai.search.EmbeddingEngine engine =
+                        pro.sketchware.ai.search.EmbeddingEngines.forModel(appContext, targetModel);
+                List<float[]> vectors = engine.embed(java.util.Collections.singletonList(msg.content));
+                if (vectors != null && !vectors.isEmpty()) {
+                    org.json.JSONArray arr = new org.json.JSONArray();
+                    for (float v : vectors.get(0)) arr.put((double) v);
+
+                    ContentValues cv = new ContentValues();
+                    cv.put("id", UUID.randomUUID().toString());
+                    cv.put("scId", scId);
+                    cv.put("messageId", msg.id);
+                    cv.put("modelRef", targetModel.id);
+                    cv.put("vector", arr.toString());
+                    cv.put("text", msg.content);
+                    cv.put("ts", System.currentTimeMillis());
+                    AiStorage.get(appContext).insertEmbedding(cv);
+                    android.util.Log.i("ConversationSearch",
+                            "auto-cache: indexed message " + msg.id + " via " + targetModel.type + " embedding engine (" + targetModel.name + ")");
+                }
+            } catch (Exception e) {
+                // Honest but non-intrusive: indexing must never break the chat.
+                android.util.Log.w("ConversationSearch", "auto-cache failed: " + e.getMessage());
+            }
+        });
     }
 
     private class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
