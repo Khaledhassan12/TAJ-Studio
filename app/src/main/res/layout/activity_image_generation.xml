@@ -38,7 +38,7 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@id/btn_back"
                     android:layout_marginTop="24dp"
-                    android:text="Title Generation"
+                    android:text="Image Generation"
                     android:textAppearance="?attr/textAppearanceHeadlineLarge"
                     android:textSize="32sp"
                     android:textStyle="bold" />
@@ -63,7 +63,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:text="Title Generation"
+                android:text="Image Generation"
                 android:textAllCaps="true"
                 android:textAppearance="?attr/textAppearanceLabelLarge"
                 android:textColor="?attr/colorPrimary"
@@ -82,7 +82,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <!-- Auto-Generate Title -->
+                    <!-- Enable Image Generation -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -93,7 +93,7 @@
                         <ImageView
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@drawable/ic_mtrl_edit"
+                            android:src="@drawable/ic_mtrl_add_photo_alternate"
                             app:tint="?attr/colorPrimary" />
 
                         <LinearLayout
@@ -106,20 +106,20 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Auto-Generate Title"
+                                android:text="Enable Image Generation"
                                 android:textAppearance="?attr/textAppearanceBodyLarge"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Generate a title after the first response"
+                                android:text="Let the model create images via a tool call"
                                 android:textAppearance="?attr/textAppearanceBodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
 
                         <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/switch_auto_gen"
+                            android:id="@+id/switch_enable"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
                     </LinearLayout>
@@ -132,9 +132,9 @@
                         android:layout_marginStart="56dp"
                         android:visibility="gone" />
 
-                    <!-- Title Model -->
+                    <!-- Image Model -->
                     <LinearLayout
-                        android:id="@+id/row_title_model"
+                        android:id="@+id/row_image_model"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="?attr/selectableItemBackground"
@@ -148,7 +148,7 @@
                         <ImageView
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@drawable/ic_mtrl_chat"
+                            android:src="@drawable/ic_mtrl_image"
                             app:tint="?attr/colorPrimary" />
 
                         <LinearLayout
@@ -161,38 +161,42 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Title Model"
+                                android:text="Image Model"
                                 android:textAppearance="?attr/textAppearanceBodyLarge"
                                 android:textStyle="bold" />
 
                             <TextView
-                                android:id="@+id/tv_title_model_sub"
+                                android:id="@+id/tv_image_model_sub"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Use Current Model"
+                                android:text="Not selected"
                                 android:textAppearance="?attr/textAppearanceBodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
                     </LinearLayout>
 
                     <View
+                        android:id="@+id/divider_size"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:background="?attr/colorOutlineVariant"
-                        android:layout_marginStart="56dp" />
+                        android:layout_marginStart="56dp"
+                        android:visibility="gone" />
 
-                    <!-- Notifications -->
+                    <!-- Default Size -->
                     <LinearLayout
+                        android:id="@+id/row_default_size"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:padding="16dp">
+                        android:padding="16dp"
+                        android:visibility="gone">
 
                         <ImageView
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@drawable/ic_mtrl_notifications"
+                            android:src="@drawable/ic_mtrl_tune"
                             app:tint="?attr/colorPrimary" />
 
                         <LinearLayout
@@ -205,94 +209,63 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Show Title Generation Notifications"
+                                android:text="Default Size"
                                 android:textAppearance="?attr/textAppearanceBodyLarge"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Show progress and result messages while generating titles"
+                                android:text="Width × Height in pixels (64–2048)"
                                 android:textAppearance="?attr/textAppearanceBodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/switch_notifications"
+                        <EditText
+                            android:id="@+id/et_size_w"
+                            android:layout_width="72dp"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:hint="W"
+                            android:imeOptions="actionNext"
+                            android:inputType="number"
+                            android:maxLength="4"
+                            android:maxLines="1"
+                            android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                        <TextView
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
-                    </LinearLayout>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="12dp"
-                android:text="Advanced"
-                android:textAllCaps="true"
-                android:textAppearance="?attr/textAppearanceLabelLarge"
-                android:textColor="?attr/colorPrimary"
-                android:textSize="13sp" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/row_title_prompt"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="?attr/colorSurfaceVariant"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/neurology_24"
-                        app:tint="?attr/colorPrimary" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Title Prompt"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginEnd="8dp"
+                            android:text="×"
                             android:textAppearance="?attr/textAppearanceBodyLarge"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="System instruction used when generating conversation titles"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
                             android:textColor="?attr/colorOnSurfaceVariant" />
 
-                        <TextView
-                            android:id="@+id/tv_title_prompt_preview"
-                            android:layout_width="match_parent"
+                        <EditText
+                            android:id="@+id/et_size_h"
+                            android:layout_width="72dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:ellipsize="end"
-                            android:maxLines="3"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
+                            android:gravity="center"
+                            android:hint="H"
+                            android:imeOptions="actionDone"
+                            android:inputType="number"
+                            android:maxLength="4"
+                            android:maxLines="1"
+                            android:textAppearance="?attr/textAppearanceBodyLarge" />
                     </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_size_error"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="56dp"
+                        android:layout_marginEnd="16dp"
+                        android:paddingBottom="12dp"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorError"
+                        android:visibility="gone" />
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -310,7 +283,7 @@
         android:text="Documentation"
         android:textColor="?attr/colorOnPrimaryContainer"
         app:backgroundTint="?attr/colorPrimaryContainer"
-        app:icon="@drawable/ic_mtrl_menu_book"
+        app:icon="@drawable/ic_brand_book"
         app:iconTint="?attr/colorOnPrimaryContainer"
         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
 

@@ -324,6 +324,18 @@
             android:theme="@style/Theme.SketchwarePro" />
 
         <activity
+            android:name="pro.sketchware.ai.ui.settings.ImageGenerationActivity"
+            android:exported="false"
+            android:label="Image Generation"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
+            android:name="pro.sketchware.ai.ui.settings.WebSearchActivity"
+            android:exported="false"
+            android:label="Web Search"
+            android:theme="@style/Theme.SketchwarePro" />
+
+        <activity
             android:name="pro.sketchware.ai.ui.GenerationActivity"
             android:exported="false"
             android:label="Generation"

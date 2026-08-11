@@ -59,6 +59,10 @@ public class AgentManager {
     }
 
     private void continueRunTurn(String scId, String conversationId, String userMessage, List<String> imagePaths, AiProvider provider, String modelId, AgentListener listener) {
+        // P2-IG/WS: re-check conditional tool registration before composing schemas.
+        ToolRegistry.syncImageGen(context);
+        ToolRegistry.syncWebSearch(context);
+
         // 0. Resolve Template (P1-H)
         pro.sketchware.ai.prompts.PromptTemplate template = pro.sketchware.ai.prompts.PromptTemplateStore.get(context).getActiveTemplate();
         pro.sketchware.ai.prompts.PromptVariables.ResolveCtx ctx = new pro.sketchware.ai.prompts.PromptVariables.ResolveCtx(System.currentTimeMillis(), modelId);

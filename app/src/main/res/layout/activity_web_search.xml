@@ -38,7 +38,7 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@id/btn_back"
                     android:layout_marginTop="24dp"
-                    android:text="Title Generation"
+                    android:text="@string/ws_title"
                     android:textAppearance="?attr/textAppearanceHeadlineLarge"
                     android:textSize="32sp"
                     android:textStyle="bold" />
@@ -63,7 +63,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:text="Title Generation"
+                android:text="@string/ws_title"
                 android:textAllCaps="true"
                 android:textAppearance="?attr/textAppearanceLabelLarge"
                 android:textColor="?attr/colorPrimary"
@@ -82,7 +82,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <!-- Auto-Generate Title -->
+                    <!-- Enable Web Search -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -93,7 +93,7 @@
                         <ImageView
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@drawable/ic_mtrl_edit"
+                            android:src="@drawable/ic_mtrl_language"
                             app:tint="?attr/colorPrimary" />
 
                         <LinearLayout
@@ -106,35 +106,35 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Auto-Generate Title"
+                                android:text="@string/ws_enable_title"
                                 android:textAppearance="?attr/textAppearanceBodyLarge"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Generate a title after the first response"
+                                android:text="@string/ws_enable_sub"
                                 android:textAppearance="?attr/textAppearanceBodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/switch_auto_gen"
+                        <pro.sketchware.ai.ui.TajSwitch
+                            android:id="@+id/switch_enable"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
                     </LinearLayout>
 
                     <View
-                        android:id="@+id/divider_model"
+                        android:id="@+id/divider_provider"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:background="?attr/colorOutlineVariant"
                         android:layout_marginStart="56dp"
                         android:visibility="gone" />
 
-                    <!-- Title Model -->
+                    <!-- Search Provider -->
                     <LinearLayout
-                        android:id="@+id/row_title_model"
+                        android:id="@+id/row_provider"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="?attr/selectableItemBackground"
@@ -148,7 +148,7 @@
                         <ImageView
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@drawable/ic_mtrl_chat"
+                            android:src="@drawable/ic_mtrl_cloud"
                             app:tint="?attr/colorPrimary" />
 
                         <LinearLayout
@@ -161,38 +161,42 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Title Model"
+                                android:text="@string/ws_provider_title"
                                 android:textAppearance="?attr/textAppearanceBodyLarge"
                                 android:textStyle="bold" />
 
                             <TextView
-                                android:id="@+id/tv_title_model_sub"
+                                android:id="@+id/tv_provider_sub"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Use Current Model"
+                                android:text="Brave"
                                 android:textAppearance="?attr/textAppearanceBodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
                     </LinearLayout>
 
                     <View
+                        android:id="@+id/divider_key"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:background="?attr/colorOutlineVariant"
-                        android:layout_marginStart="56dp" />
+                        android:layout_marginStart="56dp"
+                        android:visibility="gone" />
 
-                    <!-- Notifications -->
+                    <!-- API Key -->
                     <LinearLayout
+                        android:id="@+id/row_key"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:padding="16dp">
+                        android:padding="16dp"
+                        android:visibility="gone">
 
                         <ImageView
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@drawable/ic_mtrl_notifications"
+                            android:src="@drawable/ic_mtrl_key"
                             app:tint="?attr/colorPrimary" />
 
                         <LinearLayout
@@ -205,94 +209,149 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Show Title Generation Notifications"
+                                android:text="@string/ws_api_key_title"
                                 android:textAppearance="?attr/textAppearanceBodyLarge"
                                 android:textStyle="bold" />
+
+                            <EditText
+                                android:id="@+id/et_api_key"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="@string/ws_api_key_hint"
+                                android:inputType="textPassword"
+                                android:textAppearance="?attr/textAppearanceBodySmall" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <View
+                        android:id="@+id/divider_url"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorOutlineVariant"
+                        android:layout_marginStart="56dp"
+                        android:visibility="gone" />
+
+                    <!-- SearXNG URL -->
+                    <LinearLayout
+                        android:id="@+id/row_url"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_mtrl_link"
+                            app:tint="?attr/colorPrimary" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Show progress and result messages while generating titles"
+                                android:text="@string/ws_url_title"
+                                android:textAppearance="?attr/textAppearanceBodyLarge"
+                                android:textStyle="bold" />
+
+                            <EditText
+                                android:id="@+id/et_url"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="@string/ws_url_hint"
+                                android:inputType="textUri"
+                                android:textAppearance="?attr/textAppearanceBodySmall" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/ws_url_note"
                                 android:textAppearance="?attr/textAppearanceBodySmall"
-                                android:textColor="?attr/colorOnSurfaceVariant" />
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="10sp" />
                         </LinearLayout>
-
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/switch_notifications"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
+                android:id="@+id/tv_advanced_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="12dp"
-                android:text="Advanced"
+                android:text="@string/ws_advanced_title"
                 android:textAllCaps="true"
                 android:textAppearance="?attr/textAppearanceLabelLarge"
                 android:textColor="?attr/colorPrimary"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:visibility="gone" />
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/row_title_prompt"
+                android:id="@+id/card_advanced"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
                 app:cardBackgroundColor="?attr/colorSurfaceVariant"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:strokeWidth="0dp">
+                app:strokeWidth="0dp"
+                android:visibility="gone">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
+                    android:orientation="vertical"
                     android:padding="16dp">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/neurology_24"
-                        app:tint="?attr/colorPrimary" />
-
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Title Prompt"
-                            android:textAppearance="?attr/textAppearanceBodyLarge"
-                            android:textStyle="bold" />
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_mtrl_tune"
+                            app:tint="?attr/colorPrimary" />
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="System instruction used when generating conversation titles"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
 
-                        <TextView
-                            android:id="@+id/tv_title_prompt_preview"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:ellipsize="end"
-                            android:maxLines="3"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/ws_max_results_title"
+                                android:textAppearance="?attr/textAppearanceBodyLarge"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_max_results_sub"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Number of results to fetch: 5 (1-10)"
+                                android:textAppearance="?attr/textAppearanceBodySmall"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
                     </LinearLayout>
+
+                    <pro.sketchware.ai.ui.TajSlider
+                        android:id="@+id/slider_max_results"
+                        android:layout_width="match_parent"
+                        android:layout_height="64dp"
+                        android:layout_marginTop="8dp" />
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

@@ -61,6 +61,14 @@ public class AiManagerActivity extends BaseAppCompatActivity {
         initList();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // P2-IG/WS: re-check conditional tool registration on hub return.
+        pro.sketchware.ai.agent.tools.ToolRegistry.syncImageGen(this);
+        pro.sketchware.ai.agent.tools.ToolRegistry.syncWebSearch(this);
+    }
+
     private void initList() {
         binding.recycler.setLayoutManager(new LinearLayoutManager(this));
         adapter = new SettingsAdapter();
@@ -85,11 +93,11 @@ public class AiManagerActivity extends BaseAppCompatActivity {
         // متعدد الوسائط (Multimodal)
         items.add(new Category(getString(R.string.ai_cat_multimodal), getString(R.string.ai_cat_multimodal_ar)));
         items.add(new SettingRow(R.drawable.ic_mtrl_image, R.string.ai_row_ocr, R.string.ai_row_ocr_ar, R.string.ai_row_ocr_sub, R.string.ai_row_ocr_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.ImageTranscriptionActivity.class))));
-        items.add(new SettingRow(R.drawable.ic_cat_image, R.string.ai_row_img_gen, R.string.ai_row_img_gen_ar, R.string.ai_row_img_gen_sub, R.string.ai_row_img_gen_sub_ar, () -> showComingSoon(getString(R.string.ai_row_img_gen))));
+        items.add(new SettingRow(R.drawable.ic_cat_image, R.string.ai_row_img_gen, R.string.ai_row_img_gen_ar, R.string.ai_row_img_gen_sub, R.string.ai_row_img_gen_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.ImageGenerationActivity.class))));
 
         // الأدوات (Tools)
         items.add(new Category(getString(R.string.ai_cat_tools), getString(R.string.ai_cat_tools_ar)));
-        items.add(new SettingRow(R.drawable.ic_mtrl_web, R.string.ai_row_web_search, R.string.ai_row_web_search_ar, R.string.ai_row_web_search_sub, R.string.ai_row_web_search_sub_ar, () -> showComingSoon(getString(R.string.ai_row_web_search))));
+        items.add(new SettingRow(R.drawable.ic_mtrl_web, R.string.ai_row_web_search, R.string.ai_row_web_search_ar, R.string.ai_row_web_search_sub, R.string.ai_row_web_search_sub_ar, () -> startActivity(new Intent(this, pro.sketchware.ai.ui.settings.WebSearchActivity.class))));
         items.add(new SettingRow(R.drawable.ic_mtrl_search, R.string.ai_row_chat_search, R.string.ai_row_chat_search_ar, R.string.ai_row_chat_search_sub, R.string.ai_row_chat_search_sub_ar, () -> showComingSoon(getString(R.string.ai_row_chat_search))));
         items.add(new SettingRow(R.drawable.ic_log_terminal, R.string.ai_row_shell, R.string.ai_row_shell_ar, R.string.ai_row_shell_sub, R.string.ai_row_shell_sub_ar, () -> showComingSoon(getString(R.string.ai_row_shell))));
         items.add(new SettingRow(R.drawable.ic_mtrl_puzzle, R.string.ai_row_mcp, R.string.ai_row_mcp_ar, R.string.ai_row_mcp_sub, R.string.ai_row_mcp_sub_ar, () -> showComingSoon(getString(R.string.ai_row_mcp))));

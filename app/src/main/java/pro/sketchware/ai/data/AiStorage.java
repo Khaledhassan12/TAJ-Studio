@@ -27,6 +27,17 @@ public class AiStorage {
     public static final String KEY_TRANSCRIPTION_PROMPT = "transcription_prompt";
     public static final String KEY_TRANSCRIPTION_BATCH_SIZE = "transcription_batch_size";
 
+    public static final String KEY_IMG_GEN_ENABLED = "img_gen_enabled";
+    public static final String KEY_IMG_GEN_MODEL = "img_gen_model";
+    public static final String KEY_IMG_GEN_SIZE_W = "img_gen_size_w";
+    public static final String KEY_IMG_GEN_SIZE_H = "img_gen_size_h";
+
+    public static final String KEY_WEB_SEARCH_ENABLED = "ws_enabled";
+    public static final String KEY_WEB_SEARCH_PROVIDER = "ws_provider";
+    public static final String KEY_WEB_SEARCH_KEYS = "ws_keys";
+    public static final String KEY_WEB_SEARCH_SEARXNG_URL = "ws_searxng_url";
+    public static final String KEY_WEB_SEARCH_NUM_RESULTS = "ws_num_results";
+
     private static AiStorage instance;
     private final Context context;
     private final AiDatabase dbHelper;
@@ -127,6 +138,99 @@ public class AiStorage {
 
     public void setTranscriptionBatchSize(int size) {
         kvPut(KEY_TRANSCRIPTION_BATCH_SIZE, String.valueOf(size));
+    }
+
+    // --- Image Generation (P2-IG) ---
+
+    public boolean isImageGenEnabled() {
+        String val = kvGet(KEY_IMG_GEN_ENABLED);
+        return val != null && Boolean.parseBoolean(val);
+    }
+
+    public void setImageGenEnabled(boolean enabled) {
+        kvPut(KEY_IMG_GEN_ENABLED, String.valueOf(enabled));
+    }
+
+    public String getImageGenModel() {
+        return kvGet(KEY_IMG_GEN_MODEL);
+    }
+
+    public void setImageGenModel(String modelId) {
+        kvPut(KEY_IMG_GEN_MODEL, modelId);
+    }
+
+    public int getImageGenSizeW() {
+        String val = kvGet(KEY_IMG_GEN_SIZE_W);
+        try {
+            return val != null ? Integer.parseInt(val) : 1024;
+        } catch (NumberFormatException e) {
+            return 1024;
+        }
+    }
+
+    public void setImageGenSizeW(int width) {
+        kvPut(KEY_IMG_GEN_SIZE_W, String.valueOf(width));
+    }
+
+    public int getImageGenSizeH() {
+        String val = kvGet(KEY_IMG_GEN_SIZE_H);
+        try {
+            return val != null ? Integer.parseInt(val) : 1024;
+        } catch (NumberFormatException e) {
+            return 1024;
+        }
+    }
+
+    public void setImageGenSizeH(int height) {
+        kvPut(KEY_IMG_GEN_SIZE_H, String.valueOf(height));
+    }
+
+    // --- Web Search (P2-WS) ---
+
+    public boolean isWebSearchEnabled() {
+        String val = kvGet(KEY_WEB_SEARCH_ENABLED);
+        return val != null && Boolean.parseBoolean(val);
+    }
+
+    public void setWebSearchEnabled(boolean enabled) {
+        kvPut(KEY_WEB_SEARCH_ENABLED, String.valueOf(enabled));
+    }
+
+    public String getWebSearchProvider() {
+        return kvGet(KEY_WEB_SEARCH_PROVIDER);
+    }
+
+    public void setWebSearchProvider(String provider) {
+        kvPut(KEY_WEB_SEARCH_PROVIDER, provider);
+    }
+
+    public String getWebSearchKeysJson() {
+        return kvGet(KEY_WEB_SEARCH_KEYS);
+    }
+
+    public void setWebSearchKeysJson(String json) {
+        kvPut(KEY_WEB_SEARCH_KEYS, json);
+    }
+
+    public String getWebSearchSearxngUrl() {
+        return kvGet(KEY_WEB_SEARCH_SEARXNG_URL);
+    }
+
+    public void setWebSearchSearxngUrl(String url) {
+        kvPut(KEY_WEB_SEARCH_SEARXNG_URL, url);
+    }
+
+    public int getWebSearchNumResults() {
+        String val = kvGet(KEY_WEB_SEARCH_NUM_RESULTS);
+        try {
+            return val != null ? Integer.parseInt(val) : 5;
+        } catch (NumberFormatException e) {
+            return 5;
+        }
+    }
+
+    public void setWebSearchNumResults(int num) {
+        kvPut(KEY_WEB_SEARCH_NUM_RESULTS, String.valueOf(num));
     }
 
     // --- KV Storage ---

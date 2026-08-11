@@ -144,4 +144,44 @@
     <string name="ai_msg_test_failed_ar">فشل الاتصال: %s</string>
     <string name="ai_dialog_confirm_delete">Are you sure you want to delete this?</string>
     <string name="ai_dialog_confirm_delete_ar">هل أنت متأكد أنك تريد حذف هذا؟</string>
+
+    <!-- Web Search (P2-WS) -->
+    <string name="ws_title">Web Search</string>
+    <string name="ws_title_ar">بحث الويب</string>
+    <string name="ws_enable_title">Enable Web Search</string>
+    <string name="ws_enable_title_ar">تفعيل بحث الويب</string>
+    <string name="ws_enable_sub">Allow models to search the web via tool calling</string>
+    <string name="ws_enable_sub_ar">السماح للنماذج بالبحث في الويب عبر استدعاء الأدوات</string>
+    <string name="ws_provider_title">Search Provider</string>
+    <string name="ws_provider_title_ar">مزود البحث</string>
+    <string name="ws_api_key_title">API Key</string>
+    <string name="ws_api_key_title_ar">مفتاح API</string>
+    <string name="ws_api_key_hint">Enter your API key</string>
+    <string name="ws_api_key_hint_ar">أدخل مفتاح API الخاص بك</string>
+    <string name="ws_url_title">SearXNG URL</string>
+    <string name="ws_url_title_ar">رابط SearXNG</string>
+    <string name="ws_url_hint">e.g. https://search.example.com</string>
+    <string name="ws_url_hint_ar">مثلاً https://search.example.com</string>
+    <string name="ws_url_note">Falls back to this instance if the provider fails</string>
+    <string name="ws_url_note_ar">يتم الرجوع إلى هذا الرابط إذا فشل المزود</string>
+    <string name="ws_advanced_title">Advanced</string>
+    <string name="ws_advanced_title_ar">خيارات متقدمة</string>
+    <string name="ws_max_results_title">Max Results</string>
+    <string name="ws_max_results_title_ar">أقصى عدد من النتائج</string>
+    <string name="ws_max_results_sub">Number of results to fetch: %d (1-10)</string>
+    <string name="ws_max_results_sub_ar">عدد النتائج المراد جلبها: %d (1-10)</string>
+
+    <!-- Web Search Provider Descriptions (Mockup verbatim) -->
+    <string name="ws_desc_brave">Privacy-focused search API. Free tier available.</string>
+    <string name="ws_desc_brave_ar">API بحث يركز على الخصوصية. تتوفر فئة مجانية.</string>
+    <string name="ws_desc_kagi">Premium search API with personalized results. Pay per use.</string>
+    <string name="ws_desc_kagi_ar">API بحث مميز مع نتائج مخصصة. الدفع حسب الاستخدام.</string>
+    <string name="ws_desc_serper">Fast Google Search API. 2,500 free queries/month.</string>
+    <string name="ws_desc_serper_ar">API سريع لبحث Google. ٢٥٠٠ استعلام مجاني شهريًا.</string>
+    <string name="ws_desc_tavily">AI-optimized search API. Built for LLM agents.</string>
+    <string name="ws_desc_tavily_ar">API بحث محسّن للذكاء الاصطناعي. مُصمم لوكلاء LLM.</string>
+    <string name="ws_desc_searxng">Self-hosted metasearch engine. Best used with your own instance.</string>
+    <string name="ws_desc_searxng_ar">محرك بحث متوافق مع الاستضافة الذاتية. يفضل استخدامه مع نسختك الخاصة.</string>
+    <string name="ws_desc_duckduckgo">Free, no API key. Web scraping lite.duckduckgo.com. May be unstable and trigger anti-bot protection.</string>
+    <string name="ws_desc_duckduckgo_ar">مجاني، لا يتطلب مفتاح API. كشط ويب lite.duckduckgo.com. قد يكون غير مستقر ويفعل حماية مكافحة البوتات.</string>
 </resources>
