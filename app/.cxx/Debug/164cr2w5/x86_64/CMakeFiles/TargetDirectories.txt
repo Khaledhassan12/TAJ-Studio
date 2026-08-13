@@ -1,3 +1,0 @@
-C:/Users/khale/StudioProjects/TAJ-Studio/app/.cxx/Debug/164cr2w5/x86_64/CMakeFiles/llama-jni.dir
-C:/Users/khale/StudioProjects/TAJ-Studio/app/.cxx/Debug/164cr2w5/x86_64/CMakeFiles/edit_cache.dir
-C:/Users/khale/StudioProjects/TAJ-Studio/app/.cxx/Debug/164cr2w5/x86_64/CMakeFiles/rebuild_cache.dir
