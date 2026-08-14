@@ -1,0 +1,9 @@
+C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\cpp\CMakeLists.txt
+C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\cpp\llama_cpp\CMakeLists.txt
+C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\cpp\llama_cpp\cmake\build-info.cmake
+C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\cpp\llama_cpp\cmake\common.cmake
+C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\cpp\llama_cpp\cmake\llama-config.cmake.in
+C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\cpp\llama_cpp\ggml\CMakeLists.txt
+C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\cpp\llama_cpp\ggml\src\CMakeLists.txt
+C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\cpp\llama_cpp\ggml\src\ggml-cpu\CMakeLists.txt
+C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\cpp\llama_cpp\src\CMakeLists.txt
