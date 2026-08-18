@@ -3,6 +3,7 @@ package pro.sketchware.ai.ui;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
@@ -14,26 +15,28 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import mod.hey.studios.util.Helper;
 import pro.sketchware.R;
 import pro.sketchware.ai.config.AIConfigStore;
-import pro.sketchware.ai.core.AIProvider;
 import pro.sketchware.ai.core.AIProviderRegistry;
-import pro.sketchware.ai.core.AIRequest;
-import pro.sketchware.ai.core.AIMessage;
-import pro.sketchware.ai.core.AIResponse;
 import pro.sketchware.ai.core.ProviderProfile;
-import pro.sketchware.ai.core.StreamCallbacks;
 import pro.sketchware.ai.net.AIException;
+import pro.sketchware.ai.net.ModelSyncService;
 import pro.sketchware.databinding.ActivityTagAssistantBinding;
 
 /**
  * TAG Assistant setup screen: master switch, default mode, provider selection,
- * credentials and a live connection test. Fully isolated from the host app —
- * every failure here ends in a friendly dialog or Snackbar, never a crash.
+ * credentials, live connection test (models endpoint) and the model syncer +
+ * picker. Fully isolated from the host app: every failure ends in a friendly
+ * dialog or Snackbar, never a crash.
  */
 public final class TagAssistantActivity extends BaseAppCompatActivity {
 
@@ -42,7 +45,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     private AIProviderRegistry registry;
     private final List<ProviderProfile> profiles = new ArrayList<>();
     private ProviderProfile currentProfile;
-    private AIProvider.Handle testHandle;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private boolean syncInProgress = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -90,10 +94,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
 
     @Override
     public void onDestroy() {
-        if (testHandle != null) {
-            testHandle.cancel();
-            testHandle = null;
-        }
+        syncInProgress = false;
+        executor.shutdownNow();
         super.onDestroy();
     }
 
@@ -162,8 +164,9 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
 
         binding.btnTest.setOnClickListener(v -> testConnection());
         binding.btnSave.setOnClickListener(v -> saveConfiguration());
+        binding.btnSyncModels.setOnClickListener(v -> syncModels());
+        binding.btnChooseModel.setOnClickListener(v -> openModelPicker());
     }
-
     private void applyProfile(ProviderProfile profile) {
         currentProfile = profile;
 
@@ -189,6 +192,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.tilModel.setError(null);
 
         populateModelChips(profile);
+        refreshModelSyncUi(profile);
     }
 
     private void populateModelChips(ProviderProfile profile) {
@@ -210,16 +214,23 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     }
 
     // ------------------------------------------------------------------
-    // Save + connection test
+    // Validation
     // ------------------------------------------------------------------
 
+    private String textOf(EditText edit) {
+        return edit.getText() == null ? "" : edit.getText().toString();
+    }
+
     private boolean validateFields() {
+        return validateCredentials() && validateModelField();
+    }
+
+    private boolean validateCredentials() {
         if (currentProfile == null) {
             return false;
         }
-        String key = binding.editApiKey.getText() == null ? "" : binding.editApiKey.getText().toString().trim();
-        String url = binding.editBaseUrl.getText() == null ? "" : binding.editBaseUrl.getText().toString().trim();
-        String model = binding.editModel.getText() == null ? "" : binding.editModel.getText().toString().trim();
+        String key = textOf(binding.editApiKey).trim();
+        String url = textOf(binding.editBaseUrl).trim();
 
         if (currentProfile.requiresKey && key.isEmpty()) {
             binding.tilApiKey.setError(getString(R.string.ai_key_required));
@@ -232,7 +243,14 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             return false;
         }
         binding.tilBaseUrl.setError(null);
+        return true;
+    }
 
+    private boolean validateModelField() {
+        if (currentProfile == null) {
+            return false;
+        }
+        String model = textOf(binding.editModel).trim();
         if (model.isEmpty()) {
             binding.tilModel.setError(getString(R.string.ai_model_required));
             return false;
@@ -241,13 +259,17 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         return true;
     }
 
+    // ------------------------------------------------------------------
+    // Save + connection test + model sync
+    // ------------------------------------------------------------------
+
     private void saveConfiguration() {
         if (!validateFields()) {
             return;
         }
-        String key = binding.editApiKey.getText().toString().trim();
-        String url = binding.editBaseUrl.getText().toString().trim();
-        String model = binding.editModel.getText().toString().trim();
+        String key = AIConfigStore.sanitizeKey(textOf(binding.editApiKey));
+        String url = AIConfigStore.sanitizeBaseUrl(textOf(binding.editBaseUrl));
+        String model = textOf(binding.editModel).trim();
 
         store.setSelectedProviderId(currentProfile.id);
         store.setApiKey(currentProfile.id, key);
@@ -257,59 +279,59 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         Snackbar.make(binding.getRoot(), R.string.ai_saved, Snackbar.LENGTH_SHORT).show();
     }
 
+    /** Test connection now probes the MODELS endpoint (fast, no tokens burned). */
     private void testConnection() {
-        if (testHandle != null || !validateFields()) {
+        if (syncInProgress || !validateCredentials()) {
             return;
         }
+        setSyncUi(true, true);
+        startModelFetch();
+    }
 
-        String key = binding.editApiKey.getText().toString().trim();
-        String url = binding.editBaseUrl.getText().toString().trim();
-        String model = binding.editModel.getText().toString().trim();
-
-        ProviderProfile effectiveProfile = currentProfile;
-        if (currentProfile.baseUrlEditable && !url.isEmpty()) {
-            effectiveProfile = currentProfile.withBaseUrl(url);
+    private void syncModels() {
+        if (syncInProgress || !validateCredentials()) {
+            return;
         }
+        setSyncUi(true, false);
+        startModelFetch();
+    }
 
-        AIProvider provider = registry.createProvider(effectiveProfile, key);
-        AIRequest request = new AIRequest.Builder()
-                .model(model)
-                .temperature(0f)
-                .maxTokens(8)
-                .addMessage(AIMessage.user("Reply with exactly: OK"))
-                .build();
-
-        setTesting(true);
-        final String providerName = effectiveProfile.displayName;
-        testHandle = provider.stream(request, new StreamCallbacks() {
-            @Override
-            public void onToken(String token) {
-                // A single token is enough to prove connectivity.
-            }
-
-            @Override
-            public void onComplete(AIResponse response) {
+    private void startModelFetch() {
+        ProviderProfile effective = resolveEffectiveProfile();
+        final boolean testMode = binding.progressTest.getVisibility() == View.VISIBLE;
+        String key = AIConfigStore.sanitizeKey(textOf(binding.editApiKey));
+        executor.execute(() -> {
+            try {
+                ModelSyncService.Result result = ModelSyncService.fetch(effective, key);
+                store.saveModelsCache(effective.id, result.models);
                 runOnUiThread(() -> {
                     if (isFinishing() || isDestroyed()) {
                         return;
                     }
-                    setTesting(false);
+                    setSyncUi(false, testMode);
+                    if (result.modelListUnavailable) {
+                        new MaterialAlertDialogBuilder(TagAssistantActivity.this)
+                                .setTitle(R.string.ai_choose_model)
+                                .setMessage(R.string.ai_no_model_list)
+                                .setPositiveButton(R.string.common_word_close, null)
+                                .show();
+                        return;
+                    }
+                    refreshModelSyncUi(effective);
                     Snackbar.make(binding.getRoot(),
-                            getString(R.string.ai_connection_success, providerName),
-                            Snackbar.LENGTH_LONG).show();
+                            getString(R.string.ai_connected_models, result.models.size()),
+                            Snackbar.LENGTH_SHORT).show();
                 });
-            }
-
-            @Override
-            public void onError(Throwable error) {
+            } catch (AIException e) {
                 runOnUiThread(() -> {
                     if (isFinishing() || isDestroyed()) {
                         return;
                     }
-                    setTesting(false);
-                    String message = error instanceof AIException
-                            ? ((AIException) error).friendlyMessage()
-                            : getString(R.string.ai_connection_disabled);
+                    setSyncUi(false, testMode);
+                    String message = e.friendlyMessage();
+                    if (!e.rawBody.isEmpty()) {
+                        message += "\n\n" + e.rawBody;
+                    }
                     new MaterialAlertDialogBuilder(TagAssistantActivity.this)
                             .setTitle(R.string.ai_test_connection)
                             .setMessage(message)
@@ -319,16 +341,75 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             }
         });
     }
-
-    private void setTesting(boolean testing) {
-        testHandle = testing ? testHandle : null;
-        binding.progressTest.setVisibility(testing ? View.VISIBLE : View.GONE);
-        binding.btnTest.setEnabled(!testing);
-        if (testing) {
-            binding.tvStatusMessage.setText(R.string.ai_connection_testing);
-            binding.tvStatusMessage.setVisibility(View.VISIBLE);
-        } else if (binding.switchEnable.isChecked()) {
-            binding.tvStatusMessage.setVisibility(View.GONE);
+    private ProviderProfile resolveEffectiveProfile() {
+        ProviderProfile effective = currentProfile;
+        if (currentProfile != null && currentProfile.baseUrlEditable) {
+            String url = AIConfigStore.sanitizeBaseUrl(textOf(binding.editBaseUrl));
+            if (!url.isEmpty()) {
+                effective = currentProfile.withBaseUrl(url);
+            }
         }
+        return effective;
+    }
+
+    private void setSyncUi(boolean inProgress, boolean testMode) {
+        syncInProgress = inProgress;
+        binding.btnSyncModels.setEnabled(!inProgress);
+        binding.btnChooseModel.setEnabled(!inProgress);
+        binding.btnSave.setEnabled(!inProgress);
+        if (testMode) {
+            binding.progressTest.setVisibility(inProgress ? View.VISIBLE : View.GONE);
+            binding.btnTest.setEnabled(!inProgress);
+            if (inProgress) {
+                binding.tvStatusMessage.setText(R.string.ai_connection_testing);
+                binding.tvStatusMessage.setVisibility(View.VISIBLE);
+            } else {
+                updateStatusUi();
+            }
+        } else {
+            binding.progressModelSync.setVisibility(inProgress ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    /** Opens the M3 model picker bottom sheet for the active provider. */
+    private void openModelPicker() {
+        if (syncInProgress || !validateCredentials()) {
+            return;
+        }
+        ProviderProfile effective = resolveEffectiveProfile();
+        String key = AIConfigStore.sanitizeKey(textOf(binding.editApiKey));
+        ModelPickerBottomSheet sheet = ModelPickerBottomSheet.newInstance(
+                currentProfile.id, effective, key, ProviderProfile.exposesPricing(currentProfile));
+        sheet.setListener(this::onModelPicked);
+        sheet.show(getSupportFragmentManager(), "model_picker");
+    }
+
+    private void onModelPicked(String modelId) {
+        binding.editModel.setText(modelId);
+        saveConfiguration();
+    }
+
+    // ------------------------------------------------------------------
+    // Model sync UI state
+    // ------------------------------------------------------------------
+
+    private void refreshModelSyncUi(ProviderProfile profile) {
+        boolean hasCache = store.getModelsCacheTimestamp(profile.id) > 0L;
+        boolean pricing = ProviderProfile.exposesPricing(profile);
+        binding.chipGroupModelFilter.setVisibility(hasCache ? View.VISIBLE : View.GONE);
+        binding.chipModelFilterAll.setChecked(true);
+        binding.chipModelFilterFree.setEnabled(pricing);
+        binding.chipModelFilterPaid.setEnabled(pricing);
+        binding.tvPricingHint.setVisibility(hasCache && !pricing ? View.VISIBLE : View.GONE);
+        binding.tvLastSync.setText(formatLastSync(profile));
+    }
+
+    private String formatLastSync(ProviderProfile profile) {
+        long timestamp = store.getModelsCacheTimestamp(profile.id);
+        if (timestamp <= 0L) {
+            return getString(R.string.ai_last_sync_never);
+        }
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        return getString(R.string.ai_synced_at, format.format(new Date(timestamp)));
     }
 }

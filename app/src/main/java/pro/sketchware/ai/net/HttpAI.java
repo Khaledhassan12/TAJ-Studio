@@ -1,5 +1,7 @@
 package pro.sketchware.ai.net;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -15,6 +17,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.BufferedSource;
+import pro.sketchware.ai.config.AIConfigStore;
 import pro.sketchware.ai.core.AIProvider;
 import pro.sketchware.ai.core.AIRequest;
 import pro.sketchware.ai.core.Protocol;
@@ -23,13 +26,16 @@ import pro.sketchware.ai.core.StreamCallbacks;
 
 /**
  * Base class for all three protocol engines. Owns the shared OkHttpClient,
- * provides URL building, auth-header application, exactly-one-terminal-callback
- * guarantees, a single automatic retry (only before any token has been emitted)
- * and cooperative cancellation.
+ * provides URL building, per-contract auth header assembly, exactly-one-terminal-
+ * callback guarantees, a single automatic retry (5xx / transport only, before
+ * any token has been emitted) and cooperative cancellation.
  *
- * Engines are cheap, short-lived objects: create one per request batch.
+ * Keys and base URLs are sanitized on construction so a stale pasted key with
+ * trailing whitespace/newlines can never reach the wire or the logs.
  */
 public abstract class HttpAI implements AIProvider {
+
+    private static final String TAG = "AIEngine";
 
     protected static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
@@ -39,10 +45,10 @@ public abstract class HttpAI implements AIProvider {
         return thread;
     });
 
-    /** Shared client: long read timeout because SSE streams stay open for minutes. */
+    /** Connect 10s, read 60s (SSE streams stay open), write 60s. */
     private static final OkHttpClient SHARED_CLIENT = new OkHttpClient.Builder()
-            .connectTimeout(20, TimeUnit.SECONDS)
-            .readTimeout(10, TimeUnit.MINUTES)
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
             .build();
 
@@ -52,8 +58,9 @@ public abstract class HttpAI implements AIProvider {
 
     protected HttpAI(ProviderProfile profile, String baseUrl, String apiKey) {
         this.profile = profile;
-        this.baseUrl = baseUrl == null || baseUrl.isEmpty() ? profile.defaultBaseUrl : baseUrl;
-        this.apiKey = apiKey == null ? "" : apiKey;
+        String effective = baseUrl == null || baseUrl.isEmpty() ? profile.defaultBaseUrl : baseUrl;
+        this.baseUrl = AIConfigStore.sanitizeBaseUrl(effective);
+        this.apiKey = AIConfigStore.sanitizeKey(apiKey);
     }
 
     @Override
@@ -95,7 +102,7 @@ public abstract class HttpAI implements AIProvider {
                 }
                 boolean retriable = attempt == 0
                         && !tracked.hasEmitted()
-                        && e.type == AIException.Type.NETWORK;
+                        && e.isRetriable();
                 if (!retriable) {
                     tracked.fail(e);
                     return;
@@ -107,7 +114,6 @@ public abstract class HttpAI implements AIProvider {
             }
         }
     }
-
     private void executeAndStream(AIRequest request, Tracked tracked, CallHandle handle) throws AIException {
         Request httpRequest = buildRequest(request);
         Call call = client().newCall(httpRequest);
@@ -128,6 +134,7 @@ public abstract class HttpAI implements AIProvider {
                         // Error bodies are best-effort diagnostics.
                     }
                 }
+                logHttpError(response.code(), errorBody);
                 throw AIException.fromHttp(response, errorBody);
             }
             if (body == null) {
@@ -163,11 +170,27 @@ public abstract class HttpAI implements AIProvider {
         }
     }
 
+    /** Logs non-2xx failures: status + first 500 chars of body, key masked as ***. */
+    private void logHttpError(int code, String errorBody) {
+        try {
+            String masked = errorBody == null ? "" : errorBody;
+            if (!apiKey.isEmpty() && !masked.isEmpty()) {
+                masked = masked.replace(apiKey, "***");
+            }
+            if (masked.length() > 500) {
+                masked = masked.substring(0, 500);
+            }
+            Log.w(TAG, "HTTP " + code + " " + masked);
+        } catch (Exception ignored) {
+            Log.w(TAG, "HTTP " + code + " (unreadable error body)");
+        }
+    }
+
     protected OkHttpClient client() {
         return SHARED_CLIENT;
     }
 
-    /** Joins base URL + endpoint path and appends any fixed query suffix. */
+    /** Joins the (already sanitized, version-inclusive) base URL + endpoint path. */
     protected String buildUrl(String path) {
         String base = stripTrailingSlash(baseUrl);
         String url = base + (path.startsWith("/") ? path : "/" + path);
@@ -179,11 +202,13 @@ public abstract class HttpAI implements AIProvider {
 
     /** Applies the profile's auth scheme and any extra static headers. */
     protected Request.Builder applyHeaders(Request.Builder builder) {
-        if (!apiKey.isEmpty()) {
-            if (profile.apiKeyHeaderAuth) {
-                builder.header("api-key", apiKey);
-            } else {
-                builder.header("Authorization", "Bearer " + apiKey);
+        if (!profile.skipAuth) {
+            if (!apiKey.isEmpty()) {
+                if (profile.apiKeyHeaderAuth) {
+                    builder.header("api-key", apiKey);
+                } else {
+                    builder.header("Authorization", "Bearer " + apiKey);
+                }
             }
         }
         for (Map.Entry<String, String> header : profile.extraHeaders.entrySet()) {
@@ -214,7 +239,7 @@ public abstract class HttpAI implements AIProvider {
     /** Fresh per-call accumulation state (text, tool-call fragments, usage). */
     protected abstract StreamState newState();
 
-    /** Handles one SSE frame's data payload. May throw to abort with a friendly error. */
+    /** Handles one SSE frame\'s data payload. May throw to abort with a friendly error. */
     protected abstract void handleEvent(StreamState state, String eventName, String data, Tracked tracked)
             throws AIException;
 

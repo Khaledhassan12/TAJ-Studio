@@ -7,10 +7,14 @@ import pro.sketchware.ai.core.Protocol;
 import pro.sketchware.ai.core.ProviderProfile;
 
 /**
- * Static catalog of every built-in provider profile. Three protocol families
- * cover everything: native Anthropic, native Gemini, and OpenAI-compatible
- * (the universal escape hatch for LocalAI, LM Studio, llama.cpp, vLLM,
- * LiteLLM, one-api, new-api and any other compatible server).
+ * Static catalog of every built-in provider profile, mapped to the exact
+ * official contracts. Three protocol families cover everything: native
+ * Anthropic, native Gemini and OpenAI-compatible (the universal escape hatch
+ * for LocalAI, LM Studio, llama.cpp, vLLM, LiteLLM and any compatible server).
+ *
+ * The base URL always INCLUDES any version path (e.g. ".../v1"). Engines append
+ * ONLY endpoint paths ("chat/completions", "messages", "models"...) and never
+ * auto-append "/v1", so no double-version bug can appear.
  */
 public final class ProviderCatalog {
 
@@ -36,7 +40,6 @@ public final class ProviderCatalog {
                 .build());
         list.add(new ProviderProfile.Builder("google", "Google Vertex (compatible)", Protocol.GEMINI)
                 .baseUrl("https://generativelanguage.googleapis.com")
-                .baseUrlEditable(true)
                 .models("gemini-2.5-pro")
                 .build());
         list.add(openAi("grok", "xAI Grok", "https://api.x.ai/v1",
@@ -47,7 +50,7 @@ public final class ProviderCatalog {
                 "qwen-max", "qwen-plus", "qwen-turbo"));
         list.add(openAi("deepseek", "DeepSeek", "https://api.deepseek.com",
                 "deepseek-chat", "deepseek-reasoner"));
-        list.add(openAi("meta", "Meta (compatible gateway)", "https://api.openai.com/v1",
+        list.add(openAi("meta", "Meta (compatible gateway)", "https://api.llama.com/compat/v1",
                 "llama-4-maverick", "llama-4-scout"));
         list.add(openAi("copilot", "GitHub Models", "https://models.inference.ai.azure.com",
                 "gpt-4o", "gpt-4o-mini"));
@@ -55,7 +58,7 @@ public final class ProviderCatalog {
                 "sonar", "sonar-pro"));
         list.add(new ProviderProfile.Builder("openrouter", "OpenRouter", Protocol.OPENAI_COMPATIBLE)
                 .baseUrl("https://openrouter.ai/api/v1")
-                .header("HTTP-Referer", "https://github.com/Khaledhassan12/TAJ-Studio")
+                .header("HTTP-Referer", "https://taj.studio")
                 .header("X-Title", "TAJ Studio")
                 .models("anthropic/claude-sonnet-4.5", "openai/gpt-4o", "google/gemini-2.5-pro",
                         "meta-llama/llama-3.3-70b-instruct")
@@ -65,6 +68,7 @@ public final class ProviderCatalog {
         list.add(new ProviderProfile.Builder("ollama", "Ollama (local)", Protocol.OPENAI_COMPATIBLE)
                 .baseUrl("http://localhost:11434/v1")
                 .requiresKey(false)
+                .skipAuth(true)
                 .models("llama3.2", "qwen2.5-coder", "mistral")
                 .build());
         list.add(openAi("zai", "Z.ai (GLM)", "https://api.z.ai/api/paas/v4",
@@ -80,7 +84,7 @@ public final class ProviderCatalog {
         list.add(new ProviderProfile.Builder("azure", "Azure AI Foundry", Protocol.OPENAI_COMPATIBLE)
                 .baseUrl("https://YOUR-RESOURCE.openai.azure.com/openai/deployments/YOUR-DEPLOYMENT")
                 .apiKeyHeaderAuth(true)
-                .urlQuerySuffix("api-version=2024-08-01-preview")
+                .urlQuerySuffix("api-version=2024-10-21")
                 .models("gpt-4o", "gpt-4o-mini")
                 .build());
         list.add(openAi("together", "Together AI", "https://api.together.xyz/v1",
@@ -90,7 +94,7 @@ public final class ProviderCatalog {
         list.add(openAi("agentrouter", "AgentRouter (compatible)", "https://api.agentrouter.com/v1",
                 "gpt-4o-mini"));
 
-        // Universal escape hatch: any OpenAI/Anthropic/Gemini-compatible URL.
+        // Universal escape hatch: any OpenAI-compatible URL the user enters.
         list.add(new ProviderProfile.Builder(ProviderProfile.CUSTOM_ID, "Custom (OpenAI-compatible)", Protocol.OPENAI_COMPATIBLE)
                 .baseUrl("")
                 .requiresKey(false)

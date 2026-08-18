@@ -48,4 +48,21 @@
 
 Your API key stays on this device, encrypted. The assistant only talks to the provider you choose and can be turned off at any time.</string>
     <string name="ai_about_privacy">Privacy: keys are stored locally with EncryptedSharedPreferences. Nothing is sent anywhere except your own provider.</string>
+
+    <!-- Model sync (Part B) -->
+    <string name="ai_sync_models">Sync models</string>
+    <string name="ai_choose_model">Choose model</string>
+    <string name="ai_last_sync_never">Never synced</string>
+    <string name="ai_synced_at">Synced %1$s</string>
+    <string name="ai_model_filter_all">All</string>
+    <string name="ai_model_filter_free">Free</string>
+    <string name="ai_model_filter_paid">Paid</string>
+    <string name="ai_no_pricing">This provider does not expose pricing data</string>
+    <string name="ai_no_model_list">This provider does not expose a model list. Enter the model ID manually.</string>
+    <string name="ai_connected_models">Connected &#8226; %1$d models available</string>
+    <string name="ai_model_picker_title">Choose model</string>
+    <string name="ai_model_picker_search">Search models</string>
+    <string name="ai_model_picker_empty">No models found. Try a different search or sync again.</string>
+    <string name="ai_model_free">FREE</string>
+    <string name="ai_model_paid">PAID</string>
 </resources>

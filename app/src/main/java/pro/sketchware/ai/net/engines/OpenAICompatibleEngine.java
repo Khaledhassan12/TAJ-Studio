@@ -20,10 +20,13 @@ import pro.sketchware.ai.net.AIException;
 import pro.sketchware.ai.net.HttpAI;
 
 /**
- * Engine for every OpenAI-compatible endpoint: OpenAI, xAI Grok, Groq, Qwen,
- * DeepSeek, GitHub Models, Perplexity, OpenRouter, NVIDIA NIM, Ollama, Z.ai,
- * Hugging Face, Mistral, DashScope, AI21, Azure AI Foundry, Together, Cerebras,
- * LM Studio, LocalAI, vLLM, LiteLLM and any other /chat/completions server.
+ * Engine for every OpenAI-compatible endpoint. The base URL supplied by the
+ * provider already includes any version path; this engine appends ONLY
+ * "/chat/completions". Auth is assembled by {@link HttpAI#applyHeaders}:
+ * "Authorization: Bearer &lt;key&gt;" (exactly one space), "api-key" header for
+ * Azure-style gateways, or no Authorization at all for keyless local servers.
+ * Bodies are minimal: {model, messages, stream, temperature?, max_tokens?,
+ * tools?}. SSE parsing reads "data:" frames until "data: [DONE]".
  */
 public final class OpenAICompatibleEngine extends HttpAI {
 
@@ -190,7 +193,6 @@ public final class OpenAICompatibleEngine extends HttpAI {
             }
         }
     }
-
     @Override
     protected void parseNonStreaming(StreamState state, String rawBody, Tracked tracked) throws AIException {
         OpenAIState openAi = (OpenAIState) state;

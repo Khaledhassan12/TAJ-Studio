@@ -20,10 +20,12 @@ import pro.sketchware.ai.net.AIException;
 import pro.sketchware.ai.net.HttpAI;
 
 /**
- * Engine for Google Gemini (AI Studio), Vertex-style compatible gateways and
- * the "google-studio-ai" alias. Uses the v1beta generateContent REST surface
- * with SSE streaming, x-goog-api-key auth, function_declarations tools and
- * functionCall / functionResponse parts.
+ * Engine for Google Gemini (AI Studio) and Vertex-style compatible gateways.
+ * Base URL has no version path; this engine appends ONLY
+ * "/v1beta/models/{model}:streamGenerateContent?alt=sse" (streaming) and reads
+ * SSE chunks as candidates[0].content.parts[].text plus functionCall parts.
+ * Auth: "x-goog-api-key". Body: system_instruction.parts, contents with
+ * role user/model, tools.function_declarations, optional generationConfig.
  */
 public final class GeminiEngine extends HttpAI {
 
@@ -53,7 +55,9 @@ public final class GeminiEngine extends HttpAI {
             if (request.maxTokens > 0) {
                 generationConfig.put("maxOutputTokens", request.maxTokens);
             }
-            body.put("generationConfig", generationConfig);
+            if (generationConfig.length() > 0) {
+                body.put("generationConfig", generationConfig);
+            }
 
             if (request.hasTools()) {
                 JSONArray declarations = new JSONArray();
@@ -83,19 +87,27 @@ public final class GeminiEngine extends HttpAI {
         }
     }
 
+    /**
+     * URL-encodes the model id and tolerates pasted "models/..." prefixes so
+     * the server-accepted bare id ("gemini-2.5-pro") and the picker id are
+     * always interchangeable.
+     */
     private static String encodeModel(String model) throws AIException {
-        if (model == null || model.isEmpty()) {
+        String clean = model;
+        if (clean != null && clean.startsWith("models/")) {
+            clean = clean.substring("models/".length());
+        }
+        if (clean == null || clean.isEmpty()) {
             throw new AIException(AIException.Type.MODEL_NOT_FOUND, "No model name configured for this provider.");
         }
         try {
-            return URLEncoder.encode(model, "UTF-8").replace("+", "%20");
+            return URLEncoder.encode(clean, "UTF-8").replace("+", "%20");
         } catch (UnsupportedEncodingException e) {
-            // UTF-8 always exists on Android.
-            return model;
+            return clean;
         }
     }
 
-    /** Maps roles ("assistant" -> "model"), folds tool results in, merges consecutive turns. */
+    /** Maps roles ("assistant" -&gt; "model"), folds tool results in, merges consecutive turns. */
     private static JSONArray buildContents(AIRequest request) throws JSONException {
         JSONArray contents = new JSONArray();
         JSONObject current = null;
@@ -179,12 +191,10 @@ public final class GeminiEngine extends HttpAI {
     protected StreamState newState() {
         return new GeminiState();
     }
-
     @Override
     protected void handleEvent(StreamState state, String eventName, String data, Tracked tracked)
             throws AIException {
-        GeminiState gemini = (GeminiState) state;
-        parseChunk(gemini, data, tracked);
+        parseChunk((GeminiState) state, data, tracked);
     }
 
     @Override

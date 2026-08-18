@@ -11,6 +11,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import pro.sketchware.ai.core.ModelItem;
 import pro.sketchware.ai.core.Protocol;
 import pro.sketchware.ai.core.ProviderProfile;
 
@@ -18,7 +22,9 @@ import pro.sketchware.ai.core.ProviderProfile;
  * Persistent TAG Assistant configuration. API keys live in
  * EncryptedSharedPreferences when the device allows it, with a plain
  * SharedPreferences fallback so the feature never crashes the host app.
- * Keys are never written to logs.
+ * Keys are sanitized on write and on read; they are never written to logs.
+ * Per-provider model caches (id + optional pricing flag + sync timestamp)
+ * are persisted here too.
  */
 public final class AIConfigStore {
 
@@ -28,6 +34,10 @@ public final class AIConfigStore {
     private static final String KEY_DEFAULT_MODE = "default_mode";
     private static final String KEY_SELECTED_PROVIDER = "selected_provider";
     private static final String KEY_CUSTOM_PROVIDERS = "custom_providers";
+
+    private static final String MODELS_CACHE_PREFIX = "models_cache_";
+    private static final String MODELS_CACHE_TS_PREFIX = "models_cache_ts_";
+    private static final long MODELS_CACHE_TTL_MS = 24 * 60 * 60 * 1000L;
 
     public static final String MODE_CHAT = "chat";
     public static final String MODE_AGENT = "agent";
@@ -73,6 +83,50 @@ public final class AIConfigStore {
     }
 
     // ------------------------------------------------------------------
+    // Key / URL sanitization (applied on save AND on use)
+    // ------------------------------------------------------------------
+
+    /**
+     * Normalizes a pasted API key: trims whitespace (including \r\n), strips
+     * surrounding quotes and rejects empty results.
+     */
+    public static String sanitizeKey(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String value = raw.trim();
+        while (value.length() > 0) {
+            char first = value.charAt(0);
+            if (first == '"' || first == '\'' || Character.isWhitespace(first)) {
+                value = value.substring(1);
+            } else {
+                break;
+            }
+        }
+        while (value.length() > 0) {
+            char last = value.charAt(value.length() - 1);
+            if (last == '"' || last == '\'' || Character.isWhitespace(last)) {
+                value = value.substring(0, value.length() - 1);
+            } else {
+                break;
+            }
+        }
+        return value.trim();
+    }
+
+    /** Trims a base URL and removes any trailing slashes (no other rewriting). */
+    public static String sanitizeBaseUrl(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String value = raw.trim();
+        while (value.endsWith("/")) {
+            value = value.substring(0, value.length() - 1);
+        }
+        return value;
+    }
+
+    // ------------------------------------------------------------------
     // Master switches
     // ------------------------------------------------------------------
 
@@ -111,22 +165,22 @@ public final class AIConfigStore {
     }
 
     public String getApiKey(String providerId) {
-        return prefs == null ? "" : prefs.getString("api_key_" + providerId, "");
+        return prefs == null ? "" : sanitizeKey(prefs.getString("api_key_" + providerId, ""));
     }
 
     public void setApiKey(String providerId, String key) {
         if (prefs != null) {
-            prefs.edit().putString("api_key_" + providerId, key == null ? "" : key.trim()).apply();
+            prefs.edit().putString("api_key_" + providerId, sanitizeKey(key)).apply();
         }
     }
 
     public String getBaseUrl(String providerId) {
-        return prefs == null ? "" : prefs.getString("base_url_" + providerId, "");
+        return prefs == null ? "" : sanitizeBaseUrl(prefs.getString("base_url_" + providerId, ""));
     }
 
     public void setBaseUrl(String providerId, String url) {
         if (prefs != null) {
-            prefs.edit().putString("base_url_" + providerId, url == null ? "" : url.trim()).apply();
+            prefs.edit().putString("base_url_" + providerId, sanitizeBaseUrl(url)).apply();
         }
     }
 
@@ -138,6 +192,59 @@ public final class AIConfigStore {
         if (prefs != null) {
             prefs.edit().putString("model_" + providerId, model == null ? "" : model.trim()).apply();
         }
+    }
+    // ------------------------------------------------------------------
+    // Per-provider model cache (id + optional pricing + sync timestamp)
+    // ------------------------------------------------------------------
+
+    public void saveModelsCache(String providerId, List<ModelItem> items) {
+        if (prefs == null || providerId == null) {
+            return;
+        }
+        JSONArray array = new JSONArray();
+        if (items != null) {
+            for (ModelItem item : items) {
+                array.put(item.toJson());
+            }
+        }
+        prefs.edit()
+                .putString(MODELS_CACHE_PREFIX + providerId, array.toString())
+                .putLong(MODELS_CACHE_TS_PREFIX + providerId, System.currentTimeMillis())
+                .apply();
+    }
+
+    public List<ModelItem> loadModelsCache(String providerId) {
+        List<ModelItem> result = new ArrayList<>();
+        if (prefs == null || providerId == null) {
+            return result;
+        }
+        String raw = prefs.getString(MODELS_CACHE_PREFIX + providerId, "");
+        if (raw.isEmpty()) {
+            return result;
+        }
+        try {
+            JSONArray array = new JSONArray(raw);
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject json = array.optJSONObject(i);
+                if (json != null) {
+                    result.add(ModelItem.fromJson(json));
+                }
+            }
+        } catch (JSONException e) {
+            Log.w(TAG, "Model cache for " + providerId + " is corrupt, ignoring");
+        }
+        return result;
+    }
+
+    /** Wall-clock epoch millis of the last successful model sync for this provider (0 = never). */
+    public long getModelsCacheTimestamp(String providerId) {
+        return prefs == null ? 0L : prefs.getLong(MODELS_CACHE_TS_PREFIX + providerId, 0L);
+    }
+
+    /** True when the cache exists AND was synced within the last 24 hours. */
+    public boolean isModelsCacheFresh(String providerId) {
+        long timestamp = getModelsCacheTimestamp(providerId);
+        return timestamp > 0L && System.currentTimeMillis() - timestamp < MODELS_CACHE_TTL_MS;
     }
 
     // ------------------------------------------------------------------
@@ -240,6 +347,6 @@ public final class AIConfigStore {
         if (key.length() <= 8) {
             return "****";
         }
-        return key.substring(0, 4) + "…" + key.substring(key.length() - 4);
+        return key.substring(0, 4) + "..." + key.substring(key.length() - 4);
     }
 }

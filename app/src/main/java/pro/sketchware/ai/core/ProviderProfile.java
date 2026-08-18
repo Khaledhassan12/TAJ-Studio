@@ -15,6 +15,11 @@ public final class ProviderProfile {
     /** Reserved id for the universal user-defined endpoint entry. */
     public static final String CUSTOM_ID = "custom";
 
+    /** True when a provider exposes per-model pricing metadata (currently only OpenRouter). */
+    public static boolean exposesPricing(ProviderProfile profile) {
+        return profile != null && "openrouter".equals(profile.id);
+    }
+
     public final String id;
     public final String displayName;
     public final Protocol protocol;
@@ -26,7 +31,9 @@ public final class ProviderProfile {
     public final Map<String, String> extraHeaders;
     /** If true, auth is sent as an "api-key" header instead of "Authorization: Bearer". */
     public final boolean apiKeyHeaderAuth;
-    /** Optional fixed query suffix appended to request URLs (e.g. Azure api-version). */
+    /** If true, no Authorization header is ever sent even when a key is present (e.g. Ollama). */
+    public final boolean skipAuth;
+    /** Optional fixed query string appended to request URLs (e.g. Azure api-version). */
     public final String urlQuerySuffix;
     /** True when this profile was created/edited by the user rather than built-in. */
     public final boolean custom;
@@ -40,13 +47,17 @@ public final class ProviderProfile {
         requiresKey = b.requiresKey;
         defaultModelSuggestions = b.defaultModelSuggestions == null
                 ? new String[0] : b.defaultModelSuggestions.clone();
-        extraHeaders = Collections.unmodifiableMap(new LinkedHashMap<>(b.extraHeaders));
         apiKeyHeaderAuth = b.apiKeyHeaderAuth;
+        skipAuth = b.skipAuth;
         urlQuerySuffix = b.urlQuerySuffix;
         custom = b.custom;
+        extraHeaders = Collections.unmodifiableMap(new LinkedHashMap<>(b.extraHeaders));
     }
 
-    /** Returns a copy of this profile with a different base URL (used when the user edits it). */
+    /**
+     * Returns a copy of this profile with the same attributes but a different
+     * base URL (used when the user edits the field).
+     */
     public ProviderProfile withBaseUrl(String newBaseUrl) {
         Builder b = new Builder(id, displayName, protocol)
                 .baseUrl(newBaseUrl == null || newBaseUrl.isEmpty() ? defaultBaseUrl : newBaseUrl)
@@ -54,6 +65,7 @@ public final class ProviderProfile {
                 .requiresKey(requiresKey)
                 .models(defaultModelSuggestions)
                 .apiKeyHeaderAuth(apiKeyHeaderAuth)
+                .skipAuth(skipAuth)
                 .urlQuerySuffix(urlQuerySuffix)
                 .custom(custom);
         for (Map.Entry<String, String> e : extraHeaders.entrySet()) {
@@ -76,6 +88,7 @@ public final class ProviderProfile {
         private String[] defaultModelSuggestions;
         private final Map<String, String> extraHeaders = new LinkedHashMap<>();
         private boolean apiKeyHeaderAuth = false;
+        private boolean skipAuth = false;
         private String urlQuerySuffix = null;
         private boolean custom = false;
 
@@ -112,6 +125,11 @@ public final class ProviderProfile {
 
         public Builder apiKeyHeaderAuth(boolean enabled) {
             this.apiKeyHeaderAuth = enabled;
+            return this;
+        }
+
+        public Builder skipAuth(boolean skip) {
+            this.skipAuth = skip;
             return this;
         }
 

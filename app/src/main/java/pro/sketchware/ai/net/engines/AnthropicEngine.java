@@ -21,8 +21,15 @@ import pro.sketchware.ai.net.HttpAI;
 
 /**
  * Engine for the native Anthropic Messages API (and any Anthropic-compatible
- * gateway with a custom base URL). Streams message_start / content_block_* /
- * message_delta / message_stop events and speaks tool_use / tool_result blocks.
+ * gateway with a custom base URL). POSTs to "{base}/v1/messages" (base URL
+ * carries no version path for Anthropic). Auth is exactly
+ * "x-api-key: &lt;key&gt;" + "anthropic-version: 2023-06-01"; a Bearer header is
+ * never sent. Bodies stay minimal: model, max_tokens (required), system
+ * (top-level, extracted from system messages), messages (user/assistant only,
+ * tool results as tool_result blocks), stream:true, temperature?, tools? with
+ * input_schema. SSE events handled: message_start, content_block_start,
+ * content_block_delta (text_delta + input_json_delta accumulation),
+ * content_block_stop, message_delta, error.
  */
 public final class AnthropicEngine extends HttpAI {
 
@@ -141,7 +148,6 @@ public final class AnthropicEngine extends HttpAI {
     protected StreamState newState() {
         return new AnthropicState();
     }
-
     @Override
     protected void handleEvent(StreamState state, String eventName, String data, Tracked tracked)
             throws AIException {
