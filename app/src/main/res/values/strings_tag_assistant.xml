@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings entry (Managers category) -->
+    <string name="tag_assistant_manager_title">TAG Assistant Manager</string>
+    <string name="tag_assistant_manager_subtitle">AI agent &amp; chat companion for your project</string>
+
+    <!-- Titles -->
+    <string name="ai_chat_title">TAG Assistant</string>
+    <string name="ai_agent_title">AI Agent</string>
+
+    <!-- Provider setup -->
+    <string name="ai_test_connection">Test connection</string>
+    <string name="ai_provider">Provider</string>
+    <string name="ai_api_key">API key</string>
+    <string name="ai_base_url">Base URL</string>
+    <string name="ai_model">Model</string>
+
+    <!-- Status card -->
+    <string name="ai_status_title">Status</string>
+    <string name="ai_master_enable">Enable TAG Assistant</string>
+    <string name="ai_master_enable_desc">Adds the AI chat &amp; agent to your project editor. Everything stays optional and isolated.</string>
+    <string name="ai_default_mode">Default mode</string>
+    <string name="ai_mode_chat">Chat</string>
+    <string name="ai_mode_agent">Agent</string>
+    <string name="ai_connection_testing">Contacting provider…</string>
+    <string name="ai_connection_success">Connected! %1$s answered in time.</string>
+    <string name="ai_connection_disabled">TAG Assistant is turned off.</string>
+
+    <!-- Provider card -->
+    <string name="ai_provider_title">Provider</string>
+    <string name="ai_provider_hint">Choose your AI provider</string>
+    <string name="ai_api_key_hint">sk-… (stored encrypted on this device)</string>
+    <string name="ai_base_url_hint">https://api.example.com/v1</string>
+    <string name="ai_model_hint">Model name</string>
+    <string name="ai_model_suggestions">Suggestions</string>
+    <string name="ai_save">Save</string>
+    <string name="ai_saved">Settings saved.</string>
+    <string name="ai_key_required">This provider needs an API key before you can connect.</string>
+    <string name="ai_model_required">Enter a model name for this provider.</string>
+    <string name="ai_url_required">Enter the endpoint URL of your server.</string>
+
+    <!-- About / help card -->
+    <string name="ai_about_title">What is TAG Assistant?</string>
+    <string name="ai_about_body">TAG Assistant is an AI companion living inside your project editor.
+
+• Chat mode answers questions about your app, explains layouts and suggests events.
+• Agent mode can perform actions for you: build the project, open managers, adjust files — always asking before anything destructive.
+
+Your API key stays on this device, encrypted. The assistant only talks to the provider you choose and can be turned off at any time.</string>
+    <string name="ai_about_privacy">Privacy: keys are stored locally with EncryptedSharedPreferences. Nothing is sent anywhere except your own provider.</string>
+</resources>
