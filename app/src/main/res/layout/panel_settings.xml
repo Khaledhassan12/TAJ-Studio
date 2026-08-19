@@ -80,5 +80,32 @@
             android:layout_marginTop="24dp"
             android:text="Open full settings" />
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_readback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="1dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Config read-back (debug)"
+                    android:textAppearance="?attr/textAppearanceTitleSmall"/>
+                <TextView
+                    android:id="@+id/tv_readback"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textSize="12sp"
+                    android:textIsSelectable="true"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
     </LinearLayout>
 </ScrollView>

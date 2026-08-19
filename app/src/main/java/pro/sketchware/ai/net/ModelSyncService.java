@@ -49,6 +49,79 @@ public final class ModelSyncService {
     private ModelSyncService() {
     }
 
+    /**
+     * Synchronous key validation.
+     * Verdicts per protocol requirements.
+     */
+    public static String validateKey(ProviderProfile profile, String apiKey) {
+        String cleanKey = AIConfigStore.sanitizeKey(apiKey);
+        String base = AIConfigStore.sanitizeBaseUrl(profile.defaultBaseUrl);
+        if (base.isEmpty()) return "Enter a valid base URL.";
+
+        String path;
+        if ("openrouter".equals(profile.id)) {
+            path = "/key";
+        } else if (profile.protocol == Protocol.ANTHROPIC) {
+            path = "/v1/models";
+        } else if (profile.protocol == Protocol.GEMINI) {
+            path = "/v1beta/models";
+        } else {
+            path = "/models";
+        }
+
+        Request.Builder builder = new Request.Builder().url(base + path).get();
+        if (profile.protocol == Protocol.ANTHROPIC) {
+            builder.header("x-api-key", cleanKey);
+            builder.header("anthropic-version", "2023-06-01");
+        } else if (profile.protocol == Protocol.GEMINI) {
+            if (!cleanKey.isEmpty()) {
+                builder.header("x-goog-api-key", cleanKey);
+            }
+        } else {
+            if (!cleanKey.isEmpty()) {
+                builder.header("Authorization", "Bearer " + cleanKey);
+            }
+        }
+
+        try (Response response = CLIENT.newCall(builder.build()).execute()) {
+            if (response.isSuccessful()) {
+                // For "other oc" (OpenAI compatible but not OpenRouter), /models might be public.
+                if (!"openrouter".equals(profile.id) && profile.protocol == Protocol.OPENAI_COMPATIBLE) {
+                    // Quick ping to confirm auth
+                    AIConfigStore store = AIConfigStore.getInstance(null);
+                    String model = store.safeModel();
+                    if (!model.isEmpty()) {
+                        JSONObject body = new JSONObject();
+                        body.put("model", model);
+                        body.put("max_tokens", 1);
+                        JSONArray msgs = new JSONArray();
+                        msgs.put(new JSONObject().put("role", "user").put("content", "ping"));
+                        body.put("messages", msgs);
+
+                        Request ping = new Request.Builder()
+                                .url(base + "/chat/completions")
+                                .header("Authorization", "Bearer " + cleanKey)
+                                .post(okhttp3.RequestBody.create(body.toString(), okhttp3.MediaType.parse("application/json")))
+                                .build();
+                        try (Response pr = CLIENT.newCall(ping).execute()) {
+                            if (pr.isSuccessful()) return "Key accepted by provider.";
+                            if (pr.code() == 401 || pr.code() == 403) {
+                                return "Provider REJECTED this key. The app code is correct — generate a new key from the provider dashboard and paste it in API key field.";
+                            }
+                        }
+                    }
+                }
+                return "Key accepted by provider.";
+            }
+            if (response.code() == 401 || response.code() == 403) {
+                return "Provider REJECTED this key. The app code is correct — generate a new key from the provider dashboard and paste it in API key field.";
+            }
+            return "HTTP " + response.code() + ": " + readBody(response);
+        } catch (Exception e) {
+            return "Network error: " + e.getMessage();
+        }
+    }
+
     /** Outcome of one model-list fetch. */
     public static final class Result {
         public final List<ModelItem> models;
@@ -78,7 +151,7 @@ public final class ModelSyncService {
      */
     public static Result fetch(ProviderProfile profile, String apiKey) throws AIException {
         AIConfigStore store = AIConfigStore.getInstance(null);
-        String cleanKey = store.safeKey();
+        String cleanKey = apiKey != null && !apiKey.trim().isEmpty() ? AIConfigStore.sanitizeKey(apiKey) : store.safeKey();
         String base = store.safeBaseUrl(profile.defaultBaseUrl);
         if (base.isEmpty()) {
             throw new AIException(AIException.Type.MODEL_NOT_FOUND,

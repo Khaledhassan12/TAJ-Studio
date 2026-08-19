@@ -31,15 +31,15 @@ import pro.sketchware.ai.net.HttpAI;
  */
 public final class OpenAICompatibleEngine extends HttpAI {
 
-    public OpenAICompatibleEngine(ProviderProfile profile, String baseUrl, String apiKey) {
-        super(profile, baseUrl, apiKey);
+    public OpenAICompatibleEngine(android.content.Context context, ProviderProfile profile, String baseUrl, String apiKey) {
+        super(context, profile, baseUrl, apiKey);
     }
 
     @Override
     protected Request buildRequest(AIRequest request) throws AIException {
         try {
             JSONObject body = new JSONObject();
-            AIConfigStore store = AIConfigStore.getInstance(null);
+            AIConfigStore store = AIConfigStore.getInstance(context);
             body.put("model", store.safeModel());
             body.put("stream", true);
             if (request.temperature >= 0f) {
@@ -70,8 +70,8 @@ public final class OpenAICompatibleEngine extends HttpAI {
                     .url(buildUrl("/chat/completions"))
                     .post(jsonBody(body.toString()));
             
-            if (!apiKey.isEmpty()) {
-                applyHeaders(builder);
+            if (!store.safeKey().isEmpty()) {
+                builder.header("Authorization", "Bearer " + store.safeKey());
                 if (baseUrl.contains("openrouter.ai")) {
                     builder.header("HTTP-Referer", "https://taj.studio");
                     builder.header("X-Title", "TAJ Studio");

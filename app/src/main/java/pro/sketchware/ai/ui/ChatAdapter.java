@@ -26,10 +26,21 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_TOOL = 2;
     private static final int TYPE_SUGGESTION = 3;
     private static final int TYPE_TYPING = 4;
+    private static final int TYPE_ERROR = 5;
 
     private final List<ChatStore.Message> messages = new ArrayList<>();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
     private OnSuggestionListener suggestionListener;
+    private OnErrorActionListener onErrorActionListener;
+
+    public interface OnErrorActionListener {
+        void onAction(ChatStore.Message message);
+        void onLongClick(ChatStore.Message message);
+    }
+
+    public void setOnErrorActionListener(OnErrorActionListener listener) {
+        this.onErrorActionListener = listener;
+    }
     private boolean isTyping = false;
     private int lastAnimatedPosition = -1;
 
@@ -67,6 +78,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if ("user".equals(m.role)) return TYPE_USER;
         if ("tool".equals(m.role)) return TYPE_TOOL;
         if ("suggestion".equals(m.role)) return TYPE_SUGGESTION;
+        if ("error".equals(m.role)) return TYPE_ERROR;
         return TYPE_ASSISTANT;
     }
 
@@ -82,6 +94,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return new SuggestionViewHolder(inflater.inflate(R.layout.item_chat_suggestion, parent, false));
         } else if (viewType == TYPE_TYPING) {
             return new TypingViewHolder(inflater.inflate(R.layout.item_chat_typing, parent, false));
+        } else if (viewType == TYPE_ERROR) {
+            return new ErrorViewHolder(inflater.inflate(R.layout.item_chat_error, parent, false));
         } else {
             return new AssistantViewHolder(inflater.inflate(R.layout.item_chat_assistant, parent, false));
         }
@@ -111,6 +125,18 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             });
             vh.btnStay.setOnClickListener(v -> {
                 if (suggestionListener != null) suggestionListener.onStayInChat(holder.getAdapterPosition());
+            });
+        } else if (holder instanceof ErrorViewHolder) {
+            ErrorViewHolder vh = (ErrorViewHolder) holder;
+            vh.label.setText("Error • " + time);
+            vh.message.setText(m.text);
+            vh.btnAction.setText(m.action != null ? m.action : "Open settings");
+            vh.btnAction.setOnClickListener(v -> {
+                if (onErrorActionListener != null) onErrorActionListener.onAction(m);
+            });
+            vh.itemView.setOnLongClickListener(v -> {
+                if (onErrorActionListener != null) onErrorActionListener.onLongClick(m);
+                return true;
             });
         }
 
@@ -164,6 +190,17 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             super(v);
             btnSwitch = v.findViewById(R.id.btn_switch);
             btnStay = v.findViewById(R.id.btn_stay);
+        }
+    }
+
+    static class ErrorViewHolder extends RecyclerView.ViewHolder {
+        TextView label, message;
+        com.google.android.material.button.MaterialButton btnAction;
+        ErrorViewHolder(View v) {
+            super(v);
+            label = v.findViewById(R.id.tv_label);
+            message = v.findViewById(R.id.tv_message);
+            btnAction = v.findViewById(R.id.btn_action);
         }
     }
 

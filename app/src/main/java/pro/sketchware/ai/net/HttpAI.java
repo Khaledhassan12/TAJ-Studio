@@ -1,5 +1,6 @@
 package pro.sketchware.ai.net;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.io.IOException;
@@ -54,11 +55,13 @@ public abstract class HttpAI implements AIProvider {
 
     protected final ProviderProfile profile;
     protected final String baseUrl;
-    protected final String apiKey;
+    protected String apiKey;
+    protected final Context context;
 
-    protected HttpAI(ProviderProfile profile, String baseUrl, String apiKey) {
+    protected HttpAI(Context context, ProviderProfile profile, String baseUrl, String apiKey) {
+        this.context = context.getApplicationContext();
         this.profile = profile;
-        AIConfigStore store = AIConfigStore.getInstance(null);
+        AIConfigStore store = AIConfigStore.getInstance(this.context);
         this.baseUrl = store.safeBaseUrl(baseUrl != null && !baseUrl.isEmpty() ? baseUrl : profile.defaultBaseUrl);
         this.apiKey = store.safeKey();
     }
@@ -115,7 +118,18 @@ public abstract class HttpAI implements AIProvider {
         }
     }
     private void executeAndStream(AIRequest request, Tracked tracked, CallHandle handle) throws AIException {
+        // Defensive: ensure apiKey matches store
+        AIConfigStore store = AIConfigStore.getInstance(context);
+        String currentKey = store.safeKey();
+        if (!currentKey.equals(this.apiKey)) {
+            this.apiKey = currentKey;
+        }
+
         Request httpRequest = buildRequest(request);
+
+        String headerName = profile.apiKeyHeaderAuth ? "api-key" : (profile.protocol == Protocol.GEMINI ? "x-goog-api-key" : (profile.protocol == Protocol.ANTHROPIC ? "x-api-key" : "Authorization"));
+        Log.i("TAG_AI", "URL=" + httpRequest.url() + " MODEL=" + request.model + " AUTH=" + (headerName + "=" + pro.sketchware.ai.config.AIConfigStore.maskKey(apiKey)));
+
         Call call = client().newCall(httpRequest);
         handle.attach(call);
 

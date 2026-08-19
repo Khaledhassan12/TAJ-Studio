@@ -30,15 +30,15 @@ import pro.sketchware.ai.net.HttpAI;
  */
 public final class GeminiEngine extends HttpAI {
 
-    public GeminiEngine(ProviderProfile profile, String baseUrl, String apiKey) {
-        super(profile, baseUrl, apiKey);
+    public GeminiEngine(android.content.Context context, ProviderProfile profile, String baseUrl, String apiKey) {
+        super(context, profile, baseUrl, apiKey);
     }
 
     @Override
     protected Request buildRequest(AIRequest request) throws AIException {
         try {
             JSONObject body = new JSONObject();
-            AIConfigStore store = AIConfigStore.getInstance(null);
+            AIConfigStore store = AIConfigStore.getInstance(context);
             String model = store.safeModel();
 
             if (request.systemPrompt != null && !request.systemPrompt.isEmpty()) {
@@ -78,9 +78,8 @@ public final class GeminiEngine extends HttpAI {
             Request.Builder builder = new Request.Builder()
                     .url(url)
                     .post(jsonBody(body.toString()));
-            String key = store.safeKey();
-            if (!key.isEmpty()) {
-                builder.header("x-goog-api-key", key);
+            if (!store.safeKey().isEmpty()) {
+                builder.header("x-goog-api-key", store.safeKey());
             }
             for (java.util.Map.Entry<String, String> header : profile.extraHeaders.entrySet()) {
                 builder.header(header.getKey(), header.getValue());

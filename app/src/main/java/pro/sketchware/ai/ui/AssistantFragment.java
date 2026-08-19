@@ -42,6 +42,7 @@ import pro.sketchware.ai.core.AIProvider;
 import pro.sketchware.ai.core.AIProviderRegistry;
 import pro.sketchware.ai.core.AIResponse;
 import pro.sketchware.ai.core.ChatStore;
+import pro.sketchware.ai.core.ProviderProfile;
 import pro.sketchware.ai.core.StreamCallbacks;
 import pro.sketchware.ai.core.ToolCall;
 
@@ -90,6 +91,15 @@ public class AssistantFragment extends Fragment {
 
         if (savedInstanceState == null) {
             rail.setSelectedItemId(R.id.ai_dest_session);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        View settings = panels.get(R.id.ai_dest_settings);
+        if (settings != null) {
+            refreshReadback(settings);
         }
     }
 
@@ -158,6 +168,18 @@ public class AssistantFragment extends Fragment {
                     .setPositiveButton("OK", null)
                     .show();
         });
+        refreshReadback(panel);
+    }
+
+    private void refreshReadback(View panel) {
+        TextView tv = panel.findViewById(R.id.tv_readback);
+        if (tv != null) {
+            String report = "provider=" + configStore.getProviderId() +
+                    "\nmodel=" + configStore.safeModel() +
+                    "\nbaseUrl=" + configStore.getBaseUrl() +
+                    "\nkey=" + pro.sketchware.ai.config.AIConfigStore.maskKey(configStore.safeKey());
+            tv.setText(report);
+        }
     }
 
     private void setupModelsPanel(View panel) {
@@ -231,6 +253,29 @@ public class AssistantFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         chatAdapter = new ChatAdapter();
         rv.setAdapter(chatAdapter);
+
+        chatAdapter.setOnErrorActionListener(new ChatAdapter.OnErrorActionListener() {
+            @Override
+            public void onAction(ChatStore.Message message) {
+                if ("Test key".equals(message.action)) {
+                    testKeyLive();
+                } else {
+                    startActivity(new Intent(getActivity(), TagAssistantActivity.class));
+                }
+            }
+
+            @Override
+            public void onLongClick(ChatStore.Message message) {
+                if (message.toolState != null && !message.toolState.isEmpty()) {
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("Raw Error Details")
+                            .setMessage(message.toolState)
+                            .setPositiveButton("OK", null)
+                            .show();
+                }
+            }
+        });
+
         chatAdapter.setOnSuggestionListener(new ChatAdapter.OnSuggestionListener() {
             @Override
             public void onSwitchToAgent(int position) {
@@ -309,13 +354,20 @@ public class AssistantFragment extends Fragment {
         TextView modelInfo = panel.findViewById(R.id.tv_model_info);
         Chip location = panel.findViewById(R.id.chip_location);
 
-        String providerId = configStore.getSelectedProviderId();
+        String providerId = configStore.getProviderId();
         String model = configStore.safeModel();
         if (model.isEmpty()) {
             List<pro.sketchware.ai.core.ModelItem> cache = configStore.loadModelsCache(providerId);
             if (!cache.isEmpty()) {
-                model = cache.get(0).id;
-                configStore.setModel(providerId, model);
+                // Try to find a FREE model first
+                for (pro.sketchware.ai.core.ModelItem item : cache) {
+                    if (item.free != null && item.free) {
+                        model = item.id;
+                        break;
+                    }
+                }
+                if (model.isEmpty()) model = cache.get(0).id;
+                configStore.setModel(model);
             }
         }
         modelInfo.setText(model.isEmpty() ? "No model selected" : model);
@@ -399,7 +451,7 @@ public class AssistantFragment extends Fragment {
                     mainHandler.post(() -> {
                         isStreaming = false;
                         updateStreamingUi(false);
-                        addAssistantMessage("Error: " + error.getMessage());
+                        handleChatError(error);
                     });
                 }
             });
@@ -461,6 +513,57 @@ public class AssistantFragment extends Fragment {
         currentSession.messages.add(msg);
         chatAdapter.addMessage(msg);
         chatStore.saveSession(currentSession);
+    }
+
+    private void handleChatError(Throwable error) {
+        String providerId = configStore.getProviderId();
+        if (configStore.safeKey().isEmpty() && configStore.requiresKeyFor(providerId)) {
+            addErrorMessage("No API key stored. Open TAG Assistant Manager and Save your key.", "", "Open settings");
+            return;
+        }
+
+        String raw = "";
+        boolean isAuth = false;
+        if (error instanceof pro.sketchware.ai.net.AIException) {
+            pro.sketchware.ai.net.AIException ae = (pro.sketchware.ai.net.AIException) error;
+            raw = ae.rawBody;
+            if (raw.length() > 200) raw = raw.substring(0, 200);
+            if (ae.type == pro.sketchware.ai.net.AIException.Type.AUTH) isAuth = true;
+        }
+
+        if (isAuth) {
+            addErrorMessage("Authentication failed. Double-check your API key.", raw, "Test key");
+        } else {
+            addErrorMessage("Error: " + error.getMessage(), raw, "Open settings");
+        }
+    }
+
+    private void addErrorMessage(String text, String raw, String action) {
+        ChatStore.Message msg = new ChatStore.Message("error", text);
+        msg.toolState = raw; // Borrowing toolState for raw error details
+        msg.action = action;
+        currentSession.messages.add(msg);
+        chatAdapter.addMessage(msg);
+        chatStore.saveSession(currentSession);
+    }
+
+    private void testKeyLive() {
+        String providerId = configStore.getProviderId();
+        ProviderProfile profile = AIProviderRegistry.getInstance(getContext()).get(providerId);
+        String key = configStore.safeKey();
+        if (profile == null) return;
+
+        new Thread(() -> {
+            String verdict = pro.sketchware.ai.net.ModelSyncService.validateKey(profile, key);
+            mainHandler.post(() -> {
+                if (getContext() == null) return;
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(R.string.ai_test_connection)
+                        .setMessage(verdict)
+                        .setPositiveButton(R.string.common_word_ok, null)
+                        .show();
+            });
+        }).start();
     }
 
     private void updateStreamingUi(boolean streaming) {

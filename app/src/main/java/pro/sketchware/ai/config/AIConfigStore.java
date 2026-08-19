@@ -36,6 +36,13 @@ public final class AIConfigStore {
     private static final String KEY_SELECTED_PROVIDER = "selected_provider";
     private static final String KEY_CUSTOM_PROVIDERS = "custom_providers";
 
+    public static final String K_ENABLED = "assistant_enabled";
+    public static final String K_PROVIDER = "assistant_provider";
+    public static final String K_KEY = "assistant_key";
+    public static final String K_BASE = "assistant_base_url";
+    public static final String K_MODEL = "assistant_model";
+    public static final String K_MODE = "assistant_mode";
+
     private static final String MODELS_CACHE_PREFIX = "models_cache_";
     private static final String MODELS_CACHE_TS_PREFIX = "models_cache_ts_";
     private static final long MODELS_CACHE_TTL_MS = 24 * 60 * 60 * 1000L;
@@ -70,6 +77,40 @@ public final class AIConfigStore {
             }
         }
         prefs = candidate;
+        migrateOldKeys();
+    }
+
+    private void migrateOldKeys() {
+        if (prefs == null) return;
+        SharedPreferences.Editor editor = prefs.edit();
+        String currentProvider = getSelectedProviderId();
+
+        // 1. Provider
+        if (!prefs.contains(K_PROVIDER) && prefs.contains(KEY_SELECTED_PROVIDER)) {
+            editor.putString(K_PROVIDER, prefs.getString(KEY_SELECTED_PROVIDER, "openai"));
+        }
+
+        // 2. Key
+        if (!prefs.contains(K_KEY) && prefs.contains("api_key_" + currentProvider)) {
+            editor.putString(K_KEY, prefs.getString("api_key_" + currentProvider, ""));
+        }
+
+        // 3. Base URL
+        if (!prefs.contains(K_BASE) && prefs.contains("base_url_" + currentProvider)) {
+            editor.putString(K_BASE, prefs.getString("base_url_" + currentProvider, ""));
+        }
+
+        // 4. Model
+        if (!prefs.contains(K_MODEL) && prefs.contains("model_" + currentProvider)) {
+            editor.putString(K_MODEL, prefs.getString("model_" + currentProvider, ""));
+        }
+
+        // 5. Mode
+        if (!prefs.contains(K_MODE) && prefs.contains(KEY_DEFAULT_MODE)) {
+            editor.putString(K_MODE, prefs.getString(KEY_DEFAULT_MODE, MODE_CHAT));
+        }
+
+        editor.apply();
     }
 
     public static AIConfigStore getInstance(Context context) {
@@ -84,13 +125,19 @@ public final class AIConfigStore {
     }
 
     public String safeKey() {
-        String k = getApiKey(getSelectedProviderId());
-        return k == null ? "" : k.trim().replaceAll("^\"|\"$", "").replaceAll("[\\r\\n]", "");
+        String k = getKey();
+        if (k == null) return "";
+        k = k.trim();
+        if (k.startsWith("\"") && k.endsWith("\"") && k.length() > 1) {
+            k = k.substring(1, k.length() - 1);
+        }
+        return k.replaceAll("[\\r\\n]", "");
     }
 
     public String safeBaseUrl(String fallback) {
-        String u = getBaseUrl(getSelectedProviderId());
-        u = (u == null || u.trim().isEmpty()) ? fallback : u.trim();
+        String u = getBaseUrl();
+        if (u == null || u.trim().isEmpty()) u = fallback;
+        u = u.trim();
         while (u.endsWith("/")) {
             u = u.substring(0, u.length() - 1);
         }
@@ -110,16 +157,12 @@ public final class AIConfigStore {
         return !keyRequired || !k.isEmpty();
     }
 
-    private boolean requiresKeyFor(String providerId) {
+    public boolean requiresKeyFor(String providerId) {
         return providerId == null || !(providerId.equals("ollama") || providerId.equals("custom"));
     }
 
     public boolean isEnabledAndVerified() {
         return isAssistantEnabled() && isVerified() && !safeModel().isEmpty();
-    }
-
-    public String getModel() {
-        return getModel(getSelectedProviderId());
     }
 
     // ------------------------------------------------------------------
@@ -204,56 +247,76 @@ public final class AIConfigStore {
     // Provider selection and per-provider settings
     // ------------------------------------------------------------------
 
+    public String getProviderId() {
+        return prefs == null ? "openrouter" : prefs.getString(K_PROVIDER, "openrouter");
+    }
+
+    public void setProviderId(String id) {
+        if (prefs != null && id != null) {
+            prefs.edit().putString(K_PROVIDER, id.trim()).putBoolean(KEY_VERIFIED, false).apply();
+        }
+    }
+
+    public String getKey() {
+        return prefs == null ? "" : prefs.getString(K_KEY, "");
+    }
+
+    public void setKey(String key) {
+        if (prefs != null) {
+            prefs.edit().putString(K_KEY, sanitizeKey(key)).putBoolean(KEY_VERIFIED, false).apply();
+        }
+    }
+
+    public String getBaseUrl() {
+        return prefs == null ? "" : prefs.getString(K_BASE, "");
+    }
+
+    public void setBaseUrl(String url) {
+        if (prefs != null) {
+            prefs.edit().putString(K_BASE, sanitizeBaseUrl(url)).putBoolean(KEY_VERIFIED, false).apply();
+        }
+    }
+
+    public String getModel() {
+        return prefs == null ? "" : prefs.getString(K_MODEL, "");
+    }
+
+    public void setModel(String model) {
+        if (prefs != null) {
+            prefs.edit().putString(K_MODEL, model == null ? "" : model.trim()).putBoolean(KEY_VERIFIED, false).apply();
+        }
+    }
+
     public String getSelectedProviderId() {
-        return prefs == null ? "openai" : prefs.getString(KEY_SELECTED_PROVIDER, "openai");
+        return getProviderId();
     }
 
     public void setSelectedProviderId(String providerId) {
-        if (prefs != null && providerId != null) {
-            prefs.edit()
-                    .putString(KEY_SELECTED_PROVIDER, providerId)
-                    .putBoolean(KEY_VERIFIED, false)
-                    .apply();
-        }
+        setProviderId(providerId);
     }
 
     public String getApiKey(String providerId) {
-        return prefs == null ? "" : sanitizeKey(prefs.getString("api_key_" + providerId, ""));
+        return getKey();
     }
 
     public void setApiKey(String providerId, String key) {
-        if (prefs != null) {
-            prefs.edit()
-                    .putString("api_key_" + providerId, sanitizeKey(key))
-                    .putBoolean(KEY_VERIFIED, false)
-                    .apply();
-        }
+        setKey(key);
     }
 
     public String getBaseUrl(String providerId) {
-        return prefs == null ? "" : sanitizeBaseUrl(prefs.getString("base_url_" + providerId, ""));
+        return getBaseUrl();
     }
 
     public void setBaseUrl(String providerId, String url) {
-        if (prefs != null) {
-            prefs.edit()
-                    .putString("base_url_" + providerId, sanitizeBaseUrl(url))
-                    .putBoolean(KEY_VERIFIED, false)
-                    .apply();
-        }
+        setBaseUrl(url);
     }
 
     public String getModel(String providerId) {
-        return prefs == null ? "" : prefs.getString("model_" + providerId, "");
+        return getModel();
     }
 
     public void setModel(String providerId, String model) {
-        if (prefs != null) {
-            prefs.edit()
-                    .putString("model_" + providerId, model == null ? "" : model.trim())
-                    .putBoolean(KEY_VERIFIED, false)
-                    .apply();
-        }
+        setModel(model);
     }
     // ------------------------------------------------------------------
     // Per-provider model cache (id + optional pricing + sync timestamp)
@@ -402,13 +465,9 @@ public final class AIConfigStore {
     }
 
     /** Masks a key for safe display (first 4 + last 4 chars). */
-    public static String maskKey(String key) {
-        if (key == null || key.isEmpty()) {
-            return "";
-        }
-        if (key.length() <= 8) {
-            return "****";
-        }
-        return key.substring(0, 4) + "..." + key.substring(key.length() - 4);
+    public static String maskKey(String k) {
+        if (k == null || k.isEmpty()) return "EMPTY";
+        if (k.length() <= 6) return k.charAt(0) + "…";
+        return k.substring(0, 4) + "…" + k.substring(k.length() - 2);
     }
 }

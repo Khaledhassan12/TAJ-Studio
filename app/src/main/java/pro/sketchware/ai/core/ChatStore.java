@@ -32,10 +32,11 @@ public final class ChatStore {
     }
 
     public static class Message {
-        public String role; // user, assistant, system, tool
+        public String role; // user, assistant, system, tool, error
         public String text;
         public long time;
-        public String toolState; // JSON for tool chips
+        public String toolState; // JSON for tool chips or raw error body
+        public String action; // Action button text
 
         public Message(String role, String text) {
             this.role = role;
@@ -50,6 +51,7 @@ public final class ChatStore {
                 json.put("text", text);
                 json.put("time", time);
                 if (toolState != null) json.put("toolState", toolState);
+                if (action != null) json.put("action", action);
             } catch (JSONException ignored) {}
             return json;
         }
@@ -58,6 +60,7 @@ public final class ChatStore {
             Message m = new Message(json.optString("role"), json.optString("text"));
             m.time = json.optLong("time");
             m.toolState = json.optString("toolState", null);
+            m.action = json.optString("action", null);
             return m;
         }
     }

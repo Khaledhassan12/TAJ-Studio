@@ -87,15 +87,15 @@ public final class AIProviderRegistry {
     }
 
     /** Builds the right engine for a profile with the given credentials. */
-    public AIProvider createProvider(ProviderProfile profile, String apiKey) {
+    public AIProvider createProvider(Context context, ProviderProfile profile, String apiKey) {
         switch (profile.protocol) {
             case ANTHROPIC:
-                return new AnthropicEngine(profile, profile.defaultBaseUrl, apiKey);
+                return new AnthropicEngine(context, profile, profile.defaultBaseUrl, apiKey);
             case GEMINI:
-                return new GeminiEngine(profile, profile.defaultBaseUrl, apiKey);
+                return new GeminiEngine(context, profile, profile.defaultBaseUrl, apiKey);
             case OPENAI_COMPATIBLE:
             default:
-                return new OpenAICompatibleEngine(profile, profile.defaultBaseUrl, apiKey);
+                return new OpenAICompatibleEngine(context, profile, profile.defaultBaseUrl, apiKey);
         }
     }
 
@@ -103,7 +103,7 @@ public final class AIProviderRegistry {
     public AIProvider createActiveProvider(Context context) {
         AIConfigStore store = AIConfigStore.getInstance(context);
         ProviderProfile profile = activeProfile(context);
-        return createProvider(profile, store.getApiKey(profile.id));
+        return createProvider(context, profile, store.safeKey());
     }
 
     /** Model to use for a profile: user override, else first suggestion. */

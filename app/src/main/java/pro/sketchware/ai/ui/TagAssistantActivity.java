@@ -201,18 +201,18 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     private void applyProfile(ProviderProfile profile) {
         currentProfile = profile;
 
-        binding.editApiKey.setText(store.getApiKey(profile.id));
+        binding.editApiKey.setText(store.getKey());
         binding.tilApiKey.setEnabled(profile.requiresKey);
         if (!profile.requiresKey) {
             binding.tilApiKey.setError(null);
         }
 
-        String savedUrl = store.getBaseUrl(profile.id);
+        String savedUrl = store.getBaseUrl();
         binding.editBaseUrl.setText(!savedUrl.isEmpty() ? savedUrl : profile.defaultBaseUrl);
         binding.tilBaseUrl.setEnabled(profile.baseUrlEditable);
         binding.tilBaseUrl.setError(null);
 
-        String savedModel = store.getModel(profile.id);
+        String savedModel = store.getModel();
         if (!savedModel.isEmpty()) {
             binding.editModel.setText(savedModel);
         } else if (profile.hasSuggestions()) {
@@ -302,21 +302,34 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         String url = AIConfigStore.sanitizeBaseUrl(textOf(binding.editBaseUrl));
         String model = textOf(binding.editModel).trim();
 
-        store.setSelectedProviderId(currentProfile.id);
-        store.setApiKey(currentProfile.id, key);
-        store.setBaseUrl(currentProfile.id, url);
-        store.setModel(currentProfile.id, model);
+        store.setProviderId(currentProfile.id);
+        store.setKey(key);
+        store.setBaseUrl(url);
+        store.setModel(model);
 
         Snackbar.make(binding.getRoot(), R.string.ai_saved, Snackbar.LENGTH_SHORT).show();
     }
 
-    /** Test connection now probes the MODELS endpoint (fast, no tokens burned). */
+    /** Test connection now runs a real key validation check. */
     private void testConnection() {
         if (syncInProgress || !validateCredentials()) {
             return;
         }
         setSyncUi(true, true);
-        startModelFetch();
+        ProviderProfile effective = resolveEffectiveProfile();
+        String key = AIConfigStore.sanitizeKey(textOf(binding.editApiKey));
+        executor.execute(() -> {
+            String verdict = ModelSyncService.validateKey(effective, key);
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                setSyncUi(false, true);
+                new MaterialAlertDialogBuilder(TagAssistantActivity.this)
+                        .setTitle(R.string.ai_test_connection)
+                        .setMessage(verdict)
+                        .setPositiveButton(R.string.common_word_ok, null)
+                        .show();
+            });
+        });
     }
 
     private void syncModels() {

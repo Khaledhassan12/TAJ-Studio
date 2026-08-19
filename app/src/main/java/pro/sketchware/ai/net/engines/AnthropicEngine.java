@@ -36,15 +36,15 @@ public final class AnthropicEngine extends HttpAI {
 
     private static final String ANTHROPIC_VERSION = "2023-06-01";
 
-    public AnthropicEngine(ProviderProfile profile, String baseUrl, String apiKey) {
-        super(profile, baseUrl, apiKey);
+    public AnthropicEngine(android.content.Context context, ProviderProfile profile, String baseUrl, String apiKey) {
+        super(context, profile, baseUrl, apiKey);
     }
 
     @Override
     protected Request buildRequest(AIRequest request) throws AIException {
         try {
             JSONObject body = new JSONObject();
-            AIConfigStore store = AIConfigStore.getInstance(null);
+            AIConfigStore store = AIConfigStore.getInstance(context);
             body.put("model", store.safeModel());
             body.put("max_tokens", request.maxTokens > 0 ? request.maxTokens : 1024);
             body.put("stream", true);
@@ -68,7 +68,7 @@ public final class AnthropicEngine extends HttpAI {
                     .url(buildUrl("/v1/messages"))
                     .post(jsonBody(body.toString()))
                     .header("x-api-key", store.safeKey())
-                    .header("anthropic-version", ANTHROPIC_VERSION);
+                    .header("anthropic-version", "2023-06-01");
             for (Map.Entry<String, String> header : profile.extraHeaders.entrySet()) {
                 builder.header(header.getKey(), header.getValue());
             }
