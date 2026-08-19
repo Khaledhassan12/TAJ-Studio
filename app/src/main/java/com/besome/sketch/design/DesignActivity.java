@@ -179,6 +179,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     });
     private rs eventTabAdapter;
     private br componentTabAdapter;
+    private Fragment assistantFragment;
+    private boolean aiTabEnabled;
     private final ActivityResultLauncher<Intent> openImageManager = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
         if (result.getResultCode() == RESULT_OK) {
             refresh();
@@ -423,6 +425,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
     @Override
     public void onBackPressed() {
+        super.onBackPressed();
         if (drawer.isDrawerOpen(GravityCompat.END)) {
             drawer.closeDrawer(GravityCompat.END);
         } else if (viewTabAdapter.isPropertyViewVisible()) {
@@ -461,6 +464,9 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.design);
+
+        aiTabEnabled = pro.sketchware.ai.config.AIConfigStore.getInstance(this).isEnabledAndVerified(this);
+
         if (!isStoragePermissionGranted()) {
             finish();
         }
@@ -562,56 +568,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         xmlLayoutOrientation = findViewById(R.id.img_orientation);
         viewPager = findViewById(R.id.viewpager);
         viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
-        viewPager.setOffscreenPageLimit(3);
-        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-            }
-
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                if (currentTabNumber == 1) {
-                    if (eventTabAdapter != null) {
-                        eventTabAdapter.c();
-                    }
-                } else if (currentTabNumber == 2 && componentTabAdapter != null) {
-                    componentTabAdapter.unselectAll();
-                }
-                if (position == 0) {
-                    bottomMenu.findItem(7).setVisible(true);
-                    if (viewTabAdapter != null) {
-                        viewTabAdapter.showHidePropertyView(true);
-                        xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_screen);
-                    }
-                } else if (position == 1) {
-                    bottomMenu.findItem(7).setVisible(false);
-                    if (viewTabAdapter != null) {
-                        xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_code);
-                        viewTabAdapter.showHidePropertyView(false);
-                        if (eventTabAdapter != null) {
-                            eventTabAdapter.refreshEvents();
-                        }
-                    }
-                } else {
-                    bottomMenu.findItem(7).setVisible(false);
-                    if (viewTabAdapter != null) {
-                        xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_code);
-                        viewTabAdapter.showHidePropertyView(false);
-                        if (componentTabAdapter != null) {
-                            componentTabAdapter.refreshData();
-                        }
-                    }
-                }
-                refresh();
-                currentTabNumber = position;
-                invalidateOptionsMenu();
-            }
-        });
+        viewPager.setOffscreenPageLimit(4);
+        setupViewPagerListener();
         viewPager.getAdapter().notifyDataSetChanged();
         ((TabLayout) findViewById(R.id.tab_layout)).setupWithViewPager(viewPager);
 
@@ -646,6 +604,19 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     public void onDestroy() {
         super.onDestroy();
         unregisterReceiver(buildCancelReceiver);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (currentTabNumber == 3) {
+            MenuItem undo = menu.findItem(R.id.menu_view_undo);
+            if (undo != null) undo.setVisible(false);
+            MenuItem redo = menu.findItem(R.id.menu_view_redo);
+            if (redo != null) redo.setVisible(false);
+            MenuItem search = menu.findItem(R.id.design_option_menu_search);
+            if (search != null) search.setVisible(false);
+        }
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -707,6 +678,16 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         super.onResume();
         if (!isStoragePermissionGranted()) {
             finish();
+        }
+
+        boolean now = pro.sketchware.ai.config.AIConfigStore.getInstance(this).isEnabledAndVerified(this);
+        if (now != aiTabEnabled) {
+            aiTabEnabled = now;
+            int cur = viewPager.getCurrentItem();
+            viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
+            ((TabLayout) findViewById(R.id.tab_layout)).setupWithViewPager(viewPager);
+            viewPager.setCurrentItem(Math.min(cur, aiTabEnabled ? 3 : 2));
+            setupViewPagerListener();
         }
 
         long freeMegabytes = GB.c();
@@ -924,14 +905,14 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     /**
      * Opens {@link ManageCollectionActivity}.
      */
-    void toCollectionManager() {
+    public void toCollectionManager() {
         launchActivity(ManageCollectionActivity.class, openCollectionManager);
     }
 
     /**
      * Opens {@link AndroidManifestInjection}.
      */
-    void toAndroidManifestManager() {
+    public void toAndroidManifestManager() {
         if (projectFile == null) return;
         launchActivity(AndroidManifestInjection.class, null, new Pair<>("file_name", currentJavaFileName));
     }
@@ -939,7 +920,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     /**
      * Opens {@link ManageAppCompatActivity}.
      */
-    void toAppCompatInjectionManager() {
+    public void toAppCompatInjectionManager() {
         if (projectFile == null) return;
         launchActivity(ManageAppCompatActivity.class, null, new Pair<>("file_name", projectFile.getXmlName()));
     }
@@ -947,56 +928,56 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     /**
      * Opens {@link ManageAssetsActivity}.
      */
-    void toAssetManager() {
+    public void toAssetManager() {
         launchActivity(ManageAssetsActivity.class, null);
     }
 
     /**
      * Shows a {@link CustomBlocksDialog}.
      */
-    void toCustomBlocksViewer() {
+    public void toCustomBlocksViewer() {
         new CustomBlocksDialog().show(this, sc_id);
     }
 
     /**
      * Opens {@link ManageJavaActivity}.
      */
-    void toJavaManager() {
+    public void toJavaManager() {
         launchActivity(ManageJavaActivity.class, null, new Pair<>("pkgName", q.packageName));
     }
 
     /**
      * Opens {@link ManagePermissionActivity}.
      */
-    void toPermissionManager() {
+    public void toPermissionManager() {
         launchActivity(ManagePermissionActivity.class, null);
     }
 
     /**
      * Opens {@link ManageProguardActivity}.
      */
-    void toProguardManager() {
+    public void toProguardManager() {
         launchActivity(ManageProguardActivity.class, null);
     }
 
     /**
      * Opens {@link ManageResourceActivity}.
      */
-    void toResourceManager() {
+    public void toResourceManager() {
         launchActivity(ManageResourceActivity.class, openResourcesManager);
     }
 
     /**
      * Opens {@link ResourcesEditorActivity}.
      */
-    void toResourceEditor() {
+    public void toResourceEditor() {
         launchActivity(ResourcesEditorActivity.class, openResourcesManager);
     }
 
     /**
      * Opens {@link ManageStringFogFragment}.
      */
-    void toStringFogManager() {
+    public void toStringFogManager() {
         var fragmentManager = getSupportFragmentManager();
         if (fragmentManager.findFragmentByTag("stringFogFragment") == null) {
             var bottomSheet = new ManageStringFogFragment();
@@ -1007,42 +988,42 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     /**
      * Opens {@link ManageFontActivity}.
      */
-    void toFontManager() {
+    public void toFontManager() {
         launchActivity(ManageFontActivity.class, null);
     }
 
     /**
      * Opens {@link ManageImageActivity}.
      */
-    void toImageManager() {
+    public void toImageManager() {
         launchActivity(ManageImageActivity.class, openImageManager);
     }
 
     /**
      * Opens {@link ManageLibraryActivity}.
      */
-    void toLibraryManager() {
+    public void toLibraryManager() {
         launchActivity(ManageLibraryActivity.class, openLibraryManager);
     }
 
     /**
      * Opens {@link ManageViewActivity}.
      */
-    void toViewManager() {
+    public void toViewManager() {
         launchActivity(ManageViewActivity.class, openViewManager);
     }
 
     /**
      * Opens {@link ManageSoundActivity}.
      */
-    void toSoundManager() {
+    public void toSoundManager() {
         launchActivity(ManageSoundActivity.class, null);
     }
 
     /**
      * Opens {@link SrcViewerActivity}.
      */
-    void toSourceCodeViewer() {
+    public void toSourceCodeViewer() {
         launchActivity(SrcViewerActivity.class, null, new Pair<>("current", Helper.getText(fileName)));
     }
 
@@ -1551,20 +1532,108 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         }
     }
 
+    private void setupViewPagerListener() {
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (currentTabNumber == 1) {
+                    if (eventTabAdapter != null) {
+                        eventTabAdapter.c();
+                    }
+                } else if (currentTabNumber == 2 && componentTabAdapter != null) {
+                    componentTabAdapter.unselectAll();
+                }
+
+                View bottomBar = findViewById(R.id.bottom_bar);
+
+                if (position == 3) {
+                    if (bottomBar != null && bottomBar.getVisibility() == View.VISIBLE) {
+                        bottomBar.animate()
+                                .translationY(bottomBar.getHeight())
+                                .setDuration(200)
+                                .setInterpolator(new androidx.interpolator.view.animation.FastOutSlowInInterpolator())
+                                .withEndAction(() -> bottomBar.setVisibility(View.GONE))
+                                .start();
+                    }
+                } else if (currentTabNumber == 3) {
+                    if (bottomBar != null && bottomBar.getVisibility() != View.VISIBLE) {
+                        bottomBar.setVisibility(View.VISIBLE);
+                        bottomBar.setTranslationY(bottomBar.getHeight());
+                        bottomBar.animate()
+                                .translationY(0)
+                                .setDuration(200)
+                                .setInterpolator(new androidx.interpolator.view.animation.FastOutSlowInInterpolator())
+                                .start();
+                    }
+                }
+
+                if (position == 0) {
+                    bottomMenu.findItem(7).setVisible(true);
+                    if (viewTabAdapter != null) {
+                        viewTabAdapter.showHidePropertyView(true);
+                        refreshViewTabAdapter();
+                    }
+                } else if (position == 1) {
+                    bottomMenu.findItem(7).setVisible(false);
+                    if (viewTabAdapter != null) {
+                        xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_code);
+                        viewTabAdapter.showHidePropertyView(false);
+                        if (eventTabAdapter != null) {
+                            eventTabAdapter.refreshEvents();
+                        }
+                    }
+                } else if (position == 2) {
+                    bottomMenu.findItem(7).setVisible(false);
+                    if (viewTabAdapter != null) {
+                        xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_code);
+                        viewTabAdapter.showHidePropertyView(false);
+                        if (componentTabAdapter != null) {
+                            componentTabAdapter.refreshData();
+                        }
+                    }
+                } else {
+                    // Assistant tab
+                    if (viewTabAdapter != null) {
+                        viewTabAdapter.showHidePropertyView(false);
+                    }
+                }
+                refresh();
+                currentTabNumber = position;
+                invalidateOptionsMenu();
+            }
+        });
+    }
+
     private class ViewPagerAdapter extends FragmentPagerAdapter {
         private final String[] labels;
 
         public ViewPagerAdapter(FragmentManager fragmentManager) {
             super(fragmentManager);
-            labels = new String[]{
-                    Helper.getResString(R.string.design_tab_title_view),
-                    Helper.getResString(R.string.design_tab_title_event),
-                    Helper.getResString(R.string.design_tab_title_component)};
+            if (aiTabEnabled) {
+                labels = new String[]{
+                        Helper.getResString(R.string.design_tab_title_view),
+                        Helper.getResString(R.string.design_tab_title_event),
+                        Helper.getResString(R.string.design_tab_title_component),
+                        Helper.getResString(R.string.design_tab_title_assistant)};
+            } else {
+                labels = new String[]{
+                        Helper.getResString(R.string.design_tab_title_view),
+                        Helper.getResString(R.string.design_tab_title_event),
+                        Helper.getResString(R.string.design_tab_title_component)};
+            }
         }
 
         @Override
         public int getCount() {
-            return 3;
+            return labels.length;
         }
 
         @Override
@@ -1580,8 +1649,10 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                 viewTabAdapter = (ViewEditorFragment) fragment;
             } else if (position == 1) {
                 eventTabAdapter = (rs) fragment;
-            } else {
+            } else if (position == 2) {
                 componentTabAdapter = (br) fragment;
+            } else if (position == 3) {
+                assistantFragment = fragment;
             }
 
             return fragment;
@@ -1592,8 +1663,12 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         public Fragment getItem(int position) {
             if (position == 0) {
                 return new ViewEditorFragment();
+            } else if (position == 1) {
+                return new rs();
+            } else if (position == 2) {
+                return new br();
             } else {
-                return position == 1 ? new rs() : new br();
+                return new pro.sketchware.ai.ui.AssistantFragment();
             }
         }
     }

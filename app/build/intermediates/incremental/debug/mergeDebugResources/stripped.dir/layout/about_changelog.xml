@@ -1,0 +1,202 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:colorBackground"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginBottom="2dp"
+        android:focusable="false"
+        android:id="@+id/tv_variant"
+        android:letterSpacing="0.12"
+        android:textAllCaps="true"
+        android:textAppearance="?attr/textAppearanceLabelLarge"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        tools:text="Official / Beta" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="10dp">
+
+        <!-- Backdrop glow layer: offset colored card creates a soft depth silhouette behind the main card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="1dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="-1dp"
+            android:layout_marginBottom="-1dp"
+            android:alpha="0.10"
+            app:cardBackgroundColor="?attr/colorPrimary"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="3dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:animateLayoutChanges="true"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:id="@+id/log_background">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="0dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="14dp">
+
+                    <LinearLayout
+                        android:id="@+id/view_leftline"
+                        android:layout_width="5dp"
+                        android:layout_height="52dp"
+                        android:layout_marginEnd="14dp"
+                        android:background="?attr/colorPrimary"
+                        android:orientation="horizontal" />
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <!-- Soft colored halo behind the icon, larger and low-alpha, offset centered -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:layout_gravity="center"
+                            android:alpha="0.16"
+                            app:cardBackgroundColor="?attr/colorPrimary"
+                            app:cardCornerRadius="18dp"
+                            app:cardElevation="0dp" />
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="46dp"
+                            android:layout_height="46dp"
+                            android:layout_gravity="center"
+                            app:cardCornerRadius="15dp"
+                            app:cardElevation="0dp"
+                            app:contentPadding="0dp"
+                            app:strokeColor="?attr/colorPrimary"
+                            app:strokeWidth="1.5dp">
+
+                            <ImageView
+                                android:id="@+id/img_variant_icon"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:focusable="false"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/sketch_app_icon" />
+                        </com.google.android.material.card.MaterialCardView>
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:fadingEdgeLength="20dp"
+                            android:focusable="true"
+                            android:focusableInTouchMode="true"
+                            android:marqueeRepeatLimit="marquee_forever"
+                            android:requiresFadingEdge="horizontal"
+                            android:scrollHorizontally="true"
+                            android:singleLine="true"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorPrimary"
+                            android:textStyle="bold"
+                            tools:text="Sketchware Pro v6.4" />
+
+                        <TextView
+                            android:id="@+id/tv_release_note"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:alpha="0.7"
+                            android:focusable="false"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            tools:text="Released on: ----- (= never ¯\\_(ツ)_/¯)" />
+                    </LinearLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        app:cardBackgroundColor="?attr/colorPrimary"
+                        app:cardCornerRadius="13dp"
+                        app:cardElevation="0dp"
+                        app:rippleColor="?attr/colorOnPrimary">
+
+                        <ImageButton
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@android:color/transparent"
+                            android:padding="8dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_expand_less_grey600_24dp"
+                            android:id="@+id/ic_arrow"
+                            app:tint="?attr/colorOnPrimary" />
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:orientation="vertical"
+                    android:id="@+id/view_additional_info">
+
+                    <com.google.android.material.divider.MaterialDivider
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        app:dividerColor="#1F000000"
+                        app:dividerInsetEnd="20dp"
+                        app:dividerInsetStart="20dp" />
+
+                    <TextView
+                        android:id="@+id/tv_sub_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="20dp"
+                        android:autoLink="all"
+                        android:alpha="0.85"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:lineSpacingExtra="2dp"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        tools:text="A version that's newer than v6.3.0. That's it." />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
+</LinearLayout>

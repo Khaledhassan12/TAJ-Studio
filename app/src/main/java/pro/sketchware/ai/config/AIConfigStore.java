@@ -31,6 +31,7 @@ public final class AIConfigStore {
     private static final String TAG = "AIConfigStore";
     private static final String PREFS_NAME = "tag_assistant_config";
     private static final String KEY_ENABLED = "assistant_enabled";
+    private static final String KEY_VERIFIED = "assistant_verified";
     private static final String KEY_DEFAULT_MODE = "default_mode";
     private static final String KEY_SELECTED_PROVIDER = "selected_provider";
     private static final String KEY_CUSTOM_PROVIDERS = "custom_providers";
@@ -80,6 +81,40 @@ public final class AIConfigStore {
             }
         }
         return instance;
+    }
+
+    /**
+     * @return true if the Assistant tab should be shown.
+     */
+    public boolean isEnabledAndVerified(Context context) {
+        if (!isAssistantEnabled()) return false;
+        if (!isVerified()) return false;
+
+        String providerId = getSelectedProviderId();
+        String model = getModel(providerId);
+        if (model.isEmpty()) return false;
+
+        ProviderProfile profile = ProviderCatalog.builtInProfiles().stream()
+                .filter(p -> p.id.equals(providerId))
+                .findFirst()
+                .orElse(null);
+
+        // Fallback check custom providers if not built-in
+        if (profile == null) {
+            profile = getCustomProviders().stream()
+                    .filter(p -> p.id.equals(providerId))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (profile == null) return false;
+
+        if (profile.requiresKey) {
+            String key = getApiKey(providerId);
+            if (key.isEmpty()) return false;
+        }
+
+        return true;
     }
 
     // ------------------------------------------------------------------
@@ -140,6 +175,16 @@ public final class AIConfigStore {
         }
     }
 
+    public boolean isVerified() {
+        return prefs != null && prefs.getBoolean(KEY_VERIFIED, false);
+    }
+
+    public void setVerified(boolean verified) {
+        if (prefs != null) {
+            prefs.edit().putBoolean(KEY_VERIFIED, verified).apply();
+        }
+    }
+
     public String getDefaultMode() {
         return prefs == null ? MODE_CHAT : prefs.getString(KEY_DEFAULT_MODE, MODE_CHAT);
     }
@@ -160,7 +205,10 @@ public final class AIConfigStore {
 
     public void setSelectedProviderId(String providerId) {
         if (prefs != null && providerId != null) {
-            prefs.edit().putString(KEY_SELECTED_PROVIDER, providerId).apply();
+            prefs.edit()
+                    .putString(KEY_SELECTED_PROVIDER, providerId)
+                    .putBoolean(KEY_VERIFIED, false)
+                    .apply();
         }
     }
 
@@ -170,7 +218,10 @@ public final class AIConfigStore {
 
     public void setApiKey(String providerId, String key) {
         if (prefs != null) {
-            prefs.edit().putString("api_key_" + providerId, sanitizeKey(key)).apply();
+            prefs.edit()
+                    .putString("api_key_" + providerId, sanitizeKey(key))
+                    .putBoolean(KEY_VERIFIED, false)
+                    .apply();
         }
     }
 
@@ -180,7 +231,10 @@ public final class AIConfigStore {
 
     public void setBaseUrl(String providerId, String url) {
         if (prefs != null) {
-            prefs.edit().putString("base_url_" + providerId, sanitizeBaseUrl(url)).apply();
+            prefs.edit()
+                    .putString("base_url_" + providerId, sanitizeBaseUrl(url))
+                    .putBoolean(KEY_VERIFIED, false)
+                    .apply();
         }
     }
 
@@ -190,7 +244,10 @@ public final class AIConfigStore {
 
     public void setModel(String providerId, String model) {
         if (prefs != null) {
-            prefs.edit().putString("model_" + providerId, model == null ? "" : model.trim()).apply();
+            prefs.edit()
+                    .putString("model_" + providerId, model == null ? "" : model.trim())
+                    .putBoolean(KEY_VERIFIED, false)
+                    .apply();
         }
     }
     // ------------------------------------------------------------------

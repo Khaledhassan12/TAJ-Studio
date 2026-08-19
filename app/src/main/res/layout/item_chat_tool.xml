@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.chip.Chip xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/chip_tool"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:text="tool_name"
+    app:chipIcon="@drawable/ic_mtrl_wrench"
+    app:chipMinHeight="32dp"
+    app:closeIconEnabled="false"
+    app:ensureMinTouchTargetSize="false" />

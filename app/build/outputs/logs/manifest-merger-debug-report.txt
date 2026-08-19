@@ -1,0 +1,1529 @@
+-- Merging decision tree log ---
+provider#androidx.core.content.FileProvider
+INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:37:9-45:20
+	android:grantUriPermissions
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:41:13-47
+	android:authorities
+		INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:39:13-60
+	android:exported
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:40:13-37
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:38:13-62
+manifest
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:2:1-366:12
+INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:2:1-366:12
+INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:2:1-366:12
+INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:2:1-366:12
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:2:1-16:12
+MERGED from [androidx.databinding:viewbinding:8.12.0] C:\Users\khale\.gradle\caches\8.13\transforms\ef6afc4aeedf1637646686d6faa5b074\transformed\viewbinding-8.12.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.material:material:1.14.0-alpha05] C:\Users\khale\.gradle\caches\8.13\transforms\8cd7e965465d0331655a750ce16d8a3f\transformed\material-1.14.0-alpha05\AndroidManifest.xml:17:1-24:12
+MERGED from [com.airbnb.android:lottie:6.6.7] C:\Users\khale\.gradle\caches\8.13\transforms\637066da5526af720e9a7db6213ccbad\transformed\lottie-6.6.7\AndroidManifest.xml:2:1-9:12
+MERGED from [androidx.preference:preference:1.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\166dcd0f6e2aacb971eaba57530391cb\transformed\preference-1.2.1\AndroidManifest.xml:17:1-24:12
+MERGED from [io.coil-kt:coil:2.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\1f99bcd2609bee49c3ec8f41a03ea217\transformed\coil-2.0.0\AndroidManifest.xml:2:1-9:12
+MERGED from [io.coil-kt:coil-svg:2.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\fced5e6e0f25ff1abbe949ef7ae6f785\transformed\coil-svg-2.0.0\AndroidManifest.xml:2:1-9:12
+MERGED from [io.coil-kt:coil-base:2.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\0220a187724645c4c015be976aaf4eae\transformed\coil-base-2.0.0\AndroidManifest.xml:2:1-9:12
+MERGED from [androidx.appcompat:appcompat-resources:1.7.1] C:\Users\khale\.gradle\caches\8.13\transforms\324bdfa2759804885f66cb009ee41e74\transformed\appcompat-resources-1.7.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.constraintlayout:constraintlayout:2.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\b989be165d9e1c4beab28a75dab1d4ef\transformed\constraintlayout-2.2.1\AndroidManifest.xml:2:1-9:12
+MERGED from [androidx.appcompat:appcompat:1.7.1] C:\Users\khale\.gradle\caches\8.13\transforms\2f51ac80dd472ef7ec84257ecd74c6ce\transformed\appcompat-1.7.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.browser:browser:1.10.0] C:\Users\khale\.gradle\caches\8.13\transforms\3d11c38e5ed46aff1bb777be307206e7\transformed\browser-1.10.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.github.bumptech.glide:glide:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\6ccbd2c81e3e4519da83504b9ae2be75\transformed\glide-5.0.4\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.recyclerview:recyclerview:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\10c5856b3dafc0f3e61dcc729b51a6d1\transformed\recyclerview-1.4.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.viewpager2:viewpager2:1.1.0-beta02] C:\Users\khale\.gradle\caches\8.13\transforms\b4fbc88e7cfbbd98815841a6da3d57d1\transformed\viewpager2-1.1.0-beta02\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.fragment:fragment-ktx:1.6.1] C:\Users\khale\.gradle\caches\8.13\transforms\bd51d2a1fe96aded10a65db0ddfd504e\transformed\fragment-ktx-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:17:1-66:12
+MERGED from [com.google.firebase:firebase-analytics:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\e68161a5327180593cb4dbbb1798bc5c\transformed\firebase-analytics-23.0.0\AndroidManifest.xml:2:1-9:12
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:17:1-46:12
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:17:1-39:12
+MERGED from [com.google.android.gms:play-services-measurement-sdk:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\0438a3f1770f498726e2e1d6dfe28908\transformed\play-services-measurement-sdk-23.0.0\AndroidManifest.xml:17:1-25:12
+MERGED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:2:1-24:12
+MERGED from [com.google.firebase:firebase-measurement-connector:20.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\92432b1d8309fa2b548479bdd879dec3\transformed\firebase-measurement-connector-20.0.1\AndroidManifest.xml:17:1-25:12
+MERGED from [com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:15:1-31:12
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:2:1-24:12
+MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:15:1-41:12
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\b76084f94bee4856f2eeb9d47c83b3a3\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:2:1-10:12
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:2:1-13:12
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:17:1-32:12
+MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\2fc46c7d21c2947a974e526ea71fb171\transformed\play-services-stats-17.0.2\AndroidManifest.xml:2:1-9:12
+MERGED from [com.google.android.gms:play-services-ads-identifier:18.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\a07a8b52bfb94930d9a19d1ddf19c9e0\transformed\play-services-ads-identifier-18.0.0\AndroidManifest.xml:17:1-27:12
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:17:1-30:12
+MERGED from [com.google.android.gms:play-services-measurement-base:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\e9a58bb7eb592dadf49cad3386faca71\transformed\play-services-measurement-base-23.0.0\AndroidManifest.xml:2:1-9:12
+MERGED from [com.google.firebase:firebase-installations-interop:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\9729b2b722521db6c8f0f0741738e400\transformed\firebase-installations-interop-17.2.0\AndroidManifest.xml:15:1-19:12
+MERGED from [androidx.slidingpanelayout:slidingpanelayout:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\6abba4b11fdf84975cb9ac109d1706af\transformed\slidingpanelayout-1.2.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.viewpager:viewpager:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\d53e987664cf49d02fff662c1df6323e\transformed\viewpager-1.1.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\a4e770d01bbce5425e89780b303c9ac2\transformed\swiperefreshlayout-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [dev.chrisbanes.insetter:insetter:0.6.1] C:\Users\khale\.gradle\caches\8.13\transforms\d3f4db2df9b873208f894919d2cb587e\transformed\insetter-0.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\67ed37341d26c5fb8b1a48c5501de4a2\transformed\emoji2-views-helper-1.3.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\khale\.gradle\caches\8.13\transforms\07657847047a1a147a51d5cafd88e72c\transformed\drawerlayout-1.1.1\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\a56ce8cb4eeeef3a6f957a9598a301cd\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.transition:transition:1.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\b5ab1094770ce72862c26d7c0fbcb82f\transformed\transition-1.5.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\f9f992a998699cf79bfb1a8e3bce11cd\transformed\dynamicanimation-1.1.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\bc67fef45019666e61d4da66c159644c\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\f33024c2b44d4fd9e4cd0710a747b085\transformed\vectordrawable-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\b6bceef184a59c8f2d84522609d501a7\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:17:1-23:12
+MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\6ed365b2063ef0562b1946f42ec57937\transformed\graphics-shapes-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.privacysandbox.ads:ads-adservices-java:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\8e5d90887b7165af1586baaffdf4d18e\transformed\ads-adservices-java-1.1.0-beta11\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:17:1-28:12
+MERGED from [androidx.core:core-ktx:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\fb027ac6cfd3318ddce55d5f915284e0\transformed\core-ktx-1.16.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\2574d18118b9fe9616498b744873b143\transformed\customview-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\3963b5629ad59b14ca2e2e3e0feb9b77\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7a151d7ffc35e34fd952d0646d46365b\transformed\loader-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.activity:activity-ktx:1.11.0] C:\Users\khale\.gradle\caches\8.13\transforms\ea64afb10de9ae4041ee27f85c65fe82\transformed\activity-ktx-1.11.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\65ac36b4d488cf159992715792313188\transformed\lifecycle-livedata-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\019a0049b3783705385fb59aa162451d\transformed\lifecycle-livedata-core-ktx-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\b090f6668530082e31df68a67d8ac4c8\transformed\lifecycle-viewmodel-ktx-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\ba62eb3512879608c1aca9757ac0cfb9\transformed\lifecycle-viewmodel-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\ca5c19142b8276687b68165d3afb5980\transformed\lifecycle-runtime-ktx-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\9555a3b9c84f1e069b4a6aa64759e638\transformed\lifecycle-livedata-core-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\056828cfbd9c3257e8c04fed1c739d58\transformed\lifecycle-runtime-2.6.2\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\77b02d9803e42dabe1e2381b1d1e4819\transformed\lifecycle-viewmodel-savedstate-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\6579146387640bc04b66d6f76d2c28c3\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\318467fa664060753f74b19020bcab81\transformed\savedstate-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.datastore:datastore-preferences-core-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\fa412fdca5814e92f0c3dcaea86944be\transformed\datastore-preferences-core-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.datastore:datastore-core-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\6ec2f66ae27af8d1b12eff440b53e4c5\transformed\datastore-core-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\95c3eb8d5716cde9aa68b8cf2b54558e\transformed\datastore-preferences-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.datastore:datastore-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\6a5d37003ee44109c0b05691ae946426\transformed\datastore-release\AndroidManifest.xml:17:1-22:12
+MERGED from [com.google.android.gms:play-services-tasks:18.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\c0035180c6614cbc1821e209bba2791f\transformed\play-services-tasks-18.2.0\AndroidManifest.xml:2:1-5:12
+MERGED from [com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:16:1-26:12
+MERGED from [androidx.fragment:fragment:1.6.1] C:\Users\khale\.gradle\caches\8.13\transforms\589cdc7428f854895513714dad1bbc26\transformed\fragment-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.activity:activity:1.11.0] C:\Users\khale\.gradle\caches\8.13\transforms\55aeec18c97325af6219766ebab43d53\transformed\activity-1.11.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core-splashscreen:1.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d4ffd4ef48578680ead80c1833dfb0bf\transformed\core-splashscreen-1.0.1\AndroidManifest.xml:17:1-24:12
+MERGED from [com.google.android.flexbox:flexbox:3.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\599f45378522d8111cd0992150c47e3a\transformed\flexbox-3.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.core:core-viewtree:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\c2e5e5dfde682eecd99bd9db59332e7f\transformed\core-viewtree-1.0.0\AndroidManifest.xml:2:1-7:12
+MERGED from [io.github.Rosemoe.sora-editor:editor:0.23.5] C:\Users\khale\.gradle\caches\8.13\transforms\c4f9fce333e61a9d252ad41b43dc1ddc\transformed\editor-0.23.5\AndroidManifest.xml:27:1-32:12
+MERGED from [io.github.Rosemoe.sora-editor:language-textmate:0.23.5] C:\Users\khale\.gradle\caches\8.13\transforms\4b68b4d8bd6b1a1132f4bf4ea87e8a3b\transformed\language-textmate-0.23.5\AndroidManifest.xml:27:1-32:12
+MERGED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:2:1-22:12
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\khale\.gradle\caches\8.13\transforms\301fc42f7f3a0a66dfee27c33827e044\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.firebase:firebase-config-interop:16.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\8d95d60248a36a6718c9c936f673e8fb\transformed\firebase-config-interop-16.0.1\AndroidManifest.xml:15:1-20:12
+MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:15:1-31:12
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:15:1-35:12
+MERGED from [com.google.firebase:firebase-encoders-json:18.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\c5a8469bd9a7ddc76fdbae725ffb6078\transformed\firebase-encoders-json-18.0.1\AndroidManifest.xml:15:1-22:12
+MERGED from [androidx.security:security-crypto:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\3d9b276076575fc814d52d7014c1a01d\transformed\security-crypto-1.1.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\khale\.gradle\caches\8.13\transforms\a35ab2b9c98f76c2b304a46a632d6f4f\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\157dc610b6748306a1c00c2fc29aada9\transformed\cardview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.exifinterface:exifinterface:1.4.1] C:\Users\khale\.gradle\caches\8.13\transforms\5005ba51c5401a47d74b04fa8ddaca51\transformed\exifinterface-1.4.1\AndroidManifest.xml:2:1-7:12
+MERGED from [io.noties.markwon:core:4.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4d654e3222bc8b0ca09e673ee55c6793\transformed\core-4.6.2\AndroidManifest.xml:2:1-11:12
+MERGED from [com.github.topjohnwu.libsu:core:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\e890e4230bc00fc1e1c1dbecc8b21442\transformed\core-5.0.4\AndroidManifest.xml:2:1-9:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\28923299d4a27bec5e40c06532b97240\transformed\cursoradapter-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\8eabeeb4911cbc4fffa89d54343de5c0\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [com.github.bumptech.glide:gifdecoder:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\2dbb35e81c51cb1bf2e3413010644c98\transformed\gifdecoder-5.0.4\AndroidManifest.xml:2:1-7:12
+MERGED from [io.github.Rosemoe.sora-editor:language-java:0.23.5] C:\Users\khale\.gradle\caches\8.13\transforms\79d7a80c24677d92d48b8661157b7785\transformed\language-java-0.23.5\AndroidManifest.xml:27:1-32:12
+MERGED from [androidx.startup:startup-runtime:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\794dfc68de9a8ecb6c23c3b820eabc36\transformed\startup-runtime-1.2.0\AndroidManifest.xml:17:1-31:12
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\329134f1801d51bb582352396397ab7f\transformed\tracing-1.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\eff47677ac4a4e4e7aba055536eae243\transformed\firebase-components-19.0.0\AndroidManifest.xml:15:1-20:12
+MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:15:1-39:12
+MERGED from [com.google.android.datatransport:transport-api:3.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\db0057ba2f21d84e82c6c86e19152822\transformed\transport-api-3.2.0\AndroidManifest.xml:15:1-20:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\83231a2e6e03d0e9818d18114b9602fc\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\c9f11797e36884f3d947dfdc3acbdf0f\transformed\documentfile-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\acd88c1667944728ab04cfc7c1f08ebf\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.print:print:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\d132344918f945cdaad37d59c65a91fe\transformed\print-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [de.hdodenhof:circleimageview:3.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\6b5a11d60d0dfb8d61a932e0ddcd88ff\transformed\circleimageview-3.1.0\AndroidManifest.xml:2:1-11:12
+MERGED from [com.github.bumptech.glide:disklrucache:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\618db9ea639c87348879f53a371f3053\transformed\disklrucache-5.0.4\AndroidManifest.xml:2:1-7:12
+MERGED from [com.caverock:androidsvg-aar:1.4] C:\Users\khale\.gradle\caches\8.13\transforms\8733e1152fee6ab957b689046345e534\transformed\androidsvg-aar-1.4\AndroidManifest.xml:2:1-11:12
+	package
+		INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml
+	android:versionName
+		INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml
+	xmlns:tools
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:3:5-51
+	android:versionCode
+		INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:2:11-69
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:5:5-79
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:22:5-79
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:24:5-79
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:24:5-79
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:23:5-79
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:23:5-79
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:7:5-79
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:7:5-79
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:7:5-79
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:7:5-79
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:24:5-79
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:24:5-79
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:24:5-79
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:24:5-79
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:20:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:20:5-79
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:5:22-76
+uses-permission#android.permission.ACCESS_WIFI_STATE
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:6:5-76
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:6:22-73
+uses-permission#android.permission.VIBRATE
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:7:5-66
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:7:22-63
+uses-permission#android.permission.READ_EXTERNAL_STORAGE
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:8:5-80
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:8:5-80
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:8:5-80
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:8:22-77
+uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:9:5-81
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:9:5-81
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:9:5-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:9:22-78
+uses-permission#android.permission.MANAGE_EXTERNAL_STORAGE
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:10:5-12:40
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:10:5-12:40
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:10:5-12:40
+	tools:ignore
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:12:9-37
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:11:9-66
+uses-permission#android.permission.INTERNET
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:13:5-67
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:23:5-67
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:23:5-67
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:22:5-67
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:22:5-67
+MERGED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:7:5-67
+MERGED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:7:5-67
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:8:5-67
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:8:5-67
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:8:5-67
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:8:5-67
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:23:5-67
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:23:5-67
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:23:5-67
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:23:5-67
+MERGED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:8:5-67
+MERGED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:8:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:23:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:23:5-67
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:13:22-64
+uses-permission#android.permission.WAKE_LOCK
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:14:5-68
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:24:5-68
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:24:5-68
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:25:5-68
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:25:5-68
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:24:5-68
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:24:5-68
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:9:5-68
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:9:5-68
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:25:5-68
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:25:5-68
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:25:5-68
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:25:5-68
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:14:22-65
+uses-permission#android.permission.REQUEST_INSTALL_PACKAGES
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:15:5-83
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:15:22-80
+uses-permission#android.permission.POST_NOTIFICATIONS
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:16:5-77
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:23:5-77
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:23:5-77
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:16:22-74
+uses-permission#android.permission.FOREGROUND_SERVICE
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:17:5-77
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:17:22-74
+uses-permission#android.permission.FOREGROUND_SERVICE_DATA_SYNC
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:18:5-87
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:18:22-84
+application
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:20:5-364:19
+INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:20:5-364:19
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:14:5-64
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:14:5-64
+MERGED from [com.google.android.material:material:1.14.0-alpha05] C:\Users\khale\.gradle\caches\8.13\transforms\8cd7e965465d0331655a750ce16d8a3f\transformed\material-1.14.0-alpha05\AndroidManifest.xml:22:5-20
+MERGED from [com.google.android.material:material:1.14.0-alpha05] C:\Users\khale\.gradle\caches\8.13\transforms\8cd7e965465d0331655a750ce16d8a3f\transformed\material-1.14.0-alpha05\AndroidManifest.xml:22:5-20
+MERGED from [com.airbnb.android:lottie:6.6.7] C:\Users\khale\.gradle\caches\8.13\transforms\637066da5526af720e9a7db6213ccbad\transformed\lottie-6.6.7\AndroidManifest.xml:7:5-20
+MERGED from [com.airbnb.android:lottie:6.6.7] C:\Users\khale\.gradle\caches\8.13\transforms\637066da5526af720e9a7db6213ccbad\transformed\lottie-6.6.7\AndroidManifest.xml:7:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\b989be165d9e1c4beab28a75dab1d4ef\transformed\constraintlayout-2.2.1\AndroidManifest.xml:7:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\b989be165d9e1c4beab28a75dab1d4ef\transformed\constraintlayout-2.2.1\AndroidManifest.xml:7:5-20
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:28:5-64:19
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:28:5-64:19
+MERGED from [com.google.firebase:firebase-analytics:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\e68161a5327180593cb4dbbb1798bc5c\transformed\firebase-analytics-23.0.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.firebase:firebase-analytics:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\e68161a5327180593cb4dbbb1798bc5c\transformed\firebase-analytics-23.0.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:28:5-44:19
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:28:5-44:19
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:29:5-37:19
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:29:5-37:19
+MERGED from [com.google.android.gms:play-services-measurement-sdk:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\0438a3f1770f498726e2e1d6dfe28908\transformed\play-services-measurement-sdk-23.0.0\AndroidManifest.xml:22:5-23:19
+MERGED from [com.google.android.gms:play-services-measurement-sdk:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\0438a3f1770f498726e2e1d6dfe28908\transformed\play-services-measurement-sdk-23.0.0\AndroidManifest.xml:22:5-23:19
+MERGED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:11:5-22:19
+MERGED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:11:5-22:19
+MERGED from [com.google.firebase:firebase-measurement-connector:20.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\92432b1d8309fa2b548479bdd879dec3\transformed\firebase-measurement-connector-20.0.1\AndroidManifest.xml:22:5-23:19
+MERGED from [com.google.firebase:firebase-measurement-connector:20.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\92432b1d8309fa2b548479bdd879dec3\transformed\firebase-measurement-connector-20.0.1\AndroidManifest.xml:22:5-23:19
+MERGED from [com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:21:5-29:19
+MERGED from [com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:21:5-29:19
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:11:5-22:19
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:11:5-22:19
+MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:22:5-39:19
+MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:22:5-39:19
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\b76084f94bee4856f2eeb9d47c83b3a3\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:7:5-8:19
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\b76084f94bee4856f2eeb9d47c83b3a3\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:7:5-8:19
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:29:5-30:19
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:29:5-30:19
+MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\2fc46c7d21c2947a974e526ea71fb171\transformed\play-services-stats-17.0.2\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\2fc46c7d21c2947a974e526ea71fb171\transformed\play-services-stats-17.0.2\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-ads-identifier:18.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\a07a8b52bfb94930d9a19d1ddf19c9e0\transformed\play-services-ads-identifier-18.0.0\AndroidManifest.xml:25:5-20
+MERGED from [com.google.android.gms:play-services-ads-identifier:18.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\a07a8b52bfb94930d9a19d1ddf19c9e0\transformed\play-services-ads-identifier-18.0.0\AndroidManifest.xml:25:5-20
+MERGED from [com.google.android.gms:play-services-measurement-base:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\e9a58bb7eb592dadf49cad3386faca71\transformed\play-services-measurement-base-23.0.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-measurement-base:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\e9a58bb7eb592dadf49cad3386faca71\transformed\play-services-measurement-base-23.0.0\AndroidManifest.xml:7:5-20
+MERGED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:24:5-31:19
+MERGED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:24:5-31:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:22:5-26:19
+MERGED from [androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:22:5-26:19
+MERGED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:4:5-6:19
+MERGED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:4:5-6:19
+MERGED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:23:5-33:19
+MERGED from [com.google.android.gms:play-services-tasks:18.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\c0035180c6614cbc1821e209bba2791f\transformed\play-services-tasks-18.2.0\AndroidManifest.xml:4:5-20
+MERGED from [com.google.android.gms:play-services-tasks:18.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\c0035180c6614cbc1821e209bba2791f\transformed\play-services-tasks-18.2.0\AndroidManifest.xml:4:5-20
+MERGED from [com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:20:5-24:19
+MERGED from [com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:20:5-24:19
+MERGED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:10:5-20:19
+MERGED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:10:5-20:19
+MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:21:5-29:19
+MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:21:5-29:19
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:25:5-33:19
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:25:5-33:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\khale\.gradle\caches\8.13\transforms\a35ab2b9c98f76c2b304a46a632d6f4f\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\khale\.gradle\caches\8.13\transforms\a35ab2b9c98f76c2b304a46a632d6f4f\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.startup:startup-runtime:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\794dfc68de9a8ecb6c23c3b820eabc36\transformed\startup-runtime-1.2.0\AndroidManifest.xml:23:5-29:19
+MERGED from [androidx.startup:startup-runtime:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\794dfc68de9a8ecb6c23c3b820eabc36\transformed\startup-runtime-1.2.0\AndroidManifest.xml:23:5-29:19
+MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:23:5-37:19
+MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:23:5-37:19
+MERGED from [de.hdodenhof:circleimageview:3.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\6b5a11d60d0dfb8d61a932e0ddcd88ff\transformed\circleimageview-3.1.0\AndroidManifest.xml:9:5-20
+MERGED from [de.hdodenhof:circleimageview:3.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\6b5a11d60d0dfb8d61a932e0ddcd88ff\transformed\circleimageview-3.1.0\AndroidManifest.xml:9:5-20
+	android:extractNativeLibs
+		INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml
+	android:requestLegacyExternalStorage
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:27:9-52
+	android:label
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:25:9-41
+	android:appComponentFactory
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:23:9-77
+	tools:targetApi
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:30:9-28
+	android:largeHeap
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:26:9-33
+	android:icon
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:24:9-43
+	android:allowBackup
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:22:9-35
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:28:9-51
+	android:usesCleartextTraffic
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:29:9-44
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:21:9-42
+activity#pro.sketchware.activities.iconcreator.IconCreatorActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:31:9-35:58
+	android:label
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:34:13-64
+	android:exported
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:33:13-37
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:35:13-55
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:32:13-71
+activity#com.besome.sketch.common.SrcViewerActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:47:9-49:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:49:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:48:13-70
+activity#pro.sketchware.activities.importicon.ImportIconActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:50:9-53:57
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:53:13-54
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:52:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:51:13-83
+activity#com.besome.sketch.help.LicenseActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:54:9-75
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:54:19-72
+activity#com.besome.sketch.help.ProgramInfoActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:55:9-79
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:55:19-76
+activity#com.besome.sketch.help.SystemSettingActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:56:9-58:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:58:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:57:13-72
+activity#com.besome.sketch.help.SystemInfoActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:59:9-78
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:59:19-75
+activity#com.besome.sketch.editor.LogicEditorActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:60:9-65:73
+	android:hardwareAccelerated
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:63:13-48
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:65:13-70
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:62:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:64:13-68
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:61:13-72
+activity#com.besome.sketch.editor.PropertyActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:66:9-68:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:68:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:67:13-69
+activity#com.besome.sketch.editor.makeblock.MakeBlockActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:69:9-71:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:71:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:70:13-80
+activity#com.besome.sketch.projects.MyProjectSettingActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:72:9-74:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:74:13-67
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:73:13-79
+activity#com.besome.sketch.tools.CompileLogActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:76:9-79
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:76:19-76
+activity#com.besome.sketch.tools.CollectErrorActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:77:9-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:77:19-78
+activity#com.besome.sketch.tools.NewKeyStoreActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:78:9-80:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:80:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:79:13-71
+activity#com.besome.sketch.export.ExportProjectActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:81:9-83:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:83:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:82:13-74
+activity#com.besome.sketch.design.DesignActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:84:9-88:71
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:87:13-54
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:86:13-115
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:88:13-68
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:85:13-67
+activity#pro.sketchware.activities.main.activities.MainActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:89:9-114:20
+	android:exported
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:92:13-36
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:91:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:93:13-64
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:90:13-82
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:94:13-98:29
+action#android.intent.action.MAIN
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:95:17-69
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:95:25-66
+category#android.intent.category.LAUNCHER
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:97:17-77
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:97:27-74
+intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:*+data:mimeType:*/*+data:pathPattern:.*\\..*\\..*\\..*\\.swb+data:pathPattern:.*\\..*\\..*\\.swb+data:pathPattern:.*\\..*\\.swb+data:pathPattern:.*\\.swb+data:scheme:content+data:scheme:file
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:99:13-113:29
+action#android.intent.action.VIEW
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:100:17-69
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:100:25-66
+category#android.intent.category.DEFAULT
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:102:17-76
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:102:27-73
+category#android.intent.category.BROWSABLE
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:103:17-78
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:103:27-75
+data
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:17-47
+	android:host
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:108:23-39
+	android:scheme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:23-44
+	android:pathPattern
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:109:23-53
+	android:mimeType
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:107:23-45
+activity#com.besome.sketch.editor.manage.view.ManageViewActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:115:9-117:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:117:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:116:13-83
+activity#com.besome.sketch.editor.manage.sound.ManageSoundActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:118:9-120:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:120:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:119:13-85
+activity#com.besome.sketch.editor.manage.sound.ManageSoundImportActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:121:9-123:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:123:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:122:13-91
+activity#com.besome.sketch.editor.manage.image.ManageImageActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:124:9-126:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:126:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:125:13-85
+activity#com.besome.sketch.editor.manage.image.ManageImageImportActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:127:9-129:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:129:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:128:13-91
+activity#com.besome.sketch.editor.manage.font.ManageFontActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:130:9-132:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:132:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:131:13-83
+activity#com.besome.sketch.editor.manage.font.ManageFontImportActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:133:9-135:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:135:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:134:13-89
+activity#com.besome.sketch.editor.manage.library.ManageLibraryActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:136:9-138:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:138:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:137:13-89
+activity#com.besome.sketch.editor.manage.ManageCollectionActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:139:9-141:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:141:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:140:13-84
+activity#com.besome.sketch.editor.manage.ShowWidgetCollectionActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:142:9-145:67
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:145:13-64
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:144:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:143:13-88
+activity#com.besome.sketch.editor.event.AddEventActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:146:9-149:84
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:148:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:149:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:147:13-75
+activity#com.besome.sketch.editor.manage.ViewSelectorActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:150:9-154:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:154:13-67
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:152:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:153:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:151:13-80
+activity#com.besome.sketch.editor.manage.view.AddViewActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:155:9-158:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:158:13-67
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:157:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:156:13-80
+activity#com.besome.sketch.editor.manage.view.AddCustomViewActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:159:9-163:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:163:13-67
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:161:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:162:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:160:13-86
+activity#com.besome.sketch.editor.manage.image.AddImageActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:164:9-168:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:168:13-67
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:166:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:167:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:165:13-82
+activity#com.besome.sketch.editor.manage.sound.AddSoundActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:169:9-173:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:173:13-67
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:171:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:172:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:170:13-82
+activity#com.besome.sketch.editor.manage.font.AddFontActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:174:9-178:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:178:13-67
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:176:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:177:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:175:13-80
+activity#com.besome.sketch.editor.manage.ShowBlockCollectionActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:179:9-184:67
+	android:hardwareAccelerated
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:182:13-48
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:184:13-64
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:181:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:183:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:180:13-87
+activity#com.besome.sketch.editor.manage.ShowMoreBlockCollectionActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:185:9-190:67
+	android:hardwareAccelerated
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:188:13-48
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:190:13-64
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:187:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:189:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:186:13-91
+activity#com.besome.sketch.editor.manage.image.AddImageCollectionActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:191:9-194:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:194:13-67
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:193:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:192:13-92
+activity#com.besome.sketch.editor.manage.sound.AddSoundCollectionActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:195:9-199:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:199:13-67
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:197:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:198:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:196:13-92
+activity#com.besome.sketch.editor.manage.font.AddFontCollectionActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:200:9-204:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:204:13-67
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:202:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:203:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:201:13-90
+activity#com.besome.sketch.editor.manage.library.admob.AdmobActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:205:9-207:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:207:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:206:13-87
+activity#com.besome.sketch.editor.manage.library.firebase.FirebaseActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:208:9-210:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:210:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:209:13-93
+activity#com.besome.sketch.editor.manage.library.firebase.ManageFirebaseActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:211:9-213:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:213:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:212:13-99
+activity#com.besome.sketch.editor.manage.library.admob.ManageAdmobActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:214:9-216:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:216:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:215:13-93
+activity#com.besome.sketch.editor.manage.library.compat.ManageCompatActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:217:9-219:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:219:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:218:13-95
+activity#com.besome.sketch.editor.manage.library.googlemap.ManageGoogleMapActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:220:9-222:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:222:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:221:13-101
+activity#dev.aldi.sayuti.editor.manage.ManageLocalLibraryActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:223:9-225:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:225:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:224:13-84
+activity#mod.agus.jcoderz.editor.manage.permission.ManagePermissionActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:226:9-229:57
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:229:13-54
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:228:13-74
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:227:13-94
+activity#mod.agus.jcoderz.editor.manage.resource.ManageResourceActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:230:9-232:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:232:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:231:13-90
+activity#mod.hey.studios.activity.managers.assets.ManageAssetsActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:233:9-235:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:235:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:234:13-89
+activity#mod.hey.studios.activity.managers.java.ManageJavaActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:236:9-238:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:238:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:237:13-85
+activity#mod.hey.studios.activity.managers.nativelib.ManageNativelibsActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:239:9-241:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:241:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:240:13-96
+activity#mod.hey.studios.code.SrcCodeEditor
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:242:9-244:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:244:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:243:13-62
+activity#mod.hey.studios.project.proguard.ManageProguardActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:245:9-247:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:247:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:246:13-83
+activity#mod.hilal.saif.activities.android_manifest.AndroidManifestInjection
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:248:9-250:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:250:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:249:13-95
+activity#mod.hilal.saif.activities.android_manifest.AndroidManifestInjectionDetails
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:251:9-254:63
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:254:13-60
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:253:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:252:13-102
+activity#mod.hilal.saif.activities.tools.BlocksManager
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:255:9-257:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:257:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:256:13-73
+activity#mod.hilal.saif.activities.tools.BlocksManagerCreatorActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:258:9-260:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:260:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:259:13-88
+activity#mod.hilal.saif.activities.tools.BlocksManagerDetailsActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:261:9-263:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:263:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:262:13-88
+activity#mod.hilal.saif.activities.tools.ConfigActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:264:9-266:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:266:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:265:13-74
+activity#mod.hilal.saif.activities.tools.AppSettings
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:267:9-269:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:269:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:268:13-71
+activity#pro.sketchware.ai.ui.TagAssistantActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:271:9-275:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:275:13-67
+	android:exported
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:274:13-37
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:273:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:272:13-69
+activity#pro.sketchware.activities.about.AboutActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:276:9-278:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:278:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:277:13-73
+activity#mod.jbk.editor.manage.library.ExcludeBuiltInLibrariesActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:279:9-98
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:279:19-95
+activity#com.besome.sketch.editor.manage.view.PresetSettingActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:280:9-284:70
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:284:13-67
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:282:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:283:13-81
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:281:13-86
+activity#mod.khaled.logcat.LogReaderActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:285:9-287:94
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:287:13-91
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:286:13-63
+activity#pro.sketchware.activities.main.fragments.projects_store.ProjectPreviewActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:289:9-292:73
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:291:13-59
+	android:theme
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:292:13-70
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:290:13-106
+activity#pro.sketchware.activities.settings.SettingsActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:294:9-88
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:294:19-85
+activity#pro.sketchware.marketplace.activities.LibraryMarketplaceActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:296:9-299:70
+	android:label
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:298:13-71
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:299:13-67
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:297:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:296:19-98
+activity#pro.sketchware.activities.resourceseditor.ResourcesEditorActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:301:9-102
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:301:19-99
+activity#com.besome.sketch.editor.manage.library.material3.Material3LibraryActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:303:9-305:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:305:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:304:13-102
+activity#pro.sketchware.activities.appcompat.ManageAppCompatActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:307:9-309:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:309:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:308:13-73
+activity#pro.sketchware.activities.editor.command.ManageXMLCommandActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:311:9-313:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:313:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:312:13-79
+activity#pro.sketchware.activities.editor.component.ManageCustomComponentActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:315:9-318:63
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:318:13-60
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:317:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:316:13-86
+activity#pro.sketchware.activities.editor.component.AddCustomComponentActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:320:9-323:58
+	android:windowSoftInputMode
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:323:13-55
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:322:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:321:13-83
+activity#pro.sketchware.activities.editor.view.ViewCodeEditorActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:325:9-327:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:327:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:326:13-74
+activity#pro.sketchware.activities.editor.view.CodeViewerActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:329:9-331:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:331:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:330:13-70
+activity#pro.sketchware.activities.preview.LayoutPreviewActivity
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:333:9-335:62
+	android:configChanges
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:335:13-59
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:334:13-69
+meta-data#firebase_crashlytics_collection_enabled
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:337:9-339:36
+	android:value
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:339:13-33
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:338:13-67
+service#pro.sketchware.marketplace.services.LibraryInstallService
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:341:9-344:56
+	android:exported
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:343:13-37
+	android:foregroundServiceType
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:344:13-53
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:342:13-85
+service#pro.sketchware.firebase.FirebaseMessagingServiceImpl
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:346:9-352:19
+	android:exported
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:348:13-37
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:347:13-80
+intent-filter#action:name:com.google.firebase.MESSAGING_EVENT
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:349:13-351:29
+action#com.google.firebase.MESSAGING_EVENT
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:350:17-78
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:350:25-75
+service#pro.sketchware.github.GitHubUploadService
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:354:9-357:56
+	android:exported
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:356:13-37
+	android:foregroundServiceType
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:357:13-53
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:355:13-55
+service#pro.sketchware.github.GitCommitService
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:359:9-363:56
+	android:enabled
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:361:13-35
+	android:exported
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:362:13-37
+	android:foregroundServiceType
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:363:13-53
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:360:13-52
+meta-data#android.support.FILE_PROVIDER_PATHS
+ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:42:13-44:58
+	android:resource
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:44:17-55
+	android:name
+		ADDED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:43:17-67
+uses-sdk
+INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:6:5-44
+MERGED from [com.github.PranavPurwar:filepicker:74526bea66] C:\Users\khale\.gradle\caches\8.13\transforms\d6f8b998fcf6fedb6b094b47ae48e7c9\transformed\filepicker-74526bea66\AndroidManifest.xml:6:5-44
+MERGED from [androidx.databinding:viewbinding:8.12.0] C:\Users\khale\.gradle\caches\8.13\transforms\ef6afc4aeedf1637646686d6faa5b074\transformed\viewbinding-8.12.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.databinding:viewbinding:8.12.0] C:\Users\khale\.gradle\caches\8.13\transforms\ef6afc4aeedf1637646686d6faa5b074\transformed\viewbinding-8.12.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.material:material:1.14.0-alpha05] C:\Users\khale\.gradle\caches\8.13\transforms\8cd7e965465d0331655a750ce16d8a3f\transformed\material-1.14.0-alpha05\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.material:material:1.14.0-alpha05] C:\Users\khale\.gradle\caches\8.13\transforms\8cd7e965465d0331655a750ce16d8a3f\transformed\material-1.14.0-alpha05\AndroidManifest.xml:20:5-44
+MERGED from [com.airbnb.android:lottie:6.6.7] C:\Users\khale\.gradle\caches\8.13\transforms\637066da5526af720e9a7db6213ccbad\transformed\lottie-6.6.7\AndroidManifest.xml:5:5-44
+MERGED from [com.airbnb.android:lottie:6.6.7] C:\Users\khale\.gradle\caches\8.13\transforms\637066da5526af720e9a7db6213ccbad\transformed\lottie-6.6.7\AndroidManifest.xml:5:5-44
+MERGED from [androidx.preference:preference:1.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\166dcd0f6e2aacb971eaba57530391cb\transformed\preference-1.2.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.preference:preference:1.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\166dcd0f6e2aacb971eaba57530391cb\transformed\preference-1.2.1\AndroidManifest.xml:20:5-22:41
+MERGED from [io.coil-kt:coil:2.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\1f99bcd2609bee49c3ec8f41a03ea217\transformed\coil-2.0.0\AndroidManifest.xml:5:5-7:41
+MERGED from [io.coil-kt:coil:2.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\1f99bcd2609bee49c3ec8f41a03ea217\transformed\coil-2.0.0\AndroidManifest.xml:5:5-7:41
+MERGED from [io.coil-kt:coil-svg:2.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\fced5e6e0f25ff1abbe949ef7ae6f785\transformed\coil-svg-2.0.0\AndroidManifest.xml:5:5-7:41
+MERGED from [io.coil-kt:coil-svg:2.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\fced5e6e0f25ff1abbe949ef7ae6f785\transformed\coil-svg-2.0.0\AndroidManifest.xml:5:5-7:41
+MERGED from [io.coil-kt:coil-base:2.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\0220a187724645c4c015be976aaf4eae\transformed\coil-base-2.0.0\AndroidManifest.xml:5:5-7:41
+MERGED from [io.coil-kt:coil-base:2.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\0220a187724645c4c015be976aaf4eae\transformed\coil-base-2.0.0\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.appcompat:appcompat-resources:1.7.1] C:\Users\khale\.gradle\caches\8.13\transforms\324bdfa2759804885f66cb009ee41e74\transformed\appcompat-resources-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.7.1] C:\Users\khale\.gradle\caches\8.13\transforms\324bdfa2759804885f66cb009ee41e74\transformed\appcompat-resources-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.constraintlayout:constraintlayout:2.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\b989be165d9e1c4beab28a75dab1d4ef\transformed\constraintlayout-2.2.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.constraintlayout:constraintlayout:2.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\b989be165d9e1c4beab28a75dab1d4ef\transformed\constraintlayout-2.2.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat:1.7.1] C:\Users\khale\.gradle\caches\8.13\transforms\2f51ac80dd472ef7ec84257ecd74c6ce\transformed\appcompat-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat:1.7.1] C:\Users\khale\.gradle\caches\8.13\transforms\2f51ac80dd472ef7ec84257ecd74c6ce\transformed\appcompat-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.browser:browser:1.10.0] C:\Users\khale\.gradle\caches\8.13\transforms\3d11c38e5ed46aff1bb777be307206e7\transformed\browser-1.10.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.browser:browser:1.10.0] C:\Users\khale\.gradle\caches\8.13\transforms\3d11c38e5ed46aff1bb777be307206e7\transformed\browser-1.10.0\AndroidManifest.xml:5:5-44
+MERGED from [com.github.bumptech.glide:glide:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\6ccbd2c81e3e4519da83504b9ae2be75\transformed\glide-5.0.4\AndroidManifest.xml:5:5-44
+MERGED from [com.github.bumptech.glide:glide:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\6ccbd2c81e3e4519da83504b9ae2be75\transformed\glide-5.0.4\AndroidManifest.xml:5:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\10c5856b3dafc0f3e61dcc729b51a6d1\transformed\recyclerview-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\10c5856b3dafc0f3e61dcc729b51a6d1\transformed\recyclerview-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.viewpager2:viewpager2:1.1.0-beta02] C:\Users\khale\.gradle\caches\8.13\transforms\b4fbc88e7cfbbd98815841a6da3d57d1\transformed\viewpager2-1.1.0-beta02\AndroidManifest.xml:5:5-44
+MERGED from [androidx.viewpager2:viewpager2:1.1.0-beta02] C:\Users\khale\.gradle\caches\8.13\transforms\b4fbc88e7cfbbd98815841a6da3d57d1\transformed\viewpager2-1.1.0-beta02\AndroidManifest.xml:5:5-44
+MERGED from [androidx.fragment:fragment-ktx:1.6.1] C:\Users\khale\.gradle\caches\8.13\transforms\bd51d2a1fe96aded10a65db0ddfd504e\transformed\fragment-ktx-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.fragment:fragment-ktx:1.6.1] C:\Users\khale\.gradle\caches\8.13\transforms\bd51d2a1fe96aded10a65db0ddfd504e\transformed\fragment-ktx-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-analytics:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\e68161a5327180593cb4dbbb1798bc5c\transformed\firebase-analytics-23.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-analytics:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\e68161a5327180593cb4dbbb1798bc5c\transformed\firebase-analytics-23.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-measurement-sdk:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\0438a3f1770f498726e2e1d6dfe28908\transformed\play-services-measurement-sdk-23.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-measurement-sdk:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\0438a3f1770f498726e2e1d6dfe28908\transformed\play-services-measurement-sdk-23.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-measurement-connector:20.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\92432b1d8309fa2b548479bdd879dec3\transformed\firebase-measurement-connector-20.0.1\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-measurement-connector:20.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\92432b1d8309fa2b548479bdd879dec3\transformed\firebase-measurement-connector-20.0.1\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:19:5-44
+MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:19:5-44
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\b76084f94bee4856f2eeb9d47c83b3a3\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\b76084f94bee4856f2eeb9d47c83b3a3\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\2fc46c7d21c2947a974e526ea71fb171\transformed\play-services-stats-17.0.2\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\2fc46c7d21c2947a974e526ea71fb171\transformed\play-services-stats-17.0.2\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-ads-identifier:18.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\a07a8b52bfb94930d9a19d1ddf19c9e0\transformed\play-services-ads-identifier-18.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-ads-identifier:18.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\a07a8b52bfb94930d9a19d1ddf19c9e0\transformed\play-services-ads-identifier-18.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-measurement-base:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\e9a58bb7eb592dadf49cad3386faca71\transformed\play-services-measurement-base-23.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-measurement-base:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\e9a58bb7eb592dadf49cad3386faca71\transformed\play-services-measurement-base-23.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-installations-interop:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\9729b2b722521db6c8f0f0741738e400\transformed\firebase-installations-interop-17.2.0\AndroidManifest.xml:17:5-44
+MERGED from [com.google.firebase:firebase-installations-interop:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\9729b2b722521db6c8f0f0741738e400\transformed\firebase-installations-interop-17.2.0\AndroidManifest.xml:17:5-44
+MERGED from [androidx.slidingpanelayout:slidingpanelayout:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\6abba4b11fdf84975cb9ac109d1706af\transformed\slidingpanelayout-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.slidingpanelayout:slidingpanelayout:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\6abba4b11fdf84975cb9ac109d1706af\transformed\slidingpanelayout-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager:viewpager:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\d53e987664cf49d02fff662c1df6323e\transformed\viewpager-1.1.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.viewpager:viewpager:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\d53e987664cf49d02fff662c1df6323e\transformed\viewpager-1.1.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\a4e770d01bbce5425e89780b303c9ac2\transformed\swiperefreshlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\a4e770d01bbce5425e89780b303c9ac2\transformed\swiperefreshlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [dev.chrisbanes.insetter:insetter:0.6.1] C:\Users\khale\.gradle\caches\8.13\transforms\d3f4db2df9b873208f894919d2cb587e\transformed\insetter-0.6.1\AndroidManifest.xml:20:5-44
+MERGED from [dev.chrisbanes.insetter:insetter:0.6.1] C:\Users\khale\.gradle\caches\8.13\transforms\d3f4db2df9b873208f894919d2cb587e\transformed\insetter-0.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\67ed37341d26c5fb8b1a48c5501de4a2\transformed\emoji2-views-helper-1.3.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\67ed37341d26c5fb8b1a48c5501de4a2\transformed\emoji2-views-helper-1.3.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\khale\.gradle\caches\8.13\transforms\07657847047a1a147a51d5cafd88e72c\transformed\drawerlayout-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\khale\.gradle\caches\8.13\transforms\07657847047a1a147a51d5cafd88e72c\transformed\drawerlayout-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\a56ce8cb4eeeef3a6f957a9598a301cd\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\a56ce8cb4eeeef3a6f957a9598a301cd\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.transition:transition:1.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\b5ab1094770ce72862c26d7c0fbcb82f\transformed\transition-1.5.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.transition:transition:1.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\b5ab1094770ce72862c26d7c0fbcb82f\transformed\transition-1.5.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\f9f992a998699cf79bfb1a8e3bce11cd\transformed\dynamicanimation-1.1.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\f9f992a998699cf79bfb1a8e3bce11cd\transformed\dynamicanimation-1.1.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\bc67fef45019666e61d4da66c159644c\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\bc67fef45019666e61d4da66c159644c\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\f33024c2b44d4fd9e4cd0710a747b085\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\f33024c2b44d4fd9e4cd0710a747b085\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\b6bceef184a59c8f2d84522609d501a7\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\b6bceef184a59c8f2d84522609d501a7\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\6ed365b2063ef0562b1946f42ec57937\transformed\graphics-shapes-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\6ed365b2063ef0562b1946f42ec57937\transformed\graphics-shapes-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.privacysandbox.ads:ads-adservices-java:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\8e5d90887b7165af1586baaffdf4d18e\transformed\ads-adservices-java-1.1.0-beta11\AndroidManifest.xml:5:5-44
+MERGED from [androidx.privacysandbox.ads:ads-adservices-java:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\8e5d90887b7165af1586baaffdf4d18e\transformed\ads-adservices-java-1.1.0-beta11\AndroidManifest.xml:5:5-44
+MERGED from [androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:20:5-44
+MERGED from [androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core-ktx:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\fb027ac6cfd3318ddce55d5f915284e0\transformed\core-ktx-1.16.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\fb027ac6cfd3318ddce55d5f915284e0\transformed\core-ktx-1.16.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\2574d18118b9fe9616498b744873b143\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\2574d18118b9fe9616498b744873b143\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\3963b5629ad59b14ca2e2e3e0feb9b77\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\3963b5629ad59b14ca2e2e3e0feb9b77\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7a151d7ffc35e34fd952d0646d46365b\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7a151d7ffc35e34fd952d0646d46365b\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:3:5-44
+MERGED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:3:5-44
+MERGED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity-ktx:1.11.0] C:\Users\khale\.gradle\caches\8.13\transforms\ea64afb10de9ae4041ee27f85c65fe82\transformed\activity-ktx-1.11.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.11.0] C:\Users\khale\.gradle\caches\8.13\transforms\ea64afb10de9ae4041ee27f85c65fe82\transformed\activity-ktx-1.11.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\65ac36b4d488cf159992715792313188\transformed\lifecycle-livedata-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\65ac36b4d488cf159992715792313188\transformed\lifecycle-livedata-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\019a0049b3783705385fb59aa162451d\transformed\lifecycle-livedata-core-ktx-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\019a0049b3783705385fb59aa162451d\transformed\lifecycle-livedata-core-ktx-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\b090f6668530082e31df68a67d8ac4c8\transformed\lifecycle-viewmodel-ktx-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\b090f6668530082e31df68a67d8ac4c8\transformed\lifecycle-viewmodel-ktx-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\ba62eb3512879608c1aca9757ac0cfb9\transformed\lifecycle-viewmodel-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\ba62eb3512879608c1aca9757ac0cfb9\transformed\lifecycle-viewmodel-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\ca5c19142b8276687b68165d3afb5980\transformed\lifecycle-runtime-ktx-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\ca5c19142b8276687b68165d3afb5980\transformed\lifecycle-runtime-ktx-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\9555a3b9c84f1e069b4a6aa64759e638\transformed\lifecycle-livedata-core-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\9555a3b9c84f1e069b4a6aa64759e638\transformed\lifecycle-livedata-core-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\056828cfbd9c3257e8c04fed1c739d58\transformed\lifecycle-runtime-2.6.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\056828cfbd9c3257e8c04fed1c739d58\transformed\lifecycle-runtime-2.6.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\77b02d9803e42dabe1e2381b1d1e4819\transformed\lifecycle-viewmodel-savedstate-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\77b02d9803e42dabe1e2381b1d1e4819\transformed\lifecycle-viewmodel-savedstate-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\6579146387640bc04b66d6f76d2c28c3\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\6579146387640bc04b66d6f76d2c28c3\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\318467fa664060753f74b19020bcab81\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\khale\.gradle\caches\8.13\transforms\318467fa664060753f74b19020bcab81\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-preferences-core-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\fa412fdca5814e92f0c3dcaea86944be\transformed\datastore-preferences-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-preferences-core-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\fa412fdca5814e92f0c3dcaea86944be\transformed\datastore-preferences-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-core-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\6ec2f66ae27af8d1b12eff440b53e4c5\transformed\datastore-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-core-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\6ec2f66ae27af8d1b12eff440b53e4c5\transformed\datastore-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\95c3eb8d5716cde9aa68b8cf2b54558e\transformed\datastore-preferences-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\95c3eb8d5716cde9aa68b8cf2b54558e\transformed\datastore-preferences-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\6a5d37003ee44109c0b05691ae946426\transformed\datastore-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-android:1.1.7] C:\Users\khale\.gradle\caches\8.13\transforms\6a5d37003ee44109c0b05691ae946426\transformed\datastore-release\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-tasks:18.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\c0035180c6614cbc1821e209bba2791f\transformed\play-services-tasks-18.2.0\AndroidManifest.xml:3:5-44
+MERGED from [com.google.android.gms:play-services-tasks:18.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\c0035180c6614cbc1821e209bba2791f\transformed\play-services-tasks-18.2.0\AndroidManifest.xml:3:5-44
+MERGED from [com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:18:5-43
+MERGED from [androidx.fragment:fragment:1.6.1] C:\Users\khale\.gradle\caches\8.13\transforms\589cdc7428f854895513714dad1bbc26\transformed\fragment-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.fragment:fragment:1.6.1] C:\Users\khale\.gradle\caches\8.13\transforms\589cdc7428f854895513714dad1bbc26\transformed\fragment-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.11.0] C:\Users\khale\.gradle\caches\8.13\transforms\55aeec18c97325af6219766ebab43d53\transformed\activity-1.11.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.11.0] C:\Users\khale\.gradle\caches\8.13\transforms\55aeec18c97325af6219766ebab43d53\transformed\activity-1.11.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core-splashscreen:1.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d4ffd4ef48578680ead80c1833dfb0bf\transformed\core-splashscreen-1.0.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core-splashscreen:1.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d4ffd4ef48578680ead80c1833dfb0bf\transformed\core-splashscreen-1.0.1\AndroidManifest.xml:20:5-22:41
+MERGED from [com.google.android.flexbox:flexbox:3.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\599f45378522d8111cd0992150c47e3a\transformed\flexbox-3.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [com.google.android.flexbox:flexbox:3.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\599f45378522d8111cd0992150c47e3a\transformed\flexbox-3.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core-viewtree:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\c2e5e5dfde682eecd99bd9db59332e7f\transformed\core-viewtree-1.0.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-viewtree:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\c2e5e5dfde682eecd99bd9db59332e7f\transformed\core-viewtree-1.0.0\AndroidManifest.xml:5:5-44
+MERGED from [io.github.Rosemoe.sora-editor:editor:0.23.5] C:\Users\khale\.gradle\caches\8.13\transforms\c4f9fce333e61a9d252ad41b43dc1ddc\transformed\editor-0.23.5\AndroidManifest.xml:30:5-44
+MERGED from [io.github.Rosemoe.sora-editor:editor:0.23.5] C:\Users\khale\.gradle\caches\8.13\transforms\c4f9fce333e61a9d252ad41b43dc1ddc\transformed\editor-0.23.5\AndroidManifest.xml:30:5-44
+MERGED from [io.github.Rosemoe.sora-editor:language-textmate:0.23.5] C:\Users\khale\.gradle\caches\8.13\transforms\4b68b4d8bd6b1a1132f4bf4ea87e8a3b\transformed\language-textmate-0.23.5\AndroidManifest.xml:30:5-44
+MERGED from [io.github.Rosemoe.sora-editor:language-textmate:0.23.5] C:\Users\khale\.gradle\caches\8.13\transforms\4b68b4d8bd6b1a1132f4bf4ea87e8a3b\transformed\language-textmate-0.23.5\AndroidManifest.xml:30:5-44
+MERGED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:6:5-44
+MERGED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:6:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\khale\.gradle\caches\8.13\transforms\301fc42f7f3a0a66dfee27c33827e044\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\khale\.gradle\caches\8.13\transforms\301fc42f7f3a0a66dfee27c33827e044\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-config-interop:16.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\8d95d60248a36a6718c9c936f673e8fb\transformed\firebase-config-interop-16.0.1\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-config-interop:16.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\8d95d60248a36a6718c9c936f673e8fb\transformed\firebase-config-interop-16.0.1\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-encoders-json:18.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\c5a8469bd9a7ddc76fdbae725ffb6078\transformed\firebase-encoders-json-18.0.1\AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.firebase:firebase-encoders-json:18.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\c5a8469bd9a7ddc76fdbae725ffb6078\transformed\firebase-encoders-json-18.0.1\AndroidManifest.xml:18:5-20:41
+MERGED from [androidx.security:security-crypto:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\3d9b276076575fc814d52d7014c1a01d\transformed\security-crypto-1.1.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.security:security-crypto:1.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\3d9b276076575fc814d52d7014c1a01d\transformed\security-crypto-1.1.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\khale\.gradle\caches\8.13\transforms\a35ab2b9c98f76c2b304a46a632d6f4f\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\khale\.gradle\caches\8.13\transforms\a35ab2b9c98f76c2b304a46a632d6f4f\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\157dc610b6748306a1c00c2fc29aada9\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\157dc610b6748306a1c00c2fc29aada9\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.exifinterface:exifinterface:1.4.1] C:\Users\khale\.gradle\caches\8.13\transforms\5005ba51c5401a47d74b04fa8ddaca51\transformed\exifinterface-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.exifinterface:exifinterface:1.4.1] C:\Users\khale\.gradle\caches\8.13\transforms\5005ba51c5401a47d74b04fa8ddaca51\transformed\exifinterface-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [io.noties.markwon:core:4.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4d654e3222bc8b0ca09e673ee55c6793\transformed\core-4.6.2\AndroidManifest.xml:7:5-9:41
+MERGED from [io.noties.markwon:core:4.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4d654e3222bc8b0ca09e673ee55c6793\transformed\core-4.6.2\AndroidManifest.xml:7:5-9:41
+MERGED from [com.github.topjohnwu.libsu:core:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\e890e4230bc00fc1e1c1dbecc8b21442\transformed\core-5.0.4\AndroidManifest.xml:5:5-7:41
+MERGED from [com.github.topjohnwu.libsu:core:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\e890e4230bc00fc1e1c1dbecc8b21442\transformed\core-5.0.4\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\28923299d4a27bec5e40c06532b97240\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\28923299d4a27bec5e40c06532b97240\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\8eabeeb4911cbc4fffa89d54343de5c0\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\8eabeeb4911cbc4fffa89d54343de5c0\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.github.bumptech.glide:gifdecoder:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\2dbb35e81c51cb1bf2e3413010644c98\transformed\gifdecoder-5.0.4\AndroidManifest.xml:5:5-44
+MERGED from [com.github.bumptech.glide:gifdecoder:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\2dbb35e81c51cb1bf2e3413010644c98\transformed\gifdecoder-5.0.4\AndroidManifest.xml:5:5-44
+MERGED from [io.github.Rosemoe.sora-editor:language-java:0.23.5] C:\Users\khale\.gradle\caches\8.13\transforms\79d7a80c24677d92d48b8661157b7785\transformed\language-java-0.23.5\AndroidManifest.xml:30:5-44
+MERGED from [io.github.Rosemoe.sora-editor:language-java:0.23.5] C:\Users\khale\.gradle\caches\8.13\transforms\79d7a80c24677d92d48b8661157b7785\transformed\language-java-0.23.5\AndroidManifest.xml:30:5-44
+MERGED from [androidx.startup:startup-runtime:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\794dfc68de9a8ecb6c23c3b820eabc36\transformed\startup-runtime-1.2.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.startup:startup-runtime:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\794dfc68de9a8ecb6c23c3b820eabc36\transformed\startup-runtime-1.2.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\329134f1801d51bb582352396397ab7f\transformed\tracing-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\329134f1801d51bb582352396397ab7f\transformed\tracing-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\eff47677ac4a4e4e7aba055536eae243\transformed\firebase-components-19.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\eff47677ac4a4e4e7aba055536eae243\transformed\firebase-components-19.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-api:3.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\db0057ba2f21d84e82c6c86e19152822\transformed\transport-api-3.2.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-api:3.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\db0057ba2f21d84e82c6c86e19152822\transformed\transport-api-3.2.0\AndroidManifest.xml:18:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\83231a2e6e03d0e9818d18114b9602fc\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\83231a2e6e03d0e9818d18114b9602fc\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\c9f11797e36884f3d947dfdc3acbdf0f\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\c9f11797e36884f3d947dfdc3acbdf0f\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\acd88c1667944728ab04cfc7c1f08ebf\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\acd88c1667944728ab04cfc7c1f08ebf\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\d132344918f945cdaad37d59c65a91fe\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\d132344918f945cdaad37d59c65a91fe\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [de.hdodenhof:circleimageview:3.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\6b5a11d60d0dfb8d61a932e0ddcd88ff\transformed\circleimageview-3.1.0\AndroidManifest.xml:5:5-7:41
+MERGED from [de.hdodenhof:circleimageview:3.1.0] C:\Users\khale\.gradle\caches\8.13\transforms\6b5a11d60d0dfb8d61a932e0ddcd88ff\transformed\circleimageview-3.1.0\AndroidManifest.xml:5:5-7:41
+MERGED from [com.github.bumptech.glide:disklrucache:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\618db9ea639c87348879f53a371f3053\transformed\disklrucache-5.0.4\AndroidManifest.xml:5:5-44
+MERGED from [com.github.bumptech.glide:disklrucache:5.0.4] C:\Users\khale\.gradle\caches\8.13\transforms\618db9ea639c87348879f53a371f3053\transformed\disklrucache-5.0.4\AndroidManifest.xml:5:5-44
+MERGED from [com.caverock:androidsvg-aar:1.4] C:\Users\khale\.gradle\caches\8.13\transforms\8733e1152fee6ab957b689046345e534\transformed\androidsvg-aar-1.4\AndroidManifest.xml:7:5-9:41
+MERGED from [com.caverock:androidsvg-aar:1.4] C:\Users\khale\.gradle\caches\8.13\transforms\8733e1152fee6ab957b689046345e534\transformed\androidsvg-aar-1.4\AndroidManifest.xml:7:5-9:41
+	android:targetSdkVersion
+		INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml
+uses-permission#com.google.android.c2dm.permission.RECEIVE
+ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:26:5-82
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:11:5-82
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\b7b323be6274b81bc354d16f8125d109\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:11:5-82
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:26:22-79
+receiver#com.google.firebase.iid.FirebaseInstanceIdReceiver
+ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:29:9-40:20
+	android:exported
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:31:13-36
+	android:permission
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:32:13-73
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:30:13-78
+intent-filter#action:name:com.google.android.c2dm.intent.RECEIVE
+ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:33:13-35:29
+action#com.google.android.c2dm.intent.RECEIVE
+ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:34:17-81
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:34:25-78
+meta-data#com.google.android.gms.cloudmessaging.FINISHED_AFTER_HANDLED
+ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:37:13-39:40
+	android:value
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:39:17-37
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:38:17-92
+service#com.google.firebase.messaging.FirebaseMessagingService
+ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:46:9-53:19
+	android:exported
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:49:13-37
+	android:directBootAware
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:48:13-43
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:47:13-82
+service#com.google.firebase.components.ComponentDiscoveryService
+ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:54:9-63:19
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:30:9-36:19
+MERGED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:30:9-36:19
+MERGED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:12:9-21:19
+MERGED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:12:9-21:19
+MERGED from [com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:22:9-28:19
+MERGED from [com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:22:9-28:19
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:12:9-21:19
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:12:9-21:19
+MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:30:9-38:19
+MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:30:9-38:19
+MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:22:9-28:19
+MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:22:9-28:19
+	android:exported
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:56:13-37
+	tools:targetApi
+		ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:34:13-32
+	android:directBootAware
+		ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:32:13-43
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:55:13-84
+meta-data#com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingKtxRegistrar
+ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:57:13-59:85
+	android:value
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:59:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:58:17-122
+meta-data#com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingRegistrar
+ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:60:13-62:85
+	android:value
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:62:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:61:17-119
+uses-permission#com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE
+ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:26:5-110
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:26:5-110
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:26:5-110
+	android:name
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:26:22-107
+receiver#com.google.android.gms.measurement.AppMeasurementReceiver
+ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:29:9-33:20
+	android:enabled
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:31:13-35
+	android:exported
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:32:13-37
+	android:name
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:30:13-85
+service#com.google.android.gms.measurement.AppMeasurementService
+ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:35:9-38:40
+	android:enabled
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:38:13-37
+	android:name
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:36:13-84
+service#com.google.android.gms.measurement.AppMeasurementJobService
+ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:39:9-43:72
+	android:enabled
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:41:13-35
+	android:exported
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:42:13-37
+	android:permission
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:43:13-69
+	android:name
+		ADDED from [com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:40:13-87
+uses-permission#com.google.android.gms.permission.AD_ID
+ADDED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:25:5-79
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:27:5-79
+MERGED from [com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7f9a1da23300d69a02ba44029d25f06a\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:27:5-79
+MERGED from [com.google.android.gms:play-services-ads-identifier:18.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\a07a8b52bfb94930d9a19d1ddf19c9e0\transformed\play-services-ads-identifier-18.0.0\AndroidManifest.xml:23:5-79
+MERGED from [com.google.android.gms:play-services-ads-identifier:18.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\a07a8b52bfb94930d9a19d1ddf19c9e0\transformed\play-services-ads-identifier-18.0.0\AndroidManifest.xml:23:5-79
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:26:5-79
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:26:5-79
+	android:name
+		ADDED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:25:22-76
+uses-permission#android.permission.ACCESS_ADSERVICES_ATTRIBUTION
+ADDED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:26:5-88
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:27:5-88
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:27:5-88
+	android:name
+		ADDED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:26:22-85
+uses-permission#android.permission.ACCESS_ADSERVICES_AD_ID
+ADDED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:27:5-82
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:28:5-82
+MERGED from [com.google.android.gms:play-services-measurement-sdk-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\7e8d563f20f5d0083a1c67d74b51fa19\transformed\play-services-measurement-sdk-api-23.0.0\AndroidManifest.xml:28:5-82
+	android:name
+		ADDED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:27:22-79
+meta-data#com.google.firebase.components:com.google.firebase.analytics.connector.internal.AnalyticsConnectorRegistrar
+ADDED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:33:13-35:85
+	android:value
+		ADDED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:35:17-82
+	android:name
+		ADDED from [com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:34:17-139
+meta-data#com.google.firebase.components:com.google.firebase.crashlytics.FirebaseCrashlyticsKtxRegistrar
+ADDED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:15:13-17:85
+	android:value
+		ADDED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:17:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:16:17-126
+meta-data#com.google.firebase.components:com.google.firebase.crashlytics.CrashlyticsRegistrar
+ADDED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:18:13-20:85
+	android:value
+		ADDED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:20:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:19:17-115
+meta-data#com.google.firebase.components:com.google.firebase.sessions.FirebaseSessionsRegistrar
+ADDED from [com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:25:13-27:85
+	android:value
+		ADDED from [com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:27:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:26:17-117
+meta-data#com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsKtxRegistrar
+ADDED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:15:13-17:85
+	android:value
+		ADDED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:17:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:16:17-130
+meta-data#com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsRegistrar
+ADDED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:18:13-20:85
+	android:value
+		ADDED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:20:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:19:17-127
+provider#com.google.firebase.provider.FirebaseInitProvider
+ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:23:9-28:39
+	android:authorities
+		ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:25:13-72
+	android:exported
+		ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:27:13-37
+	android:directBootAware
+		ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:26:13-43
+	android:initOrder
+		ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:28:13-36
+	android:name
+		ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:24:13-77
+meta-data#com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar
+ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:35:13-37:85
+	android:value
+		ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:37:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:36:17-109
+uses-library#androidx.window.extensions
+ADDED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:25:9-27:40
+	android:required
+		ADDED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:27:13-37
+	android:name
+		ADDED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:26:13-54
+uses-library#androidx.window.sidecar
+ADDED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:28:9-30:40
+	android:required
+		ADDED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:30:13-37
+	android:name
+		ADDED from [androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:29:13-51
+provider#androidx.startup.InitializationProvider
+ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:24:9-32:20
+MERGED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:11:9-19:20
+MERGED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:11:9-19:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\794dfc68de9a8ecb6c23c3b820eabc36\transformed\startup-runtime-1.2.0\AndroidManifest.xml:24:9-28:34
+MERGED from [androidx.startup:startup-runtime:1.2.0] C:\Users\khale\.gradle\caches\8.13\transforms\794dfc68de9a8ecb6c23c3b820eabc36\transformed\startup-runtime-1.2.0\AndroidManifest.xml:24:9-28:34
+	tools:node
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:28:13-31
+	android:authorities
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
+	android:exported
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
+meta-data#androidx.emoji2.text.EmojiCompatInitializer
+ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
+uses-library#android.ext.adservices
+ADDED from [androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:23:9-25:40
+	android:required
+		ADDED from [androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:25:13-37
+	android:name
+		ADDED from [androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:24:13-50
+activity#com.google.android.gms.common.api.GoogleApiActivity
+ADDED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:9-173
+	android:exported
+		ADDED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:146-170
+	android:theme
+		ADDED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:86-145
+	android:name
+		ADDED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:19-85
+permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:23:9-81
+permission#pro.sketchware.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:23:9-81
+uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:26:22-94
+uses-permission#pro.sketchware.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:26:22-94
+meta-data#androidx.lifecycle.ProcessLifecycleInitializer
+ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:30:17-78
+meta-data#com.google.android.gms.version
+ADDED from [com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:21:9-23:69
+	android:value
+		ADDED from [com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:23:13-66
+	android:name
+		ADDED from [com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:22:13-58
+meta-data#okhttp3.internal.platform.PlatformInitializer
+ADDED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:16:13-18:52
+	android:value
+		ADDED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:18:17-49
+	android:name
+		ADDED from [com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:17:17-77
+meta-data#com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar
+ADDED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:25:13-27:85
+	android:value
+		ADDED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:27:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:26:17-115
+service#com.google.android.datatransport.runtime.backends.TransportBackendDiscovery
+ADDED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:26:9-32:19
+MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:34:9-36:40
+MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:34:9-36:40
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:28:13-37
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:27:13-103
+meta-data#backend:com.google.android.datatransport.cct.CctBackendFactory
+ADDED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:29:13-31:39
+	android:value
+		ADDED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:31:17-36
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:30:17-94
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:50:25-92
+service#com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService
+ADDED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:24:9-28:19
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:26:13-37
+	android:permission
+		ADDED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:27:13-69
+	android:name
+		ADDED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:25:13-117
+receiver#com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver
+ADDED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:30:9-32:40
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:32:13-37
+	android:name
+		ADDED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:31:13-132

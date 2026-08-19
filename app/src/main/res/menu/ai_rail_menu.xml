@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/ai_dest_session"
+        android:icon="@drawable/ic_mtrl_chat"
+        android:title="@string/ai_tab_session" />
+    <item
+        android:id="@+id/ai_dest_models"
+        android:icon="@drawable/ic_mtrl_bookmark"
+        android:title="@string/ai_tab_models" />
+    <item
+        android:id="@+id/ai_dest_agents"
+        android:icon="@drawable/ic_mtrl_robot"
+        android:title="@string/ai_tab_agents" />
+    <item
+        android:id="@+id/ai_dest_favorites"
+        android:icon="@drawable/ic_mtrl_star"
+        android:title="@string/ai_tab_favorites" />
+    <item
+        android:id="@+id/ai_dest_files"
+        android:icon="@drawable/ic_mtrl_folder"
+        android:title="@string/ai_tab_files" />
+    <item
+        android:id="@+id/ai_dest_settings"
+        android:icon="@drawable/ic_mtrl_settings"
+        android:title="@string/ai_tab_settings" />
+    <item
+        android:id="@+id/ai_dest_history"
+        android:icon="@drawable/ic_mtrl_history"
+        android:title="@string/ai_tab_history" />
+</menu>

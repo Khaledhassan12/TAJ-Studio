@@ -1,0 +1,1034 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="pro.sketchware"
+4    android:versionCode="150"
+5    android:versionName="v7.0.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="28" />
+10
+11    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+11-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:5:5-79
+11-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:5:22-76
+12    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+12-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:6:5-76
+12-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:6:22-73
+13    <uses-permission android:name="android.permission.VIBRATE" />
+13-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:7:5-66
+13-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:7:22-63
+14    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+14-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:8:5-80
+14-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:8:22-77
+15    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+15-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:9:5-81
+15-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:9:22-78
+16    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+16-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:10:5-12:40
+16-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:11:9-66
+17    <uses-permission android:name="android.permission.INTERNET" />
+17-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:13:5-67
+17-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:13:22-64
+18    <uses-permission android:name="android.permission.WAKE_LOCK" />
+18-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:14:5-68
+18-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:14:22-65
+19    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+19-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:15:5-83
+19-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:15:22-80
+20    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+20-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:16:5-77
+20-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:16:22-74
+21    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+21-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:17:5-77
+21-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:17:22-74
+22    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+22-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:18:5-87
+22-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:18:22-84
+23
+24    <!-- Required by older versions of Google Play services to create IID tokens -->
+25    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+25-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:26:5-82
+25-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:26:22-79
+26    <uses-permission android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE" />
+26-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:26:5-110
+26-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:26:22-107
+27    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+27-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:25:5-79
+27-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:25:22-76
+28    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" />
+28-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:26:5-88
+28-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:26:22-85
+29    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" />
+29-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:27:5-82
+29-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:27:22-79
+30
+31    <permission
+31-->[androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:22:5-24:47
+32        android:name="pro.sketchware.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+32-->[androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:23:9-81
+33        android:protectionLevel="signature" />
+33-->[androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:24:9-44
+34
+35    <uses-permission android:name="pro.sketchware.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+35-->[androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:26:5-97
+35-->[androidx.core:core:1.16.0] C:\Users\khale\.gradle\caches\8.13\transforms\7bcb44ecc41bb1855964fcea00767906\transformed\core-1.16.0\AndroidManifest.xml:26:22-94
+36
+37    <application
+37-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:20:5-364:19
+38        android:name="pro.sketchware.SketchApplication"
+38-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:21:9-42
+39        android:allowBackup="true"
+39-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:22:9-35
+40        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+40-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:23:9-77
+41        android:debuggable="true"
+42        android:extractNativeLibs="false"
+43        android:icon="@mipmap/ic_launcher"
+43-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:24:9-43
+44        android:label="@string/app_name"
+44-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:25:9-41
+45        android:largeHeap="true"
+45-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:26:9-33
+46        android:requestLegacyExternalStorage="true"
+46-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:27:9-52
+47        android:theme="@style/Theme.SketchwarePro"
+47-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:28:9-51
+48        android:usesCleartextTraffic="true" >
+48-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:29:9-44
+49        <activity
+49-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:31:9-35:58
+50            android:name="pro.sketchware.activities.iconcreator.IconCreatorActivity"
+50-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:32:13-71
+51            android:exported="false"
+51-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:33:13-37
+52            android:label="@string/title_activity_icon_creator"
+52-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:34:13-64
+53            android:theme="@style/Theme.SketchwarePro" />
+53-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:35:13-55
+54
+55        <provider
+56            android:name="androidx.core.content.FileProvider"
+56-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:38:13-62
+57            android:authorities="pro.sketchware.provider"
+57-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:39:13-60
+58            android:exported="false"
+58-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:40:13-37
+59            android:grantUriPermissions="true" >
+59-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:41:13-47
+60            <meta-data
+60-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:42:13-44:58
+61                android:name="android.support.FILE_PROVIDER_PATHS"
+61-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:43:17-67
+62                android:resource="@xml/provider_paths" />
+62-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:44:17-55
+63        </provider>
+64
+65        <activity
+65-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:47:9-49:62
+66            android:name="com.besome.sketch.common.SrcViewerActivity"
+66-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:48:13-70
+67            android:configChanges="orientation|screenSize" />
+67-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:49:13-59
+68        <activity
+68-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:50:9-53:57
+69            android:name="pro.sketchware.activities.importicon.ImportIconActivity"
+69-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:51:13-83
+70            android:configChanges="orientation|screenSize"
+70-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:52:13-59
+71            android:windowSoftInputMode="stateHidden" />
+71-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:53:13-54
+72        <activity android:name="com.besome.sketch.help.LicenseActivity" />
+72-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:54:9-75
+72-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:54:19-72
+73        <activity android:name="com.besome.sketch.help.ProgramInfoActivity" />
+73-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:55:9-79
+73-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:55:19-76
+74        <activity
+74-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:56:9-58:62
+75            android:name="com.besome.sketch.help.SystemSettingActivity"
+75-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:57:13-72
+76            android:configChanges="orientation|screenSize" />
+76-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:58:13-59
+77        <activity android:name="com.besome.sketch.help.SystemInfoActivity" />
+77-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:59:9-78
+77-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:59:19-75
+78        <activity
+78-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:60:9-65:73
+79            android:name="com.besome.sketch.editor.LogicEditorActivity"
+79-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:61:13-72
+80            android:configChanges="orientation|screenSize"
+80-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:62:13-59
+81            android:hardwareAccelerated="false"
+81-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:63:13-48
+82            android:theme="@style/Theme.SketchwarePro.SmallToolbar"
+82-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:64:13-68
+83            android:windowSoftInputMode="adjustPan|stateAlwaysHidden" />
+83-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:65:13-70
+84        <activity
+84-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:66:9-68:62
+85            android:name="com.besome.sketch.editor.PropertyActivity"
+85-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:67:13-69
+86            android:configChanges="orientation|screenSize" />
+86-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:68:13-59
+87        <activity
+87-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:69:9-71:62
+88            android:name="com.besome.sketch.editor.makeblock.MakeBlockActivity"
+88-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:70:13-80
+89            android:configChanges="orientation|screenSize" />
+89-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:71:13-59
+90        <activity
+90-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:72:9-74:70
+91            android:name="com.besome.sketch.projects.MyProjectSettingActivity"
+91-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:73:13-79
+92            android:windowSoftInputMode="adjustResize|stateHidden" />
+92-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:74:13-67
+93        <activity android:name="com.besome.sketch.tools.CompileLogActivity" />
+93-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:76:9-79
+93-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:76:19-76
+94        <activity android:name="com.besome.sketch.tools.CollectErrorActivity" />
+94-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:77:9-81
+94-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:77:19-78
+95        <activity
+95-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:78:9-80:62
+96            android:name="com.besome.sketch.tools.NewKeyStoreActivity"
+96-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:79:13-71
+97            android:configChanges="orientation|screenSize" />
+97-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:80:13-59
+98        <activity
+98-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:81:9-83:62
+99            android:name="com.besome.sketch.export.ExportProjectActivity"
+99-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:82:13-74
+100            android:configChanges="orientation|screenSize" />
+100-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:83:13-59
+101        <activity
+101-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:84:9-88:71
+102            android:name="com.besome.sketch.design.DesignActivity"
+102-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:85:13-67
+103            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
+103-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:86:13-115
+104            android:theme="@style/Theme.SketchwarePro.SmallToolbar"
+104-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:88:13-68
+105            android:windowSoftInputMode="stateHidden" />
+105-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:87:13-54
+106        <activity
+106-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:89:9-114:20
+107            android:name="pro.sketchware.activities.main.activities.MainActivity"
+107-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:90:13-82
+108            android:configChanges="orientation|screenSize"
+108-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:91:13-59
+109            android:exported="true"
+109-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:92:13-36
+110            android:theme="@style/Theme.SketchwarePro.Starting" >
+110-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:93:13-64
+111            <intent-filter>
+111-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:94:13-98:29
+112                <action android:name="android.intent.action.MAIN" />
+112-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:95:17-69
+112-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:95:25-66
+113
+114                <category android:name="android.intent.category.LAUNCHER" />
+114-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:97:17-77
+114-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:97:27-74
+115            </intent-filter>
+116            <intent-filter>
+116-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:99:13-113:29
+117                <action android:name="android.intent.action.VIEW" />
+117-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:100:17-69
+117-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:100:25-66
+118
+119                <category android:name="android.intent.category.DEFAULT" />
+119-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:102:17-76
+119-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:102:27-73
+120                <category android:name="android.intent.category.BROWSABLE" />
+120-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:103:17-78
+120-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:103:27-75
+121
+122                <data android:scheme="file" />
+122-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:17-47
+122-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:23-44
+123                <data android:scheme="content" />
+123-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:17-47
+123-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:23-44
+124                <data android:mimeType="*/*" />
+124-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:17-47
+124-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:107:23-45
+125                <data android:host="*" />
+125-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:17-47
+125-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:108:23-39
+126                <data android:pathPattern=".*\\.swb" />
+126-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:17-47
+126-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:109:23-53
+127                <data android:pathPattern=".*\\..*\\.swb" />
+127-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:17-47
+127-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:109:23-53
+128                <data android:pathPattern=".*\\..*\\..*\\.swb" />
+128-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:17-47
+128-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:109:23-53
+129                <data android:pathPattern=".*\\..*\\..*\\..*\\.swb" />
+129-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:105:17-47
+129-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:109:23-53
+130            </intent-filter>
+131        </activity>
+132        <activity
+132-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:115:9-117:62
+133            android:name="com.besome.sketch.editor.manage.view.ManageViewActivity"
+133-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:116:13-83
+134            android:configChanges="orientation|screenSize" />
+134-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:117:13-59
+135        <activity
+135-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:118:9-120:62
+136            android:name="com.besome.sketch.editor.manage.sound.ManageSoundActivity"
+136-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:119:13-85
+137            android:configChanges="orientation|screenSize" />
+137-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:120:13-59
+138        <activity
+138-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:121:9-123:62
+139            android:name="com.besome.sketch.editor.manage.sound.ManageSoundImportActivity"
+139-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:122:13-91
+140            android:configChanges="orientation|screenSize" />
+140-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:123:13-59
+141        <activity
+141-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:124:9-126:62
+142            android:name="com.besome.sketch.editor.manage.image.ManageImageActivity"
+142-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:125:13-85
+143            android:configChanges="orientation|screenSize" />
+143-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:126:13-59
+144        <activity
+144-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:127:9-129:62
+145            android:name="com.besome.sketch.editor.manage.image.ManageImageImportActivity"
+145-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:128:13-91
+146            android:configChanges="orientation|screenSize" />
+146-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:129:13-59
+147        <activity
+147-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:130:9-132:62
+148            android:name="com.besome.sketch.editor.manage.font.ManageFontActivity"
+148-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:131:13-83
+149            android:configChanges="orientation|screenSize" />
+149-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:132:13-59
+150        <activity
+150-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:133:9-135:62
+151            android:name="com.besome.sketch.editor.manage.font.ManageFontImportActivity"
+151-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:134:13-89
+152            android:configChanges="orientation|screenSize" />
+152-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:135:13-59
+153        <activity
+153-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:136:9-138:62
+154            android:name="com.besome.sketch.editor.manage.library.ManageLibraryActivity"
+154-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:137:13-89
+155            android:configChanges="orientation|screenSize" />
+155-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:138:13-59
+156        <activity
+156-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:139:9-141:62
+157            android:name="com.besome.sketch.editor.manage.ManageCollectionActivity"
+157-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:140:13-84
+158            android:configChanges="orientation|screenSize" />
+158-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:141:13-59
+159        <activity
+159-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:142:9-145:67
+160            android:name="com.besome.sketch.editor.manage.ShowWidgetCollectionActivity"
+160-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:143:13-88
+161            android:configChanges="orientation|screenSize"
+161-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:144:13-59
+162            android:windowSoftInputMode="adjustPan|stateHidden" />
+162-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:145:13-64
+163        <activity
+163-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:146:9-149:84
+164            android:name="com.besome.sketch.editor.event.AddEventActivity"
+164-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:147:13-75
+165            android:configChanges="orientation|screenSize"
+165-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:148:13-59
+166            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent" />
+166-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:149:13-81
+167        <activity
+167-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:150:9-154:70
+168            android:name="com.besome.sketch.editor.manage.ViewSelectorActivity"
+168-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:151:13-80
+169            android:configChanges="orientation|screenSize"
+169-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:152:13-59
+170            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+170-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:153:13-81
+171            android:windowSoftInputMode="adjustResize|stateHidden" />
+171-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:154:13-67
+172        <activity
+172-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:155:9-158:70
+173            android:name="com.besome.sketch.editor.manage.view.AddViewActivity"
+173-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:156:13-80
+174            android:configChanges="orientation|screenSize"
+174-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:157:13-59
+175            android:windowSoftInputMode="adjustResize|stateHidden" />
+175-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:158:13-67
+176        <activity
+176-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:159:9-163:70
+177            android:name="com.besome.sketch.editor.manage.view.AddCustomViewActivity"
+177-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:160:13-86
+178            android:configChanges="orientation|screenSize"
+178-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:161:13-59
+179            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+179-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:162:13-81
+180            android:windowSoftInputMode="adjustResize|stateHidden" />
+180-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:163:13-67
+181        <activity
+181-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:164:9-168:70
+182            android:name="com.besome.sketch.editor.manage.image.AddImageActivity"
+182-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:165:13-82
+183            android:configChanges="orientation|screenSize"
+183-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:166:13-59
+184            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+184-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:167:13-81
+185            android:windowSoftInputMode="adjustResize|stateHidden" />
+185-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:168:13-67
+186        <activity
+186-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:169:9-173:70
+187            android:name="com.besome.sketch.editor.manage.sound.AddSoundActivity"
+187-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:170:13-82
+188            android:configChanges="orientation|screenSize"
+188-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:171:13-59
+189            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+189-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:172:13-81
+190            android:windowSoftInputMode="adjustResize|stateHidden" />
+190-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:173:13-67
+191        <activity
+191-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:174:9-178:70
+192            android:name="com.besome.sketch.editor.manage.font.AddFontActivity"
+192-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:175:13-80
+193            android:configChanges="orientation|screenSize"
+193-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:176:13-59
+194            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+194-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:177:13-81
+195            android:windowSoftInputMode="adjustResize|stateHidden" />
+195-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:178:13-67
+196        <activity
+196-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:179:9-184:67
+197            android:name="com.besome.sketch.editor.manage.ShowBlockCollectionActivity"
+197-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:180:13-87
+198            android:configChanges="orientation|screenSize"
+198-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:181:13-59
+199            android:hardwareAccelerated="false"
+199-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:182:13-48
+200            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+200-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:183:13-81
+201            android:windowSoftInputMode="adjustPan|stateHidden" />
+201-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:184:13-64
+202        <activity
+202-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:185:9-190:67
+203            android:name="com.besome.sketch.editor.manage.ShowMoreBlockCollectionActivity"
+203-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:186:13-91
+204            android:configChanges="orientation|screenSize"
+204-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:187:13-59
+205            android:hardwareAccelerated="false"
+205-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:188:13-48
+206            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+206-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:189:13-81
+207            android:windowSoftInputMode="adjustPan|stateHidden" />
+207-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:190:13-64
+208        <activity
+208-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:191:9-194:70
+209            android:name="com.besome.sketch.editor.manage.image.AddImageCollectionActivity"
+209-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:192:13-92
+210            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+210-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:193:13-81
+211            android:windowSoftInputMode="adjustResize|stateHidden" />
+211-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:194:13-67
+212        <activity
+212-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:195:9-199:70
+213            android:name="com.besome.sketch.editor.manage.sound.AddSoundCollectionActivity"
+213-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:196:13-92
+214            android:configChanges="orientation|screenSize"
+214-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:197:13-59
+215            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+215-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:198:13-81
+216            android:windowSoftInputMode="adjustResize|stateHidden" />
+216-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:199:13-67
+217        <activity
+217-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:200:9-204:70
+218            android:name="com.besome.sketch.editor.manage.font.AddFontCollectionActivity"
+218-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:201:13-90
+219            android:configChanges="orientation|screenSize"
+219-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:202:13-59
+220            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+220-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:203:13-81
+221            android:windowSoftInputMode="adjustResize|stateHidden" />
+221-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:204:13-67
+222        <activity
+222-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:205:9-207:62
+223            android:name="com.besome.sketch.editor.manage.library.admob.AdmobActivity"
+223-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:206:13-87
+224            android:configChanges="orientation|screenSize" />
+224-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:207:13-59
+225        <activity
+225-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:208:9-210:62
+226            android:name="com.besome.sketch.editor.manage.library.firebase.FirebaseActivity"
+226-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:209:13-93
+227            android:configChanges="orientation|screenSize" />
+227-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:210:13-59
+228        <activity
+228-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:211:9-213:62
+229            android:name="com.besome.sketch.editor.manage.library.firebase.ManageFirebaseActivity"
+229-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:212:13-99
+230            android:configChanges="orientation|screenSize" />
+230-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:213:13-59
+231        <activity
+231-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:214:9-216:62
+232            android:name="com.besome.sketch.editor.manage.library.admob.ManageAdmobActivity"
+232-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:215:13-93
+233            android:configChanges="orientation|screenSize" />
+233-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:216:13-59
+234        <activity
+234-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:217:9-219:62
+235            android:name="com.besome.sketch.editor.manage.library.compat.ManageCompatActivity"
+235-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:218:13-95
+236            android:configChanges="orientation|screenSize" />
+236-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:219:13-59
+237        <activity
+237-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:220:9-222:62
+238            android:name="com.besome.sketch.editor.manage.library.googlemap.ManageGoogleMapActivity"
+238-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:221:13-101
+239            android:configChanges="orientation|screenSize" />
+239-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:222:13-59
+240        <activity
+240-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:223:9-225:62
+241            android:name="dev.aldi.sayuti.editor.manage.ManageLocalLibraryActivity"
+241-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:224:13-84
+242            android:configChanges="orientation|screenSize" />
+242-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:225:13-59
+243        <activity
+243-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:226:9-229:57
+244            android:name="mod.agus.jcoderz.editor.manage.permission.ManagePermissionActivity"
+244-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:227:13-94
+245            android:configChanges="orientation|screenSize|keyboardHidden"
+245-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:228:13-74
+246            android:windowSoftInputMode="stateHidden" />
+246-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:229:13-54
+247        <activity
+247-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:230:9-232:62
+248            android:name="mod.agus.jcoderz.editor.manage.resource.ManageResourceActivity"
+248-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:231:13-90
+249            android:configChanges="orientation|screenSize" />
+249-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:232:13-59
+250        <activity
+250-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:233:9-235:62
+251            android:name="mod.hey.studios.activity.managers.assets.ManageAssetsActivity"
+251-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:234:13-89
+252            android:configChanges="orientation|screenSize" />
+252-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:235:13-59
+253        <activity
+253-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:236:9-238:62
+254            android:name="mod.hey.studios.activity.managers.java.ManageJavaActivity"
+254-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:237:13-85
+255            android:configChanges="orientation|screenSize" />
+255-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:238:13-59
+256        <activity
+256-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:239:9-241:62
+257            android:name="mod.hey.studios.activity.managers.nativelib.ManageNativelibsActivity"
+257-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:240:13-96
+258            android:configChanges="orientation|screenSize" />
+258-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:241:13-59
+259        <activity
+259-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:242:9-244:62
+260            android:name="mod.hey.studios.code.SrcCodeEditor"
+260-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:243:13-62
+261            android:configChanges="orientation|screenSize" />
+261-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:244:13-59
+262        <activity
+262-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:245:9-247:62
+263            android:name="mod.hey.studios.project.proguard.ManageProguardActivity"
+263-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:246:13-83
+264            android:configChanges="orientation|screenSize" />
+264-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:247:13-59
+265        <activity
+265-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:248:9-250:62
+266            android:name="mod.hilal.saif.activities.android_manifest.AndroidManifestInjection"
+266-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:249:13-95
+267            android:configChanges="orientation|screenSize" />
+267-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:250:13-59
+268        <activity
+268-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:251:9-254:63
+269            android:name="mod.hilal.saif.activities.android_manifest.AndroidManifestInjectionDetails"
+269-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:252:13-102
+270            android:configChanges="orientation|screenSize"
+270-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:253:13-59
+271            android:windowSoftInputMode="stateAlwaysHidden" />
+271-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:254:13-60
+272        <activity
+272-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:255:9-257:62
+273            android:name="mod.hilal.saif.activities.tools.BlocksManager"
+273-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:256:13-73
+274            android:configChanges="orientation|screenSize" />
+274-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:257:13-59
+275        <activity
+275-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:258:9-260:62
+276            android:name="mod.hilal.saif.activities.tools.BlocksManagerCreatorActivity"
+276-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:259:13-88
+277            android:configChanges="orientation|screenSize" />
+277-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:260:13-59
+278        <activity
+278-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:261:9-263:62
+279            android:name="mod.hilal.saif.activities.tools.BlocksManagerDetailsActivity"
+279-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:262:13-88
+280            android:configChanges="orientation|screenSize" />
+280-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:263:13-59
+281        <activity
+281-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:264:9-266:62
+282            android:name="mod.hilal.saif.activities.tools.ConfigActivity"
+282-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:265:13-74
+283            android:configChanges="orientation|screenSize" />
+283-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:266:13-59
+284        <activity
+284-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:267:9-269:62
+285            android:name="mod.hilal.saif.activities.tools.AppSettings"
+285-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:268:13-71
+286            android:configChanges="orientation|screenSize" />
+286-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:269:13-59
+287        <activity
+287-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:271:9-275:70
+288            android:name="pro.sketchware.ai.ui.TagAssistantActivity"
+288-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:272:13-69
+289            android:configChanges="orientation|screenSize"
+289-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:273:13-59
+290            android:exported="false"
+290-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:274:13-37
+291            android:windowSoftInputMode="adjustResize|stateHidden" />
+291-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:275:13-67
+292        <activity
+292-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:276:9-278:62
+293            android:name="pro.sketchware.activities.about.AboutActivity"
+293-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:277:13-73
+294            android:configChanges="orientation|screenSize" />
+294-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:278:13-59
+295        <activity android:name="mod.jbk.editor.manage.library.ExcludeBuiltInLibrariesActivity" />
+295-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:279:9-98
+295-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:279:19-95
+296        <activity
+296-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:280:9-284:70
+297            android:name="com.besome.sketch.editor.manage.view.PresetSettingActivity"
+297-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:281:13-86
+298            android:configChanges="orientation|screenSize"
+298-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:282:13-59
+299            android:theme="@style/Theme.AppCompat.Light.NoActionBar.Translucent"
+299-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:283:13-81
+300            android:windowSoftInputMode="adjustResize|stateHidden" />
+300-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:284:13-67
+301        <activity
+301-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:285:9-287:94
+302            android:name="mod.khaled.logcat.LogReaderActivity"
+302-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:286:13-63
+303            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize" />
+303-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:287:13-91
+304        <activity
+304-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:289:9-292:73
+305            android:name="pro.sketchware.activities.main.fragments.projects_store.ProjectPreviewActivity"
+305-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:290:13-106
+306            android:configChanges="orientation|screenSize"
+306-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:291:13-59
+307            android:theme="@style/Theme.SketchwarePro.ProjectPreview" />
+307-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:292:13-70
+308        <activity android:name="pro.sketchware.activities.settings.SettingsActivity" />
+308-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:294:9-88
+308-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:294:19-85
+309        <activity
+309-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:296:9-299:70
+310            android:name="pro.sketchware.marketplace.activities.LibraryMarketplaceActivity"
+310-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:296:19-98
+311            android:configChanges="orientation|screenSize"
+311-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:297:13-59
+312            android:label="@string/settings_library_marketplace_title"
+312-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:298:13-71
+313            android:windowSoftInputMode="adjustResize|stateHidden" />
+313-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:299:13-67
+314        <activity android:name="pro.sketchware.activities.resourceseditor.ResourcesEditorActivity" />
+314-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:301:9-102
+314-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:301:19-99
+315        <activity
+315-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:303:9-305:62
+316            android:name="com.besome.sketch.editor.manage.library.material3.Material3LibraryActivity"
+316-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:304:13-102
+317            android:configChanges="orientation|screenSize" />
+317-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:305:13-59
+318        <activity
+318-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:307:9-309:62
+319            android:name="pro.sketchware.activities.appcompat.ManageAppCompatActivity"
+319-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:308:13-73
+320            android:configChanges="orientation|screenSize" />
+320-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:309:13-59
+321        <activity
+321-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:311:9-313:62
+322            android:name="pro.sketchware.activities.editor.command.ManageXMLCommandActivity"
+322-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:312:13-79
+323            android:configChanges="orientation|screenSize" />
+323-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:313:13-59
+324        <activity
+324-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:315:9-318:63
+325            android:name="pro.sketchware.activities.editor.component.ManageCustomComponentActivity"
+325-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:316:13-86
+326            android:configChanges="orientation|screenSize"
+326-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:317:13-59
+327            android:windowSoftInputMode="stateAlwaysHidden" />
+327-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:318:13-60
+328        <activity
+328-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:320:9-323:58
+329            android:name="pro.sketchware.activities.editor.component.AddCustomComponentActivity"
+329-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:321:13-83
+330            android:configChanges="orientation|screenSize"
+330-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:322:13-59
+331            android:windowSoftInputMode="adjustResize" />
+331-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:323:13-55
+332        <activity
+332-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:325:9-327:62
+333            android:name="pro.sketchware.activities.editor.view.ViewCodeEditorActivity"
+333-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:326:13-74
+334            android:configChanges="orientation|screenSize" />
+334-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:327:13-59
+335        <activity
+335-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:329:9-331:62
+336            android:name="pro.sketchware.activities.editor.view.CodeViewerActivity"
+336-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:330:13-70
+337            android:configChanges="orientation|screenSize" />
+337-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:331:13-59
+338        <activity
+338-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:333:9-335:62
+339            android:name="pro.sketchware.activities.preview.LayoutPreviewActivity"
+339-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:334:13-69
+340            android:configChanges="orientation|screenSize" />
+340-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:335:13-59
+341
+342        <meta-data
+342-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:337:9-339:36
+343            android:name="firebase_crashlytics_collection_enabled"
+343-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:338:13-67
+344            android:value="true" />
+344-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:339:13-33
+345
+346        <service
+346-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:341:9-344:56
+347            android:name="pro.sketchware.marketplace.services.LibraryInstallService"
+347-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:342:13-85
+348            android:exported="false"
+348-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:343:13-37
+349            android:foregroundServiceType="dataSync" />
+349-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:344:13-53
+350        <service
+350-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:346:9-352:19
+351            android:name="pro.sketchware.firebase.FirebaseMessagingServiceImpl"
+351-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:347:13-80
+352            android:exported="false" >
+352-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:348:13-37
+353            <intent-filter>
+353-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:349:13-351:29
+354                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+354-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:350:17-78
+354-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:350:25-75
+355            </intent-filter>
+356        </service>
+357        <service
+357-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:354:9-357:56
+358            android:name="pro.sketchware.github.GitHubUploadService"
+358-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:355:13-55
+359            android:exported="false"
+359-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:356:13-37
+360            android:foregroundServiceType="dataSync" />
+360-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:357:13-53
+361        <service
+361-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:359:9-363:56
+362            android:name="pro.sketchware.github.GitCommitService"
+362-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:360:13-52
+363            android:enabled="true"
+363-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:361:13-35
+364            android:exported="false"
+364-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:362:13-37
+365            android:foregroundServiceType="dataSync" />
+365-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:363:13-53
+366
+367        <receiver
+367-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:29:9-40:20
+368            android:name="com.google.firebase.iid.FirebaseInstanceIdReceiver"
+368-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:30:13-78
+369            android:exported="true"
+369-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:31:13-36
+370            android:permission="com.google.android.c2dm.permission.SEND" >
+370-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:32:13-73
+371            <intent-filter>
+371-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:33:13-35:29
+372                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+372-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:34:17-81
+372-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:34:25-78
+373            </intent-filter>
+374
+375            <meta-data
+375-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:37:13-39:40
+376                android:name="com.google.android.gms.cloudmessaging.FINISHED_AFTER_HANDLED"
+376-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:38:17-92
+377                android:value="true" />
+377-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:39:17-37
+378        </receiver>
+379        <!--
+380             FirebaseMessagingService performs security checks at runtime,
+381             but set to not exported to explicitly avoid allowing another app to call it.
+382        -->
+383        <service
+383-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:46:9-53:19
+384            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+384-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:47:13-82
+385            android:directBootAware="true"
+385-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:48:13-43
+386            android:exported="false" >
+386-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:49:13-37
+387            <intent-filter android:priority="-500" >
+387-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:349:13-351:29
+388                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+388-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:350:17-78
+388-->C:\Users\khale\StudioProjects\TAJ-Studio\app\src\main\AndroidManifest.xml:350:25-75
+389            </intent-filter>
+390        </service>
+391        <service
+391-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:54:9-63:19
+392            android:name="com.google.firebase.components.ComponentDiscoveryService"
+392-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:55:13-84
+393            android:directBootAware="true"
+393-->[com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:32:13-43
+394            android:exported="false" >
+394-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:56:13-37
+395            <meta-data
+395-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:57:13-59:85
+396                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingKtxRegistrar"
+396-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:58:17-122
+397                android:value="com.google.firebase.components.ComponentRegistrar" />
+397-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:59:17-82
+398            <meta-data
+398-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:60:13-62:85
+399                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingRegistrar"
+399-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:61:17-119
+400                android:value="com.google.firebase.components.ComponentRegistrar" />
+400-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\ab13455011c1ef860b8031f26dc271d1\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:62:17-82
+401            <meta-data
+401-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:33:13-35:85
+402                android:name="com.google.firebase.components:com.google.firebase.analytics.connector.internal.AnalyticsConnectorRegistrar"
+402-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:34:17-139
+403                android:value="com.google.firebase.components.ComponentRegistrar" />
+403-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\60de9d126ee34d4bb1c69ae646b786d0\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:35:17-82
+404            <meta-data
+404-->[com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:15:13-17:85
+405                android:name="com.google.firebase.components:com.google.firebase.crashlytics.FirebaseCrashlyticsKtxRegistrar"
+405-->[com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:16:17-126
+406                android:value="com.google.firebase.components.ComponentRegistrar" />
+406-->[com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:17:17-82
+407            <meta-data
+407-->[com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:18:13-20:85
+408                android:name="com.google.firebase.components:com.google.firebase.crashlytics.CrashlyticsRegistrar"
+408-->[com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:19:17-115
+409                android:value="com.google.firebase.components.ComponentRegistrar" />
+409-->[com.google.firebase:firebase-crashlytics:20.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\833d0a32b23b0ff631637b97a3e4d90d\transformed\firebase-crashlytics-20.0.2\AndroidManifest.xml:20:17-82
+410            <meta-data
+410-->[com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:25:13-27:85
+411                android:name="com.google.firebase.components:com.google.firebase.sessions.FirebaseSessionsRegistrar"
+411-->[com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:26:17-117
+412                android:value="com.google.firebase.components.ComponentRegistrar" />
+412-->[com.google.firebase:firebase-sessions:3.0.2] C:\Users\khale\.gradle\caches\8.13\transforms\d78233f3da7b111d3d945638b8a8cdfe\transformed\firebase-sessions-3.0.2\AndroidManifest.xml:27:17-82
+413            <meta-data
+413-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:15:13-17:85
+414                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsKtxRegistrar"
+414-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:16:17-130
+415                android:value="com.google.firebase.components.ComponentRegistrar" />
+415-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:17:17-82
+416            <meta-data
+416-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:18:13-20:85
+417                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsRegistrar"
+417-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:19:17-127
+418                android:value="com.google.firebase.components.ComponentRegistrar" />
+418-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\91bf6c9c6fc77a01f769e681924cf1d2\transformed\firebase-installations-19.0.1\AndroidManifest.xml:20:17-82
+419            <meta-data
+419-->[com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:35:13-37:85
+420                android:name="com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar"
+420-->[com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:36:17-109
+421                android:value="com.google.firebase.components.ComponentRegistrar" />
+421-->[com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:37:17-82
+422            <meta-data
+422-->[com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:25:13-27:85
+423                android:name="com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar"
+423-->[com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:26:17-115
+424                android:value="com.google.firebase.components.ComponentRegistrar" />
+424-->[com.google.firebase:firebase-datatransport:19.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\ab442f9416ca5787cbf2a3e25a955bc6\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:27:17-82
+425        </service>
+426
+427        <receiver
+427-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:29:9-33:20
+428            android:name="com.google.android.gms.measurement.AppMeasurementReceiver"
+428-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:30:13-85
+429            android:enabled="true"
+429-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:31:13-35
+430            android:exported="false" >
+430-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:32:13-37
+431        </receiver>
+432
+433        <service
+433-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:35:9-38:40
+434            android:name="com.google.android.gms.measurement.AppMeasurementService"
+434-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:36:13-84
+435            android:enabled="true"
+435-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:37:13-35
+436            android:exported="false" />
+436-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:38:13-37
+437        <service
+437-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:39:9-43:72
+438            android:name="com.google.android.gms.measurement.AppMeasurementJobService"
+438-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:40:13-87
+439            android:enabled="true"
+439-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:41:13-35
+440            android:exported="false"
+440-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:42:13-37
+441            android:permission="android.permission.BIND_JOB_SERVICE" />
+441-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\93fc0afb26efd420f332431c152c0d11\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:43:13-69
+442
+443        <provider
+443-->[com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:23:9-28:39
+444            android:name="com.google.firebase.provider.FirebaseInitProvider"
+444-->[com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:24:13-77
+445            android:authorities="pro.sketchware.firebaseinitprovider"
+445-->[com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:25:13-72
+446            android:directBootAware="true"
+446-->[com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:26:13-43
+447            android:exported="false"
+447-->[com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:27:13-37
+448            android:initOrder="100" />
+448-->[com.google.firebase:firebase-common:22.0.1] C:\Users\khale\.gradle\caches\8.13\transforms\d968dec2e04c0ac57718a91d89c80be0\transformed\firebase-common-22.0.1\AndroidManifest.xml:28:13-36
+449
+450        <uses-library
+450-->[androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:25:9-27:40
+451            android:name="androidx.window.extensions"
+451-->[androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:26:13-54
+452            android:required="false" />
+452-->[androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:27:13-37
+453        <uses-library
+453-->[androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:28:9-30:40
+454            android:name="androidx.window.sidecar"
+454-->[androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:29:13-51
+455            android:required="false" />
+455-->[androidx.window:window:1.0.0] C:\Users\khale\.gradle\caches\8.13\transforms\2dbd62619a4d3111893b60e685d7f768\transformed\window-1.0.0\AndroidManifest.xml:30:13-37
+456
+457        <provider
+457-->[androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+458            android:name="androidx.startup.InitializationProvider"
+458-->[androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
+459            android:authorities="pro.sketchware.androidx-startup"
+459-->[androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
+460            android:exported="false" >
+460-->[androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
+461            <meta-data
+461-->[androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+462                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+462-->[androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
+463                android:value="androidx.startup" />
+463-->[androidx.emoji2:emoji2:1.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\019d239094fc8e5ec7b8aa0a19c6e19e\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
+464            <meta-data
+464-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:29:13-31:52
+465                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+465-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:30:17-78
+466                android:value="androidx.startup" />
+466-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\khale\.gradle\caches\8.13\transforms\4df12837986cc87303f4b1fd419d5720\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:31:17-49
+467            <meta-data
+467-->[com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:16:13-18:52
+468                android:name="okhttp3.internal.platform.PlatformInitializer"
+468-->[com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:17:17-77
+469                android:value="androidx.startup" />
+469-->[com.squareup.okhttp3:okhttp-android:5.0.0-alpha.16] C:\Users\khale\.gradle\caches\8.13\transforms\7798a9266885d6b1841ca7c4397ff29b\transformed\okhttp-release\AndroidManifest.xml:18:17-49
+470            <meta-data
+470-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:29:13-31:52
+471                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+471-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:30:17-85
+472                android:value="androidx.startup" />
+472-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:31:17-49
+473        </provider>
+474
+475        <uses-library
+475-->[androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:23:9-25:40
+476            android:name="android.ext.adservices"
+476-->[androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:24:13-50
+477            android:required="false" />
+477-->[androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\khale\.gradle\caches\8.13\transforms\6f9e1cce16543ae2f6dc918b5efaaa3d\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:25:13-37
+478
+479        <activity
+479-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:9-173
+480            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+480-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:19-85
+481            android:exported="false"
+481-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:146-170
+482            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+482-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\ee079060d5f07bc2f6644307a65c19fe\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:86-145
+483
+484        <meta-data
+484-->[com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:21:9-23:69
+485            android:name="com.google.android.gms.version"
+485-->[com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:22:13-58
+486            android:value="@integer/google_play_services_version" />
+486-->[com.google.android.gms:play-services-basement:18.5.0] C:\Users\khale\.gradle\caches\8.13\transforms\7575ec43581b92851cab3f057187bc5c\transformed\play-services-basement-18.5.0\AndroidManifest.xml:23:13-66
+487
+488        <service
+488-->[com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:26:9-32:19
+489            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+489-->[com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:27:13-103
+490            android:exported="false" >
+490-->[com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:28:13-37
+491            <meta-data
+491-->[com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:29:13-31:39
+492                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+492-->[com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:30:17-94
+493                android:value="cct" />
+493-->[com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\86e16db991495314a7534b250f515d81\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:31:17-36
+494        </service>
+495
+496        <receiver
+496-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:34:9-52:20
+497            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+497-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:35:13-76
+498            android:directBootAware="false"
+498-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:36:13-44
+499            android:enabled="true"
+499-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:37:13-35
+500            android:exported="true"
+500-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:38:13-36
+501            android:permission="android.permission.DUMP" >
+501-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:39:13-57
+502            <intent-filter>
+502-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:40:13-42:29
+503                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+503-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:41:17-91
+503-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:41:25-88
+504            </intent-filter>
+505            <intent-filter>
+505-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:43:13-45:29
+506                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+506-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:44:17-85
+506-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:44:25-82
+507            </intent-filter>
+508            <intent-filter>
+508-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:46:13-48:29
+509                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+509-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:47:17-88
+509-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:47:25-85
+510            </intent-filter>
+511            <intent-filter>
+511-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:49:13-51:29
+512                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+512-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:50:17-95
+512-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\khale\.gradle\caches\8.13\transforms\e92a0ec8d11051e4270546b924240a09\transformed\profileinstaller-1.4.0\AndroidManifest.xml:50:25-92
+513            </intent-filter>
+514        </receiver>
+515
+516        <service
+516-->[com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:24:9-28:19
+517            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+517-->[com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:25:13-117
+518            android:exported="false"
+518-->[com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:26:13-37
+519            android:permission="android.permission.BIND_JOB_SERVICE" >
+519-->[com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:27:13-69
+520        </service>
+521
+522        <receiver
+522-->[com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:30:9-32:40
+523            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+523-->[com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:31:13-132
+524            android:exported="false" />
+524-->[com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\khale\.gradle\caches\8.13\transforms\2d3031c0268c6c1234548ff0defc1b9e\transformed\transport-runtime-3.3.0\AndroidManifest.xml:32:13-37
+525    </application>
+526
+527</manifest>

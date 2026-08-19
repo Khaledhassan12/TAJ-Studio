@@ -2572,4 +2572,23 @@ Please try again later"</string>
     <string name="pin_lang_error_short">Language not supported</string>
     <string name="unlock_button">Unlock</string>
     <string name="set_button">Set</string>
+    <string name="design_tab_title_assistant">Assistant</string>
+    <string name="ai_tab_session">Session</string>
+    <string name="ai_tab_models">Models</string>
+    <string name="ai_tab_agents">Agents</string>
+    <string name="ai_tab_favorites">Favorites</string>
+    <string name="ai_tab_files">Context</string>
+    <string name="ai_tab_settings">Settings</string>
+    <string name="ai_tab_history">History</string>
+    <string name="ai_meet_assistant">Meet your Assistant</string>
+    <string name="ai_ask_hint">Ask Assistant...</string>
+    <string name="ai_badge_local">Local</string>
+    <string name="ai_badge_cloud">Cloud</string>
+    <string name="ai_suggestion_explain">Explain this layout</string>
+    <string name="ai_suggestion_button">Add a button to main.xml</string>
+    <string name="ai_suggestion_build">Build my project</string>
+    <string name="ai_agent_suggestion_title">This request can take real actions in your project.</string>
+    <string name="ai_agent_switch">Switch to Agent</string>
+    <string name="ai_agent_stay">Stay in Chat</string>
+    <string name="ai_destructive_warn">This action will modify or delete files. Continue?</string>
 </resources>

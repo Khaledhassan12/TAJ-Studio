@@ -304,6 +304,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             try {
                 ModelSyncService.Result result = ModelSyncService.fetch(effective, key);
                 store.saveModelsCache(effective.id, result.models);
+                store.setVerified(true);
                 runOnUiThread(() -> {
                     if (isFinishing() || isDestroyed()) {
                         return;

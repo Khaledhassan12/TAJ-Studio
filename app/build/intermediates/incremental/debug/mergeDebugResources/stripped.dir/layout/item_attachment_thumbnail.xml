@@ -1,0 +1,36 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="72dp"
+    android:layout_height="72dp"
+    android:layout_marginEnd="10dp">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/thumb_image"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="bottom|start"
+        android:scaleType="centerCrop"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.SmallComponent" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/btn_remove"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="top|end"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="?attr/colorSurfaceContainerHighest">
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_gravity="center"
+            android:alpha="0.7"
+            app:srcCompat="@drawable/ic_mtrl_close"
+            app:tint="?attr/colorOnSurface" />
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>
