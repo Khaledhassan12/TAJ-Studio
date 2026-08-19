@@ -48,6 +48,71 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <LinearLayout
+        android:id="@+id/actions_row"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="2dp"
+        android:alpha="0">
+
+        <ImageButton
+            android:id="@+id/btn_copy"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_msg_copy"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="?attr/colorOnSurfaceVariant"
+            android:contentDescription="@string/ai_tooltip_copy" />
+
+        <ImageButton
+            android:id="@+id/btn_regenerate"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_msg_regenerate"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="?attr/colorOnSurfaceVariant"
+            android:contentDescription="@string/ai_tooltip_regenerate" />
+
+        <ImageButton
+            android:id="@+id/btn_voice"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_msg_voice"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="?attr/colorOnSurfaceVariant"
+            android:contentDescription="@string/ai_tooltip_voice" />
+
+        <ImageButton
+            android:id="@+id/btn_branch"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_msg_branch"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="?attr/colorOnSurfaceVariant"
+            android:contentDescription="@string/ai_tooltip_branch" />
+
+        <ImageButton
+            android:id="@+id/btn_share"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_msg_share"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="?attr/colorOnSurfaceVariant"
+            android:contentDescription="@string/ai_tooltip_share" />
+
+    </LinearLayout>
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_retry"
         style="@style/Widget.Material3.Button.TextButton"

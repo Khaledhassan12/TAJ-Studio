@@ -133,4 +133,23 @@ public final class ChatStore {
         File file = new File(baseDir, id + ".json");
         if (file.exists()) file.delete();
     }
+
+    public static Session branchSession(Session source, int upToIndexInclusive) {
+        Session branch = new Session();
+        branch.id = System.currentTimeMillis() + "_branch";
+        if (source.messages.size() > 0) {
+            String firstText = source.messages.get(0).text;
+            if (firstText.length() > 30) firstText = firstText.substring(0, 30) + "...";
+            // title logic would go in metadata, but for now we just label the session.
+        }
+        for (int i = 0; i <= upToIndexInclusive && i < source.messages.size(); i++) {
+            Message m = source.messages.get(i);
+            Message copy = new Message(m.role, m.text);
+            copy.time = m.time;
+            copy.toolState = m.toolState;
+            copy.action = m.action;
+            branch.messages.add(copy);
+        }
+        return branch;
+    }
 }

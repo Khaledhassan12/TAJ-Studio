@@ -29,9 +29,29 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_ERROR = 5;
 
     private final List<ChatStore.Message> messages = new ArrayList<>();
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
     private OnSuggestionListener suggestionListener;
     private OnErrorActionListener onErrorActionListener;
+    private OnMessageActionListener onMessageActionListener;
+    private String currentSpeakingText;
+
+    public void setCurrentSpeakingText(String text) {
+        this.currentSpeakingText = text;
+        notifyDataSetChanged();
+    }
+
+    public interface OnMessageActionListener {
+        void onCopy(ChatStore.Message message);
+        void onEdit(ChatStore.Message message, int position);
+        void onBranch(ChatStore.Message message, int position);
+        void onShare(ChatStore.Message message);
+        void onRegenerate(ChatStore.Message message, int position);
+        void onVoice(ChatStore.Message message, View btnVoice);
+    }
+
+    public void setOnMessageActionListener(OnMessageActionListener listener) {
+        this.onMessageActionListener = listener;
+    }
 
     public interface OnErrorActionListener {
         void onAction(ChatStore.Message message);
@@ -111,10 +131,16 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             UserViewHolder vh = (UserViewHolder) holder;
             vh.label.setText("You • " + time);
             vh.message.setText(m.text);
+            setupActions(vh.actionsRow, vh.btnCopy, vh.btnEdit, vh.btnBranch, vh.btnShare, null, null, m, position);
         } else if (holder instanceof AssistantViewHolder) {
             AssistantViewHolder vh = (AssistantViewHolder) holder;
             vh.label.setText("Assistant • " + time);
             vh.message.setText(m.text);
+            if (vh.btnVoice instanceof android.widget.ImageButton) {
+                ((android.widget.ImageButton) vh.btnVoice).setImageResource(
+                        m.text.equals(currentSpeakingText) ? R.drawable.ic_msg_voice_stop : R.drawable.ic_msg_voice);
+            }
+            setupActions(vh.actionsRow, vh.btnCopy, null, vh.btnBranch, vh.btnShare, vh.btnRegenerate, vh.btnVoice, m, position);
         } else if (holder instanceof ToolViewHolder) {
             ToolViewHolder vh = (ToolViewHolder) holder;
             vh.chip.setText(m.text);
@@ -138,6 +164,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 if (onErrorActionListener != null) onErrorActionListener.onLongClick(m);
                 return true;
             });
+            vh.btnCopy.setOnClickListener(v -> {
+                if (onMessageActionListener != null) onMessageActionListener.onCopy(m);
+            });
         }
 
         if (position > lastAnimatedPosition) {
@@ -153,6 +182,17 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
+    private void setupActions(View row, View copy, View edit, View branch, View share, View regen, View voice, ChatStore.Message m, int pos) {
+        row.setAlpha(0f);
+        row.animate().alpha(1f).setDuration(300).setStartDelay(100).start();
+        if (copy != null) copy.setOnClickListener(v -> { if (onMessageActionListener != null) onMessageActionListener.onCopy(m); });
+        if (edit != null) edit.setOnClickListener(v -> { if (onMessageActionListener != null) onMessageActionListener.onEdit(m, pos); });
+        if (branch != null) branch.setOnClickListener(v -> { if (onMessageActionListener != null) onMessageActionListener.onBranch(m, pos); });
+        if (share != null) share.setOnClickListener(v -> { if (onMessageActionListener != null) onMessageActionListener.onShare(m); });
+        if (regen != null) regen.setOnClickListener(v -> { if (onMessageActionListener != null) onMessageActionListener.onRegenerate(m, pos); });
+        if (voice != null) voice.setOnClickListener(v -> { if (onMessageActionListener != null) onMessageActionListener.onVoice(m, voice); });
+    }
+
     @Override
     public int getItemCount() {
         return messages.size() + (isTyping ? 1 : 0);
@@ -160,19 +200,32 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class UserViewHolder extends RecyclerView.ViewHolder {
         TextView label, message;
+        View actionsRow, btnCopy, btnEdit, btnBranch, btnShare;
         UserViewHolder(View v) {
             super(v);
             label = v.findViewById(R.id.tv_label);
             message = v.findViewById(R.id.tv_message);
+            actionsRow = v.findViewById(R.id.actions_row);
+            btnCopy = v.findViewById(R.id.btn_copy);
+            btnEdit = v.findViewById(R.id.btn_edit);
+            btnBranch = v.findViewById(R.id.btn_branch);
+            btnShare = v.findViewById(R.id.btn_share);
         }
     }
 
     static class AssistantViewHolder extends RecyclerView.ViewHolder {
         TextView label, message;
+        View actionsRow, btnCopy, btnRegenerate, btnVoice, btnBranch, btnShare;
         AssistantViewHolder(View v) {
             super(v);
             label = v.findViewById(R.id.tv_label);
             message = v.findViewById(R.id.tv_message);
+            actionsRow = v.findViewById(R.id.actions_row);
+            btnCopy = v.findViewById(R.id.btn_copy);
+            btnRegenerate = v.findViewById(R.id.btn_regenerate);
+            btnVoice = v.findViewById(R.id.btn_voice);
+            btnBranch = v.findViewById(R.id.btn_branch);
+            btnShare = v.findViewById(R.id.btn_share);
         }
     }
 
@@ -196,11 +249,13 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     static class ErrorViewHolder extends RecyclerView.ViewHolder {
         TextView label, message;
         com.google.android.material.button.MaterialButton btnAction;
+        View btnCopy;
         ErrorViewHolder(View v) {
             super(v);
             label = v.findViewById(R.id.tv_label);
             message = v.findViewById(R.id.tv_message);
             btnAction = v.findViewById(R.id.btn_action);
+            btnCopy = v.findViewById(R.id.btn_copy);
         }
     }
 

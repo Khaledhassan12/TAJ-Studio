@@ -2591,4 +2591,17 @@ Please try again later"</string>
     <string name="ai_agent_switch">Switch to Agent</string>
     <string name="ai_agent_stay">Stay in Chat</string>
     <string name="ai_destructive_warn">This action will modify or delete files. Continue?</string>
+    <string name="ai_msg_copied">Message copied</string>
+    <string name="ai_msg_branched">Branched to new session</string>
+    <string name="ai_msg_edit_banner">Editing message — send to apply</string>
+    <string name="ai_tts_unavailable">No text-to-speech engine on device</string>
+    <string name="ai_tts_lang_error">Language not supported</string>
+    <string name="ai_msg_test_key">Test key</string>
+    <string name="ai_tooltip_copy">Copy</string>
+    <string name="ai_tooltip_edit">Edit</string>
+    <string name="ai_tooltip_branch">Branch</string>
+    <string name="ai_tooltip_share">Share</string>
+    <string name="ai_tooltip_regenerate">Regenerate</string>
+    <string name="ai_tooltip_voice">Voice</string>
+    <string name="ai_tooltip_voice_stop">Stop</string>
 </resources>

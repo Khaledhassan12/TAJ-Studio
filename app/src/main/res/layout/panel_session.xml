@@ -95,6 +95,21 @@
         android:visibility="gone"
         app:trackThickness="2dp" />
 
+    <com.google.android.material.chip.Chip
+        android:id="@+id/chip_edit_banner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/input_container"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="4dp"
+        android:text="@string/ai_msg_edit_banner"
+        android:visibility="gone"
+        app:chipBackgroundColor="?attr/colorTertiaryContainer"
+        app:chipIcon="@drawable/ic_mtrl_edit"
+        app:chipIconTint="?attr/colorOnTertiaryContainer"
+        app:closeIconVisible="true"
+        app:closeIconTint="?attr/colorOnTertiaryContainer" />
+
     <LinearLayout
         android:id="@+id/input_container"
         android:layout_width="match_parent"

@@ -58,10 +58,32 @@ public class AssistantFragment extends Fragment {
     private ChatAdapter chatAdapter;
     private AgentOrchestrator orchestrator;
     private ToolRegistry toolRegistry;
+    private VoiceReader voiceReader;
 
     private String sc_id;
     private boolean isStreaming = false;
+    private int pendingEditIndex = -1;
+    private String currentSpeakingText = null;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    private boolean isNearBottom() {
+        View panel = panels.get(R.id.ai_dest_session);
+        if (panel == null) return true;
+        RecyclerView rv = panel.findViewById(R.id.rv_chat);
+        LinearLayoutManager lm = (LinearLayoutManager) rv.getLayoutManager();
+        if (lm == null || chatAdapter.getItemCount() == 0) return true;
+        return lm.findLastVisibleItemPosition() >= chatAdapter.getItemCount() - 2;
+    }
+
+    private void scrollToBottom(boolean smooth) {
+        View panel = panels.get(R.id.ai_dest_session);
+        if (panel == null) return;
+        RecyclerView rv = panel.findViewById(R.id.rv_chat);
+        int n = chatAdapter.getItemCount();
+        if (n == 0) return;
+        if (smooth) rv.smoothScrollToPosition(n - 1);
+        else rv.scrollToPosition(n - 1);
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -71,6 +93,22 @@ public class AssistantFragment extends Fragment {
         configStore = AIConfigStore.getInstance(activity);
         chatStore = new ChatStore(activity, sc_id);
         toolRegistry = new ToolRegistry();
+        voiceReader = new VoiceReader(activity, new VoiceReader.OnStateListener() {
+            @Override public void onStart() {}
+            @Override public void onDone() { currentSpeakingText = null; updateVoiceIcons(); }
+            @Override
+            public void onError(String message) {
+                currentSpeakingText = null;
+                updateVoiceIcons();
+                Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateVoiceIcons() {
+        mainHandler.post(() -> {
+            if (chatAdapter != null) chatAdapter.setCurrentSpeakingText(currentSpeakingText);
+        });
     }
 
     @Nullable
@@ -232,12 +270,16 @@ public class AssistantFragment extends Fragment {
             rail.setSelectedItemId(R.id.ai_dest_session);
             if (chatAdapter != null) {
                 chatAdapter.setMessages(session.messages);
+                scrollToBottom(false);
             }
         });
 
         panel.findViewById(R.id.fab_new_session).setOnClickListener(v -> {
             currentSession = new ChatStore.Session();
-            if (chatAdapter != null) chatAdapter.setMessages(new ArrayList<>());
+            if (chatAdapter != null) {
+                chatAdapter.setMessages(new ArrayList<>());
+                scrollToBottom(false);
+            }
             rail.setSelectedItemId(R.id.ai_dest_session);
         });
     }
@@ -253,6 +295,75 @@ public class AssistantFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         chatAdapter = new ChatAdapter();
         rv.setAdapter(chatAdapter);
+
+        chatAdapter.setOnMessageActionListener(new ChatAdapter.OnMessageActionListener() {
+            @Override
+            public void onCopy(ChatStore.Message message) {
+                android.content.ClipboardManager cb = (android.content.ClipboardManager) requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+                cb.setPrimaryClip(android.content.ClipData.newPlainText("TAG Assistant", message.text));
+                Snackbar.make(panel, R.string.ai_msg_copied, Snackbar.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onEdit(ChatStore.Message message, int position) {
+                EditText input = panel.findViewById(R.id.et_input);
+                input.setText(message.text);
+                input.requestFocus();
+                pendingEditIndex = position;
+                panel.findViewById(R.id.chip_edit_banner).setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onBranch(ChatStore.Message message, int position) {
+                ChatStore.Session branch = ChatStore.branchSession(currentSession, position);
+                chatStore.saveSession(branch);
+                currentSession = branch;
+                chatAdapter.setMessages(currentSession.messages);
+                scrollToBottom(false);
+                Snackbar.make(panel, R.string.ai_msg_branched, Snackbar.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onShare(ChatStore.Message message) {
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, message.text);
+                startActivity(Intent.createChooser(intent, null));
+            }
+
+            @Override
+            public void onRegenerate(ChatStore.Message message, int position) {
+                if (isStreaming) return;
+                // Remove all messages after the last USER message before this one
+                int lastUserIdx = -1;
+                for (int i = position; i >= 0; i--) {
+                    if ("user".equals(currentSession.messages.get(i).role)) {
+                        lastUserIdx = i;
+                        break;
+                    }
+                }
+                if (lastUserIdx != -1) {
+                    String lastUserText = currentSession.messages.get(lastUserIdx).text;
+                    while (currentSession.messages.size() > lastUserIdx + 1) {
+                        currentSession.messages.remove(lastUserIdx + 1);
+                    }
+                    chatAdapter.setMessages(currentSession.messages);
+                    sendMessage(lastUserText, true);
+                }
+            }
+
+            @Override
+            public void onVoice(ChatStore.Message message, View btnVoice) {
+                if (message.text.equals(currentSpeakingText)) {
+                    voiceReader.stop();
+                    currentSpeakingText = null;
+                } else {
+                    voiceReader.speak(message.text);
+                    currentSpeakingText = message.text;
+                }
+                updateVoiceIcons();
+            }
+        });
 
         chatAdapter.setOnErrorActionListener(new ChatAdapter.OnErrorActionListener() {
             @Override
@@ -311,6 +422,7 @@ public class AssistantFragment extends Fragment {
             currentSession = sessions.get(0);
             chatAdapter.setMessages(currentSession.messages);
             panel.findViewById(R.id.empty_state).setVisibility(View.GONE);
+            rv.post(() -> scrollToBottom(false));
         }
 
         EditText input = panel.findViewById(R.id.et_input);
@@ -318,9 +430,24 @@ public class AssistantFragment extends Fragment {
         send.setOnClickListener(v -> {
             String text = input.getText().toString().trim();
             if (!text.isEmpty()) {
+                if (pendingEditIndex != -1) {
+                    while (currentSession.messages.size() > pendingEditIndex) {
+                        currentSession.messages.remove(pendingEditIndex);
+                    }
+                    chatAdapter.setMessages(currentSession.messages);
+                    pendingEditIndex = -1;
+                    panel.findViewById(R.id.chip_edit_banner).setVisibility(View.GONE);
+                }
                 sendMessage(text);
                 input.setText("");
             }
+        });
+
+        com.google.android.material.chip.Chip editBanner = panel.findViewById(R.id.chip_edit_banner);
+        editBanner.setOnCloseIconClickListener(v -> {
+            pendingEditIndex = -1;
+            editBanner.setVisibility(View.GONE);
+            input.setText("");
         });
 
         View dot = panel.findViewById(R.id.connection_dot);
@@ -377,14 +504,21 @@ public class AssistantFragment extends Fragment {
     }
 
     private void sendMessage(String text) {
+        sendMessage(text, false);
+    }
+
+    private void sendMessage(String text, boolean isRegen) {
         if (isStreaming) return;
 
         View panel = panels.get(R.id.ai_dest_session);
         if (panel != null) panel.findViewById(R.id.empty_state).setVisibility(View.GONE);
 
-        ChatStore.Message userMsg = new ChatStore.Message("user", text);
-        currentSession.messages.add(userMsg);
-        chatAdapter.addMessage(userMsg);
+        if (!isRegen) {
+            ChatStore.Message userMsg = new ChatStore.Message("user", text);
+            currentSession.messages.add(userMsg);
+            chatAdapter.addMessage(userMsg);
+            scrollToBottom(true);
+        }
         chatStore.saveSession(currentSession);
 
         DesignActivity activity = (DesignActivity) getActivity();
@@ -421,9 +555,11 @@ public class AssistantFragment extends Fragment {
                             assistantMsg = new ChatStore.Message("assistant", token);
                             currentSession.messages.add(assistantMsg);
                             chatAdapter.addMessage(assistantMsg);
+                            scrollToBottom(true);
                         } else {
                             assistantMsg.text += token;
                             chatAdapter.notifyItemChanged(currentSession.messages.size() - 1);
+                            if (isNearBottom()) scrollToBottom(false);
                         }
                     });
                 }
@@ -434,6 +570,7 @@ public class AssistantFragment extends Fragment {
                         ChatStore.Message toolMsg = new ChatStore.Message("tool", call.name);
                         currentSession.messages.add(toolMsg);
                         chatAdapter.addMessage(toolMsg);
+                        scrollToBottom(true);
                     });
                 }
 
@@ -477,9 +614,11 @@ public class AssistantFragment extends Fragment {
                             assistantMsg = new ChatStore.Message("assistant", token);
                             currentSession.messages.add(assistantMsg);
                             chatAdapter.addMessage(assistantMsg);
+                            scrollToBottom(true);
                         } else {
                             assistantMsg.text += token;
                             chatAdapter.notifyItemChanged(currentSession.messages.size() - 1);
+                            if (isNearBottom()) scrollToBottom(false);
                         }
                     });
                 }
@@ -579,6 +718,7 @@ public class AssistantFragment extends Fragment {
     @Override
     public void onDestroy() {
         if (orchestrator != null) orchestrator.shutdown();
+        if (voiceReader != null) voiceReader.shutdown();
         super.onDestroy();
     }
 }
