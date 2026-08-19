@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -32,6 +33,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_TYPING = 4;
     private static final int TYPE_ERROR = 5;
     private static final int TYPE_THINKING = 6;
+    private static final int TYPE_TOOLS_CARD = 7;
 
     private final List<ChatStore.Message> messages = new ArrayList<>();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
@@ -136,6 +138,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if ("suggestion".equals(m.role)) return TYPE_SUGGESTION;
         if ("error".equals(m.role)) return TYPE_ERROR;
         if ("thinking".equals(m.role) || "thought".equals(m.role)) return TYPE_THINKING;
+        if ("tools_card".equals(m.role)) return TYPE_TOOLS_CARD;
         return TYPE_ASSISTANT;
     }
 
@@ -155,6 +158,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return new ErrorViewHolder(inflater.inflate(R.layout.item_chat_error, parent, false));
         } else if (viewType == TYPE_THINKING) {
             return new ThinkingViewHolder(inflater.inflate(R.layout.item_chat_thinking, parent, false));
+        } else if (viewType == TYPE_TOOLS_CARD) {
+            return new ToolsViewHolder(inflater.inflate(R.layout.item_chat_tools, parent, false));
         } else {
             return new AssistantViewHolder(inflater.inflate(R.layout.item_chat_assistant, parent, false));
         }
@@ -200,13 +205,13 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (holder instanceof UserViewHolder) {
             UserViewHolder vh = (UserViewHolder) holder;
             vh.label.setText("You • " + time);
-            vh.message.setText(m.text);
+            vh.message.setText(m.text == null ? "" : m.text);
             setupActions(vh.actionsRow, vh.btnCopy, vh.btnEdit, vh.btnBranch, vh.btnShare, null, null, m, position);
         } else if (holder instanceof AssistantViewHolder) {
             AssistantViewHolder vh = (AssistantViewHolder) holder;
             vh.label.setText("Assistant • " + time);
-            vh.message.setText(m.text);
-            vh.boundLen = m.text.length();
+            vh.message.setText(m.text == null ? "" : m.text);
+            vh.boundLen = (m.text == null) ? 0 : m.text.length();
             if (vh.btnVoice instanceof android.widget.ImageButton) {
                 ((android.widget.ImageButton) vh.btnVoice).setImageResource(
                         m.text.equals(currentSpeakingText) ? R.drawable.ic_msg_voice_stop : R.drawable.ic_msg_voice);
@@ -251,6 +256,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             });
         } else if (holder instanceof ThinkingViewHolder) {
             ((ThinkingViewHolder) holder).bind(m);
+        } else if (holder instanceof ToolsViewHolder) {
+            ((ToolsViewHolder) holder).bind(m, payloads.contains("tool_events"));
         }
 
         if (position > lastAnimatedPosition) {
@@ -288,6 +295,115 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public int getItemCount() {
         return messages.size() + (isTyping ? 1 : 0);
+    }
+
+    static class ToolsViewHolder extends RecyclerView.ViewHolder {
+        TextView tvCount, tvSummary;
+        View header, progressHeader;
+        ImageView ivChevron;
+        ViewGroup rowsContainer;
+        boolean isExpanded = true;
+        ChatStore.Message currentMsg;
+
+        ToolsViewHolder(View v) {
+            super(v);
+            tvCount = v.findViewById(R.id.tv_count);
+            tvSummary = v.findViewById(R.id.tv_summary);
+            header = v.findViewById(R.id.header);
+            progressHeader = v.findViewById(R.id.progress_header);
+            ivChevron = (ImageView) v.findViewById(R.id.iv_chevron);
+            rowsContainer = v.findViewById(R.id.rows_container);
+            
+            header.setOnClickListener(view -> toggleExpand());
+        }
+
+        void bind(ChatStore.Message m, boolean isPartial) {
+            currentMsg = m;
+            List<ChatStore.ToolEvent> events = m.toolEvents;
+            if (events == null) events = new ArrayList<>();
+            
+            tvCount.setText("(" + events.size() + ")");
+            
+            boolean anyRunning = false;
+            long totalMs = 0;
+            for (ChatStore.ToolEvent te : events) {
+                if ("RUNNING".equals(te.status)) anyRunning = true;
+                if (te.finishedAt > 0) totalMs += (te.finishedAt - te.startedAt);
+            }
+            
+            progressHeader.setVisibility(anyRunning ? View.VISIBLE : View.GONE);
+            
+            if (!anyRunning && !events.isEmpty()) {
+                tvSummary.setVisibility(View.VISIBLE);
+                tvSummary.setText(String.format(Locale.getDefault(), "%d tools • %.1fs", events.size(), totalMs / 1000f));
+                if (isExpanded && !isPartial) {
+                    // Auto-collapse when done, if this is an old message being bound
+                    if (m.time < System.currentTimeMillis() - 500) {
+                         isExpanded = false;
+                    }
+                }
+            } else {
+                tvSummary.setVisibility(View.GONE);
+            }
+
+            if (!isPartial) {
+                rowsContainer.removeAllViews();
+            }
+            updateRows(events);
+            
+            ivChevron.setRotation(isExpanded ? 0 : -90);
+            rowsContainer.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+        }
+
+        private void updateRows(List<ChatStore.ToolEvent> events) {
+            int childCount = rowsContainer.getChildCount();
+            LayoutInflater inflater = LayoutInflater.from(rowsContainer.getContext());
+            
+            for (int i = 0; i < events.size(); i++) {
+                ChatStore.ToolEvent te = events.get(i);
+                View row;
+                if (i < childCount) {
+                    row = rowsContainer.getChildAt(i);
+                } else {
+                    row = inflater.inflate(R.layout.item_tool_execution, rowsContainer, false);
+                    rowsContainer.addView(row);
+                }
+                
+                TextView name = row.findViewById(R.id.tv_name);
+                View progress = row.findViewById(R.id.progress);
+                ImageView status = (ImageView) row.findViewById(R.id.iv_status);
+                
+                name.setText(te.name);
+                if ("RUNNING".equals(te.status)) {
+                    progress.setVisibility(View.VISIBLE);
+                    status.setVisibility(View.GONE);
+                } else {
+                    progress.setVisibility(View.GONE);
+                    status.setVisibility(View.VISIBLE);
+                    boolean ok = "OK".equals(te.status);
+                    status.setImageResource(ok ? R.drawable.ic_check_circle : R.drawable.ic_error_circle);
+                    status.setColorFilter(ok ? 0xFF4CAF50 : 0xFFF44336);
+                }
+            }
+        }
+
+        private void toggleExpand() {
+            toggleExpand(!isExpanded);
+        }
+
+        private void toggleExpand(boolean expand) {
+            if (isExpanded == expand) return;
+            isExpanded = expand;
+            ivChevron.animate().rotation(isExpanded ? 0 : -90).setDuration(200).start();
+            
+            if (isExpanded) {
+                rowsContainer.setVisibility(View.VISIBLE);
+                rowsContainer.setAlpha(0f);
+                rowsContainer.animate().alpha(1f).setDuration(200).start();
+            } else {
+                rowsContainer.animate().alpha(0f).setDuration(200).withEndAction(() -> rowsContainer.setVisibility(View.GONE)).start();
+            }
+        }
     }
 
     static class UserViewHolder extends RecyclerView.ViewHolder {

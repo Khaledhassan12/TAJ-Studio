@@ -72,4 +72,20 @@ Your API key stays on this device, encrypted. The assistant only talks to the pr
     <string name="ai_model_picker_empty">No models found. Try a different search or sync again.</string>
     <string name="ai_model_free">FREE</string>
     <string name="ai_model_paid">PAID</string>
+
+    <string name="ai_tools_title">Agent tools</string>
+    <string name="ai_tools_summary">Used %1$d tools &#8226; %2$ds</string>
+    <string name="ai_stopped">Stopped.</string>
+    <string name="ai_timed_out">Agent timed out.</string>
+    <string name="ai_busy">Current task still running — stop it first.</string>
+    <string name="ai_perm_section">Agent permissions</string>
+    <string name="ai_perm_reset">Reset (ask next time)</string>
+    <string name="ai_perm_full_title">Allow Full Access</string>
+    <string name="ai_perm_full_desc">No further permission prompts for agent file operations.</string>
+    <string name="ai_perm_consent_title">Allow with consent</string>
+    <string name="ai_perm_consent_desc">Prompt on every write/overwrite to storage.</string>
+    <string name="ai_perm_strict_title">Allow Yolo (strict)</string>
+    <string name="ai_perm_strict_desc">Auto-allow NEW file creation only; prompt on overwrite/delete; .bak always kept.</string>
+    <string name="ai_allow_and_remember">Allow &amp; remember</string>
+    <string name="ai_deny">Deny</string>
 </resources>

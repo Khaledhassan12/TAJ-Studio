@@ -120,6 +120,12 @@ public class ManageJavaActivity extends BaseAppCompatActivity {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        refresh();
+    }
+
+    @Override
     public void onBackPressed() {
         if (Objects.equals(Uri.parse(current_path).getPath(), Uri.parse(fpu.getPathJava(sc_id)).getPath())) {
             super.onBackPressed();

@@ -44,6 +44,7 @@ public final class AIConfigStore {
     public static final String K_MODE = "assistant_mode";
     public static final String K_SHOW_THINKING = "assistant_show_thinking";
     public static final String K_AGENT_ENABLED = "assistant_agent_enabled";
+    public static final String K_AGENT_PERM_MODE = "assistant_agent_perm_mode"; // "", full, consent, strict
 
     private static final String MODELS_CACHE_PREFIX = "models_cache_";
     private static final String MODELS_CACHE_TS_PREFIX = "models_cache_ts_";
@@ -269,6 +270,20 @@ public final class AIConfigStore {
         if (prefs != null) {
             prefs.edit().putBoolean(K_AGENT_ENABLED, enabled).apply();
         }
+    }
+
+    public String getAgentPermMode() {
+        return prefs == null ? "" : prefs.getString(K_AGENT_PERM_MODE, "");
+    }
+
+    public void setAgentPermMode(String mode) {
+        if (prefs != null) {
+            prefs.edit().putString(K_AGENT_PERM_MODE, mode).apply();
+        }
+    }
+
+    public void clearAgentPermMode() {
+        setAgentPermMode("");
     }
 
     // ------------------------------------------------------------------

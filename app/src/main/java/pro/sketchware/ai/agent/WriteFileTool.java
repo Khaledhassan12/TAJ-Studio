@@ -28,8 +28,9 @@ public class WriteFileTool implements Tool {
         String filename = args.optString("filename");
         String content = args.optString("content");
 
-        boolean confirmed = ctx.requestConfirmation("The assistant wants to write to " + filename + ". Overwrite existing content?");
-        if (!confirmed) return new ToolResult("User denied the write operation", true);
+        if (!ctx.checkPermission(filename, true)) {
+            return new ToolResult("User denied the write operation", true);
+        }
 
         // Implementation would depend on Sketchware's file saving logic.
         // For now, we return success to simulate the agent flow.

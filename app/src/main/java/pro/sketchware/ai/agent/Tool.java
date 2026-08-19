@@ -72,6 +72,67 @@ public interface Tool {
             }
             return result[0];
         }
+
+        public boolean checkPermission(String path, boolean isOverwrite) {
+            DesignActivity a = activity.get();
+            if (a == null) return false;
+
+            pro.sketchware.ai.config.AIConfigStore store = pro.sketchware.ai.config.AIConfigStore.getInstance(a);
+            String mode = store.getAgentPermMode();
+
+            if (mode.isEmpty()) {
+                return showPermissionDialog(a, store, path);
+            }
+
+            if ("full".equals(mode)) return true;
+            if ("consent".equals(mode)) return requestConfirmation("Agent wants to write to " + path);
+            if ("strict".equals(mode)) {
+                if (!isOverwrite) return true;
+                return requestConfirmation("Agent wants to overwrite " + path);
+            }
+
+            return false;
+        }
+
+        private boolean showPermissionDialog(DesignActivity a, pro.sketchware.ai.config.AIConfigStore store, String path) {
+            final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+            final boolean[] result = new boolean[1];
+
+            a.runOnUiThread(() -> {
+                android.view.View view = a.getLayoutInflater().inflate(pro.sketchware.R.layout.dialog_agent_permission, null);
+                android.widget.TextView tvBody = view.findViewById(pro.sketchware.R.id.tv_body);
+                tvBody.setText("The assistant wants to write to " + path);
+
+                android.widget.RadioGroup rg = view.findViewById(pro.sketchware.R.id.rg_modes);
+
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
+                        .setTitle("TAG Assistant")
+                        .setView(view)
+                        .setPositiveButton(pro.sketchware.R.string.ai_allow_and_remember, (d, w) -> {
+                            int checked = rg.getCheckedRadioButtonId();
+                            String chosenMode = "consent";
+                            if (checked == pro.sketchware.R.id.rb_full) chosenMode = "full";
+                            else if (checked == pro.sketchware.R.id.rb_strict) chosenMode = "strict";
+
+                            store.setAgentPermMode(chosenMode);
+                            result[0] = true;
+                            latch.countDown();
+                        })
+                        .setNegativeButton(pro.sketchware.R.string.ai_deny, (d, w) -> {
+                            result[0] = false;
+                            latch.countDown();
+                        })
+                        .setCancelable(false)
+                        .show();
+            });
+
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                return false;
+            }
+            return result[0];
+        }
     }
 
     ToolSpec spec();

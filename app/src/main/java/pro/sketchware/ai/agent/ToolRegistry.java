@@ -8,6 +8,8 @@ import java.util.HashMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import pro.sketchware.ai.agent.tools.*;
+
 public final class ToolRegistry {
 
     private final Map<String, Tool> tools = new HashMap<>();
@@ -19,6 +21,12 @@ public final class ToolRegistry {
         register(new WriteFileTool());
         register(new OpenManagerTool());
         register(new ReadLogcatTool());
+        
+        // Java/Kotlin File Tools
+        register(new ListJavaFilesTool());
+        register(new ReadJavaFileTool());
+        register(new CreateJavaFileTool());
+        register(new EditJavaFileTool());
     }
 
     public void register(Tool tool) {

@@ -32,17 +32,18 @@ public final class ChatStore {
     }
 
     public static class Message {
-        public String role; // user, assistant, system, tool, error
+        public String role; // user, assistant, system, tool, error, suggestion, thinking, thought, tools_card
         public String text;
         public long time;
         public String toolState; // JSON for tool chips or raw error body
         public String action; // Action button text
         public String reasoning;
         public int reasoningSeconds;
+        public List<ToolEvent> toolEvents;
 
         public Message(String role, String text) {
             this.role = role;
-            this.text = text;
+            this.text = text == null ? "" : text;
             this.time = System.currentTimeMillis();
         }
 
@@ -50,24 +51,78 @@ public final class ChatStore {
             JSONObject json = new JSONObject();
             try {
                 json.put("role", role);
-                json.put("text", text);
+                json.put("text", text == null ? "" : text);
                 json.put("time", time);
                 if (toolState != null) json.put("toolState", toolState);
                 if (action != null) json.put("action", action);
                 if (reasoning != null) json.put("reasoning", reasoning);
                 if (reasoningSeconds > 0) json.put("reasoningSeconds", reasoningSeconds);
+                if (toolEvents != null && !toolEvents.isEmpty()) {
+                    JSONArray arr = new JSONArray();
+                    for (ToolEvent te : toolEvents) arr.put(te.toJson());
+                    json.put("toolEvents", arr);
+                }
             } catch (JSONException ignored) {}
             return json;
         }
 
         public static Message fromJson(JSONObject json) {
-            Message m = new Message(json.optString("role"), json.optString("text"));
+            String role = json.optString("role", "");
+            String text = json.optString("text", "");
+            
+            // History sanitation: remove "null" strings
+            if (text.equals("null") || text.matches("^(null)+$")) {
+                text = "";
+            }
+
+            Message m = new Message(role, text);
             m.time = json.optLong("time");
             m.toolState = json.optString("toolState", null);
             m.action = json.optString("action", null);
             m.reasoning = json.optString("reasoning", null);
             m.reasoningSeconds = json.optInt("reasoningSeconds", 0);
+            
+            JSONArray teArr = json.optJSONArray("toolEvents");
+            if (teArr != null) {
+                m.toolEvents = new ArrayList<>();
+                for (int i = 0; i < teArr.length(); i++) {
+                    JSONObject teObj = teArr.optJSONObject(i);
+                    if (teObj != null) m.toolEvents.add(ToolEvent.fromJson(teObj));
+                }
+            }
             return m;
+        }
+    }
+
+    public static class ToolEvent {
+        public String name;
+        public String status; // RUNNING, OK, ERROR
+        public long startedAt;
+        public long finishedAt;
+
+        public ToolEvent(String name) {
+            this.name = name;
+            this.status = "RUNNING";
+            this.startedAt = System.currentTimeMillis();
+        }
+
+        public JSONObject toJson() {
+            JSONObject json = new JSONObject();
+            try {
+                json.put("name", name);
+                json.put("status", status);
+                json.put("startedAt", startedAt);
+                json.put("finishedAt", finishedAt);
+            } catch (JSONException ignored) {}
+            return json;
+        }
+
+        public static ToolEvent fromJson(JSONObject json) {
+            ToolEvent te = new ToolEvent(json.optString("name"));
+            te.status = json.optString("status", "OK");
+            te.startedAt = json.optLong("startedAt");
+            te.finishedAt = json.optLong("finishedAt");
+            return te;
         }
     }
 

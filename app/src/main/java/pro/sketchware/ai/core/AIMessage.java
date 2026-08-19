@@ -41,11 +41,11 @@ public final class AIMessage {
     }
 
     public static AIMessage assistant(String text) {
-        return new AIMessage(ROLE_ASSISTANT, text, null, null, null, 0);
+        return new AIMessage(ROLE_ASSISTANT, text == null ? "" : text, null, null, null, 0);
     }
 
     public static AIMessage assistant(String text, String reasoning, int reasoningSeconds) {
-        return new AIMessage(ROLE_ASSISTANT, text, null, null, reasoning, reasoningSeconds);
+        return new AIMessage(ROLE_ASSISTANT, text == null ? "" : text, null, null, reasoning, reasoningSeconds);
     }
 
     public static AIMessage assistantWithToolCalls(List<ToolCall> toolCalls) {

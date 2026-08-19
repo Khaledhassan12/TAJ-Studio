@@ -49,6 +49,9 @@ import pro.sketchware.ai.core.ToolCall;
 
 public class AssistantFragment extends Fragment {
 
+    private enum SessionState { IDLE, MODEL_STREAMING, TOOL_RUNNING }
+    private SessionState state = SessionState.IDLE;
+
     private NavigationRailView rail;
     private FrameLayout container;
     private final SparseArray<View> panels = new SparseArray<>();
@@ -62,10 +65,29 @@ public class AssistantFragment extends Fragment {
     private VoiceReader voiceReader;
 
     private String sc_id;
-    private boolean isStreaming = false;
     private int pendingEditIndex = -1;
     private String currentSpeakingText = null;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Handler watchdogHandler = new Handler(Looper.getMainLooper());
+    private Runnable watchdogRunnable;
+
+    private void resetWatchdog() {
+        watchdogHandler.removeCallbacks(watchdogRunnable);
+        if (state == SessionState.IDLE) return;
+        watchdogRunnable = () -> {
+            if (state != SessionState.IDLE) {
+                forceIdle();
+                addErrorMessage("Agent timed out.", "", "Retry");
+            }
+        };
+        watchdogHandler.postDelayed(watchdogRunnable, 120000);
+    }
+
+    private void forceIdle() {
+        state = SessionState.IDLE;
+        if (orchestrator != null) orchestrator.cancel();
+        mainHandler.post(() -> updateStreamingUi(false));
+    }
 
     private boolean isNearBottom() {
         View panel = panels.get(R.id.ai_dest_session);
@@ -216,6 +238,33 @@ public class AssistantFragment extends Fragment {
             switchThinking.setOnCheckedChangeListener((v, checked) -> configStore.setShowThinking(checked));
         }
 
+        com.google.android.material.chip.ChipGroup cgPerm = panel.findViewById(R.id.cg_perm_mode);
+        if (cgPerm != null) {
+            String current = configStore.getAgentPermMode();
+            if ("full".equals(current)) cgPerm.check(R.id.chip_perm_full);
+            else if ("consent".equals(current)) cgPerm.check(R.id.chip_perm_consent);
+            else if ("strict".equals(current)) cgPerm.check(R.id.chip_perm_strict);
+            
+            cgPerm.setOnCheckedStateChangeListener((group, checkedIds) -> {
+                if (checkedIds.isEmpty()) configStore.clearAgentPermMode();
+                else {
+                    int id = checkedIds.get(0);
+                    if (id == R.id.chip_perm_full) configStore.setAgentPermMode("full");
+                    else if (id == R.id.chip_perm_consent) configStore.setAgentPermMode("consent");
+                    else if (id == R.id.chip_perm_strict) configStore.setAgentPermMode("strict");
+                }
+            });
+        }
+        
+        View btnReset = panel.findViewById(R.id.btn_reset_perm);
+        if (btnReset != null) {
+            btnReset.setOnClickListener(v -> {
+                configStore.clearAgentPermMode();
+                if (cgPerm != null) cgPerm.clearCheck();
+                Snackbar.make(panel, "Permissions reset — will ask next time", Snackbar.LENGTH_SHORT).show();
+            });
+        }
+
         refreshReadback(panel);
     }
 
@@ -343,7 +392,10 @@ public class AssistantFragment extends Fragment {
 
             @Override
             public void onRegenerate(ChatStore.Message message, int position) {
-                if (isStreaming) return;
+                if (state != SessionState.IDLE) {
+                    Snackbar.make(panel, R.string.ai_busy, Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
                 // Remove all messages after the last USER message before this one
                 int lastUserIdx = -1;
                 for (int i = position; i >= 0; i--) {
@@ -412,7 +464,7 @@ public class AssistantFragment extends Fragment {
                             currentSession.messages.remove(position);
                         }
                         chatAdapter.setMessages(currentSession.messages);
-                        isStreaming = false;
+                        state = SessionState.IDLE;
                         sendMessage(prev.text, true);
                     }
                 }
@@ -439,6 +491,14 @@ public class AssistantFragment extends Fragment {
         EditText input = panel.findViewById(R.id.et_input);
         FloatingActionButton send = panel.findViewById(R.id.fab_send);
         send.setOnClickListener(v -> {
+            if (state != SessionState.IDLE) {
+                forceIdle();
+                ChatStore.Message note = new ChatStore.Message("system", getString(R.string.ai_stopped));
+                currentSession.messages.add(note);
+                chatAdapter.addMessage(note);
+                scrollToBottom(true);
+                return;
+            }
             String text = input.getText().toString().trim();
             if (!text.isEmpty()) {
                 if (pendingEditIndex != -1) {
@@ -532,7 +592,10 @@ public class AssistantFragment extends Fragment {
     }
 
     private void sendMessage(String text, boolean isRegen) {
-        if (isStreaming) return;
+        if (state != SessionState.IDLE) {
+            Snackbar.make(requireView(), R.string.ai_busy, Snackbar.LENGTH_SHORT).show();
+            return;
+        }
 
         View panel = panels.get(R.id.ai_dest_session);
         if (panel != null) panel.findViewById(R.id.empty_state).setVisibility(View.GONE);
@@ -554,8 +617,9 @@ public class AssistantFragment extends Fragment {
             return;
         }
 
-        isStreaming = true;
+        state = SessionState.MODEL_STREAMING;
         updateStreamingUi(true);
+        resetWatchdog();
 
         boolean agentEnabled = configStore.isAgentEnabled();
         List<AIMessage> history = new ArrayList<>();
@@ -569,21 +633,21 @@ public class AssistantFragment extends Fragment {
 
         if (agentEnabled) {
             orchestrator = new AgentOrchestrator(provider, toolRegistry, new Tool.ToolContext(activity, sc_id));
-            orchestrator.run("You are a helpful Android development assistant.", history, model, 0.7f, new StreamCallbacks() {
+            orchestrator.run(AgentOrchestrator.DEFAULT_SYSTEM_PROMPT, history, model, 0.7f, new StreamCallbacks() {
                 private ChatStore.Message assistantMsg;
                 private ChatStore.Message thinkingMsg;
+                private ChatStore.Message toolsCard;
                 private long thinkingStart = 0;
 
                 @Override
                 public void onReasoningToken(String token) {
+                    resetWatchdog();
                     mainHandler.post(() -> {
                         if (thinkingMsg == null) {
                             thinkingStart = System.currentTimeMillis();
                             thinkingMsg = new ChatStore.Message("thinking", "");
                             int pos = currentSession.messages.size();
-                            if (assistantMsg != null) {
-                                pos = currentSession.messages.indexOf(assistantMsg);
-                            }
+                            if (assistantMsg != null) pos = currentSession.messages.indexOf(assistantMsg);
                             currentSession.messages.add(pos, thinkingMsg);
                             chatAdapter.insertMessage(pos, thinkingMsg);
                             scrollToBottom(true);
@@ -595,6 +659,7 @@ public class AssistantFragment extends Fragment {
 
                 @Override
                 public void onToken(String token) {
+                    resetWatchdog();
                     mainHandler.post(() -> {
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
@@ -615,15 +680,49 @@ public class AssistantFragment extends Fragment {
 
                 @Override
                 public void onToolCall(ToolCall call) {
+                    resetWatchdog();
                     mainHandler.post(() -> {
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
-                        ChatStore.Message toolMsg = new ChatStore.Message("tool", call.name);
-                        currentSession.messages.add(toolMsg);
-                        chatAdapter.addMessage(toolMsg);
-                        scrollToBottom(true);
+                    });
+                }
+
+                @Override
+                public void onToolStart(String name) {
+                    resetWatchdog();
+                    state = SessionState.TOOL_RUNNING;
+                    mainHandler.post(() -> {
+                        if (toolsCard == null) {
+                            toolsCard = new ChatStore.Message("tools_card", "");
+                            toolsCard.toolEvents = new ArrayList<>();
+                            currentSession.messages.add(toolsCard);
+                            chatAdapter.addMessage(toolsCard);
+                            scrollToBottom(true);
+                        }
+                        toolsCard.toolEvents.add(new ChatStore.ToolEvent(name));
+                        int idx = currentSession.messages.indexOf(toolsCard);
+                        chatAdapter.notifyItemChanged(idx, "tool_events");
+                    });
+                }
+
+                @Override
+                public void onToolEnd(String name, boolean success) {
+                    resetWatchdog();
+                    state = SessionState.MODEL_STREAMING;
+                    mainHandler.post(() -> {
+                        if (toolsCard != null) {
+                            for (ChatStore.ToolEvent te : toolsCard.toolEvents) {
+                                if (te.name.equals(name) && "RUNNING".equals(te.status)) {
+                                    te.status = success ? "OK" : "ERROR";
+                                    te.finishedAt = System.currentTimeMillis();
+                                    break;
+                                }
+                            }
+                            int idx = currentSession.messages.indexOf(toolsCard);
+                            chatAdapter.notifyItemChanged(idx, "tool_events");
+                        }
                     });
                 }
 
@@ -634,9 +733,26 @@ public class AssistantFragment extends Fragment {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
-                        isStreaming = false;
+                        
+                        String finalTest = (response == null || response.text == null) ? "" : response.text;
+                        if (finalTest.isEmpty()) {
+                            int toolCount = toolsCard != null ? toolsCard.toolEvents.size() : 0;
+                            finalTest = "Done. Used " + toolCount + " tools.";
+                        }
+                        
+                        if (assistantMsg == null) {
+                            assistantMsg = new ChatStore.Message("assistant", finalTest);
+                            currentSession.messages.add(assistantMsg);
+                            chatAdapter.addMessage(assistantMsg);
+                        } else {
+                            assistantMsg.text = finalTest;
+                            chatAdapter.notifyItemChanged(currentSession.messages.indexOf(assistantMsg));
+                        }
+
+                        state = SessionState.IDLE;
                         updateStreamingUi(false);
                         chatStore.saveSession(currentSession);
+                        resetWatchdog();
                     });
                 }
 
@@ -647,9 +763,10 @@ public class AssistantFragment extends Fragment {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
-                        isStreaming = false;
+                        state = SessionState.IDLE;
                         updateStreamingUi(false);
                         handleChatError(error);
+                        resetWatchdog();
                     });
                 }
             });
@@ -673,6 +790,7 @@ public class AssistantFragment extends Fragment {
 
                 @Override
                 public void onReasoningToken(String token) {
+                    resetWatchdog();
                     mainHandler.post(() -> {
                         if (thinkingMsg == null) {
                             thinkingStart = System.currentTimeMillis();
@@ -692,6 +810,7 @@ public class AssistantFragment extends Fragment {
 
                 @Override
                 public void onToken(String token) {
+                    resetWatchdog();
                     mainHandler.post(() -> {
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
@@ -721,9 +840,10 @@ public class AssistantFragment extends Fragment {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
-                        isStreaming = false;
+                        state = SessionState.IDLE;
                         updateStreamingUi(false);
                         chatStore.saveSession(currentSession);
+                        resetWatchdog();
                     });
                 }
 
@@ -734,9 +854,10 @@ public class AssistantFragment extends Fragment {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
-                        isStreaming = false;
+                        state = SessionState.IDLE;
                         updateStreamingUi(false);
                         addAssistantMessage("Error: " + error.getMessage());
+                        resetWatchdog();
                     });
                 }
             });
@@ -814,7 +935,7 @@ public class AssistantFragment extends Fragment {
             LinearProgressIndicator progress = panel.findViewById(R.id.streaming_progress);
             progress.setVisibility(streaming ? View.VISIBLE : View.GONE);
             FloatingActionButton fab = panel.findViewById(R.id.fab_send);
-            fab.setImageResource(streaming ? R.drawable.ic_mtrl_stop : R.drawable.ic_mtrl_send);
+            fab.setImageResource(state == SessionState.IDLE ? R.drawable.ic_mtrl_send : R.drawable.ic_mtrl_stop);
         }
     }
 

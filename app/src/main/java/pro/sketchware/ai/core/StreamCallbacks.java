@@ -22,6 +22,14 @@ public interface StreamCallbacks {
     default void onToolCall(ToolCall toolCall) {
     }
 
+    /** Called when an agent starts executing a tool. */
+    default void onToolStart(String name) {
+    }
+
+    /** Called when an agent finishes executing a tool. */
+    default void onToolEnd(String name, boolean success) {
+    }
+
     /** Terminal success. {@code response.text} already includes all streamed tokens. */
     void onComplete(AIResponse response);
 
