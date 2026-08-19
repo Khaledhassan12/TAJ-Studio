@@ -58,6 +58,11 @@ public final class GeminiEngine extends HttpAI {
             if (request.maxTokens > 0) {
                 generationConfig.put("maxOutputTokens", request.maxTokens);
             }
+            if (request.thinkingEnabled) {
+                JSONObject thinkingConfig = new JSONObject();
+                thinkingConfig.put("includeThoughts", true);
+                generationConfig.put("thinkingConfig", thinkingConfig);
+            }
             if (generationConfig.length() > 0) {
                 body.put("generationConfig", generationConfig);
             }
@@ -254,8 +259,12 @@ public final class GeminiEngine extends HttpAI {
             }
             String token = part.optString("text", null);
             if (token != null && !token.isEmpty()) {
-                gemini.text.append(token);
-                tracked.onToken(token);
+                if (part.optBoolean("thought", false)) {
+                    tracked.onReasoningToken(token);
+                } else {
+                    gemini.text.append(token);
+                    tracked.onToken(token);
+                }
             }
             JSONObject functionCall = part.optJSONObject("functionCall");
             if (functionCall != null) {

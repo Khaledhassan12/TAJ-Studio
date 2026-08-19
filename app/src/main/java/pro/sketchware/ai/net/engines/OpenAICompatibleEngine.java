@@ -170,6 +170,14 @@ public final class OpenAICompatibleEngine extends HttpAI {
             return;
         }
 
+        String reasoning = delta.optString("reasoning", null);
+        if (reasoning == null) {
+            reasoning = delta.optString("reasoning_content", null);
+        }
+        if (reasoning != null && !reasoning.isEmpty()) {
+            tracked.onReasoningToken(reasoning);
+        }
+
         String token = delta.optString("content", null);
         if (token != null && !token.isEmpty()) {
             openAi.text.append(token);
@@ -222,6 +230,15 @@ public final class OpenAICompatibleEngine extends HttpAI {
             if (message == null) {
                 return;
             }
+
+            String reasoning = message.optString("reasoning_content", null);
+            if (reasoning == null) {
+                reasoning = message.optString("reasoning", null);
+            }
+            if (reasoning != null && !reasoning.isEmpty()) {
+                tracked.onReasoningToken(reasoning);
+            }
+
             String text = message.optString("content", "");
             if (!text.isEmpty()) {
                 openAi.text.append(text);

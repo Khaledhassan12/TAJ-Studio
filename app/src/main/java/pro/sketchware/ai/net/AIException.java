@@ -94,7 +94,11 @@ public class AIException extends Exception {
 
     /** True when this failure deserves one automatic retry: transport errors or provider 5xx. */
     public boolean isRetriable() {
-        return type == Type.NETWORK || (httpStatus >= 500 && httpStatus <= 599);
+        return type == Type.NETWORK || (httpStatus >= 500 && httpStatus <= 599) || isThinkingError();
+    }
+
+    public boolean isThinkingError() {
+        return httpStatus == 400 && rawBody != null && rawBody.toLowerCase().contains("thinking");
     }
 
     /** Returns a short, user-friendly message for display in error cards. */

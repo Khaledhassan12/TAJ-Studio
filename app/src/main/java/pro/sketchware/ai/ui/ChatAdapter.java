@@ -2,12 +2,16 @@ package pro.sketchware.ai.ui;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.SimpleDateFormat;
@@ -27,6 +31,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_SUGGESTION = 3;
     private static final int TYPE_TYPING = 4;
     private static final int TYPE_ERROR = 5;
+    private static final int TYPE_THINKING = 6;
 
     private final List<ChatStore.Message> messages = new ArrayList<>();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
@@ -84,11 +89,42 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyItemInserted(messages.size() - 1);
     }
 
+    public void insertMessage(int pos, ChatStore.Message message) {
+        if (pos >= 0 && pos <= messages.size()) {
+            messages.add(pos, message);
+            notifyItemInserted(pos);
+        }
+    }
+
     public void setTyping(boolean typing) {
         if (isTyping == typing) return;
         isTyping = typing;
         if (typing) notifyItemInserted(messages.size());
         else notifyItemRemoved(messages.size());
+    }
+
+    public void appendToken(int pos, String token) {
+        if (pos >= 0 && pos < messages.size()) {
+            messages.get(pos).text += token;
+            notifyItemChanged(pos, "token");
+        }
+    }
+
+    public void appendReasoning(int pos, String token) {
+        if (pos >= 0 && pos < messages.size()) {
+            ChatStore.Message m = messages.get(pos);
+            m.reasoning = (m.reasoning == null ? "" : m.reasoning) + token;
+            notifyItemChanged(pos, "reasoning");
+        }
+    }
+
+    public void completeThinking(int pos, long seconds) {
+        if (pos >= 0 && pos < messages.size()) {
+            ChatStore.Message m = messages.get(pos);
+            m.role = "thought";
+            m.reasoningSeconds = (int) Math.max(1, seconds);
+            notifyItemChanged(pos, "think_done");
+        }
     }
 
     @Override
@@ -99,6 +135,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if ("tool".equals(m.role)) return TYPE_TOOL;
         if ("suggestion".equals(m.role)) return TYPE_SUGGESTION;
         if ("error".equals(m.role)) return TYPE_ERROR;
+        if ("thinking".equals(m.role) || "thought".equals(m.role)) return TYPE_THINKING;
         return TYPE_ASSISTANT;
     }
 
@@ -116,6 +153,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return new TypingViewHolder(inflater.inflate(R.layout.item_chat_typing, parent, false));
         } else if (viewType == TYPE_ERROR) {
             return new ErrorViewHolder(inflater.inflate(R.layout.item_chat_error, parent, false));
+        } else if (viewType == TYPE_THINKING) {
+            return new ThinkingViewHolder(inflater.inflate(R.layout.item_chat_thinking, parent, false));
         } else {
             return new AssistantViewHolder(inflater.inflate(R.layout.item_chat_assistant, parent, false));
         }
@@ -123,8 +162,39 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        onBindViewHolder(holder, position, new ArrayList<>());
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
         if (position >= messages.size()) return;
         ChatStore.Message m = messages.get(position);
+        
+        if (!payloads.isEmpty()) {
+            if (holder instanceof AssistantViewHolder) {
+                AssistantViewHolder vh = (AssistantViewHolder) holder;
+                if (payloads.contains("token")) {
+                    if (m.text.length() > vh.boundLen) {
+                        vh.message.append(m.text.substring(vh.boundLen));
+                        vh.boundLen = m.text.length();
+                    }
+                }
+            } else if (holder instanceof ThinkingViewHolder) {
+                ThinkingViewHolder vh = (ThinkingViewHolder) holder;
+                if (payloads.contains("reasoning")) {
+                    vh.tvFull.setText(m.reasoning);
+                    vh.updatePreview(m.reasoning);
+                    if (vh.isExpanded) {
+                        vh.scrollThink.post(() -> vh.scrollThink.fullScroll(View.FOCUS_DOWN));
+                    }
+                }
+                if (payloads.contains("think_done")) {
+                    vh.bind(m); // Full bind is safer for completion state change
+                }
+            }
+            return;
+        }
+
         String time = timeFormat.format(new Date(m.time));
 
         if (holder instanceof UserViewHolder) {
@@ -136,6 +206,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             AssistantViewHolder vh = (AssistantViewHolder) holder;
             vh.label.setText("Assistant • " + time);
             vh.message.setText(m.text);
+            vh.boundLen = m.text.length();
             if (vh.btnVoice instanceof android.widget.ImageButton) {
                 ((android.widget.ImageButton) vh.btnVoice).setImageResource(
                         m.text.equals(currentSpeakingText) ? R.drawable.ic_msg_voice_stop : R.drawable.ic_msg_voice);
@@ -167,6 +238,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             vh.btnCopy.setOnClickListener(v -> {
                 if (onMessageActionListener != null) onMessageActionListener.onCopy(m);
             });
+        } else if (holder instanceof ThinkingViewHolder) {
+            ((ThinkingViewHolder) holder).bind(m);
         }
 
         if (position > lastAnimatedPosition) {
@@ -194,6 +267,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @Override
+    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+        if (holder instanceof ThinkingViewHolder) {
+            ((ThinkingViewHolder) holder).stopTimer();
+        }
+        super.onViewRecycled(holder);
+    }
+
+    @Override
     public int getItemCount() {
         return messages.size() + (isTyping ? 1 : 0);
     }
@@ -216,6 +297,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     static class AssistantViewHolder extends RecyclerView.ViewHolder {
         TextView label, message;
         View actionsRow, btnCopy, btnRegenerate, btnVoice, btnBranch, btnShare;
+        int boundLen = 0;
+
         AssistantViewHolder(View v) {
             super(v);
             label = v.findViewById(R.id.tv_label);
@@ -256,6 +339,170 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             message = v.findViewById(R.id.tv_message);
             btnAction = v.findViewById(R.id.btn_action);
             btnCopy = v.findViewById(R.id.btn_copy);
+        }
+    }
+
+    static class ThinkingViewHolder extends RecyclerView.ViewHolder {
+        com.google.android.material.progressindicator.CircularProgressIndicator progress;
+        android.widget.ImageView ivSparkle;
+        TextView tvTitle, tvSeconds, tvPreview, tvFull;
+        android.widget.ImageButton btnExpand;
+        android.widget.ScrollView scrollThink;
+        View card;
+        
+        private final Handler timerHandler = new Handler(Looper.getMainLooper());
+        private Runnable timerRunnable;
+        private int seconds = 0;
+        private boolean isExpanded = false;
+        private ChatStore.Message currentMessage;
+
+        ThinkingViewHolder(View v) {
+            super(v);
+            card = v.findViewById(R.id.card_thinking);
+            progress = v.findViewById(R.id.progress_think);
+            ivSparkle = v.findViewById(R.id.iv_sparkle);
+            tvTitle = v.findViewById(R.id.tv_think_title);
+            tvSeconds = v.findViewById(R.id.tv_think_seconds);
+            tvPreview = v.findViewById(R.id.tv_think_preview);
+            tvFull = v.findViewById(R.id.tv_think_full);
+            btnExpand = v.findViewById(R.id.btn_think_expand);
+            scrollThink = v.findViewById(R.id.scroll_think);
+
+            btnExpand.setOnClickListener(view -> toggleExpand());
+            card.setOnClickListener(view -> toggleExpand());
+        }
+
+        void bind(ChatStore.Message m) {
+            currentMessage = m;
+            boolean isStreaming = "thinking".equals(m.role) && (m.text == null || m.text.isEmpty());
+            // If it's a history item, role is assistant but reasoning is present
+            // Actually AssistantFragment will handle inserting the thinking role message.
+            // For historical items, we'll see if they have reasoning.
+            
+            boolean completed = m.reasoningSeconds > 0 || (m.reasoning != null && !m.reasoning.isEmpty() && !"thinking".equals(m.role));
+            
+            tvFull.setText(m.reasoning);
+            updatePreview(m.reasoning);
+            
+            if (completed) {
+                stopTimer();
+                seconds = m.reasoningSeconds;
+                tvSeconds.setText(seconds + "s");
+                tvTitle.setText("Thought for " + seconds + "s");
+                
+                if (progress.getVisibility() == View.VISIBLE) {
+                    progress.animate().alpha(0f).setDuration(200).withEndAction(() -> progress.setVisibility(View.GONE)).start();
+                    ivSparkle.setAlpha(0f);
+                    ivSparkle.setVisibility(View.VISIBLE);
+                    ivSparkle.animate().alpha(1f).setDuration(200).start();
+                } else {
+                    progress.setVisibility(View.GONE);
+                    ivSparkle.setVisibility(View.VISIBLE);
+                    ivSparkle.setAlpha(1f);
+                }
+                btnExpand.setRotation(isExpanded ? 90 : 0);
+            } else {
+                ivSparkle.setVisibility(View.GONE);
+                progress.setVisibility(View.VISIBLE);
+                progress.setAlpha(1f);
+                tvTitle.setText("Thinking…");
+                startTimer();
+                btnExpand.setRotation(isExpanded ? 90 : 0);
+            }
+            
+            scrollThink.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+            tvPreview.setVisibility(isExpanded ? View.GONE : View.VISIBLE);
+            
+            if (isExpanded && !completed) {
+                scrollThink.post(() -> scrollThink.fullScroll(View.FOCUS_DOWN));
+            }
+        }
+
+        private void updatePreview(String reasoning) {
+            if (reasoning == null || reasoning.isEmpty()) {
+                tvPreview.setText("");
+                return;
+            }
+            int len = reasoning.length();
+            String preview = len > 140 ? reasoning.substring(len - 140) : reasoning;
+            tvPreview.setText(preview);
+        }
+
+        private void startTimer() {
+            if (timerRunnable != null) return;
+            seconds = 0;
+            timerRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    seconds++;
+                    tvSeconds.setText(seconds + "s");
+                    timerHandler.postDelayed(this, 1000);
+                }
+            };
+            timerHandler.postDelayed(timerRunnable, 1000);
+        }
+
+        private void stopTimer() {
+            if (timerRunnable != null) {
+                timerHandler.removeCallbacks(timerRunnable);
+                timerRunnable = null;
+            }
+        }
+
+        private void toggleExpand() {
+            isExpanded = !isExpanded;
+            
+            btnExpand.animate().rotation(isExpanded ? 90 : 0).setDuration(150).start();
+            
+            boolean isStreaming = "thinking".equals(currentMessage.role);
+            
+            if (isExpanded) {
+                scrollThink.setVisibility(View.VISIBLE);
+                tvPreview.setVisibility(View.GONE);
+                if (isStreaming) {
+                    scrollThink.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    scrollThink.requestLayout();
+                } else {
+                    animateHeight(true);
+                }
+            } else {
+                if (isStreaming) {
+                    scrollThink.setVisibility(View.GONE);
+                    tvPreview.setVisibility(View.VISIBLE);
+                } else {
+                    animateHeight(false);
+                }
+            }
+        }
+
+        private void animateHeight(boolean expanding) {
+            scrollThink.measure(
+                View.MeasureSpec.makeMeasureSpec(card.getWidth(), View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            );
+            int targetHeight = Math.min(scrollThink.getMeasuredHeight(), (int)(240 * card.getContext().getResources().getDisplayMetrics().density));
+            
+            ValueAnimator anim = ValueAnimator.ofInt(expanding ? 0 : targetHeight, expanding ? targetHeight : 0);
+            anim.addUpdateListener(animation -> {
+                ViewGroup.LayoutParams lp = scrollThink.getLayoutParams();
+                lp.height = (int) animation.getAnimatedValue();
+                scrollThink.setLayoutParams(lp);
+            });
+            anim.addListener(new android.animation.AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(android.animation.Animator animation) {
+                    if (!expanding) {
+                        scrollThink.setVisibility(View.GONE);
+                        tvPreview.setVisibility(View.VISIBLE);
+                    }
+                    ViewGroup.LayoutParams lp = scrollThink.getLayoutParams();
+                    lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    scrollThink.setLayoutParams(lp);
+                }
+            });
+            anim.setDuration(200);
+            anim.setInterpolator(new FastOutSlowInInterpolator());
+            anim.start();
         }
     }
 

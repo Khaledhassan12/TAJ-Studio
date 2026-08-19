@@ -46,7 +46,17 @@ public final class AnthropicEngine extends HttpAI {
             JSONObject body = new JSONObject();
             AIConfigStore store = AIConfigStore.getInstance(context);
             body.put("model", store.safeModel());
-            body.put("max_tokens", request.maxTokens > 0 ? request.maxTokens : 1024);
+            int maxTokens = request.maxTokens > 0 ? request.maxTokens : 1024;
+            if (request.thinkingEnabled) {
+                JSONObject thinking = new JSONObject();
+                thinking.put("type", "enabled");
+                thinking.put("budget_tokens", 4096);
+                body.put("thinking", thinking);
+                if (maxTokens < 8192) {
+                    maxTokens = 8192;
+                }
+            }
+            body.put("max_tokens", maxTokens);
             body.put("stream", true);
             if (request.temperature >= 0f) {
                 body.put("temperature", request.temperature);
@@ -144,6 +154,7 @@ public final class AnthropicEngine extends HttpAI {
         String id = "";
         String name = "";
         final StringBuilder input = new StringBuilder();
+        boolean thinking = false;
     }
 
     @Override
@@ -176,11 +187,18 @@ public final class AnthropicEngine extends HttpAI {
             case "content_block_start": {
                 int index = payload.optInt("index", 0);
                 JSONObject block = payload.optJSONObject("content_block");
-                if (block != null && "tool_use".equals(block.optString("type"))) {
-                    ToolUseFragment fragment = new ToolUseFragment();
-                    fragment.id = block.optString("id", "");
-                    fragment.name = block.optString("name", "");
-                    anthropic.blocks.put(index, fragment);
+                if (block != null) {
+                    String blockType = block.optString("type");
+                    if ("tool_use".equals(blockType)) {
+                        ToolUseFragment fragment = new ToolUseFragment();
+                        fragment.id = block.optString("id", "");
+                        fragment.name = block.optString("name", "");
+                        anthropic.blocks.put(index, fragment);
+                    } else if ("thinking".equals(blockType)) {
+                        ToolUseFragment fragment = new ToolUseFragment();
+                        fragment.thinking = true;
+                        anthropic.blocks.put(index, fragment);
+                    }
                 }
                 break;
             }
@@ -196,6 +214,11 @@ public final class AnthropicEngine extends HttpAI {
                     if (!token.isEmpty()) {
                         anthropic.text.append(token);
                         tracked.onToken(token);
+                    }
+                } else if ("thinking_delta".equals(deltaType)) {
+                    String thinking = delta.optString("thinking", "");
+                    if (!thinking.isEmpty()) {
+                        tracked.onReasoningToken(thinking);
                     }
                 } else if ("input_json_delta".equals(deltaType)) {
                     ToolUseFragment fragment = anthropic.blocks.get(index);
@@ -267,6 +290,11 @@ public final class AnthropicEngine extends HttpAI {
                     if (!text.isEmpty()) {
                         anthropic.text.append(text);
                         tracked.onToken(text);
+                    }
+                } else if ("thinking".equals(block.optString("type"))) {
+                    String thinking = block.optString("thinking", "");
+                    if (!thinking.isEmpty()) {
+                        tracked.onReasoningToken(thinking);
                     }
                 } else if ("tool_use".equals(block.optString("type"))) {
                     anthropic.toolCalls.add(new ToolCall(

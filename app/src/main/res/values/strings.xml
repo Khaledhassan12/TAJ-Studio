@@ -2604,4 +2604,8 @@ Please try again later"</string>
     <string name="ai_tooltip_regenerate">Regenerate</string>
     <string name="ai_tooltip_voice">Voice</string>
     <string name="ai_tooltip_voice_stop">Stop</string>
+    <string name="ai_thinking">Thinking…</string>
+    <string name="ai_thought_for">Thought for %1$ds</string>
+    <string name="ai_tap_read">Tap to read</string>
+    <string name="ai_show_thinking">Show model thinking (when supported)</string>
 </resources>

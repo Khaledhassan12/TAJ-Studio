@@ -90,13 +90,14 @@ public abstract class HttpAI implements AIProvider {
     }
 
     private void runWithRetry(AIRequest request, Tracked tracked, CallHandle handle) {
+        AIRequest currentRequest = request;
         for (int attempt = 0; attempt <= 1; attempt++) {
             if (handle.isCancelled()) {
                 tracked.fail(AIException.cancelled());
                 return;
             }
             try {
-                executeAndStream(request, tracked, handle);
+                executeAndStream(currentRequest, tracked, handle);
                 return;
             } catch (AIException e) {
                 if (handle.isCancelled()) {
@@ -109,6 +110,17 @@ public abstract class HttpAI implements AIProvider {
                 if (!retriable) {
                     tracked.fail(e);
                     return;
+                }
+                if (e.isThinkingError()) {
+                    currentRequest = new AIRequest.Builder()
+                            .systemPrompt(request.systemPrompt)
+                            .messages(request.messages)
+                            .tools(request.tools)
+                            .model(request.model)
+                            .temperature(request.temperature)
+                            .maxTokens(request.maxTokens)
+                            .thinkingEnabled(false)
+                            .build();
                 }
             } catch (Exception e) {
                 tracked.fail(new AIException(AIException.Type.UNKNOWN,
@@ -288,6 +300,13 @@ public abstract class HttpAI implements AIProvider {
             }
             emitted.set(true);
             delegate.onToken(token);
+        }
+
+        @Override
+        public void onReasoningToken(String token) {
+            if (!terminated.get()) {
+                delegate.onReasoningToken(token);
+            }
         }
 
         @Override

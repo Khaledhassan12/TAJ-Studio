@@ -44,6 +44,7 @@ import pro.sketchware.ai.core.AIResponse;
 import pro.sketchware.ai.core.ChatStore;
 import pro.sketchware.ai.core.ProviderProfile;
 import pro.sketchware.ai.core.StreamCallbacks;
+import pro.sketchware.ai.core.ThinkingDetector;
 import pro.sketchware.ai.core.ToolCall;
 
 public class AssistantFragment extends Fragment {
@@ -79,10 +80,12 @@ public class AssistantFragment extends Fragment {
         View panel = panels.get(R.id.ai_dest_session);
         if (panel == null) return;
         RecyclerView rv = panel.findViewById(R.id.rv_chat);
-        int n = chatAdapter.getItemCount();
-        if (n == 0) return;
-        if (smooth) rv.smoothScrollToPosition(n - 1);
-        else rv.scrollToPosition(n - 1);
+        rv.post(() -> {
+            int n = chatAdapter.getItemCount();
+            if (n == 0) return;
+            if (smooth) rv.smoothScrollToPosition(n - 1);
+            else rv.scrollToPosition(n - 1);
+        });
     }
 
     @Override
@@ -206,6 +209,13 @@ public class AssistantFragment extends Fragment {
                     .setPositiveButton("OK", null)
                     .show();
         });
+
+        com.google.android.material.materialswitch.MaterialSwitch switchThinking = panel.findViewById(R.id.switch_thinking);
+        if (switchThinking != null) {
+            switchThinking.setChecked(configStore.isShowThinking());
+            switchThinking.setOnCheckedChangeListener((v, checked) -> configStore.setShowThinking(checked));
+        }
+
         refreshReadback(panel);
     }
 
@@ -547,18 +557,43 @@ public class AssistantFragment extends Fragment {
             orchestrator = new AgentOrchestrator(provider, toolRegistry, new Tool.ToolContext(activity, sc_id));
             orchestrator.run("You are a helpful Android development assistant.", history, model, 0.7f, new StreamCallbacks() {
                 private ChatStore.Message assistantMsg;
+                private ChatStore.Message thinkingMsg;
+                private long thinkingStart = 0;
+
+                @Override
+                public void onReasoningToken(String token) {
+                    mainHandler.post(() -> {
+                        if (thinkingMsg == null) {
+                            thinkingStart = System.currentTimeMillis();
+                            thinkingMsg = new ChatStore.Message("thinking", "");
+                            int pos = currentSession.messages.size();
+                            if (assistantMsg != null) {
+                                pos = currentSession.messages.indexOf(assistantMsg);
+                            }
+                            currentSession.messages.add(pos, thinkingMsg);
+                            chatAdapter.insertMessage(pos, thinkingMsg);
+                            scrollToBottom(true);
+                        }
+                        int idx = currentSession.messages.indexOf(thinkingMsg);
+                        chatAdapter.appendReasoning(idx, token);
+                    });
+                }
 
                 @Override
                 public void onToken(String token) {
                     mainHandler.post(() -> {
+                        if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
+                            long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
+                            chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
+                        }
                         if (assistantMsg == null) {
                             assistantMsg = new ChatStore.Message("assistant", token);
                             currentSession.messages.add(assistantMsg);
                             chatAdapter.addMessage(assistantMsg);
                             scrollToBottom(true);
                         } else {
-                            assistantMsg.text += token;
-                            chatAdapter.notifyItemChanged(currentSession.messages.size() - 1);
+                            int idx = currentSession.messages.indexOf(assistantMsg);
+                            chatAdapter.appendToken(idx, token);
                             if (isNearBottom()) scrollToBottom(false);
                         }
                     });
@@ -567,6 +602,10 @@ public class AssistantFragment extends Fragment {
                 @Override
                 public void onToolCall(ToolCall call) {
                     mainHandler.post(() -> {
+                        if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
+                            long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
+                            chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
+                        }
                         ChatStore.Message toolMsg = new ChatStore.Message("tool", call.name);
                         currentSession.messages.add(toolMsg);
                         chatAdapter.addMessage(toolMsg);
@@ -577,6 +616,10 @@ public class AssistantFragment extends Fragment {
                 @Override
                 public void onComplete(AIResponse response) {
                     mainHandler.post(() -> {
+                        if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
+                            long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
+                            chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
+                        }
                         isStreaming = false;
                         updateStreamingUi(false);
                         chatStore.saveSession(currentSession);
@@ -586,6 +629,10 @@ public class AssistantFragment extends Fragment {
                 @Override
                 public void onError(Throwable error) {
                     mainHandler.post(() -> {
+                        if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
+                            long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
+                            chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
+                        }
                         isStreaming = false;
                         updateStreamingUi(false);
                         handleChatError(error);
@@ -602,22 +649,49 @@ public class AssistantFragment extends Fragment {
             pro.sketchware.ai.core.AIRequest request = new pro.sketchware.ai.core.AIRequest.Builder()
                     .model(model)
                     .messages(history)
+                    .thinkingEnabled(configStore.isShowThinking() && ThinkingDetector.hint(model))
                     .build();
 
             provider.stream(request, new StreamCallbacks() {
                 private ChatStore.Message assistantMsg;
+                private ChatStore.Message thinkingMsg;
+                private long thinkingStart = 0;
+
+                @Override
+                public void onReasoningToken(String token) {
+                    mainHandler.post(() -> {
+                        if (thinkingMsg == null) {
+                            thinkingStart = System.currentTimeMillis();
+                            thinkingMsg = new ChatStore.Message("thinking", "");
+                            int pos = currentSession.messages.size();
+                            if (assistantMsg != null) {
+                                pos = currentSession.messages.indexOf(assistantMsg);
+                            }
+                            currentSession.messages.add(pos, thinkingMsg);
+                            chatAdapter.insertMessage(pos, thinkingMsg);
+                            scrollToBottom(true);
+                        }
+                        int idx = currentSession.messages.indexOf(thinkingMsg);
+                        chatAdapter.appendReasoning(idx, token);
+                    });
+                }
 
                 @Override
                 public void onToken(String token) {
                     mainHandler.post(() -> {
+                        if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
+                            long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
+                            chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
+                        }
+                        
                         if (assistantMsg == null) {
                             assistantMsg = new ChatStore.Message("assistant", token);
                             currentSession.messages.add(assistantMsg);
                             chatAdapter.addMessage(assistantMsg);
                             scrollToBottom(true);
                         } else {
-                            assistantMsg.text += token;
-                            chatAdapter.notifyItemChanged(currentSession.messages.size() - 1);
+                            int idx = currentSession.messages.indexOf(assistantMsg);
+                            chatAdapter.appendToken(idx, token);
                             if (isNearBottom()) scrollToBottom(false);
                         }
                     });
@@ -629,6 +703,10 @@ public class AssistantFragment extends Fragment {
                 @Override
                 public void onComplete(AIResponse response) {
                     mainHandler.post(() -> {
+                        if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
+                            long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
+                            chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
+                        }
                         isStreaming = false;
                         updateStreamingUi(false);
                         chatStore.saveSession(currentSession);
@@ -638,6 +716,10 @@ public class AssistantFragment extends Fragment {
                 @Override
                 public void onError(Throwable error) {
                     mainHandler.post(() -> {
+                        if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
+                            long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
+                            chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
+                        }
                         isStreaming = false;
                         updateStreamingUi(false);
                         addAssistantMessage("Error: " + error.getMessage());
@@ -708,6 +790,13 @@ public class AssistantFragment extends Fragment {
     private void updateStreamingUi(boolean streaming) {
         View panel = panels.get(R.id.ai_dest_session);
         if (panel != null) {
+            RecyclerView rv = panel.findViewById(R.id.rv_chat);
+            if (streaming) {
+                rv.setItemAnimator(null);
+            } else {
+                rv.setItemAnimator(new androidx.recyclerview.widget.DefaultItemAnimator());
+            }
+
             LinearProgressIndicator progress = panel.findViewById(R.id.streaming_progress);
             progress.setVisibility(streaming ? View.VISIBLE : View.GONE);
             FloatingActionButton fab = panel.findViewById(R.id.fab_send);

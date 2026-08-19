@@ -16,6 +16,7 @@ public final class AIRequest {
     public final String model;
     public final float temperature;
     public final int maxTokens;
+    public final boolean thinkingEnabled;
 
     private AIRequest(Builder b) {
         systemPrompt = b.systemPrompt;
@@ -24,6 +25,7 @@ public final class AIRequest {
         model = b.model;
         temperature = b.temperature;
         maxTokens = b.maxTokens;
+        thinkingEnabled = b.thinkingEnabled;
     }
 
     public boolean hasTools() {
@@ -37,6 +39,7 @@ public final class AIRequest {
         private String model = "";
         private float temperature = 0.7f;
         private int maxTokens = 4096;
+        private boolean thinkingEnabled = false;
 
         public Builder systemPrompt(String prompt) {
             this.systemPrompt = prompt;
@@ -78,6 +81,11 @@ public final class AIRequest {
 
         public Builder maxTokens(int maxTokens) {
             this.maxTokens = maxTokens;
+            return this;
+        }
+
+        public Builder thinkingEnabled(boolean enabled) {
+            this.thinkingEnabled = enabled;
             return this;
         }
 

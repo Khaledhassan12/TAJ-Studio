@@ -42,6 +42,7 @@ public final class AIConfigStore {
     public static final String K_BASE = "assistant_base_url";
     public static final String K_MODEL = "assistant_model";
     public static final String K_MODE = "assistant_mode";
+    public static final String K_SHOW_THINKING = "assistant_show_thinking";
 
     private static final String MODELS_CACHE_PREFIX = "models_cache_";
     private static final String MODELS_CACHE_TS_PREFIX = "models_cache_ts_";
@@ -230,6 +231,16 @@ public final class AIConfigStore {
     public void setVerified(boolean verified) {
         if (prefs != null) {
             prefs.edit().putBoolean(KEY_VERIFIED, verified).apply();
+        }
+    }
+
+    public boolean isShowThinking() {
+        return prefs == null || prefs.getBoolean(K_SHOW_THINKING, true);
+    }
+
+    public void setShowThinking(boolean show) {
+        if (prefs != null) {
+            prefs.edit().putBoolean(K_SHOW_THINKING, show).apply();
         }
     }
 

@@ -48,6 +48,14 @@
             android:text="Haptic Feedback"
             android:checked="true" />
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switch_thinking"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/ai_show_thinking"
+            android:checked="true" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -37,6 +37,8 @@ public final class ChatStore {
         public long time;
         public String toolState; // JSON for tool chips or raw error body
         public String action; // Action button text
+        public String reasoning;
+        public int reasoningSeconds;
 
         public Message(String role, String text) {
             this.role = role;
@@ -52,6 +54,8 @@ public final class ChatStore {
                 json.put("time", time);
                 if (toolState != null) json.put("toolState", toolState);
                 if (action != null) json.put("action", action);
+                if (reasoning != null) json.put("reasoning", reasoning);
+                if (reasoningSeconds > 0) json.put("reasoningSeconds", reasoningSeconds);
             } catch (JSONException ignored) {}
             return json;
         }
@@ -61,6 +65,8 @@ public final class ChatStore {
             m.time = json.optLong("time");
             m.toolState = json.optString("toolState", null);
             m.action = json.optString("action", null);
+            m.reasoning = json.optString("reasoning", null);
+            m.reasoningSeconds = json.optInt("reasoningSeconds", 0);
             return m;
         }
     }
@@ -148,6 +154,8 @@ public final class ChatStore {
             copy.time = m.time;
             copy.toolState = m.toolState;
             copy.action = m.action;
+            copy.reasoning = m.reasoning;
+            copy.reasoningSeconds = m.reasoningSeconds;
             branch.messages.add(copy);
         }
         return branch;

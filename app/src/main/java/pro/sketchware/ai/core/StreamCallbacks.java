@@ -11,6 +11,13 @@ public interface StreamCallbacks {
     /** Called for every decoded text token/chunk. Never null, may be multi-char. */
     void onToken(String token);
 
+    /**
+     * Called for every reasoning token/chunk. Unlike onToken, this text
+     * describes the model's internal thoughts and is not part of the final answer.
+     */
+    default void onReasoningToken(String token) {
+    }
+
     /** Called when the model has finished assembling a full tool call. */
     default void onToolCall(ToolCall toolCall) {
     }
