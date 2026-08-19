@@ -217,6 +217,17 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             vh.chip.setText(m.text);
         } else if (holder instanceof SuggestionViewHolder) {
             SuggestionViewHolder vh = (SuggestionViewHolder) holder;
+            if ("locked".equals(m.text)) {
+                vh.title.setText(R.string.ai_agent_locked_card);
+                vh.btnSwitch.setText(R.string.ai_enable_and_run);
+                vh.btnStay.setText(R.string.ai_keep_chat);
+                vh.icon.setImageResource(R.drawable.ic_mtrl_wrench);
+            } else {
+                vh.title.setText(R.string.ai_agent_suggestion_title);
+                vh.btnSwitch.setText(R.string.ai_agent_switch);
+                vh.btnStay.setText(R.string.ai_agent_stay);
+                vh.icon.setImageResource(R.drawable.ic_mtrl_sparkle);
+            }
             vh.btnSwitch.setOnClickListener(v -> {
                 if (suggestionListener != null) suggestionListener.onSwitchToAgent(holder.getAdapterPosition());
             });
@@ -321,9 +332,13 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     static class SuggestionViewHolder extends RecyclerView.ViewHolder {
-        View btnSwitch, btnStay;
+        android.widget.TextView title;
+        android.widget.ImageView icon;
+        com.google.android.material.button.MaterialButton btnSwitch, btnStay;
         SuggestionViewHolder(View v) {
             super(v);
+            title = v.findViewById(R.id.tv_title);
+            icon = v.findViewById(R.id.iv_icon);
             btnSwitch = v.findViewById(R.id.btn_switch);
             btnStay = v.findViewById(R.id.btn_stay);
         }

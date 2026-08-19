@@ -43,6 +43,7 @@ public final class AIConfigStore {
     public static final String K_MODEL = "assistant_model";
     public static final String K_MODE = "assistant_mode";
     public static final String K_SHOW_THINKING = "assistant_show_thinking";
+    public static final String K_AGENT_ENABLED = "assistant_agent_enabled";
 
     private static final String MODELS_CACHE_PREFIX = "models_cache_";
     private static final String MODELS_CACHE_TS_PREFIX = "models_cache_ts_";
@@ -109,6 +110,12 @@ public final class AIConfigStore {
         // 5. Mode
         if (!prefs.contains(K_MODE) && prefs.contains(KEY_DEFAULT_MODE)) {
             editor.putString(K_MODE, prefs.getString(KEY_DEFAULT_MODE, MODE_CHAT));
+        }
+
+        // 6. Agent Enabled (migration)
+        if (!prefs.contains(K_AGENT_ENABLED)) {
+            String mode = prefs.getString(K_MODE, prefs.getString(KEY_DEFAULT_MODE, MODE_CHAT));
+            editor.putBoolean(K_AGENT_ENABLED, MODE_AGENT.equals(mode));
         }
 
         editor.apply();
@@ -251,6 +258,16 @@ public final class AIConfigStore {
     public void setDefaultMode(String mode) {
         if (prefs != null) {
             prefs.edit().putString(KEY_DEFAULT_MODE, MODE_AGENT.equals(mode) ? MODE_AGENT : MODE_CHAT).apply();
+        }
+    }
+
+    public boolean isAgentEnabled() {
+        return prefs == null || prefs.getBoolean(K_AGENT_ENABLED, true);
+    }
+
+    public void setAgentEnabled(boolean enabled) {
+        if (prefs != null) {
+            prefs.edit().putBoolean(K_AGENT_ENABLED, enabled).apply();
         }
     }
 

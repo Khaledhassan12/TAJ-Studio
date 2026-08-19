@@ -21,6 +21,16 @@
             android:padding="8dp"
             android:gravity="center_vertical">
 
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_agent_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@string/ai_agent_off"
+                app:chipMinHeight="32dp"
+                app:chipStrokeWidth="0dp"
+                android:textAppearance="?attr/textAppearanceLabelSmall" />
+
             <View
                 android:id="@+id/connection_dot"
                 android:layout_width="8dp"
@@ -50,38 +60,12 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <com.google.android.material.button.MaterialButtonToggleGroup
-        android:id="@+id/mode_toggle_group"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/header_card"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="8dp"
-        app:singleSelection="true"
-        app:selectionRequired="true">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_mode_chat"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/ai_mode_chat" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_mode_agent"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/ai_mode_agent" />
-
-    </com.google.android.material.button.MaterialButtonToggleGroup>
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_chat"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/input_container"
-        android:layout_below="@id/mode_toggle_group"
+        android:layout_below="@id/header_card"
         android:layout_marginTop="8dp"
         android:clipToPadding="false"
         android:paddingBottom="16dp" />
@@ -156,7 +140,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/input_container"
-        android:layout_below="@id/mode_toggle_group"
+        android:layout_below="@id/header_card"
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone">

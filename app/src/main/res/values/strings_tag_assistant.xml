@@ -58,7 +58,14 @@ Your API key stays on this device, encrypted. The assistant only talks to the pr
     <string name="ai_model_filter_free">Free</string>
     <string name="ai_model_filter_paid">Paid</string>
     <string name="ai_no_pricing">This provider does not expose pricing data</string>
-    <string name="ai_no_model_list">This provider does not expose a model list. Enter the model ID manually.</string>
+    <string name="ai_no_model_list">This provider doesn\'t expose a model list. Models are managed by the key/website of the provider. Enter the Model ID manually.</string>
+    <string name="ai_agent_switch_title">Agent tool calling</string>
+    <string name="ai_agent_switch_desc">When ON, the assistant executes real project actions (create, build, edit&#8230;). When OFF, it stays a pure chat and will ask you to enable it for action requests.</string>
+    <string name="ai_agent_on">Agent ON</string>
+    <string name="ai_agent_off">Agent OFF</string>
+    <string name="ai_agent_locked_card">This request needs Agent tools, but Agent mode is OFF.</string>
+    <string name="ai_enable_and_run">Enable Agent &amp; run</string>
+    <string name="ai_keep_chat">Keep chat</string>
     <string name="ai_connected_models">Connected &#8226; %1$d models available</string>
     <string name="ai_model_picker_title">Choose model</string>
     <string name="ai_model_picker_search">Search models</string>

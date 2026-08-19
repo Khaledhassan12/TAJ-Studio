@@ -400,19 +400,20 @@ public class AssistantFragment extends Fragment {
         chatAdapter.setOnSuggestionListener(new ChatAdapter.OnSuggestionListener() {
             @Override
             public void onSwitchToAgent(int position) {
-                configStore.setDefaultMode(AIConfigStore.MODE_AGENT);
-                View modeToggle = panel.findViewById(R.id.mode_toggle_group);
-                if (modeToggle instanceof com.google.android.material.button.MaterialButtonToggleGroup) {
-                    ((com.google.android.material.button.MaterialButtonToggleGroup) modeToggle).check(R.id.btn_mode_agent);
-                }
+                configStore.setAgentEnabled(true);
+                View sessionPanel = panels.get(R.id.ai_dest_session);
+                if (sessionPanel != null) updateSessionHeader(sessionPanel);
                 // Resend the message that triggered this
                 if (position > 0) {
                     ChatStore.Message prev = currentSession.messages.get(position - 1);
                     if ("user".equals(prev.role)) {
-                        // Remove suggestion item
-                        currentSession.messages.remove(position);
-                        chatAdapter.notifyItemRemoved(position);
-                        sendMessage(prev.text);
+                        // Remove suggestion and everything after it
+                        while (currentSession.messages.size() > position) {
+                            currentSession.messages.remove(position);
+                        }
+                        chatAdapter.setMessages(currentSession.messages);
+                        isStreaming = false;
+                        sendMessage(prev.text, true);
                     }
                 }
             }
@@ -467,14 +468,15 @@ public class AssistantFragment extends Fragment {
         pulse.setRepeatMode(ValueAnimator.REVERSE);
         pulse.start();
 
-        MaterialButtonToggleGroup modeToggle = panel.findViewById(R.id.mode_toggle_group);
-        String currentMode = configStore.getDefaultMode();
-        modeToggle.check(AIConfigStore.MODE_AGENT.equals(currentMode) ? R.id.btn_mode_agent : R.id.btn_mode_chat);
-        modeToggle.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (isChecked) {
-                configStore.setDefaultMode(checkedId == R.id.btn_mode_agent ? AIConfigStore.MODE_AGENT : AIConfigStore.MODE_CHAT);
-            }
-        });
+        Chip chipAgent = panel.findViewById(R.id.chip_agent_state);
+        if (chipAgent != null) {
+            chipAgent.setOnClickListener(v -> {
+                boolean next = !configStore.isAgentEnabled();
+                configStore.setAgentEnabled(next);
+                updateSessionHeader(panel);
+                Snackbar.make(panel, next ? "Agent mode enabled — I can now act on your project" : "Agent mode off — chat only", Snackbar.LENGTH_SHORT).show();
+            });
+        }
 
         com.google.android.material.chip.ChipGroup suggestions = panel.findViewById(R.id.empty_suggestions);
         for (int i = 0; i < suggestions.getChildCount(); i++) {
@@ -490,6 +492,18 @@ public class AssistantFragment extends Fragment {
     private void updateSessionHeader(View panel) {
         TextView modelInfo = panel.findViewById(R.id.tv_model_info);
         Chip location = panel.findViewById(R.id.chip_location);
+        Chip chipAgent = panel.findViewById(R.id.chip_agent_state);
+
+        if (chipAgent != null) {
+            boolean enabled = configStore.isAgentEnabled();
+            chipAgent.setText(enabled ? R.string.ai_agent_on : R.string.ai_agent_off);
+            int bgColor = pro.sketchware.utility.ThemeUtils.getColor(getContext(),
+                    enabled ? R.attr.colorTertiaryContainer : R.attr.colorSurfaceContainerHigh);
+            chipAgent.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(bgColor));
+            
+            chipAgent.setAlpha(0f);
+            chipAgent.animate().alpha(1f).setDuration(150).start();
+        }
 
         String providerId = configStore.getProviderId();
         String model = configStore.safeModel();
@@ -543,7 +557,7 @@ public class AssistantFragment extends Fragment {
         isStreaming = true;
         updateStreamingUi(true);
 
-        String mode = configStore.getDefaultMode();
+        boolean agentEnabled = configStore.isAgentEnabled();
         List<AIMessage> history = new ArrayList<>();
         for (ChatStore.Message m : currentSession.messages) {
             if ("user".equals(m.role)) history.add(AIMessage.user(m.text));
@@ -553,7 +567,7 @@ public class AssistantFragment extends Fragment {
         String providerId = configStore.getSelectedProviderId();
         String model = configStore.getModel(providerId);
 
-        if (AIConfigStore.MODE_AGENT.equals(mode)) {
+        if (agentEnabled) {
             orchestrator = new AgentOrchestrator(provider, toolRegistry, new Tool.ToolContext(activity, sc_id));
             orchestrator.run("You are a helpful Android development assistant.", history, model, 0.7f, new StreamCallbacks() {
                 private ChatStore.Message assistantMsg;
@@ -641,7 +655,7 @@ public class AssistantFragment extends Fragment {
             });
         } else {
             if (AgentSuggester.needsAgent(text)) {
-                ChatStore.Message suggestion = new ChatStore.Message("suggestion", "");
+                ChatStore.Message suggestion = new ChatStore.Message("suggestion", "locked");
                 currentSession.messages.add(suggestion);
                 chatAdapter.addMessage(suggestion);
             }

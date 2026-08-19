@@ -56,6 +56,9 @@ public final class ModelSyncService {
     public static String validateKey(ProviderProfile profile, String apiKey) {
         String cleanKey = AIConfigStore.sanitizeKey(apiKey);
         String base = AIConfigStore.sanitizeBaseUrl(profile.defaultBaseUrl);
+        
+        Log.d(TAG, "Validating key for provider ID: " + profile.id + " at base URL: " + base);
+        
         if (base.isEmpty()) return "Enter a valid base URL.";
 
         String path;
@@ -153,6 +156,9 @@ public final class ModelSyncService {
         AIConfigStore store = AIConfigStore.getInstance(null);
         String cleanKey = apiKey != null && !apiKey.trim().isEmpty() ? AIConfigStore.sanitizeKey(apiKey) : store.safeKey();
         String base = store.safeBaseUrl(profile.defaultBaseUrl);
+
+        Log.d(TAG, "Fetching models for provider ID: " + profile.id + " at base URL: " + base);
+
         if (base.isEmpty()) {
             throw new AIException(AIException.Type.MODEL_NOT_FOUND,
                     "Enter a valid base URL for this provider.");

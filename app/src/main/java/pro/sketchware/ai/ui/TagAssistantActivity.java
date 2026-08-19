@@ -135,16 +135,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             updateStatusUi();
         });
 
-        boolean agentDefault = AIConfigStore.MODE_AGENT.equals(store.getDefaultMode());
-        binding.chipGroupMode.check(agentDefault ? R.id.chip_mode_agent : R.id.chip_mode_chat);
-        binding.chipGroupMode.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (!checkedIds.isEmpty()) {
-                String mode = checkedIds.get(0) == R.id.chip_mode_agent
-                        ? AIConfigStore.MODE_AGENT
-                        : AIConfigStore.MODE_CHAT;
-                store.setDefaultMode(mode);
-            }
-        });
+        binding.switchAgent.setChecked(store.isAgentEnabled());
+        binding.switchAgent.setOnCheckedChangeListener((v, checked) -> store.setAgentEnabled(checked));
 
         updateStatusUi();
     }
@@ -182,7 +174,9 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.dropdownProvider.setAdapter(adapter);
         binding.dropdownProvider.setOnItemClickListener((parent, view, position, id) -> {
             if (position >= 0 && position < profiles.size()) {
-                applyProfile(profiles.get(position));
+                ProviderProfile profile = profiles.get(position);
+                store.setProviderId(profile.id);
+                applyProfile(profile);
             }
         });
 
@@ -200,6 +194,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     }
     private void applyProfile(ProviderProfile profile) {
         currentProfile = profile;
+        store.setVerified(false);
 
         binding.editApiKey.setText(store.getKey());
         binding.tilApiKey.setEnabled(profile.requiresKey);
@@ -376,15 +371,24 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                     }
                     setSyncUi(false, testMode);
                     updateStatusUi();
-                    String message = e.friendlyMessage();
-                    if (!e.rawBody.isEmpty()) {
-                        message += "\n\n" + e.rawBody;
+                    
+                    if (e.type == AIException.Type.NETWORK || e.type == AIException.Type.AUTH || e.type == AIException.Type.MODEL_NOT_FOUND) {
+                        new MaterialAlertDialogBuilder(TagAssistantActivity.this)
+                                .setTitle(R.string.ai_choose_model)
+                                .setMessage(R.string.ai_no_model_list)
+                                .setPositiveButton(R.string.common_word_close, null)
+                                .show();
+                    } else {
+                        String message = e.friendlyMessage();
+                        if (!e.rawBody.isEmpty()) {
+                            message += "\n\n" + e.rawBody;
+                        }
+                        new MaterialAlertDialogBuilder(TagAssistantActivity.this)
+                                .setTitle(R.string.ai_test_connection)
+                                .setMessage(message)
+                                .setPositiveButton(R.string.common_word_close, null)
+                                .show();
                     }
-                    new MaterialAlertDialogBuilder(TagAssistantActivity.this)
-                            .setTitle(R.string.ai_test_connection)
-                            .setMessage(message)
-                            .setPositiveButton(R.string.common_word_close, null)
-                            .show();
                 });
             }
         });
