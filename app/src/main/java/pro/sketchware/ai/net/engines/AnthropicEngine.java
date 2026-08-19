@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import okhttp3.Request;
+import pro.sketchware.ai.config.AIConfigStore;
 import pro.sketchware.ai.core.AIMessage;
 import pro.sketchware.ai.core.AIRequest;
 import pro.sketchware.ai.core.AIResponse;
@@ -43,8 +44,9 @@ public final class AnthropicEngine extends HttpAI {
     protected Request buildRequest(AIRequest request) throws AIException {
         try {
             JSONObject body = new JSONObject();
-            body.put("model", request.model);
-            body.put("max_tokens", request.maxTokens > 0 ? request.maxTokens : 4096);
+            AIConfigStore store = AIConfigStore.getInstance(null);
+            body.put("model", store.safeModel());
+            body.put("max_tokens", request.maxTokens > 0 ? request.maxTokens : 1024);
             body.put("stream", true);
             if (request.temperature >= 0f) {
                 body.put("temperature", request.temperature);
@@ -65,7 +67,7 @@ public final class AnthropicEngine extends HttpAI {
             Request.Builder builder = new Request.Builder()
                     .url(buildUrl("/v1/messages"))
                     .post(jsonBody(body.toString()))
-                    .header("x-api-key", apiKey)
+                    .header("x-api-key", store.safeKey())
                     .header("anthropic-version", ANTHROPIC_VERSION);
             for (Map.Entry<String, String> header : profile.extraHeaders.entrySet()) {
                 builder.header(header.getKey(), header.getValue());

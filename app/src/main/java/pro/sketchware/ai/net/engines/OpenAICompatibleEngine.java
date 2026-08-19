@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import okhttp3.Request;
+import pro.sketchware.ai.config.AIConfigStore;
 import pro.sketchware.ai.core.AIMessage;
 import pro.sketchware.ai.core.AIRequest;
 import pro.sketchware.ai.core.AIResponse;
@@ -38,7 +39,8 @@ public final class OpenAICompatibleEngine extends HttpAI {
     protected Request buildRequest(AIRequest request) throws AIException {
         try {
             JSONObject body = new JSONObject();
-            body.put("model", request.model);
+            AIConfigStore store = AIConfigStore.getInstance(null);
+            body.put("model", store.safeModel());
             body.put("stream", true);
             if (request.temperature >= 0f) {
                 body.put("temperature", request.temperature);
@@ -67,7 +69,14 @@ public final class OpenAICompatibleEngine extends HttpAI {
             Request.Builder builder = new Request.Builder()
                     .url(buildUrl("/chat/completions"))
                     .post(jsonBody(body.toString()));
-            applyHeaders(builder);
+            
+            if (!apiKey.isEmpty()) {
+                applyHeaders(builder);
+                if (baseUrl.contains("openrouter.ai")) {
+                    builder.header("HTTP-Referer", "https://taj.studio");
+                    builder.header("X-Title", "TAJ Studio");
+                }
+            }
             return builder.build();
         } catch (JSONException e) {
             throw new AIException(AIException.Type.INVALID_JSON, "Failed to build the request payload.", e);

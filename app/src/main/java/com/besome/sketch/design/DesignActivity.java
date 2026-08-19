@@ -126,6 +126,8 @@ import pro.sketchware.activities.editor.command.ManageXMLCommandActivity;
 import pro.sketchware.activities.editor.view.CodeViewerActivity;
 import pro.sketchware.activities.editor.view.ViewCodeEditorActivity;
 import pro.sketchware.activities.resourceseditor.ResourcesEditorActivity;
+import pro.sketchware.ai.config.AIConfigStore;
+import pro.sketchware.ai.ui.AssistantFragment;
 import pro.sketchware.dialogs.BuildSettingsBottomSheet;
 import pro.sketchware.utility.FileUtil;
 import pro.sketchware.utility.SketchwareUtil;
@@ -465,7 +467,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.design);
 
-        aiTabEnabled = pro.sketchware.ai.config.AIConfigStore.getInstance(this).isEnabledAndVerified();
+        aiTabEnabled = AIConfigStore.getInstance(this).isEnabledAndConfigured();
 
         if (!isStoragePermissionGranted()) {
             finish();
@@ -680,19 +682,15 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             finish();
         }
 
-        boolean now = pro.sketchware.ai.config.AIConfigStore.getInstance(this).isEnabledAndVerified();
-        if (now != aiTabEnabled) {
-            aiTabEnabled = now;
-            int cur = viewPager.getCurrentItem();
-            viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
-            ((TabLayout) findViewById(R.id.tab_layout)).setupWithViewPager(viewPager);
-            attachPageListener();
-            viewPager.setCurrentItem(Math.min(cur, aiTabEnabled ? 3 : 2), false);
-        }
-
         long freeMegabytes = GB.c();
         if (freeMegabytes < 100L && freeMegabytes > 0L) {
             warnAboutInsufficientStorageSpace();
+        }
+
+        boolean now = AIConfigStore.getInstance(this).isEnabledAndConfigured();
+        if (now != aiTabEnabled) {
+            aiTabEnabled = now;
+            recreate();
         }
     }
 
@@ -1606,18 +1604,14 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
         public ViewPagerAdapter(FragmentManager fragmentManager) {
             super(fragmentManager);
+            java.util.List<String> l = new java.util.ArrayList<>();
+            l.add(Helper.getResString(R.string.design_tab_title_view));
+            l.add(Helper.getResString(R.string.design_tab_title_event));
+            l.add(Helper.getResString(R.string.design_tab_title_component));
             if (aiTabEnabled) {
-                labels = new String[]{
-                        Helper.getResString(R.string.design_tab_title_view),
-                        Helper.getResString(R.string.design_tab_title_event),
-                        Helper.getResString(R.string.design_tab_title_component),
-                        Helper.getResString(R.string.design_tab_title_assistant)};
-            } else {
-                labels = new String[]{
-                        Helper.getResString(R.string.design_tab_title_view),
-                        Helper.getResString(R.string.design_tab_title_event),
-                        Helper.getResString(R.string.design_tab_title_component)};
+                l.add(Helper.getResString(R.string.design_tab_title_assistant));
             }
+            labels = l.toArray(new String[0]);
         }
 
         @Override
@@ -1657,7 +1651,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             } else if (position == 2) {
                 return new br();
             } else {
-                return new pro.sketchware.ai.ui.AssistantFragment();
+                return new AssistantFragment();
             }
         }
     }

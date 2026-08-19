@@ -150,6 +150,14 @@ public class AssistantFragment extends Fragment {
         panel.findViewById(R.id.btn_full_settings).setOnClickListener(v -> {
             startActivity(new Intent(getActivity(), TagAssistantActivity.class));
         });
+        panel.findViewById(R.id.btn_diagnostics).setOnClickListener(v -> {
+            String report = pro.sketchware.ai.net.ConformanceDiagnostics.runReport();
+            new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Conformance Report")
+                    .setMessage(report)
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
     }
 
     private void setupModelsPanel(View panel) {
@@ -213,6 +221,12 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupSessionPanel(View panel) {
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(panel, (v, insets) -> {
+            int ime = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime()).bottom;
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), ime);
+            return insets;
+        });
+
         RecyclerView rv = panel.findViewById(R.id.rv_chat);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         chatAdapter = new ChatAdapter();
@@ -296,7 +310,14 @@ public class AssistantFragment extends Fragment {
         Chip location = panel.findViewById(R.id.chip_location);
 
         String providerId = configStore.getSelectedProviderId();
-        String model = configStore.getModel(providerId);
+        String model = configStore.safeModel();
+        if (model.isEmpty()) {
+            List<pro.sketchware.ai.core.ModelItem> cache = configStore.loadModelsCache(providerId);
+            if (!cache.isEmpty()) {
+                model = cache.get(0).id;
+                configStore.setModel(providerId, model);
+            }
+        }
         modelInfo.setText(model.isEmpty() ? "No model selected" : model);
 
         boolean isLocal = "ollama".equals(providerId) || providerId.contains("local");

@@ -83,16 +83,39 @@ public final class AIConfigStore {
         return instance;
     }
 
-    /**
-     * @return true if the Assistant tab should be shown.
-     */
-    public boolean isEnabledAndVerified() {
-        return isAssistantEnabled() && isVerified() && hasUsableModel();
+    public String safeKey() {
+        String k = getApiKey(getSelectedProviderId());
+        return k == null ? "" : k.trim().replaceAll("^\"|\"$", "").replaceAll("[\\r\\n]", "");
     }
 
-    private boolean hasUsableModel() {
+    public String safeBaseUrl(String fallback) {
+        String u = getBaseUrl(getSelectedProviderId());
+        u = (u == null || u.trim().isEmpty()) ? fallback : u.trim();
+        while (u.endsWith("/")) {
+            u = u.substring(0, u.length() - 1);
+        }
+        return u;
+    }
+
+    public String safeModel() {
         String m = getModel();
-        return m != null && !m.trim().isEmpty();
+        return m == null ? "" : m.trim();
+    }
+
+    public boolean isEnabledAndConfigured() {
+        String m = safeModel();
+        if (!isAssistantEnabled() || m.isEmpty()) return false;
+        String k = safeKey();
+        boolean keyRequired = requiresKeyFor(getSelectedProviderId());
+        return !keyRequired || !k.isEmpty();
+    }
+
+    private boolean requiresKeyFor(String providerId) {
+        return providerId == null || !(providerId.equals("ollama") || providerId.equals("custom"));
+    }
+
+    public boolean isEnabledAndVerified() {
+        return isAssistantEnabled() && isVerified() && !safeModel().isEmpty();
     }
 
     public String getModel() {

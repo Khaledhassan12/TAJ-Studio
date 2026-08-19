@@ -58,9 +58,9 @@ public abstract class HttpAI implements AIProvider {
 
     protected HttpAI(ProviderProfile profile, String baseUrl, String apiKey) {
         this.profile = profile;
-        String effective = baseUrl == null || baseUrl.isEmpty() ? profile.defaultBaseUrl : baseUrl;
-        this.baseUrl = AIConfigStore.sanitizeBaseUrl(effective);
-        this.apiKey = AIConfigStore.sanitizeKey(apiKey);
+        AIConfigStore store = AIConfigStore.getInstance(null);
+        this.baseUrl = store.safeBaseUrl(baseUrl != null && !baseUrl.isEmpty() ? baseUrl : profile.defaultBaseUrl);
+        this.apiKey = store.safeKey();
     }
 
     @Override

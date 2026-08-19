@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.Request;
+import pro.sketchware.ai.config.AIConfigStore;
 import pro.sketchware.ai.core.AIMessage;
 import pro.sketchware.ai.core.AIRequest;
 import pro.sketchware.ai.core.AIResponse;
@@ -37,6 +38,8 @@ public final class GeminiEngine extends HttpAI {
     protected Request buildRequest(AIRequest request) throws AIException {
         try {
             JSONObject body = new JSONObject();
+            AIConfigStore store = AIConfigStore.getInstance(null);
+            String model = store.safeModel();
 
             if (request.systemPrompt != null && !request.systemPrompt.isEmpty()) {
                 JSONObject instruction = new JSONObject();
@@ -71,12 +74,13 @@ public final class GeminiEngine extends HttpAI {
                 body.put("tools", tools);
             }
 
-            String url = buildUrl("/v1beta/models/" + encodeModel(request.model) + ":streamGenerateContent?alt=sse");
+            String url = buildUrl("/v1beta/models/" + encodeModel(model) + ":streamGenerateContent?alt=sse");
             Request.Builder builder = new Request.Builder()
                     .url(url)
                     .post(jsonBody(body.toString()));
-            if (!apiKey.isEmpty()) {
-                builder.header("x-goog-api-key", apiKey);
+            String key = store.safeKey();
+            if (!key.isEmpty()) {
+                builder.header("x-goog-api-key", key);
             }
             for (java.util.Map.Entry<String, String> header : profile.extraHeaders.entrySet()) {
                 builder.header(header.getKey(), header.getValue());

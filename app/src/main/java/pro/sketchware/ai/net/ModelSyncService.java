@@ -77,8 +77,9 @@ public final class ModelSyncService {
      *                     answers with an error status other than 404.
      */
     public static Result fetch(ProviderProfile profile, String apiKey) throws AIException {
-        String cleanKey = AIConfigStore.sanitizeKey(apiKey);
-        String base = AIConfigStore.sanitizeBaseUrl(profile.defaultBaseUrl);
+        AIConfigStore store = AIConfigStore.getInstance(null);
+        String cleanKey = store.safeKey();
+        String base = store.safeBaseUrl(profile.defaultBaseUrl);
         if (base.isEmpty()) {
             throw new AIException(AIException.Type.MODEL_NOT_FOUND,
                     "Enter a valid base URL for this provider.");
