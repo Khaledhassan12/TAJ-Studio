@@ -55,11 +55,27 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ai_status_title"
-                        android:textAppearance="?attr/textAppearanceTitleMedium" />
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ai_status_title"
+                            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_verified_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="Not verified"
+                            app:chipMinHeight="32dp"
+                            app:chipStrokeWidth="0dp"
+                            android:textAppearance="?attr/textAppearanceLabelSmall"
+                            android:clickable="false" />
+                    </RelativeLayout>
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/switch_enable"

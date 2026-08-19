@@ -465,7 +465,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.design);
 
-        aiTabEnabled = pro.sketchware.ai.config.AIConfigStore.getInstance(this).isEnabledAndVerified(this);
+        aiTabEnabled = pro.sketchware.ai.config.AIConfigStore.getInstance(this).isEnabledAndVerified();
 
         if (!isStoragePermissionGranted()) {
             finish();
@@ -569,7 +569,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         viewPager = findViewById(R.id.viewpager);
         viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
         viewPager.setOffscreenPageLimit(4);
-        setupViewPagerListener();
+        attachPageListener();
         viewPager.getAdapter().notifyDataSetChanged();
         ((TabLayout) findViewById(R.id.tab_layout)).setupWithViewPager(viewPager);
 
@@ -680,14 +680,14 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             finish();
         }
 
-        boolean now = pro.sketchware.ai.config.AIConfigStore.getInstance(this).isEnabledAndVerified(this);
+        boolean now = pro.sketchware.ai.config.AIConfigStore.getInstance(this).isEnabledAndVerified();
         if (now != aiTabEnabled) {
             aiTabEnabled = now;
             int cur = viewPager.getCurrentItem();
             viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
             ((TabLayout) findViewById(R.id.tab_layout)).setupWithViewPager(viewPager);
-            viewPager.setCurrentItem(Math.min(cur, aiTabEnabled ? 3 : 2));
-            setupViewPagerListener();
+            attachPageListener();
+            viewPager.setCurrentItem(Math.min(cur, aiTabEnabled ? 3 : 2), false);
         }
 
         long freeMegabytes = GB.c();
@@ -1532,7 +1532,18 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         }
     }
 
-    private void setupViewPagerListener() {
+    private void updateChromeForTab(int p) {
+        View bar = (View) btnRun.getParent();
+        if (p == 3) {
+            bar.animate().translationY(bar.getHeight()).alpha(0f).setDuration(200)
+                    .withEndAction(() -> bar.setVisibility(View.GONE)).start();
+        } else {
+            bar.setVisibility(View.VISIBLE);
+            bar.animate().translationY(0).alpha(1f).setDuration(200).start();
+        }
+    }
+
+    private void attachPageListener() {
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrollStateChanged(int state) {
@@ -1550,29 +1561,6 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                     }
                 } else if (currentTabNumber == 2 && componentTabAdapter != null) {
                     componentTabAdapter.unselectAll();
-                }
-
-                View bottomBar = findViewById(R.id.bottom_bar);
-
-                if (position == 3) {
-                    if (bottomBar != null && bottomBar.getVisibility() == View.VISIBLE) {
-                        bottomBar.animate()
-                                .translationY(bottomBar.getHeight())
-                                .setDuration(200)
-                                .setInterpolator(new androidx.interpolator.view.animation.FastOutSlowInInterpolator())
-                                .withEndAction(() -> bottomBar.setVisibility(View.GONE))
-                                .start();
-                    }
-                } else if (currentTabNumber == 3) {
-                    if (bottomBar != null && bottomBar.getVisibility() != View.VISIBLE) {
-                        bottomBar.setVisibility(View.VISIBLE);
-                        bottomBar.setTranslationY(bottomBar.getHeight());
-                        bottomBar.animate()
-                                .translationY(0)
-                                .setDuration(200)
-                                .setInterpolator(new androidx.interpolator.view.animation.FastOutSlowInInterpolator())
-                                .start();
-                    }
                 }
 
                 if (position == 0) {
@@ -1605,6 +1593,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                         viewTabAdapter.showHidePropertyView(false);
                     }
                 }
+                updateChromeForTab(position);
                 refresh();
                 currentTabNumber = position;
                 invalidateOptionsMenu();

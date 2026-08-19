@@ -31,6 +31,7 @@ import pro.sketchware.ai.core.ProviderProfile;
 import pro.sketchware.ai.net.AIException;
 import pro.sketchware.ai.net.ModelSyncService;
 import pro.sketchware.databinding.ActivityTagAssistantBinding;
+import pro.sketchware.utility.ThemeUtils;
 
 /**
  * TAG Assistant setup screen: master switch, default mode, provider selection,
@@ -90,6 +91,30 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
 
         setupStatusCard();
         setupProviderCard();
+        setupInputListeners();
+    }
+
+    private void setupInputListeners() {
+        android.text.TextWatcher watcher = new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                if (store.isVerified()) {
+                    store.setVerified(false);
+                    updateStatusUi();
+                }
+            }
+        };
+        binding.editApiKey.addTextChangedListener(watcher);
+        binding.editBaseUrl.addTextChangedListener(watcher);
+        binding.editModel.addTextChangedListener(watcher);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateStatusUi();
     }
 
     @Override
@@ -133,6 +158,12 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             binding.tvStatusMessage.setText(R.string.ai_connection_disabled);
             binding.tvStatusMessage.setVisibility(View.VISIBLE);
         }
+
+        boolean verified = store.isVerified();
+        binding.chipVerifiedStatus.setText(verified ? "Verified" : "Not verified");
+        binding.chipVerifiedStatus.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(
+                ThemeUtils.getColor(this, verified ? R.attr.colorSecondaryContainer : R.attr.colorSurfaceContainerHigh)));
+        binding.chipVerifiedStatus.setTextColor(ThemeUtils.getColor(this, verified ? R.attr.colorOnSecondaryContainer : R.attr.colorOnSurfaceVariant));
     }
 
     // ------------------------------------------------------------------
@@ -310,6 +341,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                         return;
                     }
                     setSyncUi(false, testMode);
+                    updateStatusUi();
                     if (result.modelListUnavailable) {
                         new MaterialAlertDialogBuilder(TagAssistantActivity.this)
                                 .setTitle(R.string.ai_choose_model)
@@ -324,11 +356,13 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                             Snackbar.LENGTH_SHORT).show();
                 });
             } catch (AIException e) {
+                store.setVerified(false);
                 runOnUiThread(() -> {
                     if (isFinishing() || isDestroyed()) {
                         return;
                     }
                     setSyncUi(false, testMode);
+                    updateStatusUi();
                     String message = e.friendlyMessage();
                     if (!e.rawBody.isEmpty()) {
                         message += "\n\n" + e.rawBody;

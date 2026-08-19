@@ -86,35 +86,17 @@ public final class AIConfigStore {
     /**
      * @return true if the Assistant tab should be shown.
      */
-    public boolean isEnabledAndVerified(Context context) {
-        if (!isAssistantEnabled()) return false;
-        if (!isVerified()) return false;
+    public boolean isEnabledAndVerified() {
+        return isAssistantEnabled() && isVerified() && hasUsableModel();
+    }
 
-        String providerId = getSelectedProviderId();
-        String model = getModel(providerId);
-        if (model.isEmpty()) return false;
+    private boolean hasUsableModel() {
+        String m = getModel();
+        return m != null && !m.trim().isEmpty();
+    }
 
-        ProviderProfile profile = ProviderCatalog.builtInProfiles().stream()
-                .filter(p -> p.id.equals(providerId))
-                .findFirst()
-                .orElse(null);
-
-        // Fallback check custom providers if not built-in
-        if (profile == null) {
-            profile = getCustomProviders().stream()
-                    .filter(p -> p.id.equals(providerId))
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        if (profile == null) return false;
-
-        if (profile.requiresKey) {
-            String key = getApiKey(providerId);
-            if (key.isEmpty()) return false;
-        }
-
-        return true;
+    public String getModel() {
+        return getModel(getSelectedProviderId());
     }
 
     // ------------------------------------------------------------------
