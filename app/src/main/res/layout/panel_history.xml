@@ -13,14 +13,14 @@
         android:textAppearance="?attr/textAppearanceHeadlineSmall" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_history"
+        android:id="@+id/ai_rv_history"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/tv_history_title"
         android:layout_marginTop="16dp" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_new_session"
+        android:id="@+id/ai_fab_new_session"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"

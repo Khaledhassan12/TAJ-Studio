@@ -19,7 +19,7 @@
         android:padding="4dp">
 
         <LinearLayout
-            android:id="@+id/header"
+            android:id="@+id/ai_tools_header"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:gravity="center_vertical"
@@ -40,7 +40,7 @@
                 android:textAppearance="?attr/textAppearanceTitleSmall" />
 
             <TextView
-                android:id="@+id/tv_count"
+                android:id="@+id/ai_tools_count"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -50,7 +50,7 @@
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
             <TextView
-                android:id="@+id/tv_summary"
+                android:id="@+id/ai_tools_summary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
@@ -59,24 +59,15 @@
                 android:visibility="gone" />
 
             <ImageView
-                android:id="@+id/iv_chevron"
+                android:id="@+id/ai_tools_chevron"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_mtrl_chevron_down"
                 app:tint="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
 
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/progress_header"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="12dp"
-            android:indeterminate="true"
-            android:visibility="gone"
-            app:trackThickness="2dp" />
-
         <LinearLayout
-            android:id="@+id/rows_container"
+            android:id="@+id/ai_tools_rows_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"

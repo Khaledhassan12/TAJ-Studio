@@ -63,6 +63,14 @@ Your API key stays on this device, encrypted. The assistant only talks to the pr
     <string name="ai_agent_switch_desc">When ON, the assistant executes real project actions (create, build, edit&#8230;). When OFF, it stays a pure chat and will ask you to enable it for action requests.</string>
     <string name="ai_agent_on">Agent ON</string>
     <string name="ai_agent_off">Agent OFF</string>
+    <string name="ai_rate_title">Provider is busy — holding your place in line</string>
+    <string name="ai_rate_retry">Retry %1$d of %2$d — waiting %3$ds</string>
+    <string name="ai_rate_resumed">Back on track ✓</string>
+    <string name="ai_rate_exhausted">Still crowded after %1$d tries.</string>
+    <string name="ai_rate_cancelled">Cancelled — send when ready.</string>
+    <string name="ai_err_rate">The provider limited us (429). Wait a minute or switch model.</string>
+    <string name="ai_auto_retry">Auto-retry when the provider is busy</string>
+    <string name="ai_auto_retry_summary">Waits politely and retries up to 3 times on 429/5xx.</string>
     <string name="ai_agent_locked_card">This request needs Agent tools, but Agent mode is OFF.</string>
     <string name="ai_enable_and_run">Enable Agent &amp; run</string>
     <string name="ai_keep_chat">Keep chat</string>

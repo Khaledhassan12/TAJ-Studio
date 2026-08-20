@@ -26,6 +26,8 @@ public class AIException extends Exception {
     public final int httpStatus;
     /** Raw provider error body, capped, for display below the friendly line. */
     public final String rawBody;
+    /** The original OkHttp response if this was an HTTP error. */
+    public transient okhttp3.Response lastResponse;
 
     public AIException(Type type, String message) {
         this(type, message, -1, null, "");
@@ -44,6 +46,11 @@ public class AIException extends Exception {
         this.type = type;
         this.httpStatus = httpStatus;
         this.rawBody = rawBody == null ? "" : rawBody;
+    }
+
+    public AIException(Type type, String message, int httpStatus, Throwable cause, String rawBody, okhttp3.Response lastResponse) {
+        this(type, message, httpStatus, cause, rawBody);
+        this.lastResponse = lastResponse;
     }
 
     public static AIException cancelled() {
@@ -70,18 +77,18 @@ public class AIException extends Exception {
         int code = response.code();
         String detail = trimRaw(errorBody);
         if (code == 401 || code == 403) {
-            return new AIException(Type.AUTH, "Authentication failed. Double-check your API key.", code, null, detail);
+            return new AIException(Type.AUTH, "Authentication failed. Double-check your API key.", code, null, detail, response);
         }
         if (code == 402 || code == 429) {
-            return new AIException(Type.RATE_LIMIT, "Quota/rate limit reached.", code, null, detail);
+            return new AIException(Type.RATE_LIMIT, "Quota/rate limit reached.", code, null, detail, response);
         }
         if (code == 404) {
-            return new AIException(Type.MODEL_NOT_FOUND, "Model or endpoint not found. Check model ID.", code, null, detail);
+            return new AIException(Type.MODEL_NOT_FOUND, "Model or endpoint not found. Check model ID.", code, null, detail, response);
         }
         if (code >= 500 && code <= 599) {
-            return new AIException(Type.HTTP, "Provider server error. Try again.", code, null, detail);
+            return new AIException(Type.HTTP, "Provider server error. Try again.", code, null, detail, response);
         }
-        return new AIException(Type.HTTP, "Provider returned an error (HTTP " + code + ").", code, null, detail);
+        return new AIException(Type.HTTP, "Provider returned an error (HTTP " + code + ").", code, null, detail, response);
     }
 
     private static String trimRaw(String body) {

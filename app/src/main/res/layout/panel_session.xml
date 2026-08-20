@@ -6,7 +6,7 @@
     android:padding="8dp">
 
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/header_card"
+        android:id="@+id/ai_header_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardCornerRadius="28dp"
@@ -22,7 +22,7 @@
             android:gravity="center_vertical">
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chip_agent_state"
+                android:id="@+id/ai_chip_agent_state"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
@@ -32,14 +32,14 @@
                 android:textAppearance="?attr/textAppearanceLabelSmall" />
 
             <View
-                android:id="@+id/connection_dot"
+                android:id="@+id/ai_connection_dot"
                 android:layout_width="8dp"
                 android:layout_height="8dp"
                 android:layout_margin="8dp"
                 android:background="@drawable/circle_dot" />
 
             <TextView
-                android:id="@+id/tv_model_info"
+                android:id="@+id/ai_tv_model_info"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -48,7 +48,7 @@
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chip_location"
+                android:id="@+id/ai_chip_location"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/ai_badge_cloud"
@@ -61,29 +61,20 @@
     </com.google.android.material.card.MaterialCardView>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_chat"
+        android:id="@+id/ai_rv_chat"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/input_container"
-        android:layout_below="@id/header_card"
+        android:layout_above="@+id/ai_input_container"
+        android:layout_below="@id/ai_header_card"
         android:layout_marginTop="8dp"
         android:clipToPadding="false"
         android:paddingBottom="16dp" />
 
-    <com.google.android.material.progressindicator.LinearProgressIndicator
-        android:id="@+id/streaming_progress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/input_container"
-        android:indeterminate="true"
-        android:visibility="gone"
-        app:trackThickness="2dp" />
-
     <com.google.android.material.chip.Chip
-        android:id="@+id/chip_edit_banner"
+        android:id="@+id/ai_chip_edit_banner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@id/input_container"
+        android:layout_above="@id/ai_input_container"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="4dp"
         android:text="@string/ai_msg_edit_banner"
@@ -95,7 +86,7 @@
         app:closeIconTint="?attr/colorOnTertiaryContainer" />
 
     <LinearLayout
-        android:id="@+id/input_container"
+        android:id="@+id/ai_input_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -113,7 +104,7 @@
             app:cardBackgroundColor="?attr/colorSurfaceContainerHigh">
 
             <EditText
-                android:id="@+id/et_input"
+                android:id="@+id/ai_et_input"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@null"
@@ -125,7 +116,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_send"
+            android:id="@+id/ai_fab_send"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -136,11 +127,11 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/empty_state"
+        android:id="@+id/ai_empty_state"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/input_container"
-        android:layout_below="@id/header_card"
+        android:layout_above="@+id/ai_input_container"
+        android:layout_below="@id/ai_header_card"
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone">
@@ -159,7 +150,7 @@
             android:textAppearance="?attr/textAppearanceHeadlineSmall" />
 
         <com.google.android.material.chip.ChipGroup
-            android:id="@+id/empty_suggestions"
+            android:id="@+id/ai_empty_suggestions"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"

@@ -34,17 +34,29 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_ERROR = 5;
     private static final int TYPE_THINKING = 6;
     private static final int TYPE_TOOLS_CARD = 7;
+    private static final int TYPE_RATE_LIMIT = 8;
 
     private final List<ChatStore.Message> messages = new ArrayList<>();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
     private OnSuggestionListener suggestionListener;
     private OnErrorActionListener onErrorActionListener;
     private OnMessageActionListener onMessageActionListener;
+    private OnRateLimitActionListener onRateLimitActionListener;
     private String currentSpeakingText;
 
     public void setCurrentSpeakingText(String text) {
         this.currentSpeakingText = text;
         notifyDataSetChanged();
+    }
+
+    public interface OnRateLimitActionListener {
+        void onRetryNow();
+        void onCancel();
+        void onRetryExhausted();
+    }
+
+    public void setOnRateLimitActionListener(OnRateLimitActionListener listener) {
+        this.onRateLimitActionListener = listener;
     }
 
     public interface OnMessageActionListener {
@@ -106,13 +118,16 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     public void appendToken(int pos, String token) {
+        if (token == null || token.isEmpty()) return;
         if (pos >= 0 && pos < messages.size()) {
-            messages.get(pos).text += token;
+            ChatStore.Message m = messages.get(pos);
+            m.text = (m.text == null ? "" : m.text) + token;
             notifyItemChanged(pos, "token");
         }
     }
 
     public void appendReasoning(int pos, String token) {
+        if (token == null || token.isEmpty()) return;
         if (pos >= 0 && pos < messages.size()) {
             ChatStore.Message m = messages.get(pos);
             m.reasoning = (m.reasoning == null ? "" : m.reasoning) + token;
@@ -139,6 +154,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if ("error".equals(m.role)) return TYPE_ERROR;
         if ("thinking".equals(m.role) || "thought".equals(m.role)) return TYPE_THINKING;
         if ("tools_card".equals(m.role)) return TYPE_TOOLS_CARD;
+        if ("rate_limit".equals(m.role)) return TYPE_RATE_LIMIT;
         return TYPE_ASSISTANT;
     }
 
@@ -160,6 +176,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return new ThinkingViewHolder(inflater.inflate(R.layout.item_chat_thinking, parent, false));
         } else if (viewType == TYPE_TOOLS_CARD) {
             return new ToolsViewHolder(inflater.inflate(R.layout.item_chat_tools, parent, false));
+        } else if (viewType == TYPE_RATE_LIMIT) {
+            return new RateLimitViewHolder(inflater.inflate(R.layout.item_chat_ratelimit, parent, false));
         } else {
             return new AssistantViewHolder(inflater.inflate(R.layout.item_chat_assistant, parent, false));
         }
@@ -213,13 +231,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             vh.message.setText(m.text == null ? "" : m.text);
             vh.boundLen = (m.text == null) ? 0 : m.text.length();
             if (vh.btnVoice instanceof android.widget.ImageButton) {
+                String safeText = m.text == null ? "" : m.text;
                 ((android.widget.ImageButton) vh.btnVoice).setImageResource(
-                        m.text.equals(currentSpeakingText) ? R.drawable.ic_msg_voice_stop : R.drawable.ic_msg_voice);
+                        safeText.equals(currentSpeakingText) ? R.drawable.ic_msg_voice_stop : R.drawable.ic_msg_voice);
             }
             setupActions(vh.actionsRow, vh.btnCopy, null, vh.btnBranch, vh.btnShare, vh.btnRegenerate, vh.btnVoice, m, position);
         } else if (holder instanceof ToolViewHolder) {
             ToolViewHolder vh = (ToolViewHolder) holder;
-            vh.chip.setText(m.text);
+            vh.chip.setText(m.text == null ? "" : m.text);
         } else if (holder instanceof SuggestionViewHolder) {
             SuggestionViewHolder vh = (SuggestionViewHolder) holder;
             if ("locked".equals(m.text)) {
@@ -258,6 +277,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             ((ThinkingViewHolder) holder).bind(m);
         } else if (holder instanceof ToolsViewHolder) {
             ((ToolsViewHolder) holder).bind(m, payloads.contains("tool_events"));
+        } else if (holder instanceof RateLimitViewHolder) {
+            ((RateLimitViewHolder) holder).bind(m, payloads, onRateLimitActionListener);
         }
 
         if (position > lastAnimatedPosition) {
@@ -299,7 +320,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class ToolsViewHolder extends RecyclerView.ViewHolder {
         TextView tvCount, tvSummary;
-        View header, progressHeader;
+        View header;
         ImageView ivChevron;
         ViewGroup rowsContainer;
         boolean isExpanded = true;
@@ -307,12 +328,11 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         ToolsViewHolder(View v) {
             super(v);
-            tvCount = v.findViewById(R.id.tv_count);
-            tvSummary = v.findViewById(R.id.tv_summary);
-            header = v.findViewById(R.id.header);
-            progressHeader = v.findViewById(R.id.progress_header);
-            ivChevron = (ImageView) v.findViewById(R.id.iv_chevron);
-            rowsContainer = v.findViewById(R.id.rows_container);
+            tvCount = v.findViewById(R.id.ai_tools_count);
+            tvSummary = v.findViewById(R.id.ai_tools_summary);
+            header = v.findViewById(R.id.ai_tools_header);
+            ivChevron = v.findViewById(R.id.ai_tools_chevron);
+            rowsContainer = v.findViewById(R.id.ai_tools_rows_container);
             
             header.setOnClickListener(view -> toggleExpand());
         }
@@ -330,8 +350,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 if ("RUNNING".equals(te.status)) anyRunning = true;
                 if (te.finishedAt > 0) totalMs += (te.finishedAt - te.startedAt);
             }
-            
-            progressHeader.setVisibility(anyRunning ? View.VISIBLE : View.GONE);
             
             if (!anyRunning && !events.isEmpty()) {
                 tvSummary.setVisibility(View.VISIBLE);
@@ -369,9 +387,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     rowsContainer.addView(row);
                 }
                 
-                TextView name = row.findViewById(R.id.tv_name);
-                View progress = row.findViewById(R.id.progress);
-                ImageView status = (ImageView) row.findViewById(R.id.iv_status);
+                TextView name = row.findViewById(R.id.ai_tool_name);
+                View progress = row.findViewById(R.id.ai_tool_progress);
+                ImageView status = row.findViewById(R.id.ai_tool_status);
                 
                 name.setText(te.name);
                 if ("RUNNING".equals(te.status)) {
@@ -403,6 +421,126 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             } else {
                 rowsContainer.animate().alpha(0f).setDuration(200).withEndAction(() -> rowsContainer.setVisibility(View.GONE)).start();
             }
+        }
+    }
+
+    static class RateLimitViewHolder extends RecyclerView.ViewHolder {
+        com.google.android.material.card.MaterialCardView card;
+        ImageView ivIcon;
+        TextView tvTitle, tvCount, tvSub, tvFinal;
+        com.google.android.material.progressindicator.LinearProgressIndicator progress;
+        View actions, btnRetry, btnCancel;
+        ObjectAnimator pulse;
+
+        RateLimitViewHolder(View v) {
+            super(v);
+            card = v.findViewById(R.id.card_rate);
+            ivIcon = v.findViewById(R.id.iv_rate_icon);
+            tvTitle = v.findViewById(R.id.tv_rate_title);
+            tvCount = v.findViewById(R.id.tv_rate_count);
+            tvSub = v.findViewById(R.id.tv_rate_sub);
+            tvFinal = v.findViewById(R.id.tv_rate_final);
+            progress = v.findViewById(R.id.prog_rate);
+            actions = v.findViewById(R.id.rate_actions);
+            btnRetry = v.findViewById(R.id.btn_rate_now);
+            btnCancel = v.findViewById(R.id.btn_rate_cancel);
+
+            pulse = ObjectAnimator.ofFloat(ivIcon, "alpha", 0.55f, 1.0f);
+            pulse.setDuration(1200);
+            pulse.setRepeatCount(ValueAnimator.INFINITE);
+            pulse.setRepeatMode(ValueAnimator.REVERSE);
+        }
+
+        void bind(ChatStore.Message m, List<Object> payloads, OnRateLimitActionListener listener) {
+            if (!payloads.isEmpty() && payloads.contains("rate_tick")) {
+                updateTick(m);
+                return;
+            }
+
+            // Full bind
+            String status = m.toolState; // Borrowing for "WAITING", "RESUMED", "CANCELLED", "EXHAUSTED"
+            if (status == null) status = "WAITING";
+
+            if ("WAITING".equals(status)) {
+                card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), R.attr.colorTertiaryContainer));
+                tvTitle.setText(R.string.ai_rate_title);
+                tvTitle.setVisibility(View.VISIBLE);
+                tvCount.setVisibility(View.VISIBLE);
+                progress.setVisibility(View.VISIBLE);
+                tvSub.setVisibility(View.VISIBLE);
+                actions.setVisibility(View.VISIBLE);
+                tvFinal.setVisibility(View.GONE);
+                if (!pulse.isRunning()) pulse.start();
+                updateTick(m);
+            } else {
+                pulse.cancel();
+                ivIcon.setAlpha(1.0f);
+                tvCount.setVisibility(View.GONE);
+                progress.setVisibility(View.GONE);
+                tvSub.setVisibility(View.GONE);
+                actions.setVisibility(View.GONE);
+                tvFinal.setVisibility(View.VISIBLE);
+
+                if ("RESUMED".equals(status)) {
+                    ivIcon.setImageResource(R.drawable.ic_check_circle);
+                    tvTitle.setText(R.string.ai_rate_resumed);
+                    tvFinal.setVisibility(View.GONE);
+                    // Subtle line transition
+                } else if ("COLLAPSED".equals(status)) {
+                    ivIcon.setImageResource(R.drawable.ic_check_circle);
+                    ivIcon.setVisibility(View.VISIBLE);
+                    tvTitle.setVisibility(View.GONE);
+                    tvFinal.setVisibility(View.VISIBLE);
+                    tvFinal.setText(R.string.ai_rate_resumed);
+                    card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), android.R.attr.colorBackground));
+                    // Add alpha 0.5 to card
+                    card.setAlpha(0.5f);
+                } else if ("CANCELLED".equals(status)) {
+                    ivIcon.setImageResource(R.drawable.ic_hourglass);
+                    tvTitle.setVisibility(View.GONE);
+                    tvFinal.setText(R.string.ai_rate_cancelled);
+                } else if ("EXHAUSTED".equals(status)) {
+                    card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), R.attr.colorErrorContainer));
+                    ivIcon.setImageResource(R.drawable.ic_error_circle);
+                    ivIcon.setColorFilter(0xFFF44336);
+                    tvTitle.setText(String.format(itemView.getContext().getString(R.string.ai_rate_exhausted), 3));
+                    tvFinal.setVisibility(View.GONE);
+                    // Actions might be needed for exhausted state: [Try again][Switch model]
+                    // But contract said "Switch to neutral one-liner" for cancel.
+                    // For exhausted: title "Still crowded..." + actions [Try again][Switch model][Open settings].
+                    actions.setVisibility(View.VISIBLE);
+                    ((com.google.android.material.button.MaterialButton)btnRetry).setText("Try again");
+                    ((com.google.android.material.button.MaterialButton)btnCancel).setText("Settings");
+                }
+            }
+
+            btnRetry.setOnClickListener(v -> { if (listener != null) listener.onRetryNow(); });
+            btnCancel.setOnClickListener(v -> {
+                if (listener != null) {
+                    if ("EXHAUSTED".equals(m.toolState)) {
+                         // Open settings
+                         listener.onRetryExhausted();
+                    } else {
+                        listener.onCancel();
+                    }
+                }
+            });
+        }
+
+        private void updateTick(ChatStore.Message m) {
+            // Data stored in m.text as "elapsed|totalWait|attempt|max"
+            try {
+                String[] parts = m.text.split("\\|");
+                long elapsed = Long.parseLong(parts[0]);
+                long total = Long.parseLong(parts[1]);
+                int attempt = Integer.parseInt(parts[2]);
+                int max = Integer.parseInt(parts[3]);
+
+                long remaining = Math.max(0, (total - elapsed) / 1000);
+                tvCount.setText(String.format(Locale.getDefault(), "%02d:%02d", remaining / 60, remaining % 60));
+                progress.setProgress((int) (elapsed * 100 / total));
+                tvSub.setText(itemView.getContext().getString(R.string.ai_rate_retry, attempt, max, (total / 1000)));
+            } catch (Exception ignored) {}
         }
     }
 

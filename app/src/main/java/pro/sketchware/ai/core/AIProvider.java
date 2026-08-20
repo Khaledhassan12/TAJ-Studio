@@ -25,5 +25,9 @@ public interface AIProvider {
         void cancel();
 
         boolean isCancelled();
+
+        /** Skips any currently active rate-limit retry wait, re-requesting immediately. */
+        default void skipWait() {
+        }
     }
 }

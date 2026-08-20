@@ -4,6 +4,10 @@ import java.io.File;
 import java.util.HashMap;
 import a.a.a.yq;
 import a.a.a.lC;
+import java.io.File;
+import java.util.HashMap;
+import a.a.a.lC;
+import pro.sketchware.ai.agent.ProjectPaths;
 import pro.sketchware.utility.FilePathUtil;
 import pro.sketchware.utility.FileUtil;
 
@@ -14,21 +18,26 @@ public final class JavaToolHelper {
     }
 
     public static String getProjectPath(String sc_id) {
-        return a.a.a.wq.d(sc_id) + java.io.File.separator + "app/src/main/java";
+        return ProjectPaths.javaDir(sc_id);
+    }
+
+    public static String getLayoutPath(String sc_id) {
+        return ProjectPaths.layoutDir(sc_id);
+    }
+
+    public static String getValuesPath(String sc_id) {
+        return ProjectPaths.valuesDir(sc_id);
     }
 
     public static String getProjectPackagePath(String sc_id) {
-        HashMap<String, Object> metadata = lC.b(sc_id);
-        if (metadata == null) return getProjectPath(sc_id);
-        
-        yq project = new yq(null, a.a.a.wq.d(sc_id), metadata);
-        return project.javaFilesPath + java.io.File.separator + project.packageNameAsFolders;
+        return ProjectPaths.packagePath(sc_id);
     }
 
     public static String getPackageName(String sc_id) {
         HashMap<String, Object> metadata = lC.b(sc_id);
         if (metadata == null) return "com.my.app";
-        return (String) metadata.get("my_sc_pkg_name");
+        String pkg = (String) metadata.get("my_sc_pkg_name");
+        return pkg != null ? pkg : "com.my.app";
     }
 
     public static void backup(String path) {

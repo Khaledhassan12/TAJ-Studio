@@ -123,7 +123,19 @@ public final class CreateJavaFileTool implements Tool {
         File parent = targetFile.getParentFile();
         if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
         
-        FileUtil.writeFile(targetFile.getAbsolutePath(), finalContent);
-        return new ToolResult("File created: " + targetFile.getAbsolutePath() + " (" + (finalContent != null ? finalContent.length() : 0) + " bytes)", false);
+        try {
+            FileUtil.writeFile(targetFile.getAbsolutePath(), finalContent);
+            
+            // VERIFICATION
+            String rb = FileUtil.readFile(targetFile.getAbsolutePath());
+            if (rb.isEmpty()) {
+                if (targetFile.exists()) targetFile.delete();
+                return new ToolResult("ERROR: create failed (empty file written)", true);
+            }
+            
+            return new ToolResult("File created: " + targetFile.getAbsolutePath() + " (" + (finalContent != null ? finalContent.length() : 0) + " bytes) - verified: file present", false);
+        } catch (Exception e) {
+            return new ToolResult("ERROR: write failed: " + e.getMessage(), true);
+        }
     }
 }

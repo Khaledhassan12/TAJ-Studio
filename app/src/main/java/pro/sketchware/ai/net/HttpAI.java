@@ -91,7 +91,11 @@ public abstract class HttpAI implements AIProvider {
 
     private void runWithRetry(AIRequest request, Tracked tracked, CallHandle handle) {
         AIRequest currentRequest = request;
-        for (int attempt = 0; attempt <= 1; attempt++) {
+        AIConfigStore store = AIConfigStore.getInstance(context);
+        boolean autoRetry = store.isAutoRetry();
+        int maxAttempts = RetryPolicy.MAX_ATTEMPTS;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             if (handle.isCancelled()) {
                 tracked.fail(AIException.cancelled());
                 return;
@@ -104,14 +108,24 @@ public abstract class HttpAI implements AIProvider {
                     tracked.fail(AIException.cancelled());
                     return;
                 }
-                boolean retriable = attempt == 0
-                        && !tracked.hasEmitted()
-                        && e.isRetriable();
-                if (!retriable) {
+
+                // Retry logic:
+                // 1. Thinking error: Always retriable once (immediate, thinking disabled).
+                // 2. 429/5xx: Retriable up to 3 times if autoRetry is ON.
+                // 3. Network/IOException: Retriable exactly once.
+                
+                boolean isThinking = e.isThinkingError();
+                boolean isRateLimitOrServer = autoRetry && RetryPolicy.isRetryable(e.httpStatus);
+                boolean isNetwork = e.type == AIException.Type.NETWORK && attempt == 1;
+
+                boolean retriable = !tracked.hasEmitted() && (isThinking || isRateLimitOrServer || isNetwork);
+
+                if (!retriable || attempt >= maxAttempts) {
                     tracked.fail(e);
                     return;
                 }
-                if (e.isThinkingError()) {
+
+                if (isThinking) {
                     currentRequest = new AIRequest.Builder()
                             .systemPrompt(request.systemPrompt)
                             .messages(request.messages)
@@ -121,6 +135,20 @@ public abstract class HttpAI implements AIProvider {
                             .maxTokens(request.maxTokens)
                             .thinkingEnabled(false)
                             .build();
+                } else {
+                    long waitMs = RetryPolicy.waitMs(attempt, e.lastResponse);
+                    tracked.onRateLimitWait(waitMs, attempt, maxAttempts);
+                    try {
+                        long start = System.currentTimeMillis();
+                        while (System.currentTimeMillis() - start < waitMs) {
+                            if (handle.isCancelled()) throw new InterruptedException();
+                            if (handle.shouldSkipWait()) break;
+                            Thread.sleep(Math.min(500, waitMs));
+                        }
+                    } catch (InterruptedException ie) {
+                        tracked.fail(AIException.cancelled());
+                        return;
+                    }
                 }
             } catch (Exception e) {
                 tracked.fail(new AIException(AIException.Type.UNKNOWN,
@@ -310,6 +338,13 @@ public abstract class HttpAI implements AIProvider {
         }
 
         @Override
+        public void onRateLimitWait(long waitMs, int attempt, int maxAttempts) {
+            if (!terminated.get()) {
+                delegate.onRateLimitWait(waitMs, attempt, maxAttempts);
+            }
+        }
+
+        @Override
         public void onToolCall(pro.sketchware.ai.core.ToolCall toolCall) {
             if (!terminated.get()) {
                 delegate.onToolCall(toolCall);
@@ -348,6 +383,7 @@ public abstract class HttpAI implements AIProvider {
     /** Cooperative cancellation handle bound to the in-flight OkHttp call. */
     protected static final class CallHandle implements Handle {
         private final AtomicBoolean cancelled = new AtomicBoolean(false);
+        private final AtomicBoolean skipWait = new AtomicBoolean(false);
         private volatile Call call;
 
         void attach(Call newCall) {
@@ -370,6 +406,15 @@ public abstract class HttpAI implements AIProvider {
         @Override
         public boolean isCancelled() {
             return cancelled.get();
+        }
+
+        @Override
+        public void skipWait() {
+            skipWait.set(true);
+        }
+
+        public boolean shouldSkipWait() {
+            return skipWait.compareAndSet(true, false);
         }
     }
 }

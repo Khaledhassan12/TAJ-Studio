@@ -183,6 +183,16 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     private br componentTabAdapter;
     private Fragment assistantFragment;
     private boolean aiTabEnabled;
+
+    private final pro.sketchware.ai.ui.AIActivityMonitor.OnStateChangeListener aiStateListener = newState -> {
+        runOnUiThread(() -> {
+            boolean busy = newState != pro.sketchware.ai.ui.AIActivityMonitor.State.IDLE;
+            if (btnRun != null) {
+                btnRun.setEnabled(!busy);
+                btnRun.setAlpha(busy ? 0.5f : 1.0f);
+            }
+        });
+    };
     private final ActivityResultLauncher<Intent> openImageManager = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
         if (result.getResultCode() == RESULT_OK) {
             refresh();
@@ -231,7 +241,40 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         }
     }
 
+    public void onProjectUpdated() {
+        runOnUiThread(() -> {
+            loadProject(true);
+            refresh();
+        });
+    }
+
+    private com.google.android.material.dialog.MaterialAlertDialogBuilder saveDialogBuilder;
+    private android.content.DialogInterface activeDialog;
+
+    private void ensureBaseResources(String scId) {
+        String resPath = pro.sketchware.ai.agent.ProjectPaths.root(scId) + "/files/resource/values";
+        String resNightPath = pro.sketchware.ai.agent.ProjectPaths.root(scId) + "/files/resource/values-night";
+        pro.sketchware.utility.FileUtil.makeDir(resPath);
+        pro.sketchware.utility.FileUtil.makeDir(resNightPath);
+
+        String emptyRes = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n</resources>";
+        String colorsPath = resPath + "/colors.xml";
+        String colorsNightPath = resNightPath + "/colors.xml";
+        String stringsPath = resPath + "/strings.xml";
+
+        if (!pro.sketchware.utility.FileUtil.isExistFile(colorsPath)) {
+            pro.sketchware.utility.FileUtil.writeFile(colorsPath, emptyRes);
+        }
+        if (!pro.sketchware.utility.FileUtil.isExistFile(colorsNightPath)) {
+            pro.sketchware.utility.FileUtil.writeFile(colorsNightPath, emptyRes);
+        }
+        if (!pro.sketchware.utility.FileUtil.isExistFile(stringsPath)) {
+            pro.sketchware.utility.FileUtil.writeFile(stringsPath, emptyRes);
+        }
+    }
+
     private void loadProject(boolean haveSavedState) {
+        ensureBaseResources(sc_id);
         projectFile = getDefaultProjectFile();
         jC.a(sc_id, haveSavedState);
         jC.b(sc_id, haveSavedState);
@@ -468,6 +511,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         setContentView(R.layout.design);
 
         aiTabEnabled = AIConfigStore.getInstance(this).isEnabledAndConfigured();
+        pro.sketchware.ai.ui.AIActivityMonitor.addListener(aiStateListener);
 
         if (!isStoragePermissionGranted()) {
             finish();
@@ -512,6 +556,10 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
         btnRun = findViewById(R.id.btn_run);
         btnRun.setOnClickListener(v -> {
+            if (pro.sketchware.ai.ui.AIActivityMonitor.isBusy()) {
+                com.google.android.material.snackbar.Snackbar.make(v, "The assistant is still working. Wait for it to finish before building to avoid corrupting the project.", com.google.android.material.snackbar.Snackbar.LENGTH_LONG).show();
+                return;
+            }
             if (currentBuildTask != null && !currentBuildTask.canceled && !currentBuildTask.isBuildFinished) {
                 currentBuildTask.cancelBuild();
                 return;
@@ -604,6 +652,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
     @Override
     public void onDestroy() {
+        if (activeDialog != null) {
+            try {
+                activeDialog.dismiss();
+            } catch (Exception ignored) {}
+            activeDialog = null;
+        }
+        pro.sketchware.ai.ui.AIActivityMonitor.removeListener(aiStateListener);
         super.onDestroy();
         unregisterReceiver(buildCancelReceiver);
     }
@@ -723,11 +778,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
      * Show a dialog asking about saving the project before quitting.
      */
     private void showSaveBeforeQuittingDialog() {
-        MaterialAlertDialogBuilder dialog = new MaterialAlertDialogBuilder(this);
-        dialog.setTitle(Helper.getResString(R.string.design_quit_title_exit_projet));
-        dialog.setIcon(R.drawable.ic_mtrl_exit);
-        dialog.setMessage(Helper.getResString(R.string.design_quit_message_confirm_save));
-        dialog.setPositiveButton(Helper.getResString(R.string.design_quit_button_save_and_exit), (v, which) -> {
+        if (isFinishing() || isDestroyed()) return;
+        saveDialogBuilder = new MaterialAlertDialogBuilder(this);
+        saveDialogBuilder.setTitle(Helper.getResString(R.string.design_quit_title_exit_projet));
+        saveDialogBuilder.setIcon(R.drawable.ic_mtrl_exit);
+        saveDialogBuilder.setMessage(Helper.getResString(R.string.design_quit_message_confirm_save));
+        saveDialogBuilder.setPositiveButton(Helper.getResString(R.string.design_quit_button_save_and_exit), (v, which) -> {
+            activeDialog = null;
             if (!mB.a()) {
                 v.dismiss();
                 try {
@@ -738,7 +795,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                 }
             }
         });
-        dialog.setNegativeButton(Helper.getResString(R.string.common_word_exit), (v, which) -> {
+        saveDialogBuilder.setNegativeButton(Helper.getResString(R.string.common_word_exit), (v, which) -> {
+            activeDialog = null;
             if (!mB.a()) {
                 v.dismiss();
                 try {
@@ -751,8 +809,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                 }
             }
         });
-        dialog.setNeutralButton(Helper.getResString(R.string.common_word_cancel), null);
-        dialog.show();
+        saveDialogBuilder.setNeutralButton(Helper.getResString(R.string.common_word_cancel), (v, which) -> activeDialog = null);
+        activeDialog = saveDialogBuilder.show();
     }
 
     /**

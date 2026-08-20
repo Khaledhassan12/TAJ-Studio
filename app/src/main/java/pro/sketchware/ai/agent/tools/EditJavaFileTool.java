@@ -105,7 +105,19 @@ public final class EditJavaFileTool implements Tool {
         JavaToolHelper.backup(path);
         try {
             FileUtil.writeFile(path, newContent);
-            return new ToolResult("File edited: " + path + " (" + newContent.length() + " bytes)", false);
+            
+            // VERIFICATION
+            String rb = FileUtil.readFile(path);
+            if (rb.isEmpty()) {
+                JavaToolHelper.restore(path);
+                return new ToolResult("ERROR: read-back failed", true);
+            }
+            if (!rb.equals(newContent)) {
+                JavaToolHelper.restore(path);
+                return new ToolResult("ERROR: data corruption detected during write", true);
+            }
+
+            return new ToolResult("File edited: " + path + " (" + newContent.length() + " bytes) - verified: content matches", false);
         } catch (Exception e) {
             JavaToolHelper.restore(path);
             return new ToolResult("Failed to write file. Original restored. Error: " + e.getMessage(), true);

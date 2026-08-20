@@ -30,6 +30,19 @@ public interface StreamCallbacks {
     default void onToolEnd(String name, boolean success) {
     }
 
+    /** Called when the request is cancelled by the user. */
+    default void onCancel() {
+    }
+
+    /**
+     * Called when the engine is waiting due to rate limiting or server errors.
+     * @param waitMs The total wait time in milliseconds.
+     * @param attempt The current retry attempt (1-based).
+     * @param maxAttempts The maximum number of attempts.
+     */
+    default void onRateLimitWait(long waitMs, int attempt, int maxAttempts) {
+    }
+
     /** Terminal success. {@code response.text} already includes all streamed tokens. */
     void onComplete(AIResponse response);
 

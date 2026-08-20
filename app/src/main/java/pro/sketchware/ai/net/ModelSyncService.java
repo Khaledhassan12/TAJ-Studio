@@ -86,12 +86,15 @@ public final class ModelSyncService {
             }
         }
 
-        try (Response response = CLIENT.newCall(builder.build()).execute()) {
-            if (response.isSuccessful()) {
+        Request request = builder.build();
+        AIConfigStore store = AIConfigStore.getInstance(null);
+        boolean autoRetry = store.isAutoRetry();
+
+        try (Response response = RetryPolicy.executeWithRetry(() -> CLIENT.newCall(request).execute(), autoRetry)) {
+            if (response != null && response.isSuccessful()) {
                 // For "other oc" (OpenAI compatible but not OpenRouter), /models might be public.
                 if (!"openrouter".equals(profile.id) && profile.protocol == Protocol.OPENAI_COMPATIBLE) {
                     // Quick ping to confirm auth
-                    AIConfigStore store = AIConfigStore.getInstance(null);
                     String model = store.safeModel();
                     if (!model.isEmpty()) {
                         JSONObject body = new JSONObject();
@@ -116,10 +119,10 @@ public final class ModelSyncService {
                 }
                 return "Key accepted by provider.";
             }
-            if (response.code() == 401 || response.code() == 403) {
+            if (response != null && (response.code() == 401 || response.code() == 403)) {
                 return "Provider REJECTED this key. The app code is correct — generate a new key from the provider dashboard and paste it in API key field.";
             }
-            return "HTTP " + response.code() + ": " + readBody(response);
+            return "HTTP " + (response != null ? response.code() : "???") + ": " + (response != null ? readBody(response) : "Unknown error");
         } catch (Exception e) {
             return "Network error: " + e.getMessage();
         }
@@ -204,8 +207,10 @@ public final class ModelSyncService {
             builder.header(header.getKey(), header.getValue());
         }
 
-        try (Response response = CLIENT.newCall(builder.build()).execute()) {
-            if (response.code() == 404) {
+        Request request = builder.build();
+
+        try (Response response = RetryPolicy.executeWithRetry(() -> CLIENT.newCall(request).execute(), store.isAutoRetry())) {
+            if (response != null && response.code() == 404) {
                 // Provider has no model-list endpoint: enter the model ID manually.
                 return Result.unavailable();
             }

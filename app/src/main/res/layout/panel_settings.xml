@@ -56,6 +56,22 @@
             android:text="@string/ai_show_thinking"
             android:checked="true" />
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switch_auto_retry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/ai_auto_retry"
+            android:checked="true" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:alpha="0.7"
+            android:text="@string/ai_auto_retry_summary"
+            android:textAppearance="?attr/textAppearanceLabelSmall" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -134,7 +150,7 @@
             android:text="Open full settings" />
 
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_readback"
+            android:id="@+id/ai_card_readback"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -151,7 +167,7 @@
                     android:text="Config read-back (debug)"
                     android:textAppearance="?attr/textAppearanceTitleSmall"/>
                 <TextView
-                    android:id="@+id/tv_readback"
+                    android:id="@+id/ai_tv_readback"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="monospace"

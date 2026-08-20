@@ -43,14 +43,14 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/tv_provider_name"
+                    android:id="@+id/ai_tv_provider_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="OpenAI"
                     android:textAppearance="?attr/textAppearanceTitleMedium" />
 
                 <TextView
-                    android:id="@+id/tv_current_model"
+                    android:id="@+id/ai_tv_current_model"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="gpt-4o"
@@ -58,7 +58,7 @@
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_sync"
+                android:id="@+id/ai_btn_sync"
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -75,13 +75,13 @@
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/et_search"
+            android:id="@+id/ai_et_search"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_models"
+        android:id="@+id/ai_rv_models"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"

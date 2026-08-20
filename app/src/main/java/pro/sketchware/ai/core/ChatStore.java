@@ -43,8 +43,17 @@ public final class ChatStore {
 
         public Message(String role, String text) {
             this.role = role;
-            this.text = text == null ? "" : text;
+            this.text = sanitize(text);
             this.time = System.currentTimeMillis();
+        }
+
+        private static String sanitize(String t) {
+            if (t == null) return "";
+            // Strip leading "null" strings often emitted by buggy engines
+            String s = t.replaceAll("^(null)+", "");
+            // If the whole thing was "null", return empty
+            if (s.isEmpty() && t.startsWith("null")) return "";
+            return s;
         }
 
         public JSONObject toJson() {
@@ -70,14 +79,18 @@ public final class ChatStore {
             String role = json.optString("role", "");
             String text = json.optString("text", "");
             
-            // History sanitation: remove "null" strings
-            if (text.equals("null") || text.matches("^(null)+$")) {
-                text = "";
-            }
-
             Message m = new Message(role, text);
+            // Re-sanitize text just in case legacy data is loaded
+            m.text = sanitize(m.text);
             m.time = json.optLong("time");
             m.toolState = json.optString("toolState", null);
+
+            // History sanitation: never load rate limit card in WAITING/RESUMED state
+            if ("rate_limit".equals(role)) {
+                if ("WAITING".equals(m.toolState) || "RESUMED".equals(m.toolState)) {
+                    m.toolState = "COLLAPSED";
+                }
+            }
             m.action = json.optString("action", null);
             m.reasoning = json.optString("reasoning", null);
             m.reasoningSeconds = json.optInt("reasoningSeconds", 0);
