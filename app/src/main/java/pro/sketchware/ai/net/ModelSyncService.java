@@ -54,8 +54,13 @@ public final class ModelSyncService {
      * Verdicts per protocol requirements.
      */
     public static String validateKey(ProviderProfile profile, String apiKey) {
-        String cleanKey = AIConfigStore.sanitizeKey(apiKey);
+        String cleanKey = (apiKey != null && !apiKey.trim().isEmpty()) ? AIConfigStore.sanitizeKey(apiKey) : AIConfigStore.getInstance(null).safeKeyFor(profile.id);
         String base = AIConfigStore.sanitizeBaseUrl(profile.defaultBaseUrl);
+        // If the profile's base is default, try to get override from store
+        if (base.equals(AIConfigStore.sanitizeBaseUrl(profile.id.equals("custom") ? "" : pro.sketchware.ai.config.ProviderCatalog.getById(profile.id).defaultBaseUrl))) {
+            String stored = AIConfigStore.getInstance(null).safeBaseUrlFor(profile.id, "");
+            if (!stored.isEmpty()) base = stored;
+        }
         
         Log.d(TAG, "Validating key for provider ID: " + profile.id + " at base URL: " + base);
         
@@ -157,8 +162,13 @@ public final class ModelSyncService {
      */
     public static Result fetch(ProviderProfile profile, String apiKey) throws AIException {
         AIConfigStore store = AIConfigStore.getInstance(null);
-        String cleanKey = apiKey != null && !apiKey.trim().isEmpty() ? AIConfigStore.sanitizeKey(apiKey) : store.safeKey();
-        String base = store.safeBaseUrl(profile.defaultBaseUrl);
+        String cleanKey = (apiKey != null && !apiKey.trim().isEmpty()) ? AIConfigStore.sanitizeKey(apiKey) : store.safeKeyFor(profile.id);
+        String base = AIConfigStore.sanitizeBaseUrl(profile.defaultBaseUrl);
+        // If the profile's base is default, try to get override from store
+        if (base.equals(AIConfigStore.sanitizeBaseUrl(profile.id.equals("custom") ? "" : pro.sketchware.ai.config.ProviderCatalog.getById(profile.id).defaultBaseUrl))) {
+             String stored = store.safeBaseUrlFor(profile.id, "");
+             if (!stored.isEmpty()) base = stored;
+        }
 
         Log.d(TAG, "Fetching models for provider ID: " + profile.id + " at base URL: " + base);
 

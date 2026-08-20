@@ -151,7 +151,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             binding.tvStatusMessage.setVisibility(View.VISIBLE);
         }
 
-        boolean verified = store.isVerified();
+        boolean verified = currentProfile != null && store.isVerifiedFor(currentProfile.id);
         binding.chipVerifiedStatus.setText(verified ? "Verified" : "Not verified");
         binding.chipVerifiedStatus.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(
                 ThemeUtils.getColor(this, verified ? R.attr.colorSecondaryContainer : R.attr.colorSurfaceContainerHigh)));
@@ -194,20 +194,20 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     }
     private void applyProfile(ProviderProfile profile) {
         currentProfile = profile;
-        store.setVerified(false);
+        updateStatusUi();
 
-        binding.editApiKey.setText(store.getKey());
+        binding.editApiKey.setText(store.getKeyFor(profile.id));
         binding.tilApiKey.setEnabled(profile.requiresKey);
         if (!profile.requiresKey) {
             binding.tilApiKey.setError(null);
         }
 
-        String savedUrl = store.getBaseUrl();
+        String savedUrl = store.getBaseUrlFor(profile.id);
         binding.editBaseUrl.setText(!savedUrl.isEmpty() ? savedUrl : profile.defaultBaseUrl);
         binding.tilBaseUrl.setEnabled(profile.baseUrlEditable);
         binding.tilBaseUrl.setError(null);
 
-        String savedModel = store.getModel();
+        String savedModel = store.getModelFor(profile.id);
         if (!savedModel.isEmpty()) {
             binding.editModel.setText(savedModel);
         } else if (profile.hasSuggestions()) {
@@ -290,7 +290,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     // ------------------------------------------------------------------
 
     private void saveConfiguration() {
-        if (!validateFields()) {
+        if (!validateFields() || currentProfile == null) {
             return;
         }
         String key = AIConfigStore.sanitizeKey(textOf(binding.editApiKey));
@@ -298,9 +298,9 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         String model = textOf(binding.editModel).trim();
 
         store.setProviderId(currentProfile.id);
-        store.setKey(key);
-        store.setBaseUrl(url);
-        store.setModel(model);
+        store.setKeyFor(currentProfile.id, key);
+        store.setBaseUrlFor(currentProfile.id, url);
+        store.setModelFor(currentProfile.id, model);
 
         Snackbar.make(binding.getRoot(), R.string.ai_saved, Snackbar.LENGTH_SHORT).show();
     }
@@ -343,7 +343,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             try {
                 ModelSyncService.Result result = ModelSyncService.fetch(effective, key);
                 store.saveModelsCache(effective.id, result.models);
-                store.setVerified(true);
+                store.setVerifiedFor(effective.id, true);
                 runOnUiThread(() -> {
                     if (isFinishing() || isDestroyed()) {
                         return;
@@ -364,7 +364,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                             Snackbar.LENGTH_SHORT).show();
                 });
             } catch (AIException e) {
-                store.setVerified(false);
+                store.setVerifiedFor(effective.id, false);
                 runOnUiThread(() -> {
                     if (isFinishing() || isDestroyed()) {
                         return;

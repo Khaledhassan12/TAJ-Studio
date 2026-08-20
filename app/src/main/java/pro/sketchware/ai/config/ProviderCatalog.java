@@ -21,6 +21,14 @@ public final class ProviderCatalog {
     private ProviderCatalog() {
     }
 
+    public static ProviderProfile getById(String id) {
+        if (id == null) return null;
+        for (ProviderProfile p : builtInProfiles()) {
+            if (id.equals(p.id)) return p;
+        }
+        return null;
+    }
+
     public static List<ProviderProfile> builtInProfiles() {
         List<ProviderProfile> list = new ArrayList<>();
 

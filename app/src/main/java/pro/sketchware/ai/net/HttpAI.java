@@ -62,8 +62,10 @@ public abstract class HttpAI implements AIProvider {
         this.context = context.getApplicationContext();
         this.profile = profile;
         AIConfigStore store = AIConfigStore.getInstance(this.context);
-        this.baseUrl = store.safeBaseUrl(baseUrl != null && !baseUrl.isEmpty() ? baseUrl : profile.defaultBaseUrl);
-        this.apiKey = store.safeKey();
+        // baseUrl passed here is usually profile.defaultBaseUrl from AIProviderRegistry
+        // We want to use the slot override if present.
+        this.baseUrl = store.safeBaseUrlFor(profile.id, baseUrl != null && !baseUrl.isEmpty() ? baseUrl : profile.defaultBaseUrl);
+        this.apiKey = store.safeKeyFor(profile.id);
     }
 
     @Override
