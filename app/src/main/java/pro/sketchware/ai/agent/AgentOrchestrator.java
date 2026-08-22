@@ -14,7 +14,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import pro.sketchware.ai.ui.UiPoster;
+import pro.sketchware.ai.live.UiPoster;
 import pro.sketchware.ai.core.AIMessage;
 import pro.sketchware.ai.core.AIProvider;
 import pro.sketchware.ai.core.AIRequest;
@@ -25,13 +25,11 @@ import pro.sketchware.ai.core.ToolSpec;
 
 public final class AgentOrchestrator {
 
-    public static final String DEFAULT_SYSTEM_PROMPT = "You are a helpful Android development assistant. " +
-            "Java/Kotlin routing rules: (1) Brand-new standalone code the user asks to create goes to target=manager (Java Manager) unless the user explicitly ties it to the app project. " +
-            "(2) Any modification to existing project files (e.g. MainActivity.java) goes to target=project at the project's on-device source tree. " +
-            "(3) If asked to EDIT inside Java Manager while it is empty, do not create anything; tell the user it is empty. " +
-            "(4) Always read before edit; prefer search_replace over replace_all. " +
-            "(5) NEVER claim a change was made unless the tool result contains 'verified'. If a tool returns ERROR, tell the user what failed and propose a fix. " +
-            "NEVER claim a change was made unless the tool result contains 'verified'. If ERROR, tell the user what failed.";
+    public static final String DEFAULT_SYSTEM_PROMPT = "Project files live under .sketchware/data/{sc_id}. " +
+            "Use relative paths: 'layout/main.xml', 'res/layout/main.xml', 'values/colors.xml', 'assets/logo.png', 'java/...'. " +
+            "Tools auto-resolve aliases; if a tool returns ERROR with candidates, retry using a candidate. " +
+            "For adding widgets to layouts prefer insert_widget with parentId. " +
+            "Plan: read -> modify -> verify. Never claim success without 'verified'.";
 
     private final AIProvider provider;
     private final ToolRegistry registry;
@@ -39,6 +37,9 @@ public final class AgentOrchestrator {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private volatile boolean isCancelled = false;
     private volatile AIProvider.Handle activeHandle;
+    private volatile SessionState state = SessionState.IDLE;
+
+    public SessionState getState() { return state; }
 
     public AgentOrchestrator(AIProvider provider, ToolRegistry registry, Tool.ToolContext context) {
         this.provider = provider;
@@ -48,6 +49,7 @@ public final class AgentOrchestrator {
 
     public void cancel() {
         isCancelled = true;
+        state = SessionState.IDLE;
         if (activeHandle != null) activeHandle.cancel();
     }
 
@@ -57,6 +59,7 @@ public final class AgentOrchestrator {
 
     public void run(String systemPrompt, List<AIMessage> messages, String model, float temperature, StreamCallbacks callbacks) {
         isCancelled = false;
+        state = SessionState.MODEL_STREAMING;
         executor.execute(() -> {
             AIResponse lastResponse = null;
             try {
@@ -81,18 +84,19 @@ public final class AgentOrchestrator {
                             .build();
 
                     try {
+                        state = SessionState.MODEL_STREAMING;
                         AIResponse response = fetchBlocking(request, callbacks);
                         lastResponse = response;
 
                         if (isCancelled) break;
 
                         if (response.toolCalls.isEmpty()) {
-                            // Loop terminates when no tools are requested
                             break;
                         } else {
                             conversation.add(AIMessage.assistantWithToolCalls(response.toolCalls));
                         }
 
+                        state = SessionState.TOOL_RUNNING;
                         for (ToolCall call : response.toolCalls) {
                             if (isCancelled) break;
 
@@ -118,6 +122,7 @@ public final class AgentOrchestrator {
                             }
                         }
                     } catch (Exception e) {
+                        state = SessionState.IDLE;
                         if (!isCancelled) {
                             UiPoster.post(() -> callbacks.onError(e));
                         }
@@ -125,6 +130,7 @@ public final class AgentOrchestrator {
                     }
                 }
 
+                state = SessionState.IDLE;
                 if (isCancelled) {
                     UiPoster.post(callbacks::onCancel);
                     return;
@@ -135,6 +141,7 @@ public final class AgentOrchestrator {
                     UiPoster.post(() -> callbacks.onComplete(finalResp));
                 }
             } finally {
+                state = SessionState.IDLE;
                 if (!isCancelled && lastResponse == null) {
                     UiPoster.post(callbacks::onCancel);
                 }

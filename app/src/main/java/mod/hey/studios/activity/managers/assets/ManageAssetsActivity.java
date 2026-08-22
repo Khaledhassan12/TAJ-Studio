@@ -44,8 +44,9 @@ import pro.sketchware.databinding.ManageJavaItemHsBinding;
 import pro.sketchware.utility.FilePathUtil;
 import pro.sketchware.utility.FileUtil;
 import pro.sketchware.utility.SketchwareUtil;
+import pro.sketchware.ai.live.LiveRegistry;
 
-public class ManageAssetsActivity extends BaseAppCompatActivity {
+public class ManageAssetsActivity extends BaseAppCompatActivity implements LiveRegistry.DomainListener {
 
     private final ArrayList<String> currentTree = new ArrayList<>();
     private String current_path;
@@ -72,8 +73,27 @@ public class ManageAssetsActivity extends BaseAppCompatActivity {
         refresh();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        LiveRegistry.register("assets", this);
+        refresh();
+    }
+
+    @Override
+    public void onPause() {
+        LiveRegistry.unregister("assets", this);
+        super.onPause();
+    }
+
+    @Override
+    public void onDomainChanged(String domain, String path) {
+        refresh();
+    }
+
     private void setupUI() {
         binding.topAppBar.setNavigationOnClickListener(Helper.getBackPressedClickListener(this));
+        binding.topAppBar.setTitle("Assets Manager");
         binding.showOptionsButton.setOnClickListener(view -> hideShowOptionsButton(false));
         binding.closeButton.setOnClickListener(view -> hideShowOptionsButton(true));
         binding.createNewButton.setOnClickListener(v -> {

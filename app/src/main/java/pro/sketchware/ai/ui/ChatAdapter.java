@@ -23,6 +23,8 @@ import java.util.Locale;
 
 import pro.sketchware.R;
 import pro.sketchware.ai.core.ChatStore;
+import pro.sketchware.ai.live.LiveTicker;
+import pro.sketchware.ai.live.UiPoster;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -212,7 +214,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     }
                 }
                 if (payloads.contains("think_done")) {
-                    vh.bind(m); // Full bind is safer for completion state change
+                    vh.bind(m); 
                 }
             }
             return;
@@ -345,17 +347,19 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvCount.setText("(" + events.size() + ")");
             
             boolean anyRunning = false;
-            long totalMs = 0;
+            long minStart = Long.MAX_VALUE;
+            long maxFinish = 0;
             for (ChatStore.ToolEvent te : events) {
                 if ("RUNNING".equals(te.status)) anyRunning = true;
-                if (te.finishedAt > 0) totalMs += (te.finishedAt - te.startedAt);
+                if (te.startedAt > 0) minStart = Math.min(minStart, te.startedAt);
+                if (te.finishedAt > 0) maxFinish = Math.max(maxFinish, te.finishedAt);
             }
             
             if (!anyRunning && !events.isEmpty()) {
                 tvSummary.setVisibility(View.VISIBLE);
+                long totalMs = (maxFinish > minStart) ? (maxFinish - minStart) : 0;
                 tvSummary.setText(String.format(Locale.getDefault(), "%d tools • %.1fs", events.size(), totalMs / 1000f));
                 if (isExpanded && !isPartial) {
-                    // Auto-collapse when done, if this is an old message being bound
                     if (m.time < System.currentTimeMillis() - 500) {
                          isExpanded = false;
                     }
@@ -388,10 +392,51 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 }
                 
                 TextView name = row.findViewById(R.id.ai_tool_name);
+                TextView domain = row.findViewById(R.id.ai_tool_domain);
                 View progress = row.findViewById(R.id.ai_tool_progress);
                 ImageView status = row.findViewById(R.id.ai_tool_status);
                 
                 name.setText(te.name);
+                if (te.domain != null) {
+                    domain.setVisibility(View.VISIBLE);
+                    domain.setText(te.domain);
+                    int bgColor;
+                    int textColor;
+                    android.content.Context ctx = row.getContext();
+                    switch (te.domain) {
+                        case "JAVA" -> {
+                            bgColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorPrimaryContainer);
+                            textColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorOnPrimaryContainer);
+                        }
+                        case "RES" -> {
+                            bgColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorTertiaryContainer);
+                            textColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorOnTertiaryContainer);
+                        }
+                        case "ASSET" -> {
+                            bgColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorSecondaryContainer);
+                            textColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorOnSecondaryContainer);
+                        }
+                        case "BLOCK" -> {
+                            bgColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorErrorContainer);
+                            textColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorOnErrorContainer);
+                        }
+                        case "MANIFEST" -> {
+                            bgColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorPrimary);
+                            textColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorOnPrimary);
+                        }
+                        default -> {
+                            bgColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorSurfaceContainerHigh);
+                            textColor = pro.sketchware.utility.ThemeUtils.getColor(ctx, R.attr.colorOnSurface);
+                        }
+                    }
+                    android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+                    gd.setColor(bgColor);
+                    gd.setCornerRadius(10 * ctx.getResources().getDisplayMetrics().density);
+                    domain.setBackground(gd);
+                    domain.setTextColor(textColor);
+                } else {
+                    domain.setVisibility(View.GONE);
+                }
                 if ("RUNNING".equals(te.status)) {
                     progress.setVisibility(View.VISIBLE);
                     status.setVisibility(View.GONE);
@@ -457,8 +502,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 return;
             }
 
-            // Full bind
-            String status = m.toolState; // Borrowing for "WAITING", "RESUMED", "CANCELLED", "EXHAUSTED"
+            String status = m.toolState;
             if (status == null) status = "WAITING";
 
             if ("WAITING".equals(status)) {
@@ -485,7 +529,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     ivIcon.setImageResource(R.drawable.ic_check_circle);
                     tvTitle.setText(R.string.ai_rate_resumed);
                     tvFinal.setVisibility(View.GONE);
-                    // Subtle line transition
                 } else if ("COLLAPSED".equals(status)) {
                     ivIcon.setImageResource(R.drawable.ic_check_circle);
                     ivIcon.setVisibility(View.VISIBLE);
@@ -493,7 +536,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     tvFinal.setVisibility(View.VISIBLE);
                     tvFinal.setText(R.string.ai_rate_resumed);
                     card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), android.R.attr.colorBackground));
-                    // Add alpha 0.5 to card
                     card.setAlpha(0.5f);
                 } else if ("CANCELLED".equals(status)) {
                     ivIcon.setImageResource(R.drawable.ic_hourglass);
@@ -505,9 +547,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     ivIcon.setColorFilter(0xFFF44336);
                     tvTitle.setText(String.format(itemView.getContext().getString(R.string.ai_rate_exhausted), 3));
                     tvFinal.setVisibility(View.GONE);
-                    // Actions might be needed for exhausted state: [Try again][Switch model]
-                    // But contract said "Switch to neutral one-liner" for cancel.
-                    // For exhausted: title "Still crowded..." + actions [Try again][Switch model][Open settings].
                     actions.setVisibility(View.VISIBLE);
                     ((com.google.android.material.button.MaterialButton)btnRetry).setText("Try again");
                     ((com.google.android.material.button.MaterialButton)btnCancel).setText("Settings");
@@ -518,7 +557,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             btnCancel.setOnClickListener(v -> {
                 if (listener != null) {
                     if ("EXHAUSTED".equals(m.toolState)) {
-                         // Open settings
                          listener.onRetryExhausted();
                     } else {
                         listener.onCancel();
@@ -528,7 +566,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
 
         private void updateTick(ChatStore.Message m) {
-            // Data stored in m.text as "elapsed|totalWait|attempt|max"
             try {
                 String[] parts = m.text.split("\\|");
                 long elapsed = Long.parseLong(parts[0]);
@@ -611,7 +648,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    static class ThinkingViewHolder extends RecyclerView.ViewHolder {
+    static class ThinkingViewHolder extends RecyclerView.ViewHolder implements LiveTicker.TickListener {
         com.google.android.material.progressindicator.CircularProgressIndicator progress;
         android.widget.ImageView ivSparkle;
         TextView tvTitle, tvSeconds, tvPreview, tvFull;
@@ -619,8 +656,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         android.widget.ScrollView scrollThink;
         View card;
         
-        private final Handler timerHandler = new Handler(Looper.getMainLooper());
-        private Runnable timerRunnable;
         private int seconds = 0;
         private boolean isExpanded = false;
         private ChatStore.Message currentMessage;
@@ -643,11 +678,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         void bind(ChatStore.Message m) {
             currentMessage = m;
-            boolean isStreaming = "thinking".equals(m.role) && (m.text == null || m.text.isEmpty());
-            // If it's a history item, role is assistant but reasoning is present
-            // Actually AssistantFragment will handle inserting the thinking role message.
-            // For historical items, we'll see if they have reasoning.
-            
             boolean completed = m.reasoningSeconds > 0 || (m.reasoning != null && !m.reasoning.isEmpty() && !"thinking".equals(m.role));
             
             tvFull.setText(m.reasoning);
@@ -659,16 +689,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 tvSeconds.setText(seconds + "s");
                 tvTitle.setText("Thought for " + seconds + "s");
                 
-                if (progress.getVisibility() == View.VISIBLE) {
-                    progress.animate().alpha(0f).setDuration(200).withEndAction(() -> progress.setVisibility(View.GONE)).start();
-                    ivSparkle.setAlpha(0f);
-                    ivSparkle.setVisibility(View.VISIBLE);
-                    ivSparkle.animate().alpha(1f).setDuration(200).start();
-                } else {
-                    progress.setVisibility(View.GONE);
-                    ivSparkle.setVisibility(View.VISIBLE);
-                    ivSparkle.setAlpha(1f);
-                }
+                progress.setVisibility(View.GONE);
+                ivSparkle.setVisibility(View.VISIBLE);
+                ivSparkle.setAlpha(1f);
                 btnExpand.setRotation(isExpanded ? 90 : 0);
             } else {
                 ivSparkle.setVisibility(View.GONE);
@@ -697,81 +720,25 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvPreview.setText(preview);
         }
 
+        @Override
+        public void onTick(long elapsedMs) {
+            seconds++;
+            UiPoster.post(() -> tvSeconds.setText(seconds + "s"));
+        }
+
         private void startTimer() {
-            if (timerRunnable != null) return;
-            seconds = 0;
-            timerRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    seconds++;
-                    tvSeconds.setText(seconds + "s");
-                    timerHandler.postDelayed(this, 1000);
-                }
-            };
-            timerHandler.postDelayed(timerRunnable, 1000);
+            LiveTicker.add(this);
         }
 
         private void stopTimer() {
-            if (timerRunnable != null) {
-                timerHandler.removeCallbacks(timerRunnable);
-                timerRunnable = null;
-            }
+            LiveTicker.remove(this);
         }
 
         private void toggleExpand() {
             isExpanded = !isExpanded;
-            
             btnExpand.animate().rotation(isExpanded ? 90 : 0).setDuration(150).start();
-            
-            boolean isStreaming = "thinking".equals(currentMessage.role);
-            
-            if (isExpanded) {
-                scrollThink.setVisibility(View.VISIBLE);
-                tvPreview.setVisibility(View.GONE);
-                if (isStreaming) {
-                    scrollThink.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                    scrollThink.requestLayout();
-                } else {
-                    animateHeight(true);
-                }
-            } else {
-                if (isStreaming) {
-                    scrollThink.setVisibility(View.GONE);
-                    tvPreview.setVisibility(View.VISIBLE);
-                } else {
-                    animateHeight(false);
-                }
-            }
-        }
-
-        private void animateHeight(boolean expanding) {
-            scrollThink.measure(
-                View.MeasureSpec.makeMeasureSpec(card.getWidth(), View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-            );
-            int targetHeight = Math.min(scrollThink.getMeasuredHeight(), (int)(240 * card.getContext().getResources().getDisplayMetrics().density));
-            
-            ValueAnimator anim = ValueAnimator.ofInt(expanding ? 0 : targetHeight, expanding ? targetHeight : 0);
-            anim.addUpdateListener(animation -> {
-                ViewGroup.LayoutParams lp = scrollThink.getLayoutParams();
-                lp.height = (int) animation.getAnimatedValue();
-                scrollThink.setLayoutParams(lp);
-            });
-            anim.addListener(new android.animation.AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(android.animation.Animator animation) {
-                    if (!expanding) {
-                        scrollThink.setVisibility(View.GONE);
-                        tvPreview.setVisibility(View.VISIBLE);
-                    }
-                    ViewGroup.LayoutParams lp = scrollThink.getLayoutParams();
-                    lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                    scrollThink.setLayoutParams(lp);
-                }
-            });
-            anim.setDuration(200);
-            anim.setInterpolator(new FastOutSlowInInterpolator());
-            anim.start();
+            scrollThink.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+            tvPreview.setVisibility(isExpanded ? View.GONE : View.VISIBLE);
         }
     }
 

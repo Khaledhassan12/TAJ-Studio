@@ -8,6 +8,19 @@
     android:paddingHorizontal="16dp">
 
     <TextView
+        android:id="@+id/ai_tool_domain"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/bg_domain_tag"
+        android:gravity="center"
+        android:paddingHorizontal="6dp"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/ai_tool_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

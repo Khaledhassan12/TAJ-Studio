@@ -45,7 +45,9 @@ import pro.sketchware.utility.FileResConfig;
 import pro.sketchware.utility.FileUtil;
 import pro.sketchware.utility.SketchwareUtil;
 
-public class ManageJavaActivity extends BaseAppCompatActivity {
+import pro.sketchware.ai.live.LiveRegistry;
+
+public class ManageJavaActivity extends BaseAppCompatActivity implements LiveRegistry.DomainListener {
 
     // works for both Java & Kotlin files
     private static final String PACKAGE_DECL_REGEX = "package (.*?);?\\n";
@@ -122,6 +124,18 @@ public class ManageJavaActivity extends BaseAppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+        LiveRegistry.register("java_manager", this);
+        refresh();
+    }
+
+    @Override
+    public void onPause() {
+        LiveRegistry.unregister("java_manager", this);
+        super.onPause();
+    }
+
+    @Override
+    public void onDomainChanged(String domain, String path) {
         refresh();
     }
 

@@ -2,10 +2,6 @@ package pro.sketchware.ai.agent.tools;
 
 import java.io.File;
 import java.util.HashMap;
-import a.a.a.yq;
-import a.a.a.lC;
-import java.io.File;
-import java.util.HashMap;
 import a.a.a.lC;
 import pro.sketchware.ai.agent.ProjectPaths;
 import pro.sketchware.utility.FilePathUtil;
@@ -14,11 +10,11 @@ import pro.sketchware.utility.FileUtil;
 public final class JavaToolHelper {
 
     public static String getManagerPath(String sc_id) {
-        return new FilePathUtil().getPathJava(sc_id);
+        return ProjectPaths.javaManagerRoot(sc_id);
     }
 
     public static String getProjectPath(String sc_id) {
-        return ProjectPaths.javaDir(sc_id);
+        return ProjectPaths.projectJavaRoot(sc_id);
     }
 
     public static String getLayoutPath(String sc_id) {

@@ -1,6 +1,7 @@
 package pro.sketchware.ai.agent;
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 import java.lang.ref.WeakReference;
 import com.besome.sketch.design.DesignActivity;
 
@@ -25,6 +26,18 @@ public interface Tool {
         public ToolResult(String content, boolean error) {
             this.content = content;
             this.error = error;
+        }
+
+        public static ToolResult structured(String tool, String status, String absolutePath, String message, JSONArray candidates, boolean error) {
+            JSONObject json = new JSONObject();
+            try {
+                json.put("tool", tool);
+                json.put("status", status);
+                if (absolutePath != null) json.put("absolutePath", absolutePath);
+                if (message != null) json.put("message", message);
+                if (candidates != null) json.put("candidates", candidates);
+            } catch (Exception ignored) {}
+            return new ToolResult(json.toString(), error);
         }
     }
 
@@ -135,6 +148,11 @@ public interface Tool {
         }
     }
 
+    enum Domain {
+        JAVA, RES, ASSET, BLOCK, MANIFEST, PROJECT, FS, LIB
+    }
+
     ToolSpec spec();
+    Domain domain();
     ToolResult run(JSONObject args, ToolContext ctx) throws Exception;
 }

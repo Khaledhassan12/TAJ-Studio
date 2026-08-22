@@ -780,18 +780,21 @@ public class yq {
             Ox ox = new Ox(N, layout);
             ox.a(eC.a(projectDataManager.d(xmlName)), projectDataManager.h(xmlName));
             var ogFile = new File(layoutDir + xmlName);
-            if (!layoutFiles.contains(ogFile)) {
+            if (layoutFiles.contains(ogFile)) {
+                srcCodeBeans.add(new SrcCodeBean(xmlName, FileUtil.readFile(ogFile.getAbsolutePath())));
+            } else {
                 srcCodeBeans.add(new SrcCodeBean(xmlName, CommandBlock.applyCommands(xmlName, ox.b())));
+            }
 
-                if (isViewBindingEnable()) {
-                    var privFile = new File(context.getCacheDir(), xmlName);
-                    FileUtil.writeFile(privFile.getAbsolutePath(), CommandBlock.applyCommands(xmlName, ox.b()));
-                    var code = viewBindingBuilder.generateBindingForLayout(privFile);
-                    srcCodeBeans.add(new SrcCodeBean(
-                            ViewBindingBuilder.generateFileNameForLayout(xmlName.replace(".xml", "")) + ".java",
-                            CommandBlock.applyCommands(xmlName, code)
-                    ));
-                }
+            if (isViewBindingEnable()) {
+                String xmlContent = layoutFiles.contains(ogFile) ? FileUtil.readFile(ogFile.getAbsolutePath()) : CommandBlock.applyCommands(xmlName, ox.b());
+                var privFile = new File(context.getCacheDir(), xmlName);
+                FileUtil.writeFile(privFile.getAbsolutePath(), xmlContent);
+                var code = viewBindingBuilder.generateBindingForLayout(privFile);
+                srcCodeBeans.add(new SrcCodeBean(
+                        ViewBindingBuilder.generateFileNameForLayout(xmlName.replace(".xml", "")) + ".java",
+                        CommandBlock.applyCommands(xmlName, code)
+                ));
             }
         }
 
@@ -801,18 +804,21 @@ public class yq {
             Ox ox = new Ox(N, customViewFile);
             ox.a(eC.a(projectDataManager.d(xmlName)));
             var ogFile = new File(layoutDir + xmlName);
-            if (!layoutFiles.contains(ogFile)) {
+            if (layoutFiles.contains(ogFile)) {
+                srcCodeBeans.add(new SrcCodeBean(xmlName, FileUtil.readFile(ogFile.getAbsolutePath())));
+            } else {
                 srcCodeBeans.add(new SrcCodeBean(xmlName, CommandBlock.applyCommands(xmlName, ox.b())));
+            }
 
-                if (isViewBindingEnable()) {
-                    var privFile = new File(context.getCacheDir(), xmlName);
-                    FileUtil.writeFile(privFile.getAbsolutePath(), CommandBlock.applyCommands(xmlName, ox.b()));
-                    var code = viewBindingBuilder.generateBindingForLayout(privFile);
-                    srcCodeBeans.add(new SrcCodeBean(
-                            ViewBindingBuilder.generateFileNameForLayout(xmlName.replace(".xml", "")) + ".java",
-                            CommandBlock.applyCommands(xmlName, code)
-                    ));
-                }
+            if (isViewBindingEnable()) {
+                String xmlContent = layoutFiles.contains(ogFile) ? FileUtil.readFile(ogFile.getAbsolutePath()) : CommandBlock.applyCommands(xmlName, ox.b());
+                var privFile = new File(context.getCacheDir(), xmlName);
+                FileUtil.writeFile(privFile.getAbsolutePath(), xmlContent);
+                var code = viewBindingBuilder.generateBindingForLayout(privFile);
+                srcCodeBeans.add(new SrcCodeBean(
+                        ViewBindingBuilder.generateFileNameForLayout(xmlName.replace(".xml", "")) + ".java",
+                        CommandBlock.applyCommands(xmlName, code)
+                ));
             }
         }
 

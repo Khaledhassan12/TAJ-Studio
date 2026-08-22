@@ -36,6 +36,7 @@ import pro.sketchware.ai.agent.AgentOrchestrator;
 import pro.sketchware.ai.agent.AgentSuggester;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.ToolRegistry;
+import pro.sketchware.ai.agent.SessionState;
 import pro.sketchware.ai.config.AIConfigStore;
 import pro.sketchware.ai.core.AIMessage;
 import pro.sketchware.ai.core.AIProvider;
@@ -46,8 +47,11 @@ import pro.sketchware.ai.core.ProviderProfile;
 import pro.sketchware.ai.core.StreamCallbacks;
 import pro.sketchware.ai.core.ThinkingDetector;
 import pro.sketchware.ai.core.ToolCall;
+import pro.sketchware.ai.live.UiPoster;
 
 public class AssistantFragment extends Fragment {
+
+    public enum PanelState { LOADING, EMPTY, ERROR, READY, SYNCING }
 
     private NavigationRailView rail;
     private FrameLayout container;
@@ -70,7 +74,7 @@ public class AssistantFragment extends Fragment {
     private final Runnable watchdog = this::handleWatchdogTimeout;
 
     private void handleWatchdogTimeout() {
-        if (AIActivityMonitor.getState() != AIActivityMonitor.State.IDLE) {
+        if (AIActivityMonitor.getState() != SessionState.IDLE) {
             long now = System.currentTimeMillis();
             if (now - lastEventTime > 120000) { // 120s
                 forceIdle();
@@ -87,11 +91,11 @@ public class AssistantFragment extends Fragment {
     }
 
     private final AIActivityMonitor.OnStateChangeListener stateListener = newState -> {
-        UiPoster.post(() -> updateStreamingUi(newState != AIActivityMonitor.State.IDLE));
+        UiPoster.post(() -> updateStreamingUi(newState != SessionState.IDLE));
     };
 
     private void forceIdle() {
-        AIActivityMonitor.setState(AIActivityMonitor.State.IDLE);
+        AIActivityMonitor.setState(SessionState.IDLE);
         if (orchestrator != null) orchestrator.cancel();
         if (activeHandle != null) activeHandle.cancel();
     }
@@ -142,7 +146,7 @@ public class AssistantFragment extends Fragment {
                             }
                         }
                     }
-                    chatAdapter.notifyDataSetChanged();
+                    if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
                     chatStore.saveSession(currentSession);
                 }
             });
@@ -200,6 +204,7 @@ public class AssistantFragment extends Fragment {
     @Override
     public void onPause() {
         AIActivityMonitor.removeListener(stateListener);
+        if (currentSession != null) chatStore.saveSession(currentSession);
         super.onPause();
     }
 
@@ -234,6 +239,7 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupPanel(int id, View panel) {
+        render(panel, PanelState.READY);
         if (id == R.id.ai_dest_session) {
             setupSessionPanel(panel);
         } else if (id == R.id.ai_dest_models) {
@@ -249,11 +255,25 @@ public class AssistantFragment extends Fragment {
         }
     }
 
+    private void render(View panel, PanelState state) {
+        if (panel == null) return;
+        View loading = panel.findViewById(R.id.ai_loading_state);
+        View empty = panel.findViewById(R.id.ai_empty_state);
+        View error = panel.findViewById(R.id.ai_error_state);
+        View content = panel.findViewById(R.id.ai_content);
+        View syncing = panel.findViewById(R.id.ai_syncing_indicator);
+
+        if (loading != null) loading.setVisibility(state == PanelState.LOADING ? View.VISIBLE : View.GONE);
+        if (empty != null) empty.setVisibility(state == PanelState.EMPTY ? View.VISIBLE : View.GONE);
+        if (error != null) error.setVisibility(state == PanelState.ERROR ? View.VISIBLE : View.GONE);
+        if (content != null) content.setVisibility(state == PanelState.READY || state == PanelState.SYNCING ? View.VISIBLE : View.GONE);
+        if (syncing != null) syncing.setVisibility(state == PanelState.SYNCING ? View.VISIBLE : View.GONE);
+    }
+
     private void setupFilesPanel(View panel) {
         panel.findViewById(R.id.btn_refresh_context).setOnClickListener(v -> {
             Snackbar.make(panel, "Context refreshed from project", Snackbar.LENGTH_SHORT).show();
         });
-        // Snapshot logic would go here
     }
 
     private void setupSettingsPanel(View panel) {
@@ -479,7 +499,6 @@ public class AssistantFragment extends Fragment {
                     Snackbar.make(panel, R.string.ai_busy, Snackbar.LENGTH_SHORT).show();
                     return;
                 }
-                // Remove all messages after the last USER message before this one
                 int lastUserIdx = -1;
                 for (int i = position; i >= 0; i--) {
                     if ("user".equals(currentSession.messages.get(i).role)) {
@@ -493,6 +512,7 @@ public class AssistantFragment extends Fragment {
                         currentSession.messages.remove(lastUserIdx + 1);
                     }
                     chatAdapter.setMessages(currentSession.messages);
+                    AIActivityMonitor.setState(SessionState.IDLE);
                     sendMessage(lastUserText, true);
                 }
             }
@@ -538,16 +558,14 @@ public class AssistantFragment extends Fragment {
                 configStore.setAgentEnabled(true);
                 View sessionPanel = panels.get(R.id.ai_dest_session);
                 if (sessionPanel != null) updateSessionHeader(sessionPanel);
-                // Resend the message that triggered this
                 if (position > 0) {
                     ChatStore.Message prev = currentSession.messages.get(position - 1);
                     if ("user".equals(prev.role)) {
-                        // Remove suggestion and everything after it
                         while (currentSession.messages.size() > position) {
                             currentSession.messages.remove(position);
                         }
                         chatAdapter.setMessages(currentSession.messages);
-                        AIActivityMonitor.setState(AIActivityMonitor.State.IDLE);
+                        AIActivityMonitor.setState(SessionState.IDLE);
                         sendMessage(prev.text, true);
                     }
                 }
@@ -565,13 +583,11 @@ public class AssistantFragment extends Fragment {
         List<ChatStore.Session> sessions = chatStore.loadAllSessions();
         if (sessions.isEmpty()) {
             currentSession = new ChatStore.Session();
-            View emptyState = panel.findViewById(R.id.ai_empty_state);
-            if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
+            render(panel, PanelState.EMPTY);
         } else {
             currentSession = sessions.get(0);
             chatAdapter.setMessages(currentSession.messages);
-            View emptyState = panel.findViewById(R.id.ai_empty_state);
-            if (emptyState != null) emptyState.setVisibility(View.GONE);
+            render(panel, PanelState.READY);
             rv.post(() -> scrollToBottom(false));
         }
 
@@ -627,19 +643,8 @@ public class AssistantFragment extends Fragment {
                 boolean next = !configStore.isAgentEnabled();
                 configStore.setAgentEnabled(next);
                 updateSessionHeader(panel);
-                Snackbar.make(panel, next ? "Agent mode enabled — I can now act on your project" : "Agent mode off — chat only", Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(panel, next ? "Agent mode enabled" : "Agent mode off", Snackbar.LENGTH_SHORT).show();
             });
-        }
-
-        com.google.android.material.chip.ChipGroup suggestions = panel.findViewById(R.id.ai_empty_suggestions);
-        if (suggestions != null) {
-            for (int i = 0; i < suggestions.getChildCount(); i++) {
-                View child = suggestions.getChildAt(i);
-                if (child instanceof com.google.android.material.chip.Chip) {
-                    com.google.android.material.chip.Chip chip = (com.google.android.material.chip.Chip) child;
-                    child.setOnClickListener(v -> sendMessage(chip.getText().toString()));
-                }
-            }
         }
 
         updateSessionHeader(panel);
@@ -647,7 +652,6 @@ public class AssistantFragment extends Fragment {
 
     private void updateSessionHeader(View panel) {
         TextView modelInfo = panel.findViewById(R.id.ai_tv_model_info);
-        Chip location = panel.findViewById(R.id.ai_chip_location);
         Chip chipAgent = panel.findViewById(R.id.ai_chip_agent_state);
 
         if (chipAgent != null) {
@@ -656,33 +660,10 @@ public class AssistantFragment extends Fragment {
             int bgColor = pro.sketchware.utility.ThemeUtils.getColor(getContext(),
                     enabled ? R.attr.colorTertiaryContainer : R.attr.colorSurfaceContainerHigh);
             chipAgent.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(bgColor));
-            
-            chipAgent.setAlpha(0f);
-            chipAgent.animate().alpha(1f).setDuration(150).start();
         }
 
-        String providerId = configStore.getProviderId();
         String model = configStore.safeModel();
-        if (model.isEmpty()) {
-            List<pro.sketchware.ai.core.ModelItem> cache = configStore.loadModelsCache(providerId);
-            if (!cache.isEmpty()) {
-                // Try to find a FREE model first
-                for (pro.sketchware.ai.core.ModelItem item : cache) {
-                    if (item.free != null && item.free) {
-                        model = item.id;
-                        break;
-                    }
-                }
-                if (model.isEmpty()) model = cache.get(0).id;
-                configStore.setModel(model);
-            }
-        }
         if (modelInfo != null) modelInfo.setText(model.isEmpty() ? "No model selected" : model);
-
-        if (location != null) {
-            boolean isLocal = "ollama".equals(providerId) || providerId.contains("local");
-            location.setText(isLocal ? R.string.ai_badge_local : R.string.ai_badge_cloud);
-        }
     }
 
     private ChatStore.Message assistantMsg;
@@ -694,51 +675,14 @@ public class AssistantFragment extends Fragment {
     private long rateLimitTotalWait;
     private int rateLimitAttempt;
     private int rateLimitMax;
-    private final Runnable rateLimitTicker = this::tickRateLimit;
-
-    private void tickRateLimit() {
-        if (rateLimitMsg == null || !"WAITING".equals(rateLimitMsg.toolState)) return;
-        long elapsed = System.currentTimeMillis() - rateLimitStartTime;
-        if (elapsed > rateLimitTotalWait) elapsed = rateLimitTotalWait;
-
-        long finalElapsed = elapsed;
-        UiPoster.post(() -> {
-            rateLimitMsg.text = finalElapsed + "|" + rateLimitTotalWait + "|" + rateLimitAttempt + "|" + rateLimitMax;
-            int idx = currentSession.messages.indexOf(rateLimitMsg);
-            if (idx != -1) {
-                chatAdapter.notifyItemChanged(idx, "rate_tick");
-            }
-        });
-
-        if (elapsed < rateLimitTotalWait) {
-            mainHandler.postDelayed(rateLimitTicker, 1000);
-        }
-    }
-
-    private void checkRateLimitResume() {
-        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) {
-            rateLimitMsg.toolState = "RESUMED";
-            UiPoster.post(() -> {
-                int idx = currentSession.messages.indexOf(rateLimitMsg);
-                if (idx != -1) {
-                    chatAdapter.notifyItemChanged(idx);
-                    mainHandler.postDelayed(() -> {
-                        if (rateLimitMsg != null && "RESUMED".equals(rateLimitMsg.toolState)) {
-                            rateLimitMsg.toolState = "COLLAPSED";
-                            int idx2 = currentSession.messages.indexOf(rateLimitMsg);
-                            if (idx2 != -1) chatAdapter.notifyItemChanged(idx2);
-                        }
-                    }, 1500);
-                }
-            });
-        }
-    }
 
     private void onContentToken(String token) {
         if (token == null || token.isEmpty()) return;
         pokeWatchdog();
+        if (AIActivityMonitor.getState() == SessionState.WAITING_RATE_LIMIT) {
+            AIActivityMonitor.setState(SessionState.MODEL_STREAMING);
+        }
         UiPoster.post(() -> {
-            checkRateLimitResume();
             if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                 long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                 chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -753,6 +697,7 @@ public class AssistantFragment extends Fragment {
                 chatAdapter.appendToken(idx, token);
                 if (isNearBottom()) scrollToBottom(false);
             }
+            chatStore.saveSession(currentSession);
         });
     }
 
@@ -760,7 +705,6 @@ public class AssistantFragment extends Fragment {
         if (token == null || token.isEmpty()) return;
         pokeWatchdog();
         UiPoster.post(() -> {
-            checkRateLimitResume();
             if (thinkingMsg == null) {
                 thinkingStart = System.currentTimeMillis();
                 thinkingMsg = new ChatStore.Message("thinking", "");
@@ -772,12 +716,27 @@ public class AssistantFragment extends Fragment {
             }
             int idx = currentSession.messages.indexOf(thinkingMsg);
             chatAdapter.appendReasoning(idx, token);
+            chatStore.saveSession(currentSession);
         });
     }
 
+    private String getToolDomain(String name) {
+        if (name == null) return null;
+        if (name.contains("java")) return "JAVA";
+        if (name.contains("res")) return "RES";
+        if (name.contains("asset")) return "ASSET";
+        if (name.contains("block")) return "BLOCK";
+        if (name.contains("manifest")) return "MANIFEST";
+        if (name.contains("fs_")) return "FS";
+        if (name.contains("lib")) return "LIB";
+        return "PROJ";
+    }
+
+    private int activeToolCount = 0;
+
     private void onRateLimitWait(long waitMs, int attempt, int maxAttempts) {
         pokeWatchdog();
-        AIActivityMonitor.setState(AIActivityMonitor.State.WAITING);
+        AIActivityMonitor.setState(SessionState.WAITING_RATE_LIMIT);
         UiPoster.post(() -> {
             if (rateLimitMsg == null) {
                 rateLimitMsg = new ChatStore.Message("rate_limit", "");
@@ -790,7 +749,7 @@ public class AssistantFragment extends Fragment {
             rateLimitTotalWait = waitMs;
             rateLimitAttempt = attempt;
             rateLimitMax = maxAttempts;
-            tickRateLimit();
+            chatStore.saveSession(currentSession);
         });
     }
 
@@ -802,12 +761,6 @@ public class AssistantFragment extends Fragment {
         if (AIActivityMonitor.isBusy()) {
             Snackbar.make(requireView(), R.string.ai_busy, Snackbar.LENGTH_SHORT).show();
             return;
-        }
-
-        View panel = panels.get(R.id.ai_dest_session);
-        if (panel != null) {
-            View emptyState = panel.findViewById(R.id.ai_empty_state);
-            if (emptyState != null) emptyState.setVisibility(View.GONE);
         }
 
         if (!isRegen) {
@@ -825,7 +778,6 @@ public class AssistantFragment extends Fragment {
         thinkingStart = 0;
         lastEventTime = System.currentTimeMillis();
         mainHandler.removeCallbacks(watchdog);
-        mainHandler.removeCallbacks(rateLimitTicker);
         mainHandler.postDelayed(watchdog, 10000);
 
         DesignActivity activity = (DesignActivity) getActivity();
@@ -837,7 +789,7 @@ public class AssistantFragment extends Fragment {
             return;
         }
 
-        AIActivityMonitor.setState(AIActivityMonitor.State.MODEL_STREAMING);
+        AIActivityMonitor.setState(SessionState.MODEL_STREAMING);
         updateStreamingUi(true);
 
         boolean agentEnabled = configStore.isAgentEnabled();
@@ -872,7 +824,6 @@ public class AssistantFragment extends Fragment {
                 public void onToolCall(ToolCall call) {
                     pokeWatchdog();
                     UiPoster.post(() -> {
-                        checkRateLimitResume();
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -883,7 +834,8 @@ public class AssistantFragment extends Fragment {
                 @Override
                 public void onToolStart(String name) {
                     pokeWatchdog();
-                    AIActivityMonitor.setState(AIActivityMonitor.State.TOOL_RUNNING);
+                    activeToolCount++;
+                    AIActivityMonitor.setState(SessionState.TOOL_RUNNING);
                     UiPoster.post(() -> {
                         if (toolsCard == null) {
                             toolsCard = new ChatStore.Message("tools_card", "");
@@ -892,7 +844,7 @@ public class AssistantFragment extends Fragment {
                             chatAdapter.addMessage(toolsCard);
                             scrollToBottom(true);
                         }
-                        toolsCard.toolEvents.add(new ChatStore.ToolEvent(name));
+                        toolsCard.toolEvents.add(new ChatStore.ToolEvent(name, getToolDomain(name)));
                         int idx = currentSession.messages.indexOf(toolsCard);
                         chatAdapter.notifyItemChanged(idx, "tool_events");
                     });
@@ -901,16 +853,8 @@ public class AssistantFragment extends Fragment {
                 @Override
                 public void onToolEnd(String name, boolean success) {
                     pokeWatchdog();
-                    AIActivityMonitor.setState(AIActivityMonitor.State.MODEL_STREAMING);
-                    if (success && name != null && (name.contains("write") || name.contains("create") || name.contains("edit"))) {
-                        UiPoster.post(() -> {
-                            DesignActivity activity = (DesignActivity) getActivity();
-                            if (activity != null) {
-                                a.a.a.jC.a(); // Clear static managers to force reload
-                                activity.onProjectUpdated();
-                            }
-                        });
-                    }
+                    activeToolCount = Math.max(0, activeToolCount - 1);
+                    AIActivityMonitor.setState(activeToolCount > 0 ? SessionState.TOOL_RUNNING : SessionState.MODEL_STREAMING);
                     UiPoster.post(() -> {
                         if (toolsCard != null) {
                             for (ChatStore.ToolEvent te : toolsCard.toolEvents) {
@@ -931,7 +875,6 @@ public class AssistantFragment extends Fragment {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
                         reconcileTools(toolsCard);
-                        checkRateLimitResume();
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -940,19 +883,28 @@ public class AssistantFragment extends Fragment {
                         String finalTest = (response == null || response.text == null) ? "" : response.text;
                         if (finalTest.isEmpty()) {
                             int toolCount = toolsCard != null ? toolsCard.toolEvents.size() : 0;
-                            finalTest = "Done. Used " + toolCount + " tools.";
+                            if (toolCount > 0) {
+                                finalTest = "Done. Used " + toolCount + " tools.";
+                            } else {
+                                // Check if we were rate limited or cancelled
+                                if (rateLimitMsg != null && "EXHAUSTED".equals(rateLimitMsg.toolState)) {
+                                    finalTest = "Provider is consistently busy. Please try again later or switch models.";
+                                }
+                            }
                         }
                         
-                        if (assistantMsg == null) {
-                            assistantMsg = new ChatStore.Message("assistant", finalTest);
-                            currentSession.messages.add(assistantMsg);
-                            chatAdapter.addMessage(assistantMsg);
-                        } else {
-                            assistantMsg.text = finalTest;
-                            chatAdapter.notifyItemChanged(currentSession.messages.indexOf(assistantMsg));
+                        if (!finalTest.isEmpty()) {
+                            if (assistantMsg == null) {
+                                assistantMsg = new ChatStore.Message("assistant", finalTest);
+                                currentSession.messages.add(assistantMsg);
+                                chatAdapter.addMessage(assistantMsg);
+                            } else {
+                                assistantMsg.text = finalTest;
+                                chatAdapter.notifyItemChanged(currentSession.messages.indexOf(assistantMsg));
+                            }
                         }
 
-                        AIActivityMonitor.setState(AIActivityMonitor.State.IDLE);
+                        AIActivityMonitor.setState(SessionState.IDLE);
                         chatStore.saveSession(currentSession);
                     });
                 }
@@ -960,18 +912,13 @@ public class AssistantFragment extends Fragment {
                 @Override
                 public void onError(Throwable error) {
                     mainHandler.removeCallbacks(watchdog);
-                    mainHandler.removeCallbacks(rateLimitTicker);
                     UiPoster.post(() -> {
                         reconcileTools(toolsCard);
-                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) {
-                            rateLimitMsg.toolState = "EXHAUSTED";
-                            chatAdapter.notifyItemChanged(currentSession.messages.indexOf(rateLimitMsg));
-                        }
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
-                        AIActivityMonitor.setState(AIActivityMonitor.State.IDLE);
+                        AIActivityMonitor.setState(SessionState.IDLE);
                         handleChatError(error);
                     });
                 }
@@ -979,14 +926,9 @@ public class AssistantFragment extends Fragment {
                 @Override
                 public void onCancel() {
                     mainHandler.removeCallbacks(watchdog);
-                    mainHandler.removeCallbacks(rateLimitTicker);
                     UiPoster.post(() -> {
                         reconcileTools(toolsCard);
-                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) {
-                            rateLimitMsg.toolState = "CANCELLED";
-                            chatAdapter.notifyItemChanged(currentSession.messages.indexOf(rateLimitMsg));
-                        }
-                        AIActivityMonitor.setState(AIActivityMonitor.State.IDLE);
+                        AIActivityMonitor.setState(SessionState.IDLE);
                     });
                 }
             });
@@ -1026,12 +968,11 @@ public class AssistantFragment extends Fragment {
                 public void onComplete(AIResponse response) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
-                        checkRateLimitResume();
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
-                        AIActivityMonitor.setState(AIActivityMonitor.State.IDLE);
+                        AIActivityMonitor.setState(SessionState.IDLE);
                         chatStore.saveSession(currentSession);
                         activeHandle = null;
                     });
@@ -1045,7 +986,7 @@ public class AssistantFragment extends Fragment {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
-                        AIActivityMonitor.setState(AIActivityMonitor.State.IDLE);
+                        AIActivityMonitor.setState(SessionState.IDLE);
                         addAssistantMessage("Error: " + error.getMessage());
                         activeHandle = null;
                     });
@@ -1055,7 +996,7 @@ public class AssistantFragment extends Fragment {
                 public void onCancel() {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
-                        AIActivityMonitor.setState(AIActivityMonitor.State.IDLE);
+                        AIActivityMonitor.setState(SessionState.IDLE);
                         activeHandle = null;
                     });
                 }
@@ -1087,35 +1028,12 @@ public class AssistantFragment extends Fragment {
     }
 
     private void handleChatError(Throwable error) {
-        String providerId = configStore.getProviderId();
-        if (configStore.safeKey().isEmpty() && configStore.requiresKeyFor(providerId)) {
-            addErrorMessage("No API key stored. Open TAG Assistant Manager and Save your key.", "", "Open settings");
-            return;
-        }
-
-        String raw = "";
-        boolean isAuth = false;
-        boolean isRate = false;
-        if (error instanceof pro.sketchware.ai.net.AIException) {
-            pro.sketchware.ai.net.AIException ae = (pro.sketchware.ai.net.AIException) error;
-            raw = ae.rawBody;
-            if (raw.length() > 200) raw = raw.substring(0, 200);
-            if (ae.type == pro.sketchware.ai.net.AIException.Type.AUTH) isAuth = true;
-            if (ae.type == pro.sketchware.ai.net.AIException.Type.RATE_LIMIT) isRate = true;
-        }
-
-        if (isAuth) {
-            addErrorMessage("Authentication failed. Double-check your API key.", raw, "Test key");
-        } else if (isRate) {
-            addErrorMessage(getString(R.string.ai_err_rate), raw, "Try again");
-        } else {
-            addErrorMessage("Error: " + error.getMessage(), raw, "Open settings");
-        }
+        addErrorMessage("Error: " + error.getMessage(), "", "Open settings");
     }
 
     private void addErrorMessage(String text, String raw, String action) {
         ChatStore.Message msg = new ChatStore.Message("error", text);
-        msg.toolState = raw; // Borrowing toolState for raw error details
+        msg.toolState = raw; 
         msg.action = action;
         currentSession.messages.add(msg);
         chatAdapter.addMessage(msg);
@@ -1144,16 +1062,9 @@ public class AssistantFragment extends Fragment {
     private void updateStreamingUi(boolean streaming) {
         View panel = panels.get(R.id.ai_dest_session);
         if (panel != null) {
-            RecyclerView rv = panel.findViewById(R.id.ai_rv_chat);
-            if (streaming) {
-                if (rv != null) rv.setItemAnimator(null);
-            } else {
-                if (rv != null) rv.setItemAnimator(new androidx.recyclerview.widget.DefaultItemAnimator());
-            }
-
             FloatingActionButton fab = panel.findViewById(R.id.ai_fab_send);
             if (fab != null) {
-                fab.setImageResource(AIActivityMonitor.getState() == AIActivityMonitor.State.IDLE ? R.drawable.ic_mtrl_send : R.drawable.ic_mtrl_stop);
+                fab.setImageResource(AIActivityMonitor.getState() == SessionState.IDLE ? R.drawable.ic_mtrl_send : R.drawable.ic_mtrl_stop);
             }
         }
     }

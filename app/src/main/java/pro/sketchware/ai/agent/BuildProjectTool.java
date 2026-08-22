@@ -11,6 +11,11 @@ public class BuildProjectTool implements Tool {
     }
 
     @Override
+    public Domain domain() {
+        return Domain.PROJECT;
+    }
+
+    @Override
     public ToolResult run(JSONObject args, ToolContext ctx) {
         ctx.runOnUiThread(() -> {
             DesignActivity a = ctx.activity.get();

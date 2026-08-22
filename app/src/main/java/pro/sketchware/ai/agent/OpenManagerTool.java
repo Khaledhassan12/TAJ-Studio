@@ -23,6 +23,11 @@ public class OpenManagerTool implements Tool {
     }
 
     @Override
+    public Domain domain() {
+        return Domain.PROJECT;
+    }
+
+    @Override
     public ToolResult run(JSONObject args, ToolContext ctx) {
         String type = args.optString("manager_type");
         ctx.runOnUiThread(() -> {

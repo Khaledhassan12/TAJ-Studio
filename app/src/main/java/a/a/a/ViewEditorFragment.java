@@ -32,7 +32,9 @@ import pro.sketchware.R;
 import pro.sketchware.utility.SketchwareUtil;
 import pro.sketchware.widgets.WidgetsCreatorManager;
 
-public class ViewEditorFragment extends qA {
+import pro.sketchware.ai.live.LiveRegistry;
+
+public class ViewEditorFragment extends qA implements LiveRegistry.DomainListener {
 
     public ViewEditor viewEditor;
     private ProjectFileBean projectFileBean;
@@ -433,6 +435,25 @@ public class ViewEditorFragment extends qA {
             viewBean = null;
         }
         viewProperty.addActivityViews(viewBeanArrayList, viewBean);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        LiveRegistry.register("layout", this);
+    }
+
+    @Override
+    public void onPause() {
+        LiveRegistry.unregister("layout", this);
+        super.onPause();
+    }
+
+    @Override
+    public void onDomainChanged(String domain, String path) {
+        if (projectFileBean != null && path.contains(projectFileBean.getXmlName())) {
+            i();
+        }
     }
 
     @Override

@@ -22,6 +22,11 @@ public class ReadLogcatTool implements Tool {
     }
 
     @Override
+    public Domain domain() {
+        return Domain.PROJECT;
+    }
+
+    @Override
     public ToolResult run(JSONObject args, ToolContext ctx) {
         int limit = args.optInt("limit", 100);
         List<String> logs = Shell.cmd("logcat -d -t " + limit).exec().getOut();

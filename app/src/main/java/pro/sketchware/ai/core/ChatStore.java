@@ -110,11 +110,17 @@ public final class ChatStore {
     public static class ToolEvent {
         public String name;
         public String status; // RUNNING, OK, ERROR
+        public String domain; // JAVA, RES, ASSET, BLOCK, MANIFEST
         public long startedAt;
         public long finishedAt;
 
         public ToolEvent(String name) {
+            this(name, null);
+        }
+
+        public ToolEvent(String name, String domain) {
             this.name = name;
+            this.domain = domain;
             this.status = "RUNNING";
             this.startedAt = System.currentTimeMillis();
         }
@@ -124,6 +130,7 @@ public final class ChatStore {
             try {
                 json.put("name", name);
                 json.put("status", status);
+                if (domain != null) json.put("domain", domain);
                 json.put("startedAt", startedAt);
                 json.put("finishedAt", finishedAt);
             } catch (JSONException ignored) {}
@@ -131,7 +138,7 @@ public final class ChatStore {
         }
 
         public static ToolEvent fromJson(JSONObject json) {
-            ToolEvent te = new ToolEvent(json.optString("name"));
+            ToolEvent te = new ToolEvent(json.optString("name"), json.optString("domain", null));
             te.status = json.optString("status", "OK");
             te.startedAt = json.optLong("startedAt");
             te.finishedAt = json.optLong("finishedAt");

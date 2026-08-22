@@ -45,8 +45,10 @@ import pro.sketchware.utility.FileResConfig;
 import pro.sketchware.utility.FileUtil;
 import pro.sketchware.utility.SketchwareUtil;
 
+import pro.sketchware.ai.live.LiveRegistry;
+
 @SuppressLint("SetTextI18n")
-public class ManageResourceActivity extends BaseAppCompatActivity {
+public class ManageResourceActivity extends BaseAppCompatActivity implements LiveRegistry.DomainListener {
 
     private CustomAdapter adapter;
     private FilePickerDialogFragment dialog;
@@ -167,7 +169,29 @@ public class ManageResourceActivity extends BaseAppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+        LiveRegistry.register("anim", this);
+        LiveRegistry.register("drawable", this);
+        LiveRegistry.register("drawable-xhdpi", this);
+        LiveRegistry.register("layout", this);
+        LiveRegistry.register("menu", this);
+        LiveRegistry.register("values", this);
         binding.filesListRecyclerView.getAdapter().notifyDataSetChanged();
+    }
+
+    @Override
+    public void onPause() {
+        LiveRegistry.unregister("anim", this);
+        LiveRegistry.unregister("drawable", this);
+        LiveRegistry.unregister("drawable-xhdpi", this);
+        LiveRegistry.unregister("layout", this);
+        LiveRegistry.unregister("menu", this);
+        LiveRegistry.unregister("values", this);
+        super.onPause();
+    }
+
+    @Override
+    public void onDomainChanged(String domain, String path) {
+        handleAdapter(temp);
     }
 
     @Override

@@ -134,7 +134,10 @@ import pro.sketchware.utility.SketchwareUtil;
 import pro.sketchware.utility.ThemeUtils;
 import pro.sketchware.utility.apk.ApkSignatures;
 
-public class DesignActivity extends BaseAppCompatActivity implements View.OnClickListener {
+import pro.sketchware.ai.live.LiveRegistry;
+import pro.sketchware.ai.live.UiPoster;
+
+public class DesignActivity extends BaseAppCompatActivity implements View.OnClickListener, LiveRegistry.DomainListener {
     public static String sc_id;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
@@ -186,7 +189,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
     private final pro.sketchware.ai.ui.AIActivityMonitor.OnStateChangeListener aiStateListener = newState -> {
         runOnUiThread(() -> {
-            boolean busy = newState != pro.sketchware.ai.ui.AIActivityMonitor.State.IDLE;
+            boolean busy = newState != pro.sketchware.ai.agent.SessionState.IDLE;
             if (btnRun != null) {
                 btnRun.setEnabled(!busy);
                 btnRun.setAlpha(busy ? 0.5f : 1.0f);
@@ -252,8 +255,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     private android.content.DialogInterface activeDialog;
 
     private void ensureBaseResources(String scId) {
-        String resPath = pro.sketchware.ai.agent.ProjectPaths.root(scId) + "/files/resource/values";
-        String resNightPath = pro.sketchware.ai.agent.ProjectPaths.root(scId) + "/files/resource/values-night";
+        String resPath = pro.sketchware.ai.agent.ProjectPaths.dataRoot(scId) + "/files/resource/values";
+        String resNightPath = pro.sketchware.ai.agent.ProjectPaths.dataRoot(scId) + "/files/resource/values-night";
         pro.sketchware.utility.FileUtil.makeDir(resPath);
         pro.sketchware.utility.FileUtil.makeDir(resNightPath);
 
@@ -731,8 +734,28 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     }
 
     @Override
+    public void onPause() {
+        LiveRegistry.unregister("layout", this);
+        LiveRegistry.unregister("values", this);
+        LiveRegistry.unregister("drawable", this);
+        LiveRegistry.unregister("anim", this);
+        LiveRegistry.unregister("menu", this);
+        super.onPause();
+    }
+
+    @Override
+    public void onDomainChanged(String domain, String path) {
+        onProjectUpdated();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
+        LiveRegistry.register("layout", this);
+        LiveRegistry.register("values", this);
+        LiveRegistry.register("drawable", this);
+        LiveRegistry.register("anim", this);
+        LiveRegistry.register("menu", this);
         if (!isStoragePermissionGranted()) {
             finish();
         }

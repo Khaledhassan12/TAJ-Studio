@@ -5,22 +5,21 @@ import android.os.Looper;
 
 import java.util.ArrayList;
 import java.util.List;
+import pro.sketchware.ai.agent.SessionState;
 
 public final class AIActivityMonitor {
 
-    public enum State { IDLE, MODEL_STREAMING, TOOL_RUNNING, WAITING }
-
-    private static volatile State state = State.IDLE;
+    private static volatile SessionState state = SessionState.IDLE;
     private static final List<OnStateChangeListener> listeners = new ArrayList<>();
     private static final Handler watchdogHandler = new Handler(Looper.getMainLooper());
     private static Runnable watchdogRunnable;
     private static Runnable onTimeoutAction;
 
     public interface OnStateChangeListener {
-        void onStateChanged(State newState);
+        void onStateChanged(SessionState newState);
     }
 
-    public static synchronized void setState(State newState) {
+    public static synchronized void setState(SessionState newState) {
         if (state == newState) return;
         state = newState;
         resetWatchdog();
@@ -29,12 +28,12 @@ public final class AIActivityMonitor {
         }
     }
 
-    public static State getState() {
+    public static SessionState getState() {
         return state;
     }
 
     public static boolean isBusy() {
-        return state != State.IDLE;
+        return state != SessionState.IDLE;
     }
 
     public static synchronized void addListener(OnStateChangeListener listener) {
@@ -54,12 +53,12 @@ public final class AIActivityMonitor {
 
     private static void resetWatchdog() {
         watchdogHandler.removeCallbacks(watchdogRunnable);
-        if (state == State.IDLE) return;
+        if (state == SessionState.IDLE) return;
 
         watchdogRunnable = () -> {
-            if (state != State.IDLE) {
+            if (state != SessionState.IDLE) {
                 if (onTimeoutAction != null) onTimeoutAction.run();
-                setState(State.IDLE);
+                setState(SessionState.IDLE);
             }
         };
         watchdogHandler.postDelayed(watchdogRunnable, 120000);
