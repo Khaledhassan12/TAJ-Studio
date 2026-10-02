@@ -578,11 +578,11 @@ public class ViewEditor extends RelativeLayout implements View.OnClickListener, 
 
         paletteWidget.cardView.setOnClickListener(view -> widgetsCreatorManager.showWidgetsCreatorDialog(-1));
 
-        colorSurfaceContainerHighest = ThemeUtils.getColor(deleteView, R.attr.colorSurfaceContainerHighest);
-        colorCoolGreenContainer = ThemeUtils.getColor(deleteView, R.attr.colorCoolGreenContainer);
-        colorCoolGreen = ThemeUtils.getColor(deleteView, R.attr.colorCoolGreen);
-        colorErrorContainer = ThemeUtils.getColor(deleteView, R.attr.colorErrorContainer);
-        colorError = ThemeUtils.getColor(deleteView, R.attr.colorOnErrorContainer);
+        colorSurfaceContainerHighest = ThemeUtils.getColor(deleteView, com.google.android.material.R.attr.colorSurfaceContainerHighest);
+        colorCoolGreenContainer = ThemeUtils.getColor(deleteView, com.google.android.material.R.attr.colorPrimaryContainer);
+        colorCoolGreen = ThemeUtils.getColor(deleteView, com.google.android.material.R.attr.colorPrimaryContainer);
+        colorErrorContainer = ThemeUtils.getColor(deleteView, com.google.android.material.R.attr.colorErrorContainer);
+        colorError = ThemeUtils.getColor(deleteView, com.google.android.material.R.attr.colorOnErrorContainer);
 
         initialDeleteViewUi();
     }

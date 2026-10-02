@@ -69,24 +69,30 @@ public class TeamAdapter extends RecyclerView.Adapter<TeamAdapter.ViewHolder> {
             holder.binding.tvTitle.setVisibility(View.GONE);
         }
 
+        // --- هنا قمنا بتحديث الألوان لتدعم Material 3 ---
         if (member.isCoreTeamMember()) {
-            advancedCorners(holder.binding.viewLeftline, MaterialColors.getColor(holder.binding.viewLeftline, R.attr.colorPrimary));
+            advancedCorners(holder.binding.viewLeftline, MaterialColors.getColor(holder.binding.viewLeftline, com.google.android.material.R.attr.colorPrimaryContainer));
         } else {
-            advancedCorners(holder.binding.viewLeftline, MaterialColors.getColor(holder.binding.viewLeftline, R.attr.colorGreen));
+            // استبدال colorGreen بلون Material 3 وهو colorTertiary
+            advancedCorners(holder.binding.viewLeftline, MaterialColors.getColor(holder.binding.viewLeftline, com.google.android.material.R.attr.colorTertiary));
         }
 
         holder.binding.tvStatus.setVisibility(View.VISIBLE);
         int activeBackgroundColor;
         int activeBackgroundTextColor;
+
         if (member.isActive()) {
             holder.binding.tvStatus.setText("Active");
-            activeBackgroundColor = MaterialColors.getColor(holder.binding.tvStatus, R.attr.colorCoolGreenContainer);
-            activeBackgroundTextColor = MaterialColors.getColor(holder.binding.tvStatus, R.attr.colorOnCoolGreenContainer);
+            // استبدال الألوان المخصصة بألوان Material 3 الرسمية للحالة النشطة
+            activeBackgroundColor = MaterialColors.getColor(holder.binding.tvStatus, com.google.android.material.R.attr.colorPrimaryContainer);
+            activeBackgroundTextColor = MaterialColors.getColor(holder.binding.tvStatus, com.google.android.material.R.attr.colorOnPrimaryContainer);
         } else {
             holder.binding.tvStatus.setText("Inactive");
-            activeBackgroundColor = MaterialColors.getColor(holder.binding.tvStatus, R.attr.colorAmberContainer);
-            activeBackgroundTextColor = MaterialColors.getColor(holder.binding.tvStatus, R.attr.colorOnAmberContainer);
+            // استبدال الألوان المخصصة بألوان Material 3 الرسمية للحالة غير النشطة (مثل اللون الأحمر الخفيف)
+            activeBackgroundColor = MaterialColors.getColor(holder.binding.tvStatus, com.google.android.material.R.attr.colorErrorContainer);
+            activeBackgroundTextColor = MaterialColors.getColor(holder.binding.tvStatus, com.google.android.material.R.attr.colorOnErrorContainer);
         }
+
         rippleRound(holder.binding.tvStatus, activeBackgroundColor, activeBackgroundColor, 100);
         holder.binding.tvStatus.setTextColor(activeBackgroundTextColor);
 

@@ -74,31 +74,31 @@ public class CommitAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             int activeBackgroundTextColor;
             if (isCoreTeamMember(commitDetails.getCommitterName())) {
                 itemHolder.binding.tvStatus.setText("Core Team");
-                activeBackgroundColor = MaterialColors.getColor(itemHolder.binding.tvStatus, R.attr.colorCoolGreenContainer);
-                activeBackgroundTextColor = MaterialColors.getColor(itemHolder.binding.tvStatus, R.attr.colorOnCoolGreenContainer);
+                activeBackgroundColor = MaterialColors.getColor(itemHolder.binding.tvStatus, com.google.android.material.R.attr.colorPrimaryContainer);
+                activeBackgroundTextColor = MaterialColors.getColor(itemHolder.binding.tvStatus, com.google.android.material.R.attr.colorOnPrimaryContainer);
             } else {
                 itemHolder.binding.tvStatus.setText("Contributor");
-                activeBackgroundColor = MaterialColors.getColor(itemHolder.binding.tvStatus, R.attr.colorAmberContainer);
-                activeBackgroundTextColor = MaterialColors.getColor(itemHolder.binding.tvStatus, R.attr.colorOnAmberContainer);
+                activeBackgroundColor = MaterialColors.getColor(itemHolder.binding.tvStatus, com.google.android.material.R.attr.colorTertiaryContainer);
+                activeBackgroundTextColor = MaterialColors.getColor(itemHolder.binding.tvStatus, com.google.android.material.R.attr.colorOnTertiaryContainer);
             }
             rippleRound(itemHolder.binding.tvStatus, activeBackgroundColor, activeBackgroundColor, 100);
             itemHolder.binding.tvStatus.setTextColor(activeBackgroundTextColor);
 
             if (shaPosition > position || shaPosition == -1) {
                 itemHolder.binding.updateStatus.setText("New Update");
-                activeBackgroundColor = MaterialColors.getColor(itemHolder.binding.updateStatus, R.attr.colorCoolGreenContainer);
-                activeBackgroundTextColor = MaterialColors.getColor(itemHolder.binding.updateStatus, R.attr.colorOnCoolGreenContainer);
-                advancedCorners(itemHolder.binding.viewLeftline, MaterialColors.getColor(itemHolder.binding.viewLeftline, R.attr.colorGreen));
+                activeBackgroundColor = MaterialColors.getColor(itemHolder.binding.updateStatus, com.google.android.material.R.attr.colorPrimaryContainer);
+                activeBackgroundTextColor = MaterialColors.getColor(itemHolder.binding.updateStatus, com.google.android.material.R.attr.colorOnPrimaryContainer);
+                advancedCorners(itemHolder.binding.viewLeftline, MaterialColors.getColor(itemHolder.binding.viewLeftline, com.google.android.material.R.attr.colorPrimaryContainer));
             } else if (shaPosition < position) {
                 itemHolder.binding.updateStatus.setText("Old Version");
-                activeBackgroundColor = MaterialColors.getColor(itemHolder.binding.updateStatus, R.attr.colorVioletContainer);
-                activeBackgroundTextColor = MaterialColors.getColor(itemHolder.binding.updateStatus, R.attr.colorViolet);
-                advancedCorners(itemHolder.binding.viewLeftline, MaterialColors.getColor(itemHolder.binding.viewLeftline, R.attr.colorViolet));
+                activeBackgroundColor = MaterialColors.getColor(itemHolder.binding.updateStatus, com.google.android.material.R.attr.colorSecondaryContainer);
+                activeBackgroundTextColor = MaterialColors.getColor(itemHolder.binding.updateStatus, com.google.android.material.R.attr.colorOnSecondaryContainer);
+                advancedCorners(itemHolder.binding.viewLeftline, MaterialColors.getColor(itemHolder.binding.viewLeftline, com.google.android.material.R.attr.colorSecondaryContainer));
             } else {
                 itemHolder.binding.updateStatus.setText("Current Version");
-                activeBackgroundColor = MaterialColors.getColor(itemHolder.binding.updateStatus, R.attr.colorAmberContainer);
-                activeBackgroundTextColor = MaterialColors.getColor(itemHolder.binding.updateStatus, R.attr.colorOnAmberContainer);
-                advancedCorners(itemHolder.binding.viewLeftline, MaterialColors.getColor(itemHolder.binding.viewLeftline, R.attr.colorAmber));
+                activeBackgroundColor = MaterialColors.getColor(itemHolder.binding.updateStatus, com.google.android.material.R.attr.colorTertiaryContainer);
+                activeBackgroundTextColor = MaterialColors.getColor(itemHolder.binding.updateStatus, com.google.android.material.R.attr.colorOnTertiaryContainer);
+                advancedCorners(itemHolder.binding.viewLeftline, MaterialColors.getColor(itemHolder.binding.viewLeftline, com.google.android.material.R.attr.colorTertiaryContainer));
             }
             rippleRound(itemHolder.binding.updateStatus, activeBackgroundColor, activeBackgroundColor, 100);
             itemHolder.binding.updateStatus.setTextColor(activeBackgroundTextColor);

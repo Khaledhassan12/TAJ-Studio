@@ -1,5 +1,5 @@
 <resources>
-    <style name="Base.Theme.SketchwarePro" parent="Scheme.SketchwarePro.DayNight" />
+    <style name="Base.Theme.SketchwarePro" parent="Theme.Material3.DayNight.NoActionBar" />
     <style name="Theme.SketchwarePro" parent="Platform.Theme.SketchwarePro">
         <item name="bottomNavigationStyle">@style/Widget.SketchwarePro.BottomNavigationView</item>
         <item name="chipStyle">@style/Widget.SketchwarePro.Chip</item>

@@ -1,10 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:background="#0E0E14"
+    android:background="?attr/colorSurface"
     tools:ignore="ContentDescription">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -12,10 +13,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fitsSystemWindows="true"
-        android:background="#16161F"
+        android:background="?attr/colorSurfaceContainer"
         android:visibility="gone"
-        app:elevation="6dp"
-        app:liftOnScroll="false">
+        app:elevation="0dp"
+        app:liftOnScroll="true">
 
         <include layout="@layout/toolbar" />
 
@@ -23,15 +24,13 @@
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            app:tabIndicatorColor="#00E5A0"
+            android:background="@android:color/transparent"
+            app:tabIndicatorColor="?attr/colorPrimary"
             app:tabIndicatorHeight="3dp"
             app:tabIndicatorFullWidth="false"
             app:tabIndicatorAnimationMode="elastic"
-            app:tabRippleColor="#3300E5A0"
-            app:tabSelectedTextColor="#FFFFFF"
-            app:tabTextColor="#8A8A99"
+            app:tabSelectedTextColor="?attr/colorOnSurface"
+            app:tabTextColor="?attr/colorOnSurfaceVariant"
             app:tabTextAppearance="?attr/textAppearanceTitleSmall"
             app:tabMode="fixed">
 
@@ -54,8 +53,8 @@
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:dividerColor="#2A2A38"
-            app:dividerThickness="0.75dp" />
+            app:dividerColor="?attr/colorOutlineVariant"
+            app:dividerThickness="1dp" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <FrameLayout
@@ -99,7 +98,7 @@
                     android:layout_height="match_parent"
                     android:clipToPadding="false"
                     android:paddingTop="8dp"
-                    android:paddingBottom="80dp"
+                    android:paddingBottom="96dp"
                     android:overScrollMode="never"
                     android:scrollbars="none"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
@@ -118,7 +117,7 @@
                     android:layout_height="match_parent"
                     android:clipToPadding="false"
                     android:paddingTop="8dp"
-                    android:paddingBottom="80dp"
+                    android:paddingBottom="96dp"
                     android:overScrollMode="never"
                     android:scrollbars="none"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
@@ -132,19 +131,20 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:orientation="vertical"
-        android:padding="8dp"
+        android:padding="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:visibility="gone">
 
         <com.google.android.material.card.MaterialCardView
+            style="?attr/materialCardViewFilledStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginEnd="24dp"
-            app:cardBackgroundColor="#16161F"
-            app:cardCornerRadius="24dp"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="28dp"
             app:cardElevation="0dp"
-            app:strokeColor="#2A2A38"
+            app:strokeColor="?attr/colorOutlineVariant"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -164,24 +164,22 @@
                     android:id="@+id/tv_loading"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="16dp"
                     android:gravity="center"
                     android:text="@string/about_loading_title"
-                    android:textAppearance="?attr/textAppearanceBodyLarge"
-                    android:textColor="#FFFFFF"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="?attr/colorOnSurface"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tv_loading_desc"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
                     android:gravity="center"
-                    android:paddingLeft="8dp"
-                    android:paddingTop="4dp"
-                    android:paddingRight="8dp"
                     android:text="@string/about_loading_subtitle"
-                    android:textAppearance="?attr/textAppearanceBodySmall"
-                    android:textColor="#8A8A99" />
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
@@ -191,16 +189,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center|bottom"
-        android:layout_margin="20dp"
-        android:elevation="8dp"
+        android:layout_margin="16dp"
         android:text="@string/about_joindiscord"
         android:textAllCaps="false"
-        android:textColor="#FFF"
-        android:textStyle="bold"
-        app:backgroundTint="#5865F2"
-        app:rippleColor="#805865F2"
-        app:cornerRadius="28dp"
-        app:icon="@drawable/ic_discord"
-        app:iconTint="#FFF" />
+        android:textColor="@android:color/white"
+        app:backgroundTint="#1877F2"
+        app:icon="@drawable/side_menu_facebook_icon"
+        app:iconTint="@android:color/white"
+        app:rippleColor="#1877F2" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
