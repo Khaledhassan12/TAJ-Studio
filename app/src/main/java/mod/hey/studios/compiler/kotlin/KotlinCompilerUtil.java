@@ -8,9 +8,7 @@ import java.util.List;
 
 import a.a.a.ProjectBuilder;
 import a.a.a.yq;
-import mod.jbk.build.BuiltInLibraries;
 import pro.sketchware.utility.FilePathUtil;
-import pro.sketchware.utility.FileUtil;
 
 public class KotlinCompilerUtil {
 
@@ -30,23 +28,6 @@ public class KotlinCompilerUtil {
     public static boolean areAnyKtFilesPresent(yq yq) {
         return getFilesToCompile(yq).stream()
                 .anyMatch(it -> it.getName().endsWith(".kt"));
-    }
-
-    public static boolean isComposeUsed(ProjectBuilder bui) {
-        return isComposeUsed(bui.yq);
-    }
-
-    public static boolean isComposeUsed(yq workspace) {
-        List<File> files = getFilesToCompile(workspace);
-        for (File file : files) {
-            if (file.getName().endsWith(".kt")) {
-                String content = FileUtil.readFile(file.getAbsolutePath());
-                if (content != null && (content.contains("@Composable") || content.contains("import androidx.compose") || content.contains("androidx.activity.compose"))) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -80,29 +61,22 @@ public class KotlinCompilerUtil {
 
     /**
      * Returns a list of available kotlin compiler plugins (.jar)
-     * found in `/.sketchware/data/xxx/files/kt_plugins` dir
-     * as well as built-in plugins (such as Compose compiler plugin when Compose is used).
+     * found in `/.sketchware/data/xxx/files/kt_plugins` dir.
      */
     static List<File> getCompilerPlugins(yq workspace) {
         String scId = workspace.sc_id;
-        List<File> plugins = new ArrayList<>();
 
         File pluginDir = new File(new FilePathUtil().getPathKotlinCompilerPlugins(scId));
-        if (pluginDir.exists()) {
-            File[] children = pluginDir.listFiles(c -> c.getName().endsWith(".jar"));
-            if (children != null) {
-                plugins.addAll(Arrays.asList(children));
-            }
+        if (!pluginDir.exists()) {
+            return Collections.emptyList();
         }
 
-        if (isComposeUsed(workspace)) {
-            File composePlugin = BuiltInLibraries.getComposeCompilerPluginFile();
-            if (composePlugin.exists()) {
-                plugins.add(composePlugin);
-            }
+        File[] children = pluginDir.listFiles(c -> c.getName().endsWith(".jar"));
+        if (children == null) {
+            return Collections.emptyList();
         }
 
-        return plugins;
+        return new ArrayList<>(Arrays.asList(children));
     }
 
     private static List<File> getSourceFiles(File dir) {

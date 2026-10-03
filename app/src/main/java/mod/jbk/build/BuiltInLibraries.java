@@ -142,56 +142,12 @@ public class BuiltInLibraries {
     public static String USER_MESSAGING_PLATFORM = "user-messaging-platform-2.0.0";
     public static String WAVE_SIDE_BAR = "wave-side-bar";
 
-    public static String ANDROIDX_ACTIVITY_COMPOSE = "activity-compose-1.9.3";
-    public static String ANDROIDX_ACTIVITY_KTX = "activity-ktx-1.9.3";
-    public static String ANDROIDX_ANIMATION = "animation-1.7.8";
-    public static String ANDROIDX_ANIMATION_CORE = "animation-core-1.7.8";
-    public static String ANDROIDX_AUTOFILL = "autofill-1.0.0";
-    public static String ANDROIDX_COMPOSE_MATERIAL3 = "material3-1.3.1";
-    public static String ANDROIDX_COMPOSE_MATERIAL_RIPPLE = "material-ripple-1.7.8";
-    public static String ANDROIDX_COMPOSE_RUNTIME = "runtime-1.7.8";
-    public static String ANDROIDX_COMPOSE_RUNTIME_SAVEABLE = "runtime-saveable-1.7.8";
-    public static String ANDROIDX_COMPOSE_UI = "ui-1.7.8";
-    public static String ANDROIDX_COMPOSE_UI_GEOMETRY = "ui-geometry-1.7.8";
-    public static String ANDROIDX_COMPOSE_UI_GRAPHICS = "ui-graphics-1.7.8";
-    public static String ANDROIDX_COMPOSE_UI_TEXT = "ui-text-1.7.8";
-    public static String ANDROIDX_COMPOSE_UI_UNIT = "ui-unit-1.7.8";
-    public static String ANDROIDX_COMPOSE_UI_UTIL = "ui-util-1.7.8";
-    public static String ANDROIDX_FOUNDATION = "foundation-1.7.8";
-    public static String ANDROIDX_FOUNDATION_LAYOUT = "foundation-layout-1.7.8";
-    public static String ANDROIDX_LIFECYCLE_RUNTIME_KTX = "lifecycle-runtime-ktx-2.6.2";
-    public static String ANDROIDX_LIFECYCLE_VIEWMODEL_KTX = "lifecycle-viewmodel-ktx-2.6.2";
-    public static String ANDROIDX_PROFILEINSTALLER = "profileinstaller-1.3.1";
-    public static String ANDROIDX_SAVEDSTATE_KTX = "savedstate-ktx-1.2.1";
-
     public static final BuiltInLibrary[] KNOWN_BUILT_IN_LIBRARIES = {
             new BuiltInLibrary(ANDROIDX_ACTIVITY, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_CORE_KTX, ANDROIDX_CORE_VIEWTREE,
                     ANDROIDX_LIFECYCLE_COMMON, ANDROIDX_LIFECYCLE_RUNTIME,
                     ANDROIDX_LIFECYCLE_VIEWMODEL_SAVEDSTATE, ANDROIDX_LIFECYCLE_VIEWMODEL,
                     ANDROIDX_SAVEDSTATE, ANDROIDX_TRACING, JETBRAINS_KOTLIN_STDLIB,
                     JETBRAINS_KOTLINX_COROUTINES_CORE_JVM), "androidx.activity"),
-
-            new BuiltInLibrary(ANDROIDX_ACTIVITY_COMPOSE, List.of(ANDROIDX_ACTIVITY, ANDROIDX_ACTIVITY_KTX, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_RUNTIME_SAVEABLE, ANDROIDX_COMPOSE_UI, ANDROIDX_LIFECYCLE_RUNTIME, ANDROIDX_LIFECYCLE_VIEWMODEL, JETBRAINS_KOTLIN_STDLIB), "androidx.activity.compose"),
-            new BuiltInLibrary(ANDROIDX_ACTIVITY_KTX, List.of(ANDROIDX_ACTIVITY, ANDROIDX_CORE_KTX, ANDROIDX_LIFECYCLE_RUNTIME_KTX, ANDROIDX_LIFECYCLE_VIEWMODEL_KTX, ANDROIDX_SAVEDSTATE_KTX, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_ANIMATION, List.of(ANDROIDX_ANIMATION_CORE, ANDROIDX_ANNOTATION_JVM, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_UI, ANDROIDX_COMPOSE_UI_GEOMETRY, ANDROIDX_COMPOSE_UI_GRAPHICS, ANDROIDX_COMPOSE_UI_UNIT, ANDROIDX_COMPOSE_UI_UTIL, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_ANIMATION_CORE, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_UI_UNIT, ANDROIDX_COMPOSE_UI_UTIL, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_AUTOFILL, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_CORE), "androidx.autofill"),
-            new BuiltInLibrary(ANDROIDX_COMPOSE_MATERIAL3, List.of(ANDROIDX_ANIMATION, ANDROIDX_ANIMATION_CORE, ANDROIDX_ANNOTATION_JVM, ANDROIDX_COMPOSE_MATERIAL_RIPPLE, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_UI, ANDROIDX_COMPOSE_UI_GRAPHICS, ANDROIDX_COMPOSE_UI_TEXT, ANDROIDX_COMPOSE_UI_UNIT, ANDROIDX_FOUNDATION, ANDROIDX_FOUNDATION_LAYOUT, JETBRAINS_KOTLIN_STDLIB), "androidx.compose.material3"),
-            new BuiltInLibrary(ANDROIDX_COMPOSE_MATERIAL_RIPPLE, List.of(ANDROIDX_ANIMATION, ANDROIDX_ANNOTATION_JVM, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_UI, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_COMPOSE_RUNTIME, List.of(JETBRAINS_ANNOTATIONS, JETBRAINS_KOTLIN_STDLIB, JETBRAINS_KOTLINX_COROUTINES_CORE_JVM)),
-            new BuiltInLibrary(ANDROIDX_COMPOSE_RUNTIME_SAVEABLE, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_COMPOSE_RUNTIME, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_COMPOSE_UI, List.of(ANDROIDX_ANNOTATION_EXPERIMENTAL, ANDROIDX_ANNOTATION_JVM, ANDROIDX_AUTOFILL, ANDROIDX_COLLECTION_JVM, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_RUNTIME_SAVEABLE, ANDROIDX_COMPOSE_UI_GEOMETRY, ANDROIDX_COMPOSE_UI_GRAPHICS, ANDROIDX_COMPOSE_UI_TEXT, ANDROIDX_COMPOSE_UI_UNIT, ANDROIDX_COMPOSE_UI_UTIL, ANDROIDX_CORE, ANDROIDX_CUSTOMVIEW_POOLINGCONTAINER, ANDROIDX_LIFECYCLE_RUNTIME, ANDROIDX_PROFILEINSTALLER, ANDROIDX_SAVEDSTATE, JETBRAINS_KOTLIN_STDLIB, JETBRAINS_KOTLINX_COROUTINES_CORE_JVM), "androidx.compose.ui"),
-            new BuiltInLibrary(ANDROIDX_COMPOSE_UI_GEOMETRY, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_COMPOSE_RUNTIME, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_COMPOSE_UI_GRAPHICS, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_UI_GEOMETRY, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_COMPOSE_UI_TEXT, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_COLLECTION_JVM, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_UI_GEOMETRY, ANDROIDX_COMPOSE_UI_GRAPHICS, ANDROIDX_COMPOSE_UI_UNIT, ANDROIDX_COMPOSE_UI_UTIL, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_COMPOSE_UI_UNIT, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_UI_GEOMETRY, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_COMPOSE_UI_UTIL, List.of(ANDROIDX_ANNOTATION_JVM, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_FOUNDATION, List.of(ANDROIDX_ANIMATION, ANDROIDX_ANNOTATION_JVM, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_UI, ANDROIDX_FOUNDATION_LAYOUT, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_FOUNDATION_LAYOUT, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_COMPOSE_RUNTIME, ANDROIDX_COMPOSE_UI, ANDROIDX_COMPOSE_UI_UNIT, JETBRAINS_KOTLIN_STDLIB)),
-            new BuiltInLibrary(ANDROIDX_LIFECYCLE_RUNTIME_KTX, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_LIFECYCLE_RUNTIME, JETBRAINS_KOTLIN_STDLIB, JETBRAINS_KOTLINX_COROUTINES_ANDROID)),
-            new BuiltInLibrary(ANDROIDX_LIFECYCLE_VIEWMODEL_KTX, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_LIFECYCLE_VIEWMODEL, JETBRAINS_KOTLIN_STDLIB, JETBRAINS_KOTLINX_COROUTINES_ANDROID)),
-            new BuiltInLibrary(ANDROIDX_PROFILEINSTALLER, List.of(ANDROIDX_ANNOTATION_JVM, ANDROIDX_STARTUP_RUNTIME), "androidx.profileinstaller"),
-            new BuiltInLibrary(ANDROIDX_SAVEDSTATE_KTX, List.of(ANDROIDX_SAVEDSTATE, JETBRAINS_KOTLIN_STDLIB)),
 
             new BuiltInLibrary(ANDROIDX_ANNOTATION_EXPERIMENTAL, List.of(JETBRAINS_KOTLIN_STDLIB)),
 
@@ -644,7 +600,6 @@ public class BuiltInLibraries {
             new KB().a(libsArchivePath, libsDirectoryPath);
         }
         maybeExtractCoreLambdaStubsJar();
-        maybeExtractComposeCompilerPlugin();
         if (ProjectBuilder.hasFileChanged(baseAssetsPath + testkeyArchiveName, testkeyArchivePath)) {
             for (BuildProgressReceiver receiver : progressReceivers) {
                 receiver.onProgress("Extracting built-in signing keys...", 6);
@@ -676,16 +631,6 @@ public class BuiltInLibraries {
         String coreLambdaStubsJarName = "core-lambda-stubs.jar";
         String coreLambdaStubsJarPath = new File(BuiltInLibraries.EXTRACTED_COMPILE_ASSETS_PATH, coreLambdaStubsJarName).getAbsolutePath();
         ProjectBuilder.hasFileChanged("libs" + File.separator + coreLambdaStubsJarName, coreLambdaStubsJarPath);
-    }
-
-    public static File getComposeCompilerPluginFile() {
-        return new File(EXTRACTED_COMPILE_ASSETS_PATH, "kotlin-compose-compiler-plugin-embeddable-2.1.21.jar");
-    }
-
-    public static void maybeExtractComposeCompilerPlugin() {
-        String composeCompilerPluginName = "kotlin-compose-compiler-plugin-embeddable-2.1.21.jar";
-        String composeCompilerPluginPath = getComposeCompilerPluginFile().getAbsolutePath();
-        ProjectBuilder.hasFileChanged("libs" + File.separator + composeCompilerPluginName, composeCompilerPluginPath);
     }
 
     public static class BuiltInLibrary implements Parcelable {

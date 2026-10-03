@@ -20,11 +20,6 @@ public class KotlinCompilerBridge {
     public static void maybeAddKotlinBuiltInLibraryDependenciesIfPossible(ProjectBuilder builder, BuiltInLibraryManager builtInLibraryManager) {
         if (KotlinCompilerUtil.areAnyKtFilesPresent(builder)) {
             builtInLibraryManager.addLibrary(BuiltInLibraries.JETBRAINS_KOTLIN_STDLIB);
-            if (KotlinCompilerUtil.isComposeUsed(builder)) {
-                builtInLibraryManager.addLibrary(BuiltInLibraries.ANDROIDX_ACTIVITY_COMPOSE);
-                builtInLibraryManager.addLibrary(BuiltInLibraries.ANDROIDX_COMPOSE_MATERIAL3);
-                builtInLibraryManager.addLibrary(BuiltInLibraries.ANDROIDX_FOUNDATION);
-            }
         }
     }
 
