@@ -69,3 +69,4 @@ app/release/
 .kilo
 tmp/
 app/build/
+.mimosa/
