@@ -1,6 +1,10 @@
 <resources>
     <style name="Base.Theme.SketchwarePro" parent="Theme.Material3.DayNight.NoActionBar" />
     <style name="Theme.SketchwarePro" parent="Platform.Theme.SketchwarePro">
+        <!-- Custom syntax-highlighter colors. These attrs are declared in attrs.xml
+             and must be resolved from the active app/dialog theme. -->
+        <item name="colorViolet">@color/monokia_pro_purple</item>
+        <item name="colorGreen">@color/monokia_pro_green</item>
         <item name="bottomNavigationStyle">@style/Widget.SketchwarePro.BottomNavigationView</item>
         <item name="chipStyle">@style/Widget.SketchwarePro.Chip</item>
         <item name="collapsingToolbarLayoutStyle">?attr/collapsingToolbarLayoutLargeStyle</item>
