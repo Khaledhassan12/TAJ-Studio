@@ -52,7 +52,12 @@
         <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Medium</item>
     </style>
 
-    <style name="ThemeOverlay.SketchwarePro.ViewEditor" parent="Base.Theme.MaterialComponents.Light" />
+    <style name="ThemeOverlay.SketchwarePro.ViewEditor" parent="Base.Theme.MaterialComponents.Light">
+        <!-- Keep custom syntax-highlighter attrs available when the ViewEditor
+             creates its own themed context instead of inheriting the app theme. -->
+        <item name="colorViolet">@color/monokia_pro_purple</item>
+        <item name="colorGreen">@color/monokia_pro_green</item>
+    </style>
 
     <style name="ThemeOverlay.SketchwarePro.ViewEditor.Material3.Light" parent="ThemeOverlay.Material3.DynamicColors.Light" />
 
