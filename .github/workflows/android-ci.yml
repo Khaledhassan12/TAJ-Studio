@@ -59,7 +59,7 @@ jobs:
           keytool -genkeypair -v \
             -keystore testkey.keystore \
             -storepass testkey \
-            -keyalias testkey \
+            -alias testkey \
             -keypass testkey \
             -keyalg RSA \
             -keysize 2048 \
