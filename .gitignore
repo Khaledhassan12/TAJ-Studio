@@ -70,3 +70,4 @@ app/release/
 tmp/
 app/build/
 .mimosa/
+/build/
