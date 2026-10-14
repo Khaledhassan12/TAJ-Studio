@@ -39,9 +39,10 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
-  group: android-ci-${{ github.workflow }}-${{ github.ref }}
+  group: android-ci-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
@@ -50,6 +51,20 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+      - name: Cancel older active runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" \\
+            --jq '.workflow_runs[] | select(.id < (env.GITHUB_RUN_ID | tonumber) and .path == ".github/workflows/android-ci.yml" and (.status == "in_progress" or .status == "queued" or .status == "pending" or .status == "waiting" or .status == "requested")) | .id' |
+          while read -r run_id; do
+            [ -n "$run_id" ] || continue
+            echo "Cancelling older run $run_id"
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/cancel"
+          done
+
       - name: Checkout
         uses: actions/checkout@v5
         with:
