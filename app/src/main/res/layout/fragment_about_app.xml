@@ -44,12 +44,14 @@
 
                 <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="228dp"
+                    android:layout_height="260dp"
                     android:layout_marginTop="12dp"
+                    android:id="@+id/maintainerHero"
                     android:background="@drawable/bg_taj_maintainer_hero"
                     android:clipToOutline="true">
 
                     <ImageView
+                        android:id="@+id/maintainerBackdrop"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:alpha="0.24"
@@ -70,7 +72,8 @@
                         android:padding="16dp">
 
                         <com.google.android.material.imageview.ShapeableImageView
-                            android:layout_width="104dp"
+                            android:id="@+id/maintainerPortrait"
+                            android:layout_width="112dp"
                             android:layout_height="104dp"
                             android:contentDescription="@string/taj_maintainer_primary_name"
                             android:scaleType="centerCrop"
