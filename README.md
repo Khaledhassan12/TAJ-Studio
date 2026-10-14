@@ -1,6 +1,6 @@
 # TAJ Studio
 
-**TAJ Studio** is a community-developed Android application development environment built on the Sketchware Pro codebase. This repository contains the Android app source, Gradle build configuration, and CI workflows used to validate and package the project.
+**TAJ Studio** is a community-developed Android application development environment built on the Sketchware Pro codebase. This repository contains the Android app source, Gradle build configuration, and CI workflow used to build the project.
 
 TAJ Studio is an independent community project and is not affiliated with or endorsed by the Sketchware Pro maintainers.
 
@@ -14,7 +14,6 @@ TAJ Studio is an independent community project and is not affiliated with or end
 - **Language:** Primarily Java, with Kotlin support in the build
 
 [![Android CI Build](https://github.com/Khaledhassan12/TAJ-Studio/actions/workflows/android-ci.yml/badge.svg?branch=TAJ-STUDIO-AI)](https://github.com/Khaledhassan12/TAJ-Studio/actions/workflows/android-ci.yml)
-[![Android CI](https://github.com/Khaledhassan12/TAJ-Studio/actions/workflows/android.yml/badge.svg?branch=TAJ-STUDIO-AI)](https://github.com/Khaledhassan12/TAJ-Studio/actions/workflows/android.yml)
 
 ## Build locally
 
@@ -49,11 +48,9 @@ The current release configuration uses the repository's test/debug signing setup
 
 ## Continuous integration
 
-- **Android CI Build** builds both Debug and Release APKs and uploads them as workflow artifacts.
-- **Android CI** builds the Release APK, uploads the artifact, and can send it to Telegram when the required repository secrets are configured.
-- Telegram delivery requires `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `TELEGRAM_BOT_TOKEN`, and `TELEGRAM_CHAT_ID`. `TELEGRAM_TOPIC_ID` is optional. Configure these in GitHub Actions secrets; never commit them to source control.
+The Android CI workflow only checks out the source, prepares the Java/Android build environment, and builds Debug and Release APKs. It does not send messages, upload APKs as workflow artifacts, publish releases, or push generated changes to another branch or service.
 
-Workflow runs and downloadable artifacts are available from the [Actions page](https://github.com/Khaledhassan12/TAJ-Studio/actions).
+Build logs and status are available from the [GitHub Actions page](https://github.com/Khaledhassan12/TAJ-Studio/actions). APK files remain in the runner's temporary workspace and are not retained after the job ends.
 
 ## Development guidelines
 
