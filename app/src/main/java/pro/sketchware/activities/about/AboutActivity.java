@@ -16,6 +16,9 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.besome.sketch.lib.base.BaseAppCompatActivity;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+
+import java.util.ArrayList;
 
 import mod.hey.studios.util.Helper;
 import pro.sketchware.R;
@@ -94,19 +97,51 @@ public class AboutActivity extends BaseAppCompatActivity {
 
     private void initData() {
         network.get(Helper.getResString(R.string.link_about_team), response -> {
-            if (response != null) {
-                sharedPref.edit().putString("aboutData", response).apply();
-            } else {
-                response = sharedPref.getString("aboutData", null);
-            }
-            if (response == null) return;
-
             Gson gson = new Gson();
-            AboutResponseModel aboutResponseModel = gson.fromJson(response, AboutResponseModel.class);
-            aboutAppData.setDiscordInviteLink(aboutResponseModel.getDiscordInviteLink());
-            aboutAppData.setTeamMembers(aboutResponseModel.getTeam());
-            aboutAppData.setChangelog(aboutResponseModel.getChangelog());
+            AboutResponseModel data = parseAboutResponse(gson, response);
+
+            // Cache only a successfully parsed response. Never replace good data with an
+            // HTTP error page, an empty body, or malformed JSON.
+            if (data != null) {
+                if (response != null) {
+                    sharedPref.edit().putString("aboutData", response).apply();
+                }
+                publishAboutData(data);
+                return;
+            }
+
+            String cachedResponse = sharedPref.getString("aboutData", null);
+            data = parseAboutResponse(gson, cachedResponse);
+            if (data != null) {
+                publishAboutData(data);
+            }
         });
+    }
+
+    private AboutResponseModel parseAboutResponse(Gson gson, String response) {
+        if (response == null || response.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            AboutResponseModel data = gson.fromJson(response, AboutResponseModel.class);
+            // A valid JSON object must contain at least one expected payload field.
+            if (data == null || (data.getTeam() == null && data.getChangelog() == null
+                    && data.getDiscordInviteLink() == null)) {
+                return null;
+            }
+            return data;
+        } catch (JsonSyntaxException | IllegalStateException exception) {
+            return null;
+        }
+    }
+
+    private void publishAboutData(AboutResponseModel data) {
+        aboutAppData.setDiscordInviteLink(data.getDiscordInviteLink());
+        aboutAppData.setTeamMembers(data.getTeam() != null
+                ? data.getTeam() : new ArrayList<>());
+        aboutAppData.setChangelog(data.getChangelog() != null
+                ? data.getChangelog() : new ArrayList<>());
     }
 
     // ----------------- classes ----------------- //
