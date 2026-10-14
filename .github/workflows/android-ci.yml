@@ -6,7 +6,7 @@ on:
       - Master
       - TAJ-STUDIO-AI
     paths:
-      - '.github/workflows/android-ci.yml'
+      - '.github/workflows/**'
       - 'app/**'
       - 'gradle/**'
       - 'build.gradle'
@@ -20,7 +20,7 @@ on:
       - Master
       - TAJ-STUDIO-AI
     paths:
-      - '.github/workflows/android-ci.yml'
+      - '.github/workflows/**'
       - 'app/**'
       - 'gradle/**'
       - 'build.gradle'
