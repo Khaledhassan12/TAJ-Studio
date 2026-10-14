@@ -168,6 +168,15 @@ tasks.register('createMockGoogleServices') {
 }"""
             mockFile.text = mockContent
         }
+
+        // The Google Services Gradle plugin searches variant-specific files.
+        // A debug-only mock lets assembleDebug pass, but assembleRelease fails
+        // when no GOOGLE_SERVICES_JSON secret is configured in CI.
+        def mockReleaseFile = file("src/release/google-services.json")
+        if (!mockReleaseFile.exists()) {
+            mockReleaseFile.parentFile.mkdirs()
+            mockReleaseFile.text = mockFile.text
+        }
     }
 }
 
