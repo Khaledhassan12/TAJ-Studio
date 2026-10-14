@@ -10,6 +10,11 @@
       — '*' - instead of using the asterisk (*), replace it with the specific name of the component whose style is being modified or created.
     -->
 
+    <style name="ShapeAppearanceOverlay.SketchwarePro.MaintainerPortrait" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
     <style name="Widget.SketchwarePro.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
         <item name="android:background">?attr/colorSurfaceContainer</item>
         <item name="elevation">0dp</item>
@@ -87,8 +92,7 @@
 
     <style name="ThemeOverlay.SketchwarePro.AlertDialog" parent="ThemeOverlay.Material3Expressive.MaterialAlertDialog.Centered">
         <item name="android:colorBackground">?attr/colorSurfaceContainer</item>
-        <item name="android:windowAnimationStyle">@style/MaterialAlertDialog.Material3.Animation
-        </item>
+        <item name="android:windowAnimationStyle">@style/MaterialAlertDialog.Material3.Animation</item>
         <item name="android:windowSoftInputMode">adjustResize</item>
         <item name="android:windowMinWidthMajor">65%</item>
         <item name="android:windowMinWidthMinor">98%</item>
@@ -96,13 +100,9 @@
 
         <!-- Expressive button styles have increased horizontal padding, which we don't need at all. -->
         <item name="buttonBarButtonStyle">@style/Widget.Material3.Button.TextButton.Dialog</item>
-        <item name="buttonBarNegativeButtonStyle">@style/Widget.Material3.Button.TextButton.Dialog
-        </item>
-        <item name="buttonBarNeutralButtonStyle">
-            @style/Widget.Material3.Button.TextButton.Dialog.Flush
-        </item>
-        <item name="buttonBarPositiveButtonStyle">@style/Widget.Material3.Button.TextButton.Dialog
-        </item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.Material3.Button.TextButton.Dialog</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.Material3.Button.TextButton.Dialog.Flush</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.Material3.Button.TextButton.Dialog</item>
     </style>
 
     <style name="MaterialAlertDialog.SketchwarePro" parent="MaterialAlertDialog.Material3Expressive">
@@ -128,14 +128,6 @@
         <item name="android:textColor">?attr/colorOnSecondary</item>
     </style>
 
-    <style name="Widget.SketchwarePro.Chip.ProjectPreview" parent="Widget.Material3.Chip.Suggestion">
-        <item name="android:focusable">false</item>
-        <item name="android:clickable">false</item>
-        <item name="android:stateListAnimator">@null</item>
-        <item name="rippleColor">@null</item>
-        <item name="shapeAppearance">?attr/shapeAppearanceCornerLarge</item>
-    </style>
-
     <style name="TextAppearance.SketchwarePro.Chip" parent="TextAppearance.SketchwarePro.BodyMedium">
     </style>
 
@@ -149,13 +141,5 @@
 
     <style name="ThemeOverlay.SketchwarePro.Chip.ProjectPreview" parent="">
         <item name="chipStyle">@style/Widget.SketchwarePro.Chip.ProjectPreview</item>
-    </style>
-    <!-- Theme used by AsdDialog to fix keyboard visibility for find/replace -->
-    <style name="AsdEditorDialogTheme" parent="Theme.SketchwarePro">
-        <item name="android:windowIsFloating">false</item>
-        <item name="android:windowFullscreen">false</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowSoftInputMode">stateVisible|adjustResize</item>
-        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
     </style>
 </resources>
