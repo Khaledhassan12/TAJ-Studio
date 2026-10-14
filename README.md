@@ -1,83 +1,76 @@
-<p align="center">
-  <img src="assets/Sketchware-Pro.png" style="width: 30%;" />
-</p>
+# TAJ Studio
 
-# Sketchware Pro
-[![GitHub contributors](https://img.shields.io/github/contributors/Sketchware-Pro/Sketchware-Pro)](https://github.com/Sketchware-Pro/Sketchware-Pro/graphs/contributors)
-[![GitHub last commit](https://img.shields.io/github/last-commit/Sketchware-Pro/Sketchware-Pro)](https://github.com/Sketchware-Pro/Sketchware-Pro/commits/)
-[![Discord server stats](https://img.shields.io/discord/790686719753846785)](http://discord.gg/kq39yhT4rX)
-[![Total downloads](https://img.shields.io/github/downloads/Sketchware-Pro/Sketchware-Pro/total)](https://github.com/Sketchware-Pro/Sketchware-Pro/releases)
-[![Repository Size](https://img.shields.io/github/repo-size/Sketchware-Pro/Sketchware-Pro)](https://github.com/Sketchware-Pro/Sketchware-Pro)
+**TAJ Studio** is a community-developed Android application development environment built on the Sketchware Pro codebase. This repository contains the Android app source, Gradle build configuration, and CI workflows used to validate and package the project.
 
-Welcome to Sketchware Pro! Here you'll find the source code of many classes in Sketchware Pro and, most importantly, the place to contribute to Sketchware Pro.
+TAJ Studio is an independent community project and is not affiliated with or endorsed by the Sketchware Pro maintainers.
 
-## Building the App
-To build the app, you must use Gradle. It's highly recommended to use Android Studio for the best experience.
+## Project status
 
-### Source Code Map
+- **Primary development branch:** `TAJ-STUDIO-AI`
+- **Stable/base branch:** `Master`
+- **Android application ID:** `pro.sketchware`
+- **Minimum Android version:** Android 8.0 (API 26)
+- **Build toolchain:** Gradle 8.13, JDK 17, Android SDK 36
+- **Language:** Primarily Java, with Kotlin support in the build
 
-| Class           | Role                                        |
-| --------------- | ------------------------------------------- |
-| `a.a.a.ProjectBuilder`      | Helper for compiling an entire project       |
-| `a.a.a.Ix`      | Responsible for generating AndroidManifest.xml |
-| `a.a.a.Jx`      | Generates source code of activities          |
-| `a.a.a.Lx`      | Generates source code of components, such as listeners, etc. |
-| `a.a.a.Ox`      | Responsible for generating XML files of layouts |
-| `a.a.a.qq`      | Registry of built-in libraries' dependencies |
-| `a.a.a.tq`      | Responsible for the compiling dialog's quizzes |
-| `a.a.a.yq`      | Organizes Sketchware projects' file paths    |
+[![Android CI Build](https://github.com/Khaledhassan12/TAJ-Studio/actions/workflows/android-ci.yml/badge.svg?branch=TAJ-STUDIO-AI)](https://github.com/Khaledhassan12/TAJ-Studio/actions/workflows/android-ci.yml)
+[![Android CI](https://github.com/Khaledhassan12/TAJ-Studio/actions/workflows/android.yml/badge.svg?branch=TAJ-STUDIO-AI)](https://github.com/Khaledhassan12/TAJ-Studio/actions/workflows/android.yml)
 
-> [!TIP]
-> You can also check the `mod` package, which contains the majority of contributors' changes.
+## Build locally
+
+### Requirements
+
+- JDK 17
+- Android SDK platform 36 and Android build tools
+- A working internet connection for Gradle dependency resolution
+
+### Build commands
+
+On Linux or macOS:
+
+```bash
+./gradlew --no-daemon assembleDebug
+./gradlew --no-daemon assembleRelease
+```
+
+On Windows:
+
+```bat
+gradlew.bat --no-daemon assembleDebug
+gradlew.bat --no-daemon assembleRelease
+```
+
+The APKs are generated under:
+
+- `app/build/outputs/apk/debug/`
+- `app/build/outputs/apk/release/`
+
+The current release configuration uses the repository's test/debug signing setup. It is suitable for CI validation and testing, **not a production signing key for a public release**. Keep any private production signing material outside the repository and out of logs.
+
+## Continuous integration
+
+- **Android CI Build** builds both Debug and Release APKs and uploads them as workflow artifacts.
+- **Android CI** builds the Release APK, uploads the artifact, and can send it to Telegram when the required repository secrets are configured.
+- Telegram delivery requires `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `TELEGRAM_BOT_TOKEN`, and `TELEGRAM_CHAT_ID`. `TELEGRAM_TOPIC_ID` is optional. Configure these in GitHub Actions secrets; never commit them to source control.
+
+Workflow runs and downloadable artifacts are available from the [Actions page](https://github.com/Khaledhassan12/TAJ-Studio/actions).
+
+## Development guidelines
+
+- Keep changes focused and reviewable.
+- Prefer fixing the underlying cause over masking errors.
+- Preserve project compatibility and test build-affecting changes with CI.
+- Do not commit generated build output, local SDK configuration, credentials, or production signing keys.
+- Use clear Conventional Commit messages, for example `fix(editor): prevent invalid child indexes` or `chore(ci): pin build tooling`.
+
+## Upstream code and licensing
+
+TAJ Studio is derived from [Sketchware Pro](https://github.com/Sketchware-Pro/Sketchware-Pro). Existing upstream code and third-party components retain their respective copyright and licensing terms. Read [LICENSE.md](LICENSE.md) before reusing or redistributing code; do not assume that all code in this repository is available under one permissive license.
 
 ## Contributing
 
-If you'd like to contribute to Sketchware Pro, follow these steps:
+Before submitting a change, explain the problem it solves, keep the patch scoped, and verify relevant build or runtime behavior. For compiler, project-generation, or editor changes, include reproduction steps and test evidence whenever possible.
 
-1. Fork this repository.
-2. Make changes in your forked repository.
-3. Test out those changes.
-4. Create a pull request in this repository.
-5. Your pull request will be reviewed by the repository members and merged if accepted.
+---
 
-We welcome contributions of any size, whether they are major features or bug fixes, but please note that all contributions will be thoroughly reviewed.
-
-### Commit Message
-
-When you make changes to one or more files, you need to commit those changes with a commit message. Here are some guidelines:
-
-- Keep the commit message short and detailed.
-- Use one of these commit types as a prefix:
-  - `feat:` for a feature, possibly improving something already existing.
-  - `fix:` for a fix, such as a bug fix.
-  - `style:` for features and updates related to styling.
-  - `refactor:` for refactoring a specific section of the codebase.
-  - `test:` for everything related to testing.
-  - `docs:` for everything related to documentation.
-  - `chore:` for code maintenance (you can also use emojis to represent commit types).
-
-Examples:
-- `feat: Speed up compiling with new technique`
-- `fix: Fix crash during launch on certain phones`
-- `refactor: Reformat code in File.java`
-
-> [!IMPORTANT]
-> If you want to add new features that don't require editing other packages other than `pro.sketchware`, make your changes in `pro.sketchware` package, and respect the directories and files structure and names. Also, even though the project compiles just fine with Kotlin classes that you might add, try to make your changes or additions in Java, not Kotlin unless it is more than necessary.
-
-## Thanks for Contributing
-
-Thank you for contributing to Sketchware Pro! Your contributions help keep Sketchware Pro alive. Each accepted contribution will be noted down in the "About Team" activity. We'll use your GitHub name and profile picture initially, but they can be changed, of course.
-
-## Discord
-
-Want to chat with us, discuss changes, or just hang out? We have a Discord server just for that.
-
-[![Join our Discord server!](https://invidget.switchblade.xyz/kq39yhT4rX)](http://discord.gg/kq39yhT4rX)
-
-## Disclaimer
-
-This mod was not created for any harmful purposes, such as harming Sketchware; quite the opposite, actually. It was made to keep Sketchware alive by the community for the community. Please use it at your own discretion and consider becoming a Patreon backer to support the developers. Unfortunately, other ways to support them are not working anymore, so Patreon is the only available option currently. You can find their Patreon page [here](https://www.patreon.com/sketchware).
-
-We do NOT permit publishing Sketchware Pro as it is, or with modifications, on Play Store or on any other app store. Keep in mind that this project is still a mod. Unauthorized modding of apps is considered illegal and we discourage such behavior.
-
-We love Sketchware very much and are grateful to Sketchware's developers for creating such an amazing app. However, we haven't received updates for a long time. That's why we decided to keep Sketchware alive by creating this mod, and it's completely free. We don't demand any money :)
+TAJ Studio is maintained as an independent community project. Names and trademarks belonging to upstream projects remain the property of their respective owners.
