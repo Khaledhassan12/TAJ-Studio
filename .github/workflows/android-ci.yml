@@ -3,18 +3,18 @@ name: Android CI Build
 on:
   push:
     branches:
-      - main
-      - ai-rebuild
+      - Master
+      - TAJ-STUDIO-AI
   pull_request:
     branches:
-      - main
-      - ai-rebuild
+      - Master
+      - TAJ-STUDIO-AI
   workflow_dispatch:
     inputs:
       ref:
         description: "Branch or commit to build"
         required: true
-        default: "ai-rebuild"
+        default: "TAJ-STUDIO-AI"
         type: string
 
 permissions:
