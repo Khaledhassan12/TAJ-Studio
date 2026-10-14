@@ -25,9 +25,9 @@ def main():
     commit_author, commit_message, commit_hash, commit_hash_short = get_git_commit_info()
 
     message = (
-        f"A new [commit](https://github.com/Sketchware-Pro/Sketchware-Pro/commit/{commit_hash}) has been merged to the repository by *{commit_author}*.\n\n"
+        f"A new [commit](https://github.com/Khaledhassan12/TAJ-Studio/commit/{commit_hash}) has been pushed to TAJ Studio by *{commit_author}*.\n\n"
         f"*What has changed:*\n>{escape_parentheses(commit_message)}\n\n"
-        f"I'm currently building it and will send you the APKs here within ~6 mins if the build is successful.\n\n#{commit_hash_short}"
+        f"TAJ Studio CI is building the APK. The build result and artifact will be available in the repository Actions page.\n\n#{commit_hash_short}"
     )
 
     escaped_message = escape_markdown_v2(message)
