@@ -4,6 +4,8 @@
              theme derived from this base theme. -->
         <item name="colorViolet">@color/monokia_pro_purple</item>
         <item name="colorGreen">@color/monokia_pro_green</item>
+        <!-- Used by the component-event add icon tint; declaring the attr alone is not enough. -->
+        <item name="colorCoolGreen">@color/scolor_green_normal</item>
         <item name="colorAmber">@color/design_tab_indicator_color</item>
     </style>
     <style name="Theme.SketchwarePro" parent="Platform.Theme.SketchwarePro">
