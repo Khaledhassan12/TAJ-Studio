@@ -42,47 +42,63 @@
                     android:textStyle="bold"
                     android:letterSpacing="0.08" />
 
-                <LinearLayout
+                <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="228dp"
                     android:layout_marginTop="12dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:background="@drawable/bg_taj_maintainer_hero"
+                    android:clipToOutline="true">
 
-                    <TextView
-                        android:layout_width="54dp"
-                        android:layout_height="54dp"
-                        android:background="@drawable/bg_taj_maintainer_avatar"
-                        android:gravity="center"
-                        android:text="KH"
-                        android:textColor="?attr/colorOnPrimary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:alpha="0.24"
+                        android:contentDescription="@string/taj_maintainer_primary_name"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/bg_taj_maintainer_portrait_placeholder" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_taj_maintainer_blur_scrim" />
 
                     <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:layout_width="104dp"
+                            android:layout_height="104dp"
+                            android:contentDescription="@string/taj_maintainer_primary_name"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/bg_taj_maintainer_portrait_placeholder"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Material3.Corner.Full"
+                            app:strokeColor="?attr/colorPrimary"
+                            app:strokeWidth="3dp" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:gravity="center"
                             android:text="@string/taj_maintainer_primary_name"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="22sp"
+                            android:textColor="@android:color/white"
+                            android:textSize="23sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center"
                             android:text="@string/taj_maintainer_alias"
-                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textColor="#E6FFFFFF"
                             android:textSize="12sp" />
                     </LinearLayout>
-                </LinearLayout>
+                </FrameLayout>
 
                 <com.google.android.material.chip.Chip
                     android:layout_width="wrap_content"
