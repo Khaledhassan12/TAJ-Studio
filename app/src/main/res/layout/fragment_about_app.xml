@@ -78,7 +78,7 @@
                             android:contentDescription="@string/taj_maintainer_primary_name"
                             android:scaleType="centerCrop"
                             android:src="@drawable/bg_taj_maintainer_portrait_placeholder"
-                            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Material3.Corner.Full"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.SketchwarePro.MaintainerPortrait"
                             app:strokeColor="?attr/colorPrimary"
                             app:strokeWidth="3dp" />
 
