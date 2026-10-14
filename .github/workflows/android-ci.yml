@@ -3,18 +3,38 @@ name: Android CI Build
 on:
   push:
     branches:
-      - main
-      - ai-rebuild
+      - Master
+      - TAJ-STUDIO-AI
+    paths:
+      - '.github/workflows/**'
+      - 'app/**'
+      - 'gradle/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'public-stable-ids.txt'
+      - 'settings.gradle'
   pull_request:
     branches:
-      - main
-      - ai-rebuild
+      - Master
+      - TAJ-STUDIO-AI
+    paths:
+      - '.github/workflows/**'
+      - 'app/**'
+      - 'gradle/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'public-stable-ids.txt'
+      - 'settings.gradle'
   workflow_dispatch:
     inputs:
       ref:
         description: "Branch or commit to build"
         required: true
-        default: "ai-rebuild"
+        default: "TAJ-STUDIO-AI"
         type: string
 
 permissions:
@@ -26,7 +46,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Debug APK
+    name: Build Debug and Release APKs
     runs-on: ubuntu-24.04
 
     steps:
@@ -70,10 +90,24 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew --no-daemon --stacktrace assembleDebug
 
+      - name: Build Release APK
+        env:
+          SKETCHUB_API_KEY: ${{ secrets.SKETCHUB_API_KEY }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: ./gradlew --no-daemon --stacktrace assembleRelease
+
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: TAJ-Studio-debug-${{ github.sha }}
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 30
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TAJ-Studio-release-${{ github.sha }}
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
