@@ -2608,4 +2608,26 @@ Please try again later"</string>
     <string name="ai_thought_for">Thought for %1$ds</string>
     <string name="ai_tap_read">Tap to read</string>
     <string name="ai_show_thinking">Show model thinking (when supported)</string>
+
+    <!-- TAJ Studio maintainer profile -->
+    <string name="taj_maintainer_heading">TAJ Studio Maintainers</string>
+    <string name="taj_maintainer_eyebrow">INDEPENDENT PROJECT • ENGINEERING &amp; PRODUCT VISION</string>
+    <string name="taj_maintainer_primary_name">Kha Led Hassan</string>
+    <string name="taj_maintainer_alias">Also known as Kha Led Banzema</string>
+    <string name="taj_maintainer_role">Founder • Product direction • AI-assisted engineering</string>
+    <string name="taj_maintainer_identity_title">Identity &amp; purpose</string>
+    <string name="taj_maintainer_identity_body">TAJ Studio is an independent evolution of the Sketchware-based Android development experience. Its direction is shaped around a practical idea: make complex project work more understandable, extensible and accessible on-device, while keeping the developer in control of every important change.</string>
+    <string name="taj_maintainer_vision_title">Vision &amp; mission</string>
+    <string name="taj_maintainer_vision_body">The goal is not merely to add buttons or decorate screens. It is to build a coherent development environment where project structure, source files, dependencies, build feedback, reusable components and intelligent assistance work together as one understandable workflow.</string>
+    <string name="taj_maintainer_engineering_title">Engineering philosophy</string>
+    <string name="taj_maintainer_engineering_body">The project explores layered architecture, explicit responsibility boundaries, reusable UI components, predictable state transitions, defensive error handling, asynchronous work, cache-aware data delivery and build validation. Changes should preserve existing behavior, respect project files and remain reviewable rather than hiding risky operations behind automation.</string>
+    <string name="taj_maintainer_ai_title">AI &amp; agent-assisted development</string>
+    <string name="taj_maintainer_ai_body">AI models and agent-oriented tools can support repository exploration, implementation planning, code generation, refactoring, test design and engineering documentation. They are treated as collaborators in a human-directed workflow—not as a substitute for verification. Proposed changes must be inspected, compiled and tested; destructive actions and publishing remain under developer control.</string>
+    <string name="taj_maintainer_architecture_title">Architecture &amp; system thinking</string>
+    <string name="taj_maintainer_architecture_body">The long-term direction includes clearer module boundaries, project-level knowledge, traceable engineering decisions, resilient local data, explicit capability contracts and a path toward local and remote model runtimes. Architecture diagrams and dependency maps should explain data flow, component ownership, lifecycle behavior and failure paths—not just make the project look complicated.</string>
+    <string name="taj_maintainer_roadmap_title">Exploration roadmap</string>
+    <string name="taj_maintainer_roadmap_body">Areas under exploration include safer project diagnostics, smart cleanup with preview-before-delete, import validation, dependency discovery, build and runtime diagnostics, reusable interface patterns, project-aware AI context, agent tool permissions, local model integration and accessible Material design. These are goals and exploration areas; availability depends on implementation and validation in each release.</string>
+    <string name="taj_maintainer_principles_title">Core principles</string>
+    <string name="taj_maintainer_principles_body">Human control • Transparent changes • Preserve existing work • Validate before release • Useful documentation • Accessible design • Reliable failure handling • Continuous learning.</string>
+    <string name="taj_maintainer_credit_note">This independent maintainer profile is separate from the upstream Sketchware Pro team and its official contributor data.</string>
 </resources>
