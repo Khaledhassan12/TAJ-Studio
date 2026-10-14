@@ -48,9 +48,9 @@ The current release configuration uses the repository's test/debug signing setup
 
 ## Continuous integration
 
-The Android CI workflow only checks out the source, prepares the Java/Android build environment, and builds Debug and Release APKs. It does not send messages, upload APKs as workflow artifacts, publish releases, or push generated changes to another branch or service.
+The Android CI workflow checks out the source, prepares the Java/Android build environment, and builds Debug and Release APKs. Both APKs are saved as downloadable GitHub Actions artifacts for **30 days**. The workflow does not send messages to Telegram or other platforms, publish releases, or push generated changes to another branch or service.
 
-Build logs and status are available from the [GitHub Actions page](https://github.com/Khaledhassan12/TAJ-Studio/actions). APK files remain in the runner's temporary workspace and are not retained after the job ends.
+Open the [GitHub Actions page](https://github.com/Khaledhassan12/TAJ-Studio/actions), select a successful build run, and download either `TAJ-Studio-debug-` or `TAJ-Studio-release-` from its Artifacts section. Artifacts expire after 30 days, so download the APK before then.
 
 ## Development guidelines
 
