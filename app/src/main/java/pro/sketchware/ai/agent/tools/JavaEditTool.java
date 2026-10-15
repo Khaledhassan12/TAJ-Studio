@@ -70,6 +70,10 @@ public final class JavaEditTool implements Tool {
         DomainToolHelper.backup(path);
         try {
             FileUtil.writeFile(path, next);
+            if (!f.isFile() || !next.equals(FileUtil.readFile(path))) {
+                DomainToolHelper.restore(path);
+                return new ToolResult("Edit verification failed: persisted content differs from requested content.", true);
+            }
             LiveRegistry.notifyChanged("manager".equals(target) ? "java_manager" : "project_java", path);
             return new ToolResult("verified: content matches @ " + path, false);
         } catch (Exception e) {
