@@ -35,7 +35,7 @@ public final class ResMoveCopyTool implements Tool {
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         String fromPath = ProjectPaths.resourceRoot(sc_id) + "/" + args.getString("fromFolder") + "/" + args.getString("fromName");
         String toPath = ProjectPaths.resourceRoot(sc_id) + "/" + args.getString("toFolder") + "/" + args.getString("toName");
         String op = args.getString("op");
