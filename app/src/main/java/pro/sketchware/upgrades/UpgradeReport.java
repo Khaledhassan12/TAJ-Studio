@@ -23,6 +23,7 @@ public class UpgradeReport {
     public boolean androidxOn;
     public int minSdk;
     public int libsCount;
+    public int diagnosticCount;
 
     public UpgradeReport(String scId, String appName, String packageName, String age, long lastModified, boolean hasCustomIcon) {
         this.scId = scId;
@@ -35,17 +36,24 @@ public class UpgradeReport {
 
     public boolean isUpToDate() {
         for (UpgradeItem item : items) {
-            if (item.status == UpgradeItem.Status.UPGRADABLE) {
+            if (item.status != UpgradeItem.Status.UP_TO_DATE) {
                 return false;
             }
         }
         return true;
     }
 
+    public boolean hasActionableUpgrades() {
+        for (UpgradeItem item : items) {
+            if (item.status == UpgradeItem.Status.UPGRADABLE) return true;
+        }
+        return false;
+    }
+
     public int getUpgradableCount() {
         int count = 0;
         for (UpgradeItem item : items) {
-            if (item.status == UpgradeItem.Status.UPGRADABLE) {
+            if (item.status != UpgradeItem.Status.UP_TO_DATE) {
                 count++;
             }
         }

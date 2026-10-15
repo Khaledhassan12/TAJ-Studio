@@ -19,6 +19,7 @@ import a.a.a.wq;
 import a.a.a.yB;
 import mod.hey.studios.project.ProjectSettings;
 import pro.sketchware.R;
+import pro.sketchware.upgrades.scan.ProjectDiagnosticsScanner;
 
 /**
  * Background scanner that analyzes projects for potential upgrades.
@@ -45,12 +46,31 @@ public class ProjectUpgradeScanner {
         if (callback != null) callback.onScanStarted();
         executor.execute(() -> {
             List<UpgradeReport> reports = new ArrayList<>();
-            ArrayList<HashMap<String, Object>> projects = lC.a();
+            ArrayList<HashMap<String, Object>> projects;
+            try {
+                projects = lC.a();
+            } catch (Exception projectListError) {
+                reports.add(createScanFailureReport(projectListError));
+                mainHandler.post(() -> {
+                    if (callback != null) callback.onScanFinished(reports);
+                });
+                return;
+            }
 
             for (HashMap<String, Object> project : projects) {
-                String scId = yB.c(project, "sc_id");
-                String appName = yB.c(project, "my_app_name");
-                String pkgName = yB.c(project, "my_sc_pkg_name");
+                if (Thread.currentThread().isInterrupted()) break;
+                String scId = null;
+                String appName = "Unknown project";
+                String pkgName = "";
+                try {
+                    scId = yB.c(project, "sc_id");
+                    appName = yB.c(project, "my_app_name");
+                    pkgName = yB.c(project, "my_sc_pkg_name");
+                    if (appName == null || appName.trim().isEmpty()) appName = "Unnamed project";
+                    if (pkgName == null) pkgName = "";
+                    if (scId == null || scId.trim().isEmpty()) {
+                        throw new IllegalArgumentException("Missing project ID");
+                    }
                 
                 File projectFolder = new File(wq.c(scId));
                 long lastMod = projectFolder.lastModified();
@@ -124,13 +144,73 @@ public class ProjectUpgradeScanner {
                 if (libConfig.f != null && "Y".equals(libConfig.f.useYn)) libsCount++;
                 report.libsCount = libsCount;
 
+                // Run bounded read-only diagnostics for every discovered project, not only
+                // after the user opens a project's detailed report.
+                try {
+                    String diagnosticPath = wq.b(scId);
+                    File diagnosticRoot = diagnosticPath == null ? null : new File(diagnosticPath);
+                    if (diagnosticRoot != null && diagnosticRoot.isDirectory()) {
+                        List<pro.sketchware.upgrades.model.Finding> diagnostics =
+                                new ProjectDiagnosticsScanner().scan(diagnosticPath);
+                        if (!diagnostics.isEmpty()) {
+                            report.diagnosticCount = diagnostics.size();
+                            StringBuilder summary = new StringBuilder();
+                            int shown = Math.min(3, diagnostics.size());
+                            for (int i = 0; i < shown; i++) {
+                                if (i > 0) summary.append(", ");
+                                summary.append(diagnostics.get(i).title);
+                            }
+                            if (diagnostics.size() > shown) summary.append(", and more");
+                            report.items.add(new UpgradeItem(
+                                    UpgradeItem.Type.PROJECT_HEALTH,
+                                    UpgradeItem.Status.RECOMMENDED_MANUAL,
+                                    "Project Doctor: " + diagnostics.size() + " finding(s)",
+                                    summary.toString() + ". Open the project report for details; no files were changed."));
+                        }
+                    }
+                } catch (Exception diagnosticError) {
+                    report.items.add(new UpgradeItem(
+                            UpgradeItem.Type.PROJECT_HEALTH,
+                            UpgradeItem.Status.RECOMMENDED_MANUAL,
+                            "Project Doctor could not finish",
+                            "Some diagnostics could not be collected (" +
+                                    diagnosticError.getClass().getSimpleName() +
+                                    "). Open the project report and review the project path."));
+                }
+
                 reports.add(report);
+                } catch (Exception projectError) {
+                    String safeId = scId == null || scId.trim().isEmpty()
+                            ? "unknown-" + Integer.toHexString(project == null ? 0 : project.hashCode())
+                            : scId;
+                    UpgradeReport failedReport = new UpgradeReport(safeId, appName, pkgName, "unknown", 0L, false);
+                    failedReport.items.add(new UpgradeItem(
+                            UpgradeItem.Type.PROJECT_HEALTH,
+                            UpgradeItem.Status.RECOMMENDED_MANUAL,
+                            "Project scan could not finish",
+                            "This project was kept in the results, but one or more checks failed (" +
+                                    projectError.getClass().getSimpleName() +
+                                    "). Review its metadata and open the detailed report."));
+                    reports.add(failedReport);
+                }
             }
 
             mainHandler.post(() -> {
                 if (callback != null) callback.onScanFinished(reports);
             });
         });
+    }
+
+    private UpgradeReport createScanFailureReport(Exception error) {
+        UpgradeReport report = new UpgradeReport("project-list-error", "Project list unavailable",
+                "", "unknown", 0L, false);
+        report.items.add(new UpgradeItem(
+                UpgradeItem.Type.PROJECT_HEALTH,
+                UpgradeItem.Status.RECOMMENDED_MANUAL,
+                "Could not enumerate projects",
+                "Sketchware's project index could not be read (" + error.getClass().getSimpleName() +
+                        "). No project files were changed."));
+        return report;
     }
 
     private String calculateAge(long timestamp) {

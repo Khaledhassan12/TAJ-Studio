@@ -43,25 +43,65 @@ public class SafeFixApplier {
                 String backupRoot = dataRoot + "/.upgrade_backup/" + timestamp;
 
                 for (Finding f : selectedFindings) {
-                    if (!f.autoFixable) continue;
-
-                    // Mandatory Backup
-                    for (String path : f.paths) {
-                        File original = new File(path);
-                        if (original.exists()) {
-                            String relativePath = path.replace(dataRoot, "");
-                            File backupFile = new File(backupRoot, relativePath);
-                            // G6: Ensure backup directory exists
-                            if (backupFile.getParentFile() != null) {
-                                backupFile.getParentFile().mkdirs();
-                            }
-                            FileUtil.copyFile(path, backupFile.getAbsolutePath());
-                        }
+                    if (f == null) continue;
+                    // Deletion-based fixes are deliberately disabled until each detector can prove
+                    // that removing a resource/file is safe. Only a backed-up Java import cleanup
+                    // is currently eligible for automatic application.
+                    if (!f.autoFixable || f.category != Finding.Category.UNUSED_IMPORT) {
+                        appliedFixes.add("Not auto-fixed (manual review required): " + f.title);
+                        continue;
                     }
 
-                    // Execution
+                    boolean safeToApply = true;
+                    List<File> originals = new ArrayList<>();
+                    List<File> backups = new ArrayList<>();
+                    for (String path : f.paths) {
+                        if (path == null || path.trim().isEmpty()) {
+                            safeToApply = false;
+                            break;
+                        }
+                        File original;
+                        try {
+                            original = new File(path).getCanonicalFile();
+                            if (!isWithin(new File(dataRoot).getCanonicalFile(), original) ||
+                                    !original.isFile() || !original.getName().endsWith(".java")) {
+                                safeToApply = false;
+                                break;
+                            }
+                        } catch (Exception invalidPath) {
+                            safeToApply = false;
+                            break;
+                        }
+                        String relativePath = new File(dataRoot).getCanonicalFile().toPath()
+                                .relativize(original.toPath()).toString();
+                        File backupFile = new File(backupRoot, relativePath);
+                        if (backupFile.getParentFile() != null && !backupFile.getParentFile().mkdirs()
+                                && !backupFile.getParentFile().isDirectory()) {
+                            safeToApply = false;
+                            break;
+                        }
+                        try {
+                            FileUtil.copyFile(original.getAbsolutePath(), backupFile.getAbsolutePath());
+                        } catch (Exception backupError) {
+                            safeToApply = false;
+                            break;
+                        }
+                        if (!backupFile.isFile() || backupFile.length() != original.length()) {
+                            safeToApply = false;
+                            break;
+                        }
+                        originals.add(original);
+                        backups.add(backupFile);
+                    }
+
+                    if (!safeToApply || originals.isEmpty()) {
+                        appliedFixes.add("Skipped: could not validate path or verify backup for " + f.title);
+                        continue;
+                    }
                     if (applyFindingFix(f, dataRoot)) {
                         appliedFixes.add(f.fixDescription + " (" + f.title + ")");
+                    } else {
+                        appliedFixes.add("Not changed; review manually: " + f.title);
                     }
                 }
 
@@ -76,29 +116,19 @@ public class SafeFixApplier {
         });
     }
 
+    private boolean isWithin(File root, File candidate) throws java.io.IOException {
+        String rootPath = root.getCanonicalPath();
+        String candidatePath = candidate.getCanonicalPath();
+        return candidatePath.startsWith(rootPath + File.separator);
+    }
+
     private boolean applyFindingFix(Finding f, String dataRoot) {
-        switch (f.category) {
-            case UNUSED_RESOURCE:
-            case DUPLICATE_FILE:
-            case EMPTY_ARTIFACT:
-                for (String path : f.paths) {
-                    FileUtil.deleteFile(path);
-                }
-                return true;
-            
-            case BUILD_ARTIFACT:
-                for (String path : f.paths) {
-                    // G6: Use FileUtil.deleteFile for directories too
-                    FileUtil.deleteFile(path);
-                }
-                return true;
-
-            case UNUSED_IMPORT:
-                return applyImportCleanup(f);
-
-            default:
-                return false;
+        if (f.category == Finding.Category.UNUSED_IMPORT) {
+            return applyImportCleanup(f);
         }
+        // Resource/file deletion and Gradle/SDK edits are advisory only until they have
+        // dedicated validation, previews, and reversible implementations.
+        return false;
     }
 
     private boolean applyImportCleanup(Finding f) {

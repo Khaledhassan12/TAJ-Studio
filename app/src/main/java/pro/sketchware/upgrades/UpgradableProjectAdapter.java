@@ -88,6 +88,7 @@ public class UpgradableProjectAdapter extends RecyclerView.Adapter<UpgradablePro
                 UpgradeReport newR = newReports.get(newItemPosition);
                 return oldR.isUpToDate() == newR.isUpToDate() &&
                         oldR.getUpgradableCount() == newR.getUpgradableCount() &&
+                        oldR.diagnosticCount == newR.diagnosticCount &&
                         oldR.age.equals(newR.age) &&
                         oldR.hasCustomIcon == newR.hasCustomIcon &&
                         oldR.appName.equals(newR.appName);
@@ -188,7 +189,7 @@ public class UpgradableProjectAdapter extends RecyclerView.Adapter<UpgradablePro
             });
 
             binding.expand.setImageResource(R.drawable.ic_tab_upgrades);
-            binding.expand.setVisibility(upToDate ? View.GONE : View.VISIBLE);
+            binding.expand.setVisibility(report.hasActionableUpgrades() ? View.VISIBLE : View.GONE);
             binding.expand.setOnClickListener(v -> {
                 if (upgradeClickListener != null) {
                     upgradeClickListener.onUpgradeClick(report);

@@ -18,6 +18,10 @@ import pro.sketchware.utility.FileUtil;
  */
 public class ReferenceIndexBuilder {
 
+    private static final int MAX_FILES = 12000;
+    private static final int MAX_DEPTH = 32;
+    private static final long MAX_HAYSTACK_BYTES = 8L * 1024L * 1024L;
+
     private static final Pattern JAVA_R_PATTERN = Pattern.compile("R\\.(drawable|mipmap|raw|anim|animator|menu|font|string|color|dimen|style)\\.([a-zA-Z0-9_]+)");
     private static final Pattern XML_REF_PATTERN = Pattern.compile("@(drawable|mipmap|raw|anim|animator|menu|font|string|color|dimen|style)/([a-zA-Z0-9_]+)");
 
@@ -38,50 +42,92 @@ public class ReferenceIndexBuilder {
         haystacks.clear();
 
         // 1. Scan for specific patterns in Java & XML
-        for (String javaDir : javaDirs) scanDirectory(new File(javaDir), true);
-        for (String resDir : resDirs) scanDirectory(new File(resDir), true);
+        int[] scannedFiles = {0};
+        Set<String> scannedDirectories = new HashSet<>();
+        for (String javaDir : javaDirs) {
+            scanDirectory(new File(javaDir), true, scannedDirectories, scannedFiles, 0);
+        }
+        for (String resDir : resDirs) {
+            scanDirectory(new File(resDir), true, scannedDirectories, scannedFiles, 0);
+        }
 
-        // 2. Scan for generic content in ALL files < 2MB (G7: Capture Designer usages)
-        scanGenericContent(new File(projectPath));
+        // 2. Scan a bounded sample of generic content to catch designer-generated references.
+        scanGenericContent(new File(projectPath), new HashSet<>(), new int[]{0}, new long[]{0L}, 0);
         
         // Whitelist basics (R2)
         referencedMipmaps.add("ic_launcher");
         referencedMipmaps.add("ic_launcher_round");
     }
 
-    private void scanDirectory(File dir, boolean recursive) {
+    private void scanDirectory(File dir, boolean recursive, Set<String> visitedDirectories,
+                               int[] visitedFiles, int depth) {
+        if (Thread.currentThread().isInterrupted() || depth > MAX_DEPTH ||
+                visitedFiles[0] >= MAX_FILES || dir == null) return;
+        String canonical;
+        try {
+            canonical = dir.getCanonicalPath();
+            if (!visitedDirectories.add(canonical)) return;
+        } catch (Exception ignored) {
+            return;
+        }
+        if (shouldSkipDirectory(dir.getName())) return;
         File[] files = dir.listFiles();
         if (files == null) return;
 
         for (File file : files) {
-            if (file.isDirectory() && recursive) {
-                scanDirectory(file, true);
-            } else {
-                String name = file.getName();
-                if (name.endsWith(".java") || name.endsWith(".xml")) {
-                    processFile(file);
-                }
+            if (Thread.currentThread().isInterrupted() || visitedFiles[0] >= MAX_FILES) break;
+            if (file.isDirectory()) {
+                if (recursive) scanDirectory(file, true, visitedDirectories, visitedFiles, depth + 1);
+                continue;
+            }
+            visitedFiles[0]++;
+            String name = file.getName();
+            if (name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".kt")) {
+                processFile(file);
             }
         }
     }
 
-    private void scanGenericContent(File dir) {
+    private void scanGenericContent(File dir, Set<String> visitedDirectories, int[] visitedFiles,
+                                    long[] totalBytes, int depth) {
+        if (Thread.currentThread().isInterrupted() || depth > MAX_DEPTH ||
+                visitedFiles[0] >= MAX_FILES || totalBytes[0] >= MAX_HAYSTACK_BYTES || dir == null) return;
+        String canonical;
+        try {
+            canonical = dir.getCanonicalPath();
+            if (!visitedDirectories.add(canonical)) return;
+        } catch (Exception ignored) {
+            return;
+        }
+        if (shouldSkipDirectory(dir.getName())) return;
         File[] files = dir.listFiles();
         if (files == null) return;
 
         for (File file : files) {
-            String name = file.getName();
-            // G6: Skip backups and mysc
-            if (name.equals(".upgrade_backup") || name.contains("mysc")) continue;
-
+            if (Thread.currentThread().isInterrupted() || visitedFiles[0] >= MAX_FILES ||
+                    totalBytes[0] >= MAX_HAYSTACK_BYTES) break;
             if (file.isDirectory()) {
-                scanGenericContent(file);
-            } else if (file.length() > 0 && file.length() < 2 * 1024 * 1024) { // < 2MB
-                if (!isBinaryFile(file)) {
-                    haystacks.add(FileUtil.readFile(file.getAbsolutePath()));
-                }
+                scanGenericContent(file, visitedDirectories, visitedFiles, totalBytes, depth + 1);
+                continue;
+            }
+            visitedFiles[0]++;
+            long length = file.length();
+            if (length <= 0L || length >= 2L * 1024L * 1024L ||
+                    totalBytes[0] + length > MAX_HAYSTACK_BYTES || isBinaryFile(file)) continue;
+            String content = FileUtil.readFile(file.getAbsolutePath());
+            if (content != null) {
+                haystacks.add(content);
+                totalBytes[0] += length;
             }
         }
+    }
+
+    private boolean shouldSkipDirectory(String name) {
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        return lower.equals(".upgrade_backup") || lower.equals(".git") ||
+                lower.equals(".gradle") || lower.equals("build") || lower.equals("outputs") ||
+                lower.equals("generated") || lower.equals("node_modules") || lower.equals(".cxx") ||
+                lower.equals("captures") || lower.equals("builds") || lower.equals("mysc");
     }
 
     private boolean isBinaryFile(File file) {

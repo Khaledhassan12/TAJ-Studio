@@ -11,7 +11,8 @@ public class UpgradeItem {
         GRADLE_CONFIG,
         LIBRARIES,
         MANIFEST,
-        PERMISSIONS
+        PERMISSIONS,
+        PROJECT_HEALTH
     }
 
     public enum Status {

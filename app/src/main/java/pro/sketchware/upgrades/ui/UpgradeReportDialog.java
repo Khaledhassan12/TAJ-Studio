@@ -51,12 +51,19 @@ public class UpgradeReportDialog {
         builder.setView(rv);
         builder.setPositiveButton("Close", null);
         
-        if (!report.isEmpty()) {
+        boolean hasSafeFix = false;
+        for (Finding finding : report.findings) {
+            if (finding.autoFixable && finding.category == Finding.Category.UNUSED_IMPORT) {
+                hasSafeFix = true;
+                break;
+            }
+        }
+        if (hasSafeFix) {
             builder.setNeutralButton("Apply Safe Fixes", (dialog, which) -> {
                 // Confirmation Dialog
                 new MaterialAlertDialogBuilder(context)
                     .setTitle("Confirm Fixes")
-                    .setMessage("This will delete unused files and apply automated fixes. A backup will be created in .upgrade_backup. Proceed?")
+                    .setMessage("Only verified Java import cleanup is eligible for automatic changes, after a backup is verified. File/resource deletion and Gradle/SDK changes require manual review. Proceed?")
                     .setPositiveButton("Yes, Fix All", (dialog1, which1) -> {
                         if (listener != null) listener.onApplyFixes(report.findings);
                     })
@@ -88,8 +95,11 @@ public class UpgradeReportDialog {
             holder.title.setText("[" + f.category + "] " + f.title);
             holder.desc.setText(f.detail);
             
-            if (f.autoFixable) {
+            boolean safelyAutoFixable = f.autoFixable && f.category == Finding.Category.UNUSED_IMPORT;
+            if (safelyAutoFixable) {
                 holder.desc.append("\n" + f.fixDescription);
+            } else {
+                holder.desc.append("\nManual review only; automatic deletion or build changes are disabled for safety.");
             }
 
             // Middle-truncated path for readability
@@ -101,7 +111,7 @@ public class UpgradeReportDialog {
                 holder.desc.append("\nPath: " + path);
             }
 
-            if (f.autoFixable) {
+            if (safelyAutoFixable) {
                 holder.statusIcon.setImageResource(R.drawable.ic_expire_48dp);
                 holder.statusIcon.setVisibility(View.VISIBLE);
             } else {
