@@ -32,51 +32,110 @@ public final class PathResolver {
     }
 
     public static File resolve(String scId, String userPath) {
-        if (userPath == null || userPath.isEmpty()) return new File(dataRoot(scId));
-
-        File f = new File(userPath);
-        if (f.isAbsolute() && f.exists()) return f;
-
-        String path = userPath.replace("./", "");
-        if (path.startsWith("/")) path = path.substring(1);
-
-        if (path.startsWith("res/") || path.startsWith("resource/")) {
-            String rest = path.substring(path.indexOf("/") + 1);
-            return new File(resourceRoot(scId), rest);
+        if (scId == null || scId.trim().isEmpty() || !scId.matches("[A-Za-z0-9_-]+")) {
+            throw new IllegalArgumentException("Invalid project identifier.");
         }
 
-        String[] knownFolders = {"layout/", "values/", "drawable/", "anim/", "menu/", "drawable-xhdpi/", "values-night/"};
-        for (String folder : knownFolders) {
-            if (path.startsWith(folder)) return new File(resourceRoot(scId), path);
+        File candidate;
+        if (userPath == null || userPath.trim().isEmpty()) {
+            candidate = new File(dataRoot(scId));
+        } else {
+            String path = userPath.trim();
+            File requested = new File(path);
+            if (requested.isAbsolute()) {
+                candidate = requested;
+            } else {
+                path = path.replace("./", "");
+                while (path.startsWith("/")) path = path.substring(1);
+
+                if (path.startsWith("res/") || path.startsWith("resource/")) {
+                    String rest = path.substring(path.indexOf("/") + 1);
+                    candidate = new File(resourceRoot(scId), rest);
+                } else {
+                    String[] knownFolders = {"layout/", "values/", "drawable/", "anim/", "menu/", "drawable-xhdpi/", "values-night/"};
+                    File mapped = null;
+                    for (String folder : knownFolders) {
+                        if (path.startsWith(folder)) {
+                            mapped = new File(resourceRoot(scId), path);
+                            break;
+                        }
+                    }
+
+                    if (mapped != null) {
+                        candidate = mapped;
+                    } else if (path.startsWith("assets/")) {
+                        candidate = new File(assetsRoot(scId), path.substring(7));
+                    } else if (path.startsWith("java/")) {
+                        candidate = new File(projectJavaRoot(scId), path.substring(5));
+                    } else {
+                        String[] searchOrder = {"layout", "drawable", "values", "anim", "menu", "drawable-xhdpi", "values-night"};
+                        File found = null;
+                        for (String folder : searchOrder) {
+                            String suffix = ".xml";
+                            File possible = new File(resourceRoot(scId) + File.separator + folder,
+                                    path + (path.contains(".") ? "" : suffix));
+                            if (possible.exists()) {
+                                found = possible;
+                                break;
+                            }
+                        }
+
+                        if (found == null) {
+                            File assetCandidate = new File(assetsRoot(scId), path);
+                            if (assetCandidate.exists()) {
+                                found = assetCandidate;
+                            }
+                        }
+                        if (found == null) {
+                            File javaCandidate = new File(javaManagerRoot(scId), path + (path.contains(".") ? "" : ".java"));
+                            if (javaCandidate.exists()) {
+                                found = javaCandidate;
+                            } else if (!path.contains(".")) {
+                                File kotlinCandidate = new File(javaManagerRoot(scId), path + ".kt");
+                                if (kotlinCandidate.exists()) found = kotlinCandidate;
+                            }
+                        }
+                        candidate = found != null ? found : new File(dataRoot(scId), path);
+                    }
+                }
+            }
         }
 
-        if (path.startsWith("assets/")) {
-            return new File(assetsRoot(scId), path.substring(7));
-        }
+        ensureInsideProject(scId, candidate);
+        return candidate;
+    }
 
-        if (path.startsWith("java/")) {
-            return new File(projectJavaRoot(scId), path.substring(5));
+    public static File validateProjectPath(String scId, File candidate) {
+        if (scId == null || scId.trim().isEmpty() || !scId.matches("[A-Za-z0-9_-]+") || candidate == null) {
+            throw new IllegalArgumentException("Invalid project path.");
         }
+        ensureInsideProject(scId, candidate);
+        return candidate;
+    }
 
-        // Bare filename: search order
-        String[] searchOrder = {"layout", "drawable", "values", "anim", "menu", "drawable-xhdpi", "values-night"};
-        for (String folder : searchOrder) {
-            String suffix = (folder.startsWith("drawable") || folder.startsWith("anim") || folder.startsWith("layout") || folder.startsWith("menu") || folder.startsWith("values")) ? ".xml" : "";
-            File candidate = new File(resourceRoot(scId) + File.separator + folder, path + (path.contains(".") ? "" : suffix));
-            if (candidate.exists()) return candidate;
+    /**
+     * Rejects traversal, symlink escapes and arbitrary absolute paths. Only the
+     * active project's known storage roots are addressable by AI tools.
+     */
+    private static void ensureInsideProject(String scId, File candidate) {
+        try {
+            String target = candidate.getCanonicalPath();
+            String[] roots = {
+                    dataRoot(scId), resourceRoot(scId), assetsRoot(scId),
+                    javaManagerRoot(scId), projectJavaRoot(scId)
+            };
+            for (String root : roots) {
+                if (root == null || root.trim().isEmpty()) continue;
+                String canonicalRoot = new File(root).getCanonicalPath();
+                if (target.equals(canonicalRoot)
+                        || target.startsWith(canonicalRoot + File.separator)) {
+                    return;
+                }
+            }
+        } catch (java.io.IOException ignored) {
+            // Fail closed when canonicalization cannot establish a safe path.
         }
-
-        File assetCandidate = new File(assetsRoot(scId), path);
-        if (assetCandidate.exists()) return assetCandidate;
-        
-        File javaCandidate = new File(javaManagerRoot(scId), path + (path.contains(".") ? "" : ".java"));
-        if (javaCandidate.exists()) return javaCandidate;
-        if (!path.contains(".")) {
-             File ktCandidate = new File(javaManagerRoot(scId), path + ".kt");
-             if (ktCandidate.exists()) return ktCandidate;
-        }
-
-        return new File(dataRoot(scId), path);
+        throw new SecurityException("AI tools may only access files inside the current project.");
     }
 
     public static List<String> candidates(String scId, String filename) {

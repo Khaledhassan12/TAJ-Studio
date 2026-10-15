@@ -34,7 +34,7 @@ public final class FsSearchTool implements Tool {
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String pattern = args.getString("pattern");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         String basePath = args.optString("path", "");
         
         File root = PathResolver.resolve(sc_id, basePath);

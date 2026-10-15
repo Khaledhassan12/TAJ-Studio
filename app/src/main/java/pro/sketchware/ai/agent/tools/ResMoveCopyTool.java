@@ -4,7 +4,7 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
 import pro.sketchware.ai.agent.Tool;
-import pro.sketchware.ai.agent.ProjectPaths;
+import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
 import pro.sketchware.ai.live.LiveRegistry;
 
@@ -35,12 +35,15 @@ public final class ResMoveCopyTool implements Tool {
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String sc_id = args.optString("sc_id", ctx.sc_id);
-        String fromPath = ProjectPaths.resourceRoot(sc_id) + "/" + args.getString("fromFolder") + "/" + args.getString("fromName");
-        String toPath = ProjectPaths.resourceRoot(sc_id) + "/" + args.getString("toFolder") + "/" + args.getString("toName");
+        String sc_id = ctx.sc_id;
+        File source = PathResolver.resolve(sc_id, "res/" + args.getString("fromFolder") + "/" + args.getString("fromName"));
+        File destination = PathResolver.resolve(sc_id, "res/" + args.getString("toFolder") + "/" + args.getString("toName"));
+        String fromPath = source.getAbsolutePath();
+        String toPath = destination.getAbsolutePath();
         String op = args.getString("op");
 
         if (!FileUtil.isExistFile(fromPath)) return new ToolResult("Source not found.", true);
+        if ("move".equals(op) && !ctx.checkPermission(fromPath, true)) return new ToolResult("Denied.", true);
         if (!ctx.checkPermission(toPath, FileUtil.isExistFile(toPath))) return new ToolResult("Denied.", true);
 
         if ("copy".equals(op)) {

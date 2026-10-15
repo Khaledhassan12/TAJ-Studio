@@ -3,6 +3,9 @@ package pro.sketchware.ai.config;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
+import android.util.Base64;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKeys;
@@ -13,15 +16,23 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 
 import pro.sketchware.ai.core.ModelItem;
 import pro.sketchware.ai.core.Protocol;
 import pro.sketchware.ai.core.ProviderProfile;
 
 /**
- * Persistent TAG Assistant configuration. API keys live in
- * EncryptedSharedPreferences when the device allows it, with a plain
- * SharedPreferences fallback so the feature never crashes the host app.
+ * Persistent TAG Assistant configuration. Preferences use EncryptedSharedPreferences
+ * when available; API keys are additionally wrapped with an Android Keystore AES-GCM
+ * key so the private-preferences fallback never stores credentials in plaintext.
  * Keys are sanitized on write and on read; they are never written to logs.
  * Per-provider model caches (id + optional pricing flag + sync timestamp)
  * are persisted here too.
@@ -30,6 +41,8 @@ public final class AIConfigStore {
 
     private static final String TAG = "AIConfigStore";
     private static final String PREFS_NAME = "tag_assistant_config";
+    private static final String API_KEY_CIPHER_PREFIX = "enc:v1:";
+    private static final String API_KEY_KEYSTORE_ALIAS = "taj_studio_ai_api_key_v1";
     private static final String KEY_ENABLED = "assistant_enabled";
     private static final String KEY_VERIFIED = "assistant_verified";
     private static final String KEY_DEFAULT_MODE = "default_mode";
@@ -75,7 +88,7 @@ public final class AIConfigStore {
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM);
         } catch (Exception e) {
             // Isolation principle: encryption must never break the feature.
-            Log.w(TAG, "EncryptedSharedPreferences unavailable, using plain fallback");
+            Log.w(TAG, "Encrypted preferences unavailable; API keys remain separately encrypted");
         }
         if (candidate == null) {
             try {
@@ -87,6 +100,7 @@ public final class AIConfigStore {
         }
         prefs = candidate;
         migrateOldKeys();
+        migratePlaintextApiKeys();
     }
 
     private void migrateOldKeys() {
@@ -345,12 +359,128 @@ public final class AIConfigStore {
     }
 
     public String getKeyFor(String providerId) {
-        return prefs == null ? "" : prefs.getString(K_KEY_PREFIX + providerId, "");
+        if (prefs == null || providerId == null) return "";
+        String storageKey = K_KEY_PREFIX + providerId;
+        String stored = prefs.getString(storageKey, "");
+        if (stored == null || stored.isEmpty()) return "";
+        if (stored.startsWith(API_KEY_CIPHER_PREFIX)) {
+            String decrypted = decryptApiKey(stored);
+            if (decrypted == null) {
+                prefs.edit().remove(storageKey).putBoolean(K_VERIFIED_PREFIX + providerId, false).apply();
+                return "";
+            }
+            return sanitizeKey(decrypted);
+        }
+
+        // Migrate legacy plaintext values immediately; never return a key if it
+        // cannot first be protected by the Android Keystore.
+        String encrypted = encryptApiKey(sanitizeKey(stored));
+        if (encrypted == null) {
+            prefs.edit().remove(storageKey).putBoolean(K_VERIFIED_PREFIX + providerId, false).apply();
+            return "";
+        }
+        prefs.edit().putString(storageKey, encrypted).apply();
+        return sanitizeKey(stored);
     }
 
     public void setKeyFor(String providerId, String key) {
-        if (prefs != null) {
-            prefs.edit().putString(K_KEY_PREFIX + providerId, sanitizeKey(key)).putBoolean(K_VERIFIED_PREFIX + providerId, false).apply();
+        if (prefs == null || providerId == null) return;
+        String sanitized = sanitizeKey(key);
+        String encrypted = sanitized.isEmpty() ? "" : encryptApiKey(sanitized);
+        SharedPreferences.Editor editor = prefs.edit().putBoolean(K_VERIFIED_PREFIX + providerId, false);
+        if (encrypted == null) {
+            // Fail closed rather than persist credentials in plaintext.
+            editor.remove(K_KEY_PREFIX + providerId);
+        } else {
+            editor.putString(K_KEY_PREFIX + providerId, encrypted);
+        }
+        editor.apply();
+    }
+
+    private void migratePlaintextApiKeys() {
+        if (prefs == null) return;
+        try {
+            Map<String, ?> all = prefs.getAll();
+            SharedPreferences.Editor editor = prefs.edit();
+            boolean changed = false;
+            for (Map.Entry<String, ?> entry : all.entrySet()) {
+                String name = entry.getKey();
+                Object value = entry.getValue();
+                if (K_KEY.equals(name)) {
+                    editor.remove(name);
+                    changed = true;
+                } else if (name.startsWith(K_KEY_PREFIX) && value instanceof String) {
+                    String raw = (String) value;
+                    if (!raw.isEmpty() && !raw.startsWith(API_KEY_CIPHER_PREFIX)) {
+                        String encrypted = encryptApiKey(sanitizeKey(raw));
+                        if (encrypted == null) editor.remove(name);
+                        else editor.putString(name, encrypted);
+                        changed = true;
+                    }
+                }
+            }
+            if (changed) editor.apply();
+        } catch (Exception e) {
+            Log.w(TAG, "Could not complete API-key storage migration; credentials remain unavailable until re-entered");
+        }
+    }
+
+    private static String encryptApiKey(String value) {
+        if (value == null || value.isEmpty()) return "";
+        try {
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            SecretKey key;
+            if (keyStore.containsAlias(API_KEY_KEYSTORE_ALIAS)) {
+                key = (SecretKey) keyStore.getKey(API_KEY_KEYSTORE_ALIAS, null);
+            } else {
+                KeyGenerator generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+                generator.init(new KeyGenParameterSpec.Builder(API_KEY_KEYSTORE_ALIAS,
+                        KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                        .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                        .setRandomizedEncryptionRequired(true)
+                        .build());
+                key = generator.generateKey();
+            }
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            byte[] iv = cipher.getIV();
+            byte[] encrypted = cipher.doFinal(value.getBytes(StandardCharsets.UTF_8));
+            ByteBuffer packed = ByteBuffer.allocate(1 + iv.length + encrypted.length);
+            packed.put((byte) iv.length);
+            packed.put(iv);
+            packed.put(encrypted);
+            return API_KEY_CIPHER_PREFIX + Base64.encodeToString(packed.array(), Base64.NO_WRAP);
+        } catch (Exception e) {
+            Log.w(TAG, "Android Keystore unavailable; API key was not persisted");
+            return null;
+        }
+    }
+
+    private static String decryptApiKey(String stored) {
+        try {
+            String encoded = stored.substring(API_KEY_CIPHER_PREFIX.length());
+            byte[] packed = Base64.decode(encoded, Base64.NO_WRAP);
+            if (packed.length < 2) return null;
+            ByteBuffer buffer = ByteBuffer.wrap(packed);
+            int ivLength = buffer.get() & 0xff;
+            if (ivLength < 12 || packed.length <= 1 + ivLength) return null;
+            byte[] iv = new byte[ivLength];
+            buffer.get(iv);
+            byte[] encrypted = new byte[buffer.remaining()];
+            buffer.get(encrypted);
+
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            SecretKey key = (SecretKey) keyStore.getKey(API_KEY_KEYSTORE_ALIAS, null);
+            if (key == null) return null;
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, iv));
+            return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            Log.w(TAG, "Stored API key could not be decrypted; re-entry is required");
+            return null;
         }
     }
 

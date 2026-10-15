@@ -3,6 +3,7 @@ package pro.sketchware.ai.agent.tools.fs;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import pro.sketchware.ai.agent.Tool;
+import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
 
 public final class FsMkdirTool implements Tool {
@@ -25,10 +26,12 @@ public final class FsMkdirTool implements Tool {
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String path = args.getString("path");
-        if (FileUtil.isExistFile(path)) return new ToolResult("Path already exists.", false);
+        java.io.File directory = PathResolver.resolve(ctx.sc_id, args.getString("path"));
+        String path = directory.getAbsolutePath();
+        if (directory.exists()) return new ToolResult("Path already exists.", false);
+        if (!ctx.checkPermission(path, false)) return new ToolResult("Denied.", true);
         FileUtil.makeDir(path);
-        if (FileUtil.isExistFile(path)) return new ToolResult("verified: folder created @ " + path, false);
+        if (directory.isDirectory()) return new ToolResult("verified: folder created @ " + path, false);
         return new ToolResult("Failed to create folder.", true);
     }
 }

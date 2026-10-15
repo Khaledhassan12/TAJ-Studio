@@ -162,7 +162,7 @@ public abstract class HttpAI implements AIProvider {
     private void executeAndStream(AIRequest request, Tracked tracked, CallHandle handle) throws AIException {
         // Defensive: ensure apiKey matches store
         AIConfigStore store = AIConfigStore.getInstance(context);
-        String currentKey = store.safeKey();
+        String currentKey = store.safeKeyFor(profile.id);
         if (!currentKey.equals(this.apiKey)) {
             this.apiKey = currentKey;
         }
@@ -170,7 +170,7 @@ public abstract class HttpAI implements AIProvider {
         Request httpRequest = buildRequest(request);
 
         String headerName = profile.apiKeyHeaderAuth ? "api-key" : (profile.protocol == Protocol.GEMINI ? "x-goog-api-key" : (profile.protocol == Protocol.ANTHROPIC ? "x-api-key" : "Authorization"));
-        Log.i("TAG_AI", "URL=" + httpRequest.url() + " MODEL=" + request.model + " AUTH=" + (headerName + "=" + pro.sketchware.ai.config.AIConfigStore.maskKey(apiKey)));
+        Log.d("TAG_AI", "HOST=" + httpRequest.url().host() + " MODEL=" + store.safeModelFor(profile.id) + " AUTH_HEADER=" + headerName);
 
         Call call = client().newCall(httpRequest);
         handle.attach(call);
@@ -226,17 +226,10 @@ public abstract class HttpAI implements AIProvider {
         }
     }
 
-    /** Logs non-2xx failures: status + first 500 chars of body, key masked as ***. */
+    /** Logs only the status code; provider error bodies can contain credentials or user data. */
     private void logHttpError(int code, String errorBody) {
         try {
-            String masked = errorBody == null ? "" : errorBody;
-            if (!apiKey.isEmpty() && !masked.isEmpty()) {
-                masked = masked.replace(apiKey, "***");
-            }
-            if (masked.length() > 500) {
-                masked = masked.substring(0, 500);
-            }
-            Log.w(TAG, "HTTP " + code + " " + masked);
+            Log.w(TAG, "HTTP " + code + " (provider error details omitted)");
         } catch (Exception ignored) {
             Log.w(TAG, "HTTP " + code + " (unreadable error body)");
         }

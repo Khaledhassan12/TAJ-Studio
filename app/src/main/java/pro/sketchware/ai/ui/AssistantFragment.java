@@ -159,7 +159,10 @@ public class AssistantFragment extends Fragment {
             public void onError(String message) {
                 currentSpeakingText = null;
                 updateVoiceIcons();
-                Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT).show();
+                View currentView = getView();
+                if (isAdded() && currentView != null) {
+                    Snackbar.make(currentView, message, Snackbar.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -1071,10 +1074,23 @@ public class AssistantFragment extends Fragment {
 
     @Override
     public void onDestroy() {
-        if (getActivity() != null && getActivity().isFinishing()) {
-            if (orchestrator != null) orchestrator.shutdown();
-            if (activeHandle != null) activeHandle.cancel();
+        mainHandler.removeCallbacks(watchdog);
+        AIActivityMonitor.removeListener(stateListener);
+        AIActivityMonitor.setOnTimeoutAction(null);
+
+        // This fragment owns its request handles; never leave a request or
+        // agent executor retaining a destroyed UI.
+        if (orchestrator != null) {
+            orchestrator.cancel();
+            orchestrator.shutdown();
+            orchestrator = null;
         }
+        if (activeHandle != null) {
+            activeHandle.cancel();
+            activeHandle = null;
+        }
+        AIActivityMonitor.setState(SessionState.IDLE);
+
         if (voiceReader != null) voiceReader.shutdown();
         super.onDestroy();
     }

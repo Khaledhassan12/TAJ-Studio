@@ -43,6 +43,7 @@ public final class BlockEditTool implements Tool {
             blocks = GsonUtils.getGson().fromJson(FileUtil.readFile(path), Helper.TYPE_MAP_LIST);
         }
         if (blocks == null) return new ToolResult("No blocks to edit.", true);
+        if (!ctx.checkPermission(path, true)) return new ToolResult("Denied.", true);
 
         boolean found = false;
         HashMap<String, Object> nextMap = GsonUtils.getGson().fromJson(newSpec.toString(), Helper.TYPE_MAP);

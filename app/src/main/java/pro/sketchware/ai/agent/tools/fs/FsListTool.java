@@ -33,7 +33,7 @@ public final class FsListTool implements Tool {
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String userPath = args.getString("path");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         boolean recursive = args.optBoolean("recursive", false);
         
         File dir = PathResolver.resolve(sc_id, userPath);

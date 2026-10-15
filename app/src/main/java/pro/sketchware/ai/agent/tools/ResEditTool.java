@@ -38,7 +38,7 @@ public final class ResEditTool implements Tool {
         String folder = args.getString("folder");
         String name = args.getString("name");
         String mode = args.getString("mode");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         
         File f = PathResolver.resolve(sc_id, "res/" + folder + "/" + name);
         String path = f.getAbsolutePath();

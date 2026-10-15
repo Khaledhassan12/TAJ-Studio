@@ -28,7 +28,7 @@ public final class ManifestReadTool implements Tool {
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         
         yq gen = new yq(SketchApplication.getContext(), sc_id);
         String generated = gen.getFileSrc("AndroidManifest.xml", jC.b(sc_id), jC.a(sc_id), jC.c(sc_id));

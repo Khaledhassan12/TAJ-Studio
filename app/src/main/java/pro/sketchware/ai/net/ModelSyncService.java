@@ -54,15 +54,15 @@ public final class ModelSyncService {
      * Verdicts per protocol requirements.
      */
     public static String validateKey(ProviderProfile profile, String apiKey) {
-        String cleanKey = (apiKey != null && !apiKey.trim().isEmpty()) ? AIConfigStore.sanitizeKey(apiKey) : AIConfigStore.getInstance(null).safeKeyFor(profile.id);
+        AIConfigStore store = AIConfigStore.getInstance(null);
+        String cleanKey = (apiKey != null && !apiKey.trim().isEmpty()) ? AIConfigStore.sanitizeKey(apiKey) : store.safeKeyFor(profile.id);
         String base = AIConfigStore.sanitizeBaseUrl(profile.defaultBaseUrl);
-        // If the profile's base is default, try to get override from store
-        if (base.equals(AIConfigStore.sanitizeBaseUrl(profile.id.equals("custom") ? "" : pro.sketchware.ai.config.ProviderCatalog.getById(profile.id).defaultBaseUrl))) {
-            String stored = AIConfigStore.getInstance(null).safeBaseUrlFor(profile.id, "");
-            if (!stored.isEmpty()) base = stored;
+        if (base.isEmpty()) base = store.safeBaseUrlFor(profile.id, "");
+
+        Log.d(TAG, "Validating connection for provider ID: " + profile.id);
+        if (profile.apiKeyHeaderAuth) {
+            return validateHeaderKey(profile, base, cleanKey, store);
         }
-        
-        Log.d(TAG, "Validating key for provider ID: " + profile.id + " at base URL: " + base);
         
         if (base.isEmpty()) return "Enter a valid base URL.";
 
@@ -86,13 +86,13 @@ public final class ModelSyncService {
                 builder.header("x-goog-api-key", cleanKey);
             }
         } else {
-            if (!cleanKey.isEmpty()) {
+            if (!profile.skipAuth && !cleanKey.isEmpty()) {
                 builder.header("Authorization", "Bearer " + cleanKey);
             }
         }
 
         Request request = builder.build();
-        AIConfigStore store = AIConfigStore.getInstance(null);
+
         boolean autoRetry = store.isAutoRetry();
 
         try (Response response = RetryPolicy.executeWithRetry(() -> CLIENT.newCall(request).execute(), autoRetry)) {
@@ -100,7 +100,7 @@ public final class ModelSyncService {
                 // For "other oc" (OpenAI compatible but not OpenRouter), /models might be public.
                 if (!"openrouter".equals(profile.id) && profile.protocol == Protocol.OPENAI_COMPATIBLE) {
                     // Quick ping to confirm auth
-                    String model = store.safeModel();
+                    String model = store.safeModelFor(profile.id);
                     if (!model.isEmpty()) {
                         JSONObject body = new JSONObject();
                         body.put("model", model);
@@ -109,11 +109,16 @@ public final class ModelSyncService {
                         msgs.put(new JSONObject().put("role", "user").put("content", "ping"));
                         body.put("messages", msgs);
 
-                        Request ping = new Request.Builder()
+                        Request.Builder pingBuilder = new Request.Builder()
                                 .url(base + "/chat/completions")
-                                .header("Authorization", "Bearer " + cleanKey)
-                                .post(okhttp3.RequestBody.create(body.toString(), okhttp3.MediaType.parse("application/json")))
-                                .build();
+                                .post(okhttp3.RequestBody.create(body.toString(), okhttp3.MediaType.parse("application/json")));
+                        if (!profile.skipAuth && !cleanKey.isEmpty()) {
+                            pingBuilder.header("Authorization", "Bearer " + cleanKey);
+                        }
+                        for (Map.Entry<String, String> header : profile.extraHeaders.entrySet()) {
+                            pingBuilder.header(header.getKey(), header.getValue());
+                        }
+                        Request ping = pingBuilder.build();
                         try (Response pr = CLIENT.newCall(ping).execute()) {
                             if (pr.isSuccessful()) return "Key accepted by provider.";
                             if (pr.code() == 401 || pr.code() == 403) {
@@ -127,9 +132,49 @@ public final class ModelSyncService {
             if (response != null && (response.code() == 401 || response.code() == 403)) {
                 return "Provider REJECTED this key. The app code is correct — generate a new key from the provider dashboard and paste it in API key field.";
             }
-            return "HTTP " + (response != null ? response.code() : "???") + ": " + (response != null ? readBody(response) : "Unknown error");
+            return "Provider responded with HTTP " + (response != null ? response.code() : "unknown") + ". Check the API key, model, and base URL.";
         } catch (Exception e) {
-            return "Network error: " + e.getMessage();
+            return "Network error while validating the provider connection.";
+        }
+    }
+
+    private static String validateHeaderKey(ProviderProfile profile, String base,
+            String cleanKey, AIConfigStore store) {
+        if (base.isEmpty()) return "Enter a valid base URL.";
+        String model = store.safeModelFor(profile.id);
+        if (model.isEmpty() && profile.hasSuggestions()) model = profile.defaultModelSuggestions[0];
+        if (model.isEmpty()) return "Select a model before testing this provider.";
+
+        try {
+            JSONObject body = new JSONObject();
+            body.put("model", model);
+            body.put("max_tokens", 1);
+            body.put("messages", new JSONArray().put(
+                    new JSONObject().put("role", "user").put("content", "ping")));
+            String url = base + "/chat/completions";
+            if (profile.urlQuerySuffix != null && !profile.urlQuerySuffix.isEmpty()) {
+                url += (url.contains("?") ? "&" : "?") + profile.urlQuerySuffix;
+            }
+            Request.Builder builder = new Request.Builder()
+                    .url(url)
+                    .header("api-key", cleanKey)
+                    .post(okhttp3.RequestBody.create(body.toString(),
+                            okhttp3.MediaType.parse("application/json")));
+            for (Map.Entry<String, String> header : profile.extraHeaders.entrySet()) {
+                builder.header(header.getKey(), header.getValue());
+            }
+            try (Response response = RetryPolicy.executeWithRetry(
+                    () -> CLIENT.newCall(builder.build()).execute(), store.isAutoRetry())) {
+                if (response != null && response.isSuccessful()) return "Key accepted by provider.";
+                if (response != null && (response.code() == 401 || response.code() == 403)) {
+                    return "Provider rejected this key. Check the key and deployment settings.";
+                }
+                return "Provider responded with HTTP "
+                        + (response == null ? "unknown" : response.code())
+                        + ". Check the deployment URL and API version.";
+            }
+        } catch (Exception e) {
+            return "Network error while validating the provider connection.";
         }
     }
 
@@ -170,7 +215,7 @@ public final class ModelSyncService {
              if (!stored.isEmpty()) base = stored;
         }
 
-        Log.d(TAG, "Fetching models for provider ID: " + profile.id + " at base URL: " + base);
+        Log.d(TAG, "Fetching models for provider ID: " + profile.id);
 
         if (base.isEmpty()) {
             throw new AIException(AIException.Type.MODEL_NOT_FOUND,
@@ -344,19 +389,8 @@ public final class ModelSyncService {
         }
     }
 
-    /** Logs status + first 500 chars of the body, key masked as ***. */
+    /** Never log provider error bodies: they may echo credentials or request data. */
     private static void logError(int code, String body, String key) {
-        try {
-            String masked = body == null ? "" : body;
-            if (!key.isEmpty() && !masked.isEmpty()) {
-                masked = masked.replace(key, "***");
-            }
-            if (masked.length() > 500) {
-                masked = masked.substring(0, 500);
-            }
-            Log.w(TAG, "HTTP " + code + " " + masked);
-        } catch (Exception ignored) {
-            Log.w(TAG, "HTTP " + code + " (unreadable error body)");
-        }
+        Log.w(TAG, "HTTP " + code + " (provider error details omitted)");
     }
 }

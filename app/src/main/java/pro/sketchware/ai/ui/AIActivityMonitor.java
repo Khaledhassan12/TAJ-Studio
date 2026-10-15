@@ -13,7 +13,7 @@ public final class AIActivityMonitor {
     private static final List<OnStateChangeListener> listeners = new ArrayList<>();
     private static final Handler watchdogHandler = new Handler(Looper.getMainLooper());
     private static Runnable watchdogRunnable;
-    private static Runnable onTimeoutAction;
+    private static volatile Runnable onTimeoutAction;
 
     public interface OnStateChangeListener {
         void onStateChanged(SessionState newState);
@@ -52,7 +52,10 @@ public final class AIActivityMonitor {
     }
 
     private static void resetWatchdog() {
-        watchdogHandler.removeCallbacks(watchdogRunnable);
+        if (watchdogRunnable != null) {
+            watchdogHandler.removeCallbacks(watchdogRunnable);
+            watchdogRunnable = null;
+        }
         if (state == SessionState.IDLE) return;
 
         watchdogRunnable = () -> {
@@ -64,7 +67,7 @@ public final class AIActivityMonitor {
         watchdogHandler.postDelayed(watchdogRunnable, 120000);
     }
 
-    public static void poke() {
+    public static synchronized void poke() {
         resetWatchdog();
     }
 }

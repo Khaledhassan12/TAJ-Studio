@@ -41,7 +41,7 @@ public final class ManifestEditTool implements Tool {
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String op = args.getString("op");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         String injPath = ProjectPaths.manifestInjectionPath(sc_id);
 
         if ("add_permission".equals(op)) {
@@ -53,6 +53,7 @@ public final class ManifestEditTool implements Tool {
             }
             if (perms == null) perms = new ArrayList<>();
             if (!perms.contains(perm)) perms.add(perm);
+            if (!ctx.checkPermission(path, FileUtil.isExistFile(path))) return new ToolResult("Denied.", true);
             FileUtil.writeFile(path, GsonUtils.getGson().toJson(perms));
             return verify(ctx, sc_id, perm);
         }
@@ -79,6 +80,7 @@ public final class ManifestEditTool implements Tool {
             data.add(item);
         }
 
+        if (!ctx.checkPermission(injPath, FileUtil.isExistFile(injPath))) return new ToolResult("Denied.", true);
         DomainToolHelper.backup(injPath);
         FileUtil.writeFile(injPath, GsonUtils.getGson().toJson(data));
         LiveRegistry.notifyChanged("manifest", injPath);

@@ -36,7 +36,7 @@ public final class AssetEditTool implements Tool {
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String userPath = args.getString("path");
         String mode = args.getString("mode");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         
         File f = PathResolver.resolve(sc_id, "assets/" + userPath);
         String path = f.getAbsolutePath();

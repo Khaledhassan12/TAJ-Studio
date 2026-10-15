@@ -3,6 +3,7 @@ package pro.sketchware.ai.agent.tools.fs;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
+import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.utility.FileUtil;
 
@@ -26,9 +27,12 @@ public final class FsMoveTool implements Tool {
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String src = args.getString("src");
-        String dst = args.getString("dst");
+        File source = PathResolver.resolve(ctx.sc_id, args.getString("src"));
+        File destination = PathResolver.resolve(ctx.sc_id, args.getString("dst"));
+        String src = source.getAbsolutePath();
+        String dst = destination.getAbsolutePath();
         if (!FileUtil.isExistFile(src)) return new ToolResult("Source not found.", true);
+        if (!ctx.checkPermission(src, true)) return new ToolResult("Denied.", true);
         if (!ctx.checkPermission(dst, FileUtil.isExistFile(dst))) return new ToolResult("Denied.", true);
 
         FileUtil.moveFile(src, dst);

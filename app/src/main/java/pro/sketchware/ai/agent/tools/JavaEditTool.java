@@ -38,7 +38,7 @@ public final class JavaEditTool implements Tool {
         String target = args.getString("target");
         String userPath = args.getString("path");
         String mode = args.getString("mode");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
 
         File f = PathResolver.resolve(sc_id, ("manager".equals(target) ? userPath : "java/" + userPath));
         String path = f.getAbsolutePath();
