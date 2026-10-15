@@ -66,6 +66,7 @@ public final class FsWriteTool implements Tool {
                 return ToolResult.structured("fs_write", "ERROR", path, "Verification failed: '" + expect + "' not found.", null, true);
             }
             
+            DomainToolHelper.commitBackup(path);
             notifyLive(path);
             
             return ToolResult.structured("fs_write", "SUCCESS", path, "verified", null, false);
