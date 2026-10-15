@@ -57,6 +57,7 @@ public final class AssetDeleteTool implements Tool {
             LiveRegistry.notifyChanged("assets", path);
             return new ToolResult("verified: moved to trash @ " + trashPath, false);
         }
-        return new ToolResult("Delete verification failed; the asset was not confirmed in trash.", true);
+        if (f.exists() && FileUtil.isExistFile(trashPath)) new File(trashPath).delete();
+        return new ToolResult("Delete verification failed; the source remains in place.", true);
     }
 }
