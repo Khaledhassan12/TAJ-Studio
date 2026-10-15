@@ -212,12 +212,15 @@ public final class ChatStore {
         File[] files = baseDir.listFiles((dir, name) -> name.endsWith(".json"));
         if (files != null) {
             for (File f : files) {
-                try (FileInputStream in = new FileInputStream(f)) {
-                    if (f.length() > Integer.MAX_VALUE) {
+                try (FileInputStream in = new AtomicFile(f).openRead()) {
+                    // AtomicFile.openRead() restores a previous complete backup if an
+                    // interrupted write left the base file incomplete.
+                    long fileLength = f.length();
+                    if (fileLength > Integer.MAX_VALUE) {
                         Log.w(TAG, "Skipping oversized session file: " + f.getName());
                         continue;
                     }
-                    byte[] data = new byte[(int) f.length()];
+                    byte[] data = new byte[(int) fileLength];
                     int offset = 0;
                     while (offset < data.length) {
                         int count = in.read(data, offset, data.length - offset);
