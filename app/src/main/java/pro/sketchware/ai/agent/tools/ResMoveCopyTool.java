@@ -21,7 +21,7 @@ public final class ResMoveCopyTool implements Tool {
             props.put("toFolder", new JSONObject().put("type", "string"));
             props.put("toName", new JSONObject().put("type", "string"));
             props.put("op", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"move", "copy"})));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("fromFolder").put("fromName").put("toFolder").put("toName").put("op"));
             return new ToolSpec("res_move_copy", "Moves or copies a resource file.", params);
