@@ -65,6 +65,8 @@ public class ProjectUpgradeScanner {
                     scId = yB.c(project, "sc_id");
                     appName = yB.c(project, "my_app_name");
                     pkgName = yB.c(project, "my_sc_pkg_name");
+                    if (appName == null || appName.trim().isEmpty()) appName = "Unnamed project";
+                    if (pkgName == null) pkgName = "";
                     if (scId == null || scId.trim().isEmpty()) {
                         throw new IllegalArgumentException("Missing project ID");
                     }
