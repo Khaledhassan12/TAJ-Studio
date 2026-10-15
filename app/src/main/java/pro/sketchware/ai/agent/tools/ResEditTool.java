@@ -52,9 +52,13 @@ public final class ResEditTool implements Tool {
             return new ToolResult(err.toString(), true);
         }
         
+        if (!pro.sketchware.ai.agent.tools.DomainToolHelper.isTextEditableFileName(f.getName())) {
+            return new ToolResult("This tool edits text resources only; binary or unsupported file formats are refused.", true);
+        }
         if (!ctx.checkPermission(path, true)) return new ToolResult("Denied.", true);
 
         String original = FileUtil.readFile(path);
+        if (original == null) return new ToolResult("Resource could not be read as text.", true);
         String next = "";
         switch (mode) {
             case "replace_all" -> next = args.getString("content");
