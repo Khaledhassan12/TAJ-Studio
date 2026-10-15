@@ -75,6 +75,10 @@ public interface Tool {
             cancellationCheck = check == null ? () -> false : check;
         }
 
+        public boolean isCancellationRequested() {
+            return isCancelled(cancellationCheck);
+        }
+
         public boolean requestConfirmation(String message) {
             return requestConfirmation(message, cancellationCheck);
         }

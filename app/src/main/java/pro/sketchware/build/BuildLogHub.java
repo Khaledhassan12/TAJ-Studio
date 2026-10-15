@@ -39,6 +39,7 @@ public class BuildLogHub {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private Phase currentPhase = Phase.IDLE;
+    private long sessionGeneration;
     private String lastMessage = "";
 
     private BuildLogHub() {
@@ -52,6 +53,7 @@ public class BuildLogHub {
     }
 
     public synchronized void newSession() {
+        sessionGeneration++;
         history.clear();
         currentPhase = Phase.RUNNING;
         lastMessage = "Build started";
@@ -106,6 +108,11 @@ public class BuildLogHub {
                 }
             }
         });
+    }
+
+    /** Monotonically increases for each new build, allowing callers to bind to the exact run. */
+    public synchronized long getSessionGeneration() {
+        return sessionGeneration;
     }
 
     public synchronized Phase getCurrentPhase() {
