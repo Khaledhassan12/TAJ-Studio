@@ -101,6 +101,7 @@ public final class InsertWidgetTool implements Tool {
                 DomainToolHelper.syncLayoutToDesigner(sc_id, f.getName(), original);
                 return ToolResult.structured("insert_widget", "ERROR", path, "Widget was not found in the live designer model; the layout edit was rolled back.", null, true);
             }
+            DomainToolHelper.commitBackup(path);
             LiveRegistry.notifyChanged("layout", path);
             return ToolResult.structured("insert_widget", "SUCCESS", path, "verified: widget inserted and persisted", null, false);
         } catch (Exception e) {
