@@ -19,7 +19,7 @@ public final class ResCreateTool implements Tool {
             props.put("folder", new JSONObject().put("type", "string"));
             props.put("name", new JSONObject().put("type", "string"));
             props.put("content", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("folder").put("name").put("content"));
             return new ToolSpec("res_create", "Creates a resource file with validation.", params);
