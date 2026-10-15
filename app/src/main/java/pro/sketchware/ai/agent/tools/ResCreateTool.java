@@ -57,12 +57,14 @@ public final class ResCreateTool implements Tool {
                 try {
                     DomainToolHelper.syncLayoutToDesigner(sc_id, name, content);
                 } catch (Exception e) {
-                    return new ToolResult("Resource was written but designer synchronization failed: " + e.getMessage(), true);
+                    f.delete();
+                    return new ToolResult("Resource creation rolled back because designer synchronization failed: " + e.getMessage(), true);
                 }
             }
             LiveRegistry.notifyChanged(folder, path);
             return new ToolResult("verified: created @ " + path, false);
         }
-        return new ToolResult("Resource creation verification failed: " + path, true);
+        if (f.isFile()) f.delete();
+        return new ToolResult("Resource creation verification failed; the incomplete new file was removed: " + path, true);
     }
 }
