@@ -46,10 +46,10 @@ public final class FsDeleteTool implements Tool {
 
         String trashDir = FileUtil.getExternalStorageDir() + "/.sketchware/.agent_trash";
         FileUtil.makeDir(trashDir);
-        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + f.getName();
+        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + System.nanoTime() + "_" + f.getName();
         
         FileUtil.moveFile(path, trashPath);
-        if (FileUtil.isExistFile(trashPath)) {
+        if (FileUtil.isExistFile(trashPath) && !f.exists()) {
             return new ToolResult("verified: moved to trash @ " + trashPath, false);
         } else {
             return new ToolResult("Delete failed.", true);
