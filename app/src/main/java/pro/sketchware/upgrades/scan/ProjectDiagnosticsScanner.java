@@ -83,7 +83,7 @@ public final class ProjectDiagnosticsScanner {
 
     private void scanDirectory(File root, File dir, List<Finding> out, int[] visitedFiles,
                                Set<String> visitedDirectories, int depth) {
-        if (visitedFiles[0] >= MAX_FILES || out.size() >= MAX_FINDINGS || depth > MAX_DEPTH) return;
+        if (Thread.currentThread().isInterrupted() || visitedFiles[0] >= MAX_FILES || out.size() >= MAX_FINDINGS || depth > MAX_DEPTH) return;
 
         String canonical;
         try {
@@ -100,7 +100,7 @@ public final class ProjectDiagnosticsScanner {
         File[] children = dir.listFiles();
         if (children == null) return;
         for (File file : children) {
-            if (visitedFiles[0] >= MAX_FILES || out.size() >= MAX_FINDINGS) break;
+            if (Thread.currentThread().isInterrupted() || visitedFiles[0] >= MAX_FILES || out.size() >= MAX_FINDINGS) break;
             if (file.isDirectory()) {
                 scanDirectory(root, file, out, visitedFiles, visitedDirectories, depth + 1);
                 continue;
@@ -136,7 +136,6 @@ public final class ProjectDiagnosticsScanner {
 
         try (FileInputStream input = new FileInputStream(file)) {
             XmlPullParser parser = Xml.newPullParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_DOCDECL, false);
             parser.setInput(input, null);
             int event;
             String rootName = null;
