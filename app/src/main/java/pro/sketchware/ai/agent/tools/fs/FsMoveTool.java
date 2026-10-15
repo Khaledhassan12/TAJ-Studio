@@ -31,15 +31,21 @@ public final class FsMoveTool implements Tool {
         File destination = PathResolver.resolve(ctx.sc_id, args.getString("dst"));
         String src = source.getAbsolutePath();
         String dst = destination.getAbsolutePath();
-        if (!FileUtil.isExistFile(src)) return new ToolResult("Source not found.", true);
-        if (!ctx.checkPermission(src, true)) return new ToolResult("Denied.", true);
-        if (!ctx.checkPermission(dst, FileUtil.isExistFile(dst))) return new ToolResult("Denied.", true);
-
-        FileUtil.moveFile(src, dst);
-        if (FileUtil.isExistFile(dst) && !FileUtil.isExistFile(src)) {
-            return new ToolResult("verified: moved to " + dst, false);
-        } else {
-            return new ToolResult("Move failed.", true);
+        if (!source.exists()) return new ToolResult("Source not found.", true);
+        if (src.equals(dst)) return new ToolResult("Source and destination are identical.", true);
+        if (source.isDirectory() && dst.startsWith(src + File.separator)) {
+            return new ToolResult("Cannot move a directory into itself or one of its descendants.", true);
         }
+        if (destination.exists()) return new ToolResult("Destination already exists. Move it elsewhere first to prevent accidental data loss.", true);
+        if (!ctx.checkPermission(src, true)) return new ToolResult("Denied.", true);
+        if (!ctx.checkPermission(dst, false)) return new ToolResult("Denied.", true);
+
+        File parent = destination.getParentFile();
+        if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
+        FileUtil.moveFile(src, dst);
+        if (destination.exists() && !source.exists()) {
+            return new ToolResult("verified: moved to " + dst, false);
+        }
+        return new ToolResult("Move verification failed; source or destination state did not match the requested move.", true);
     }
 }
