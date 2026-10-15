@@ -416,6 +416,8 @@ public class AssistantFragment extends Fragment {
             adapter.setSessions(chatStore.loadAllSessions());
             adapter.setOnSessionClickListener(session -> {
                 currentSession = session;
+                View sessionPanel = panels.get(R.id.ai_dest_session);
+                if (sessionPanel != null) render(sessionPanel, PanelState.READY);
                 rail.setSelectedItemId(R.id.ai_dest_session);
                 if (chatAdapter != null) {
                     chatAdapter.setMessages(session.messages);
@@ -428,6 +430,8 @@ public class AssistantFragment extends Fragment {
         if (btnNew != null) {
             btnNew.setOnClickListener(v -> {
                 currentSession = new ChatStore.Session();
+                View sessionPanel = panels.get(R.id.ai_dest_session);
+                if (sessionPanel != null) render(sessionPanel, PanelState.EMPTY);
                 if (chatAdapter != null) {
                     chatAdapter.setMessages(new ArrayList<>());
                     scrollToBottom(false);
@@ -784,11 +788,14 @@ public class AssistantFragment extends Fragment {
     }
 
     private void sendMessage(String text, boolean isRegen) {
+        if (!isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
         if (AIActivityMonitor.isBusy()) {
             Snackbar.make(requireView(), R.string.ai_busy, Snackbar.LENGTH_SHORT).show();
             return;
         }
 
+        View sessionPanel = panels.get(R.id.ai_dest_session);
+        if (sessionPanel != null) render(sessionPanel, PanelState.READY);
         if (!isRegen) {
             ChatStore.Message userMsg = new ChatStore.Message("user", text);
             currentSession.messages.add(userMsg);
