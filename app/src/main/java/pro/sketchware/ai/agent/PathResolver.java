@@ -105,6 +105,14 @@ public final class PathResolver {
         return candidate;
     }
 
+    public static File validateProjectPath(String scId, File candidate) {
+        if (scId == null || scId.trim().isEmpty() || !scId.matches("[A-Za-z0-9_-]+") || candidate == null) {
+            throw new IllegalArgumentException("Invalid project path.");
+        }
+        ensureInsideProject(scId, candidate);
+        return candidate;
+    }
+
     /**
      * Rejects traversal, symlink escapes and arbitrary absolute paths. Only the
      * active project's known storage roots are addressable by AI tools.
