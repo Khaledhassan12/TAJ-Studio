@@ -20,24 +20,155 @@ import java.util.Map;
 public final class DomainToolHelper {
 
     public static void backup(String path) {
-        if (FileUtil.isExistFile(path)) {
-            FileUtil.copyFile(path, path + ".bak");
+        File target = new File(path);
+        File backup = new File(path + ".bak");
+        File absentMarker = new File(path + ".bak.absent");
+        if (absentMarker.exists()) absentMarker.delete();
+        if (target.isFile()) {
+            FileUtil.copyFile(path, backup.getAbsolutePath());
+        } else if (!target.exists()) {
+            if (backup.exists()) backup.delete();
+            try {
+                absentMarker.createNewFile();
+            } catch (java.io.IOException ignored) {
+                // If the marker cannot be written, callers still verify the operation before reporting success.
+            }
         }
     }
 
     public static void restore(String path) {
-        if (FileUtil.isExistFile(path + ".bak")) {
-            FileUtil.moveFile(path + ".bak", path);
+        File target = new File(path);
+        File backup = new File(path + ".bak");
+        File absentMarker = new File(path + ".bak.absent");
+        if (backup.isFile()) {
+            FileUtil.copyFile(backup.getAbsolutePath(), path);
+            if (sameBytes(backup, target)) {
+                backup.delete();
+                if (absentMarker.exists()) absentMarker.delete();
+            }
+        } else if (absentMarker.exists()) {
+            if (target.isFile()) target.delete();
+            absentMarker.delete();
         }
     }
 
-    public static boolean verifyXml(String content) {
+    /**
+     * Move without using FileUtil.moveFile, which deletes the source even when its copy fails.
+     * Directories are moved only by rename; files may use a verified copy fallback.
+     */
+    public static boolean moveVerified(File source, File destination) {
+        if (source == null || destination == null || !source.exists() || destination.exists()) return false;
+        File parent = destination.getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) return false;
+        if (source.renameTo(destination)) {
+            if (!source.exists() && destination.exists()) return true;
+            if (source.exists() && destination.exists()) deleteTree(destination);
+            return false;
+        }
+        if (source.isDirectory()) return false;
         try {
-            org.xmlpull.v1.XmlPullParserFactory.newInstance().newPullParser().setInput(new java.io.StringReader(content));
-            return true;
+            FileUtil.copyFile(source.getAbsolutePath(), destination.getAbsolutePath());
+            if (!sameBytes(source, destination)) {
+                if (destination.exists()) destination.delete();
+                return false;
+            }
+            if (!source.delete()) {
+                destination.delete();
+                return false;
+            }
+            return !source.exists() && destination.isFile();
+        } catch (RuntimeException e) {
+            if (destination.exists()) destination.delete();
+            return false;
+        }
+    }
+
+    private static boolean sameBytes(File a, File b) {
+        if (a == null || b == null || !a.isFile() || !b.isFile() || a.length() != b.length()) return false;
+        try (java.io.BufferedInputStream left = new java.io.BufferedInputStream(new java.io.FileInputStream(a));
+             java.io.BufferedInputStream right = new java.io.BufferedInputStream(new java.io.FileInputStream(b))) {
+            byte[] x = new byte[8192];
+            byte[] y = new byte[8192];
+            while (true) {
+                int n = readChunk(left, x);
+                int m = readChunk(right, y);
+                if (n != m) return false;
+                if (n < 0) return true;
+                for (int i = 0; i < n; i++) if (x[i] != y[i]) return false;
+            }
+        } catch (java.io.IOException e) {
+            return false;
+        }
+    }
+
+    private static int readChunk(java.io.InputStream input, byte[] buffer) throws java.io.IOException {
+        int total = 0;
+        while (total < buffer.length) {
+            int count = input.read(buffer, total, buffer.length - total);
+            if (count < 0) return total == 0 ? -1 : total;
+            total += count;
+        }
+        return total;
+    }
+
+    private static boolean deleteTree(File file) {
+        if (file == null || !file.exists()) return true;
+        if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            if (children == null) return false;
+            for (File child : children) if (!deleteTree(child)) return false;
+        }
+        return file.delete();
+    }
+
+    /** Finalize a successful transaction while retaining any pre-existing-file backup for manual recovery. */
+    public static void commitBackup(String path) {
+        File absentMarker = new File(path + ".bak.absent");
+        if (absentMarker.exists()) absentMarker.delete();
+    }
+
+    public static boolean verifyXml(String content) {
+        if (content == null || content.trim().isEmpty()) return false;
+        try {
+            org.xmlpull.v1.XmlPullParser parser = org.xmlpull.v1.XmlPullParserFactory.newInstance().newPullParser();
+            parser.setInput(new java.io.StringReader(content));
+            boolean seenRoot = false;
+            int depth = 0;
+            int event;
+            while ((event = parser.next()) != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+                if (event == org.xmlpull.v1.XmlPullParser.START_TAG) {
+                    depth++;
+                    if (depth == 1) seenRoot = true;
+                } else if (event == org.xmlpull.v1.XmlPullParser.END_TAG) {
+                    depth--;
+                    if (depth < 0) return false;
+                }
+            }
+            return seenRoot && depth == 0;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static boolean isKnownBinaryFileName(String name) {
+        if (name == null) return false;
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        String[] extensions = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".ico",
+                ".mp3", ".wav", ".ogg", ".m4a", ".mp4", ".webm", ".ttf", ".otf", ".woff",
+                ".woff2", ".zip", ".jar", ".aar", ".class", ".dex", ".so", ".bin", ".pdf",
+                ".db", ".sqlite", ".apk", ".aab", ".keystore", ".jks"};
+        for (String extension : extensions) if (lower.endsWith(extension)) return true;
+        return false;
+    }
+
+    public static boolean isTextEditableFileName(String name) {
+        if (name == null || isKnownBinaryFileName(name)) return false;
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        String[] extensions = {".xml", ".json", ".txt", ".properties", ".html", ".htm", ".css",
+                ".js", ".svg", ".md", ".csv", ".yaml", ".yml", ".gradle", ".java", ".kt",
+                ".xml", ".pro", ".mf", ".toml", ".ini", ".sh"};
+        for (String extension : extensions) if (lower.endsWith(extension)) return true;
+        return false;
     }
 
     public static void refreshEditor(Tool.ToolContext ctx) {

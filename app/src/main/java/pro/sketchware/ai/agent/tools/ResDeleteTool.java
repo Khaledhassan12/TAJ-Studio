@@ -18,7 +18,7 @@ public final class ResDeleteTool implements Tool {
             JSONObject props = new JSONObject();
             props.put("folder", new JSONObject().put("type", "string"));
             props.put("name", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("folder").put("name"));
             return new ToolSpec("res_delete", "Deletes a resource file via PathResolver.", params);
@@ -52,10 +52,14 @@ public final class ResDeleteTool implements Tool {
 
         String trashDir = FileUtil.getExternalStorageDir() + "/.sketchware/.agent_trash";
         FileUtil.makeDir(trashDir);
-        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + name;
+        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + System.nanoTime() + "_" + name;
         
-        FileUtil.moveFile(path, trashPath);
-        LiveRegistry.notifyChanged(folder, path);
-        return new ToolResult("verified: moved to trash @ " + trashPath, false);
+        DomainToolHelper.moveVerified(f, new File(trashPath));
+        if (!f.exists() && FileUtil.isExistFile(trashPath)) {
+            LiveRegistry.notifyChanged(folder, path);
+            return new ToolResult("verified: moved to trash @ " + trashPath, false);
+        }
+        if (f.exists() && FileUtil.isExistFile(trashPath)) new File(trashPath).delete();
+        return new ToolResult("Delete verification failed; the source remains in place.", true);
     }
 }

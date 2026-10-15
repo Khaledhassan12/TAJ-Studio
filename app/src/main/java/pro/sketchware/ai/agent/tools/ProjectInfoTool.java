@@ -12,9 +12,8 @@ public final class ProjectInfoTool implements Tool {
         try {
             JSONObject params = new JSONObject();
             params.put("type", "object");
-            params.put("properties", new JSONObject().put("sc_id", new JSONObject().put("type", "string")));
-            params.put("required", new org.json.JSONArray().put("sc_id"));
-            return new ToolSpec("project_info", "Gets metadata for a specific project.", params);
+            params.put("properties", new JSONObject());
+            return new ToolSpec("project_info", "Gets metadata for the project currently open in TAJ Studio.", params);
         } catch (Exception e) { return null; }
     }
 
@@ -25,7 +24,7 @@ public final class ProjectInfoTool implements Tool {
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String sc_id = args.getString("sc_id");
+        String sc_id = ctx.sc_id;
         HashMap<String, Object> map = lC.b(sc_id);
         if (map == null) return new ToolResult("Project not found: " + sc_id, true);
         return new ToolResult(new JSONObject(map).toString(), false);

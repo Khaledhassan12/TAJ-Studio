@@ -20,7 +20,6 @@ public final class FsWriteTool implements Tool {
             props.put("path", new JSONObject().put("type", "string"));
             props.put("content", new JSONObject().put("type", "string"));
             props.put("expectContains", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
             params.put("required", new JSONArray().put("path").put("content"));
             return new ToolSpec("fs_write", "Writes a file with PathResolver and structured result.", params);
@@ -41,6 +40,9 @@ public final class FsWriteTool implements Tool {
 
         File f = PathResolver.resolve(sc_id, userPath);
         String path = f.getAbsolutePath();
+        if (DomainToolHelper.isKnownBinaryFileName(f.getName())) {
+            return ToolResult.structured("fs_write", "ERROR", path, "Text writes are refused for known binary formats.", null, true);
+        }
 
         if (!ctx.checkPermission(path, f.exists())) return new ToolResult("Write denied.", true);
 
@@ -50,12 +52,21 @@ public final class FsWriteTool implements Tool {
         DomainToolHelper.backup(path);
         try {
             FileUtil.writeFile(path, content);
+            if (!f.isFile()) {
+                DomainToolHelper.restore(path);
+                return ToolResult.structured("fs_write", "ERROR", path, "Write did not produce a regular file.", null, true);
+            }
             String rb = FileUtil.readFile(path);
+            if (rb == null || !content.equals(rb)) {
+                DomainToolHelper.restore(path);
+                return ToolResult.structured("fs_write", "ERROR", path, "Verification failed: persisted content differs from requested content.", null, true);
+            }
             if (!expect.isEmpty() && !rb.contains(expect)) {
                 DomainToolHelper.restore(path);
                 return ToolResult.structured("fs_write", "ERROR", path, "Verification failed: '" + expect + "' not found.", null, true);
             }
             
+            DomainToolHelper.commitBackup(path);
             notifyLive(path);
             
             return ToolResult.structured("fs_write", "SUCCESS", path, "verified", null, false);

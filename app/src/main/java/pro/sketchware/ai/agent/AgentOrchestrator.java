@@ -25,11 +25,15 @@ import pro.sketchware.ai.core.ToolSpec;
 
 public final class AgentOrchestrator {
 
-    public static final String DEFAULT_SYSTEM_PROMPT = "Project files live under .sketchware/data/{sc_id}. " +
-            "Use relative paths: 'layout/main.xml', 'res/layout/main.xml', 'values/colors.xml', 'assets/logo.png', 'java/...'. " +
-            "Tools auto-resolve aliases; if a tool returns ERROR with candidates, retry using a candidate. " +
+    public static final String DEFAULT_SYSTEM_PROMPT = "You are operating on the project currently open in TAJ Studio. " +
+            "Use the supplied tools to inspect and change that project; do not merely describe edits when a tool can perform them. " +
+            "Never supply a different sc_id: the runtime binds every project operation to the currently open project. " +
+            "Use relative paths such as 'res/layout/main.xml', 'values/colors.xml', 'assets/logo.png', and 'java/...'. " +
+            "Tools auto-resolve supported aliases; if a tool returns ERROR with candidates, retry using an exact candidate. " +
             "For adding widgets to layouts prefer insert_widget with parentId. " +
-            "Plan: read -> modify -> verify. Never claim success without 'verified'.";
+            "For every requested change: inspect the target, execute the appropriate tool, read back or otherwise verify the persisted result, and report the actual result. " +
+            "The block_create and block_edit tools update the shared custom-block manager catalog, not project-private files; disclose that scope. " +
+            "Never claim an operation succeeded unless the tool returned a verified success. Explain permission denials and failed verification plainly.";
 
     private final AIProvider provider;
     private final ToolRegistry registry;
@@ -72,8 +76,8 @@ public final class AgentOrchestrator {
                     iterations++;
 
                     List<pro.sketchware.ai.core.ToolSpec> toolSpecs = new ArrayList<>();
-                    for (Tool t : registry.all()) {
-                        toolSpecs.add(new pro.sketchware.ai.core.ToolSpec(t.spec().name, t.spec().description, t.spec().parameters));
+                    for (Tool.ToolSpec spec : registry.specs()) {
+                        toolSpecs.add(new pro.sketchware.ai.core.ToolSpec(spec.name, spec.description, spec.parameters));
                     }
 
                     AIRequest request = new AIRequest.Builder()
@@ -105,21 +109,32 @@ public final class AgentOrchestrator {
 
                             boolean success = false;
                             try {
-                                Tool tool = registry.get(call.name);
-                                Tool.ToolResult result;
-                                if (tool != null) {
-                                    if (requiresManualConfirmation(call.name)) {
+                                if (!call.argumentsValid) {
+                                    conversation.add(AIMessage.toolResult(call.id,
+                                            "ERROR: the provider returned malformed JSON for this tool's arguments. No operation was executed. Request a corrected tool call."));
+                                } else {
+                                    Tool tool = registry.get(call.name);
+                                    Tool.ToolResult result;
+                                    if (tool != null) {
+                                    boolean destructive = requiresManualConfirmation(call.name);
+                                    if (destructive && !context.confirmDestructiveOperation(call.name, call.arguments)) {
                                         result = new Tool.ToolResult(
-                                                "Blocked by TAJ safety policy: this operation requires explicit confirmation, which is not available in the current Assistant UI. No file operation was performed.",
+                                                "Operation not executed: destructive operations are disabled or confirmation was denied/dismissed.",
                                                 true);
                                     } else {
-                                        result = tool.run(call.arguments, context);
+                                        if (destructive) context.beginConfirmedOperation();
+                                        try {
+                                            result = tool.run(call.arguments, context);
+                                        } finally {
+                                            if (destructive) context.endConfirmedOperation();
+                                        }
                                     }
                                     conversation.add(AIMessage.toolResult(call.id, result.content));
                                     success = !result.error;
-                                } else {
-                                    result = new Tool.ToolResult("Tool not found: " + call.name, true);
-                                    conversation.add(AIMessage.toolResult(call.id, result.content));
+                                    } else {
+                                        result = new Tool.ToolResult("Tool not found: " + call.name, true);
+                                        conversation.add(AIMessage.toolResult(call.id, result.content));
+                                    }
                                 }
                             } catch (Exception e) {
                                 conversation.add(AIMessage.toolResult(call.id, "Error executing tool: " + e.getMessage()));
@@ -144,6 +159,12 @@ public final class AgentOrchestrator {
                 if (isCancelled) {
                     terminalCallbackSent = true;
                     UiPoster.post(callbacks::onCancel);
+                    return;
+                }
+                if (iterations >= MAX_ITERATIONS && lastResponse != null && !lastResponse.toolCalls.isEmpty()) {
+                    terminalCallbackSent = true;
+                    UiPoster.post(() -> callbacks.onError(
+                            new Exception("Agent reached the 10-round tool limit before producing a final answer. Review the tool results and send a follow-up request.")));
                     return;
                 }
 
@@ -171,7 +192,9 @@ public final class AgentOrchestrator {
         return name.contains("delete")
                 || name.contains("remove")
                 || name.contains("move")
-                || name.contains("copy");
+                || name.contains("copy")
+                || "block_create".equals(name)
+                || "block_edit".equals(name);
     }
 
     private AIResponse fetchBlocking(AIRequest request, StreamCallbacks outerCallbacks) throws Exception {
@@ -224,8 +247,11 @@ public final class AgentOrchestrator {
         if (errorRef.get() != null) {
             throw errorRef.get();
         }
-
-        return responseRef.get();
+        AIResponse response = responseRef.get();
+        if (response == null) {
+            throw new Exception("Provider completed without an AI response payload.");
+        }
+        return response;
     }
 
     public void shutdown() {

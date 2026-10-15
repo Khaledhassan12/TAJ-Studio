@@ -19,7 +19,7 @@ public final class ResCreateTool implements Tool {
             props.put("folder", new JSONObject().put("type", "string"));
             props.put("name", new JSONObject().put("type", "string"));
             props.put("content", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("folder").put("name").put("content"));
             return new ToolSpec("res_create", "Creates a resource file with validation.", params);
@@ -49,16 +49,22 @@ public final class ResCreateTool implements Tool {
             return new ToolResult("Malformed XML content.", true);
         }
 
+        File parent = f.getParentFile();
+        if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
         FileUtil.writeFile(path, content);
-        if (FileUtil.isExistFile(path)) {
+        if (f.isFile() && content.equals(FileUtil.readFile(path))) {
             if ("layout".equals(folder)) {
                 try {
                     DomainToolHelper.syncLayoutToDesigner(sc_id, name, content);
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    f.delete();
+                    return new ToolResult("Resource creation rolled back because designer synchronization failed: " + e.getMessage(), true);
+                }
             }
             LiveRegistry.notifyChanged(folder, path);
             return new ToolResult("verified: created @ " + path, false);
         }
-        return new ToolResult("Failed to create file.", true);
+        if (f.isFile()) f.delete();
+        return new ToolResult("Resource creation verification failed; the incomplete new file was removed: " + path, true);
     }
 }

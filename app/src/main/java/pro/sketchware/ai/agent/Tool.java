@@ -96,7 +96,32 @@ public interface Tool {
             return result[0];
         }
 
+        private final ThreadLocal<Boolean> confirmedOperation = new ThreadLocal<>();
+
+        /** Ask the user before an agent call that deletes, moves, copies, or removes project data. */
+        public boolean confirmDestructiveOperation(String toolName, JSONObject arguments) {
+            DesignActivity a = activity.get();
+            if (a == null || !pro.sketchware.ai.config.AIConfigStore.getInstance(a).isAgentDestructiveOpsEnabled()) {
+                return false;
+            }
+            String details = arguments == null ? "{}" : arguments.toString();
+            if (details.length() > 1200) details = details.substring(0, 1200) + "...";
+            return requestConfirmation(
+                    "The AI agent requested a destructive project operation.\n\nTool: " + toolName
+                    + "\nArguments: " + details
+                    + "\n\nReview the paths carefully. This approval applies only to this one tool call.");
+        }
+
+        public void beginConfirmedOperation() {
+            confirmedOperation.set(Boolean.TRUE);
+        }
+
+        public void endConfirmedOperation() {
+            confirmedOperation.remove();
+        }
+
         public boolean checkPermission(String path, boolean isOverwrite) {
+            if (Boolean.TRUE.equals(confirmedOperation.get())) return true;
             DesignActivity a = activity.get();
             if (a == null) return false;
 

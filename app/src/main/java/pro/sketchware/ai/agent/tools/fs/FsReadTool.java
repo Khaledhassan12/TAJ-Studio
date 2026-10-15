@@ -17,7 +17,6 @@ public final class FsReadTool implements Tool {
             params.put("type", "object");
             JSONObject props = new JSONObject();
             props.put("path", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
             params.put("required", new org.json.JSONArray().put("path"));
             return new ToolSpec("fs_read", "Reads a file with PathResolver and structured result.", params);
@@ -40,12 +39,19 @@ public final class FsReadTool implements Tool {
         if (!f.exists()) {
             return ToolResult.structured("fs_read", "ERROR", path, "File not found.", new JSONArray(PathResolver.candidates(sc_id, f.getName())), true);
         }
-        
+        if (!f.isFile()) {
+            return ToolResult.structured("fs_read", "ERROR", path, "Path is not a regular file.", null, true);
+        }
+        if (pro.sketchware.ai.agent.tools.DomainToolHelper.isKnownBinaryFileName(f.getName())) {
+            return new ToolResult("Binary file was not decoded as text: " + path + " (" + f.length() + " bytes). Use copy/move tools for binary files.", false);
+        }
+
         JSONObject res = FormatRegistry.parse(path);
         res.put("tool", "fs_read");
         res.put("status", "SUCCESS");
         res.put("path", path);
         String content = FileUtil.readFile(path);
+        if (content == null) return ToolResult.structured("fs_read", "ERROR", path, "File could not be read.", null, true);
         if (content.length() > 20000) {
             res.put("raw", content.substring(0, 20000));
             res.put("truncated", true);

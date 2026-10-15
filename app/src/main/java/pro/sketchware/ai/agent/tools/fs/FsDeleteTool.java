@@ -4,6 +4,7 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
 import pro.sketchware.ai.agent.Tool;
+import pro.sketchware.ai.agent.tools.DomainToolHelper;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
 
@@ -14,7 +15,7 @@ public final class FsDeleteTool implements Tool {
         try {
             JSONObject params = new JSONObject();
             params.put("type", "object");
-            params.put("properties", new JSONObject().put("path", new JSONObject().put("type", "string")).put("sc_id", new JSONObject().put("type", "string")));
+            params.put("properties", new JSONObject().put("path", new JSONObject().put("type", "string")));
             params.put("required", new org.json.JSONArray().put("path"));
             return new ToolSpec("fs_delete", "Moves a file to trash via PathResolver.", params);
         } catch (Exception e) { return null; }
@@ -46,13 +47,13 @@ public final class FsDeleteTool implements Tool {
 
         String trashDir = FileUtil.getExternalStorageDir() + "/.sketchware/.agent_trash";
         FileUtil.makeDir(trashDir);
-        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + f.getName();
+        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + System.nanoTime() + "_" + f.getName();
         
-        FileUtil.moveFile(path, trashPath);
-        if (FileUtil.isExistFile(trashPath)) {
+        DomainToolHelper.moveVerified(f, new File(trashPath));
+        if (FileUtil.isExistFile(trashPath) && !f.exists()) {
             return new ToolResult("verified: moved to trash @ " + trashPath, false);
-        } else {
-            return new ToolResult("Delete failed.", true);
         }
+        if (f.exists() && FileUtil.isExistFile(trashPath)) new File(trashPath).delete();
+        return new ToolResult("Delete failed; source remains in place.", true);
     }
 }

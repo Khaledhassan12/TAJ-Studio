@@ -58,6 +58,7 @@ public final class AIConfigStore {
     public static final String K_SHOW_THINKING = "assistant_show_thinking";
     public static final String K_AGENT_ENABLED = "assistant_agent_enabled";
     public static final String K_AGENT_PERM_MODE = "assistant_agent_perm_mode"; // "", full, consent, strict
+    private static final String K_AGENT_DESTRUCTIVE_ENABLED = "assistant_agent_destructive_enabled";
     public static final String K_AUTO_RETRY = "assistant_auto_retry";
     private static final String K_STREAMING_ENABLED = "assistant_streaming_enabled";
     private static final String K_AUTO_SUGGEST = "assistant_auto_suggest";
@@ -328,6 +329,17 @@ public final class AIConfigStore {
 
     public void clearAgentPermMode() {
         setAgentPermMode("");
+    }
+
+    /** Destructive agent tools are available only when enabled; every call still requires confirmation. */
+    public boolean isAgentDestructiveOpsEnabled() {
+        return prefs != null && prefs.getBoolean(K_AGENT_DESTRUCTIVE_ENABLED, true);
+    }
+
+    public void setAgentDestructiveOpsEnabled(boolean enabled) {
+        if (prefs != null) {
+            prefs.edit().putBoolean(K_AGENT_DESTRUCTIVE_ENABLED, enabled).apply();
+        }
     }
 
     public boolean isAutoRetry() {

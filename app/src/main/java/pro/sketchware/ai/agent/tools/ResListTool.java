@@ -17,7 +17,7 @@ public final class ResListTool implements Tool {
             params.put("type", "object");
             JSONObject props = new JSONObject();
             props.put("folder", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"anim", "drawable", "drawable-xhdpi", "layout", "menu", "values", "values-night"})));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("folder"));
             return new ToolSpec("res_list", "Lists resource files using PathResolver.", params);

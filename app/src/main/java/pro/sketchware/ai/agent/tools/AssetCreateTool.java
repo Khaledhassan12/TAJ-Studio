@@ -20,7 +20,7 @@ public final class AssetCreateTool implements Tool {
             props.put("dir", new JSONObject().put("type", "string"));
             props.put("type", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"folder", "file"})));
             props.put("content", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("name").put("type"));
             return new ToolSpec("asset_create", "Creates an asset file or folder.", params);
@@ -42,6 +42,9 @@ public final class AssetCreateTool implements Tool {
         if (type.equals("file") && !name.contains(".")) {
             return new ToolResult("Asset file creation WITHOUT extension is refused.", true);
         }
+        if ("file".equals(type) && DomainToolHelper.isKnownBinaryFileName(name)) {
+            return new ToolResult("This tool writes text content and cannot create binary assets. Use a binary-capable import path.", true);
+        }
 
         String relativePath = "assets/" + (dir.isEmpty() ? "" : dir + "/") + name;
         File target = PathResolver.resolve(sc_id, relativePath);
@@ -53,13 +56,18 @@ public final class AssetCreateTool implements Tool {
             return new ToolResult(target.isDirectory() ? "verified: folder created @ " + path : "Failed.", !target.isDirectory());
         }
 
+        if (target.exists()) return new ToolResult("Asset already exists: " + path + ". Use asset_edit to modify it.", true);
         if (!ctx.checkPermission(path, false)) return new ToolResult("Denied.", true);
 
-        FileUtil.writeFile(path, args.optString("content", ""));
-        if (FileUtil.isExistFile(path)) {
+        String content = args.optString("content", "");
+        File parent = target.getParentFile();
+        if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
+        FileUtil.writeFile(path, content);
+        if (target.isFile() && content.equals(FileUtil.readFile(path))) {
             LiveRegistry.notifyChanged("assets", path);
             return new ToolResult("verified: created @ " + path, false);
         }
-        return new ToolResult("Failed.", true);
+        if (target.isFile()) target.delete();
+        return new ToolResult("Asset creation verification failed; the incomplete new file was removed: " + path, true);
     }
 }

@@ -3,6 +3,9 @@ package pro.sketchware.ai.agent.tools.fs;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.utility.FileUtil;
@@ -31,18 +34,81 @@ public final class FsCopyTool implements Tool {
         File destination = PathResolver.resolve(ctx.sc_id, args.getString("dst"));
         String src = source.getAbsolutePath();
         String dst = destination.getAbsolutePath();
-        if (!FileUtil.isExistFile(src)) return new ToolResult("Source not found.", true);
-        if (!ctx.checkPermission(dst, FileUtil.isExistFile(dst))) return new ToolResult("Denied.", true);
+        if (!source.exists()) return new ToolResult("Source not found.", true);
+        if (src.equals(dst)) return new ToolResult("Source and destination are identical.", true);
+        if (destination.exists()) return new ToolResult("Destination already exists. Choose a new destination to avoid merging or overwriting project data.", true);
+        if (source.isDirectory() && dst.startsWith(src + File.separator)) {
+            return new ToolResult("Cannot copy a directory into itself or one of its descendants.", true);
+        }
+        if (!ctx.checkPermission(dst, false)) return new ToolResult("Denied.", true);
 
         try {
-            if (FileUtil.isDirectory(src)) {
+            File parent = destination.getParentFile();
+            if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
+            if (source.isDirectory()) {
                 FileUtil.copyDirectory(source, destination);
             } else {
                 FileUtil.copyFile(src, dst);
             }
+            if (!verifyTree(source, destination)) {
+                boolean cleaned = deleteTree(destination);
+                return new ToolResult("Copy verification failed: destination does not match source."
+                        + (cleaned ? " Partial destination was removed." : " WARNING: partial destination could not be removed: " + dst), true);
+            }
             return new ToolResult("verified: copied to " + dst, false);
         } catch (Exception e) {
-            return new ToolResult("Copy failed: " + e.getMessage(), true);
+            boolean cleaned = deleteTree(destination);
+            return new ToolResult("Copy failed: " + e.getMessage()
+                    + (cleaned ? " Partial destination was removed." : " WARNING: partial destination could not be removed: " + dst), true);
         }
+    }
+
+    private static boolean deleteTree(File file) {
+        if (file == null || !file.exists()) return true;
+        if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            if (children == null) return false;
+            for (File child : children) if (!deleteTree(child)) return false;
+        }
+        return file.delete();
+    }
+
+    private static boolean verifyTree(File source, File destination) throws IOException {
+        if (source.isDirectory()) {
+            if (!destination.isDirectory()) return false;
+            File[] sourceChildren = source.listFiles();
+            File[] destinationChildren = destination.listFiles();
+            if (sourceChildren == null || destinationChildren == null || sourceChildren.length != destinationChildren.length) return false;
+            java.util.Map<String, File> destinationByName = new java.util.HashMap<>();
+            for (File child : destinationChildren) destinationByName.put(child.getName(), child);
+            for (File child : sourceChildren) {
+                File copy = destinationByName.get(child.getName());
+                if (copy == null || !verifyTree(child, copy)) return false;
+            }
+            return true;
+        }
+        if (!source.isFile() || !destination.isFile() || source.length() != destination.length()) return false;
+        try (BufferedInputStream a = new BufferedInputStream(new FileInputStream(source));
+             BufferedInputStream b = new BufferedInputStream(new FileInputStream(destination))) {
+            byte[] left = new byte[8192];
+            byte[] right = new byte[8192];
+            while (true) {
+                int n = readChunk(a, left);
+                int m = readChunk(b, right);
+                if (n != m) return false;
+                if (n == -1) return true;
+                for (int i = 0; i < n; i++) if (left[i] != right[i]) return false;
+            }
+        }
+    }
+
+    private static int readChunk(java.io.InputStream input, byte[] buffer) throws IOException {
+        int total = 0;
+        while (total < buffer.length) {
+            int count = input.read(buffer, total, buffer.length - total);
+            if (count < 0) return total == 0 ? -1 : total;
+            total += count;
+        }
+        return total;
     }
 }

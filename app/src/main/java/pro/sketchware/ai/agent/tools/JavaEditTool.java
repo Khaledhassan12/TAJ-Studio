@@ -21,7 +21,7 @@ public final class JavaEditTool implements Tool {
             props.put("mode", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"replace_all", "search_replace", "append"})));
             props.put("content", new JSONObject().put("type", "string"));
             props.put("search", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("target").put("path").put("mode"));
             return new ToolSpec("java_edit", "Edits a Java/Kotlin file via PathResolver.", params);
@@ -52,9 +52,13 @@ public final class JavaEditTool implements Tool {
             return new ToolResult(err.toString(), true);
         }
         
+        if (!path.endsWith(".java") && !path.endsWith(".kt")) {
+            return new ToolResult("java_edit supports Java and Kotlin source files only.", true);
+        }
         if (!ctx.checkPermission(path, true)) return new ToolResult("Denied.", true);
 
         String original = FileUtil.readFile(path);
+        if (original == null) return new ToolResult("Source file could not be read as text.", true);
         String next = "";
         switch (mode) {
             case "replace_all" -> next = args.getString("content");
@@ -70,6 +74,11 @@ public final class JavaEditTool implements Tool {
         DomainToolHelper.backup(path);
         try {
             FileUtil.writeFile(path, next);
+            if (!f.isFile() || !next.equals(FileUtil.readFile(path))) {
+                DomainToolHelper.restore(path);
+                return new ToolResult("Edit verification failed: persisted content differs from requested content.", true);
+            }
+            DomainToolHelper.commitBackup(path);
             LiveRegistry.notifyChanged("manager".equals(target) ? "java_manager" : "project_java", path);
             return new ToolResult("verified: content matches @ " + path, false);
         } catch (Exception e) {

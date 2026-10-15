@@ -2,6 +2,9 @@ package pro.sketchware.ai.agent;
 
 import org.json.JSONObject;
 import com.besome.sketch.design.DesignActivity;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class OpenManagerTool implements Tool {
 
@@ -29,20 +32,45 @@ public class OpenManagerTool implements Tool {
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) {
-        String type = args.optString("manager_type");
-        ctx.runOnUiThread(() -> {
-            DesignActivity a = ctx.activity.get();
-            if (a == null) return;
-            switch (type) {
-                case "image" -> a.toImageManager();
-                case "java" -> a.toJavaManager();
-                case "resource" -> a.toResourceManager();
-                case "library" -> a.toLibraryManager();
-                case "view" -> a.toViewManager();
-                case "asset" -> a.toAssetManager();
-                case "font" -> a.toFontManager();
+        String type = args.optString("manager_type", "");
+        if (!java.util.Arrays.asList("image", "java", "resource", "library", "view", "asset", "font").contains(type)) {
+            return new ToolResult("Unsupported manager type: " + type, true);
+        }
+        DesignActivity activity = ctx.activity.get();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return new ToolResult("Cannot open manager: the active project editor is unavailable.", true);
+        }
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<ToolResult> result = new AtomicReference<>();
+        activity.runOnUiThread(() -> {
+            try {
+                if (activity.isFinishing() || activity.isDestroyed()) {
+                    result.set(new ToolResult("Cannot open manager: the project editor closed before dispatch.", true));
+                    return;
+                }
+                switch (type) {
+                    case "image" -> activity.toImageManager();
+                    case "java" -> activity.toJavaManager();
+                    case "resource" -> activity.toResourceManager();
+                    case "library" -> activity.toLibraryManager();
+                    case "view" -> activity.toViewManager();
+                    case "asset" -> activity.toAssetManager();
+                    case "font" -> activity.toFontManager();
+                }
+                result.set(new ToolResult("Manager navigation dispatched: " + type, false));
+            } catch (RuntimeException e) {
+                result.set(new ToolResult("Manager navigation failed: " + e.getMessage(), true));
+            } finally {
+                latch.countDown();
             }
         });
-        return new ToolResult("Opened " + type + " manager", false);
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) return new ToolResult("Manager navigation dispatch timed out.", true);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new ToolResult("Manager navigation was interrupted.", true);
+        }
+        ToolResult dispatched = result.get();
+        return dispatched == null ? new ToolResult("Manager navigation returned no status.", true) : dispatched;
     }
 }
