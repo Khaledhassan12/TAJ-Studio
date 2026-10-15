@@ -46,12 +46,28 @@ public class ProjectUpgradeScanner {
         if (callback != null) callback.onScanStarted();
         executor.execute(() -> {
             List<UpgradeReport> reports = new ArrayList<>();
-            ArrayList<HashMap<String, Object>> projects = lC.a();
+            ArrayList<HashMap<String, Object>> projects;
+            try {
+                projects = lC.a();
+            } catch (Exception projectListError) {
+                reports.add(createScanFailureReport(projectListError));
+                mainHandler.post(() -> {
+                    if (callback != null) callback.onScanFinished(reports);
+                });
+                return;
+            }
 
             for (HashMap<String, Object> project : projects) {
-                String scId = yB.c(project, "sc_id");
-                String appName = yB.c(project, "my_app_name");
-                String pkgName = yB.c(project, "my_sc_pkg_name");
+                String scId = null;
+                String appName = "Unknown project";
+                String pkgName = "";
+                try {
+                    scId = yB.c(project, "sc_id");
+                    appName = yB.c(project, "my_app_name");
+                    pkgName = yB.c(project, "my_sc_pkg_name");
+                    if (scId == null || scId.trim().isEmpty()) {
+                        throw new IllegalArgumentException("Missing project ID");
+                    }
                 
                 File projectFolder = new File(wq.c(scId));
                 long lastMod = projectFolder.lastModified();
@@ -160,12 +176,38 @@ public class ProjectUpgradeScanner {
                 }
 
                 reports.add(report);
+                } catch (Exception projectError) {
+                    String safeId = scId == null || scId.trim().isEmpty()
+                            ? "unknown-" + Integer.toHexString(project == null ? 0 : project.hashCode())
+                            : scId;
+                    UpgradeReport failedReport = new UpgradeReport(safeId, appName, pkgName, "unknown", 0L, false);
+                    failedReport.items.add(new UpgradeItem(
+                            UpgradeItem.Type.PROJECT_HEALTH,
+                            UpgradeItem.Status.RECOMMENDED_MANUAL,
+                            "Project scan could not finish",
+                            "This project was kept in the results, but one or more checks failed (" +
+                                    projectError.getClass().getSimpleName() +
+                                    "). Review its metadata and open the detailed report."));
+                    reports.add(failedReport);
+                }
             }
 
             mainHandler.post(() -> {
                 if (callback != null) callback.onScanFinished(reports);
             });
         });
+    }
+
+    private UpgradeReport createScanFailureReport(Exception error) {
+        UpgradeReport report = new UpgradeReport("project-list-error", "Project list unavailable",
+                "", "unknown", 0L, false);
+        report.items.add(new UpgradeItem(
+                UpgradeItem.Type.PROJECT_HEALTH,
+                UpgradeItem.Status.RECOMMENDED_MANUAL,
+                "Could not enumerate projects",
+                "Sketchware's project index could not be read (" + error.getClass().getSimpleName() +
+                        "). No project files were changed."));
+        return report;
     }
 
     private String calculateAge(long timestamp) {
