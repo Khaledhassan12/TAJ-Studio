@@ -8,7 +8,12 @@ public final class RefreshUiTool implements Tool {
 
     @Override
     public ToolSpec spec() {
-        return new ToolSpec("refresh_ui", "Triggers a full UI refresh across all active domains.", new JSONObject());
+        JSONObject schema = new JSONObject();
+        try {
+            schema.put("type", "object");
+            schema.put("properties", new JSONObject());
+        } catch (Exception ignored) {}
+        return new ToolSpec("refresh_ui", "Triggers a full UI refresh across all active domains.", schema);
     }
 
     @Override
