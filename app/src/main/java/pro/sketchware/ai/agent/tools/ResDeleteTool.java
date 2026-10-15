@@ -59,6 +59,7 @@ public final class ResDeleteTool implements Tool {
             LiveRegistry.notifyChanged(folder, path);
             return new ToolResult("verified: moved to trash @ " + trashPath, false);
         }
-        return new ToolResult("Delete verification failed; the resource was not confirmed in trash.", true);
+        if (f.exists() && FileUtil.isExistFile(trashPath)) new File(trashPath).delete();
+        return new ToolResult("Delete verification failed; the source remains in place.", true);
     }
 }
