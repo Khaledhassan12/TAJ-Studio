@@ -17,6 +17,7 @@ import pro.sketchware.ai.agent.tools.fs.*;
 public final class ToolRegistry {
 
     private final Map<String, Tool> tools = new LinkedHashMap<>();
+    private final Map<String, Tool.ToolSpec> specs = new LinkedHashMap<>();
 
     public ToolRegistry() {
         // Project Tools
@@ -118,6 +119,20 @@ public final class ToolRegistry {
             throw new IllegalArgumentException("Duplicate agent tool name: " + spec.name);
         }
         tools.put(spec.name, tool);
+        specs.put(spec.name, spec);
+    }
+
+    /** Returns the exact validated schema snapshot advertised for this registered executor. */
+    public synchronized Tool.ToolSpec spec(String name) {
+        return specs.get(name);
+    }
+
+    /** Looks up the immutable-at-registration spec snapshot for this exact executor instance. */
+    public synchronized Tool.ToolSpec spec(Tool tool) {
+        for (Map.Entry<String, Tool> entry : tools.entrySet()) {
+            if (entry.getValue() == tool) return specs.get(entry.getKey());
+        }
+        return null;
     }
 
     public synchronized Tool get(String name) {

@@ -103,7 +103,12 @@ public final class AgentOrchestrator {
 
                     List<pro.sketchware.ai.core.ToolSpec> toolSpecs = new ArrayList<>();
                     for (Tool t : registry.all()) {
-                        toolSpecs.add(new pro.sketchware.ai.core.ToolSpec(t.spec().name, t.spec().description, t.spec().parameters));
+                        Tool.ToolSpec declared = registry.spec(t);
+                        if (declared == null) {
+                            throw new IllegalStateException("A registered tool has no validated schema snapshot.");
+                        }
+                        toolSpecs.add(new pro.sketchware.ai.core.ToolSpec(
+                                declared.name, declared.description, declared.parameters));
                     }
 
                     AIRequest request = new AIRequest.Builder()
@@ -133,7 +138,8 @@ public final class AgentOrchestrator {
                         for (ToolCall call : response.toolCalls) {
                             if (isCancelled) break;
 
-                            UiPoster.post(() -> callbacks.onToolStart(call.name));
+                            // StreamCallbacks is a background-thread contract; UI consumers post once themselves.
+                            callbacks.onToolStart(call.name);
 
                             boolean success = false;
                             String toolSummary = "Tool execution did not produce a result.";
@@ -141,7 +147,7 @@ public final class AgentOrchestrator {
                                 Tool tool = registry.get(call.name);
                                 Tool.ToolResult result;
                                 if (tool != null) {
-                                    String validationError = ToolArgumentValidator.validate(tool.spec(), call.arguments);
+                                    String validationError = ToolArgumentValidator.validate(registry.spec(call.name), call.arguments);
                                     if (validationError == null) {
                                         validationError = validateActiveProjectArgs(call.arguments);
                                     }
@@ -191,8 +197,8 @@ public final class AgentOrchestrator {
                                 }
                                 final boolean ok = success;
                                 final String summary = toolSummary;
-                                UiPoster.post(() -> callbacks.onToolResult(call.name, summary, ok));
-                                UiPoster.post(() -> callbacks.onToolEnd(call.name, ok));
+                                callbacks.onToolResult(call.name, summary, ok);
+                                callbacks.onToolEnd(call.name, ok);
                             }
                         }
                     } catch (Exception e) {
