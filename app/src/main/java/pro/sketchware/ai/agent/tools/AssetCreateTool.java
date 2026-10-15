@@ -37,7 +37,7 @@ public final class AssetCreateTool implements Tool {
         String name = args.getString("name");
         String type = args.getString("type");
         String dir = args.optString("dir", "");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
 
         if (type.equals("file") && !name.contains(".")) {
             return new ToolResult("Asset file creation WITHOUT extension is refused.", true);
