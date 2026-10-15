@@ -51,7 +51,7 @@ public final class ProjectDiagnosticsScanner {
     private static final Pattern GRADLE_WRAPPER_VERSION = Pattern.compile(
             "gradle-([0-9]+(?:\\.[0-9]+){1,2})-(?:all|bin)\\.zip");
     private static final Pattern AGP_VERSION = Pattern.compile(
-            "(?:com\\.android\\.tools\\.build:gradle:|com\\.android\\.application[\\\"']\\s*version\\s*[\\\"'])([0-9]+(?:\\.[0-9]+){1,2})");
+            "com\\.android\\.tools\\.build:gradle:([0-9]+(?:\\.[0-9]+){1,2})");
     private static final Pattern TARGET_SDK = Pattern.compile(
             "(?m)\\btargetSdk(?:Version)?\\s*(?:=\\s*|\\s+)([0-9]+)");
     private static final Pattern COMPILE_SDK = Pattern.compile(
@@ -167,15 +167,15 @@ public final class ProjectDiagnosticsScanner {
         String source = readText(file, MAX_XML_BYTES);
         if (source == null) return;
         String withoutComments = source.replaceAll("(?s)<!--.*?-->", " ");
-        if (Pattern.compile("android:debuggable\\s*=\\s*[\\\"']true[\\\"']", Pattern.CASE_INSENSITIVE).matcher(withoutComments).find()) {
+        if (Pattern.compile("android:debuggable\\s*=\\s*['\"]true['\"]", Pattern.CASE_INSENSITIVE).matcher(withoutComments).find()) {
             add(out, "manifest_debuggable", "Debuggable app manifest",
                     "android:debuggable is explicitly true. Remove it from production variants unless there is a reviewed reason.", file);
         }
-        if (Pattern.compile("android:usesCleartextTraffic\\s*=\\s*[\\\"']true[\\\"']", Pattern.CASE_INSENSITIVE).matcher(withoutComments).find()) {
+        if (Pattern.compile("android:usesCleartextTraffic\\s*=\\s*['\"]true['\"]", Pattern.CASE_INSENSITIVE).matcher(withoutComments).find()) {
             add(out, "manifest_cleartext_traffic", "Cleartext network traffic is enabled",
                     "Review whether unencrypted HTTP traffic is required. Prefer HTTPS and a narrow network security configuration.", file);
         }
-        if (Pattern.compile("android:allowBackup\\s*=\\s*[\\\"']true[\\\"']", Pattern.CASE_INSENSITIVE).matcher(withoutComments).find()) {
+        if (Pattern.compile("android:allowBackup\\s*=\\s*['\"]true['\"]", Pattern.CASE_INSENSITIVE).matcher(withoutComments).find()) {
             add(out, "manifest_backup_enabled", "App data backup is enabled",
                     "Confirm that backed-up data is appropriate and sensitive data is excluded or protected. Backup may be intentional.", file);
         }
