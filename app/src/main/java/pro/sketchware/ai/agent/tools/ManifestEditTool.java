@@ -148,7 +148,7 @@ public final class ManifestEditTool implements Tool {
     }
 
     private static String escapeXmlAttribute(String value) {
-        return value.replace("&", "&amp;").replace("\\\"", "&quot;")
+        return value.replace("&", "&amp;").replace("\"", "&quot;")
                 .replace("<", "&lt;").replace(">", "&gt;");
     }
 
