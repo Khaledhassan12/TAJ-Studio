@@ -86,7 +86,7 @@ public final class ModelSyncService {
                 builder.header("x-goog-api-key", cleanKey);
             }
         } else {
-            if (!cleanKey.isEmpty()) {
+            if (!profile.skipAuth && !cleanKey.isEmpty()) {
                 builder.header("Authorization", "Bearer " + cleanKey);
             }
         }
