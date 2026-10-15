@@ -52,9 +52,13 @@ public final class JavaEditTool implements Tool {
             return new ToolResult(err.toString(), true);
         }
         
+        if (!path.endsWith(".java") && !path.endsWith(".kt")) {
+            return new ToolResult("java_edit supports Java and Kotlin source files only.", true);
+        }
         if (!ctx.checkPermission(path, true)) return new ToolResult("Denied.", true);
 
         String original = FileUtil.readFile(path);
+        if (original == null) return new ToolResult("Source file could not be read as text.", true);
         String next = "";
         switch (mode) {
             case "replace_all" -> next = args.getString("content");
