@@ -2,6 +2,7 @@ package pro.sketchware.ai.core;
 
 import android.content.Context;
 import android.util.Log;
+import android.util.AtomicFile;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -183,11 +184,22 @@ public final class ChatStore {
         }
     }
 
-    public void saveSession(Session session) {
+    public synchronized void saveSession(Session session) {
+        if (session == null || session.id == null || session.id.trim().isEmpty()) return;
+        if (!baseDir.exists() && !baseDir.mkdirs() && !baseDir.isDirectory()) {
+            Log.e(TAG, "Failed to create session directory");
+            return;
+        }
         File file = new File(baseDir, session.id + ".json");
-        try (FileOutputStream out = new FileOutputStream(file)) {
+        AtomicFile atomicFile = new AtomicFile(file);
+        FileOutputStream out = null;
+        try {
+            out = atomicFile.startWrite();
             out.write(session.toJson().toString().getBytes(StandardCharsets.UTF_8));
+            out.getFD().sync();
+            atomicFile.finishWrite(out);
         } catch (IOException e) {
+            if (out != null) atomicFile.failWrite(out);
             Log.e(TAG, "Failed to save session", e);
         }
     }
@@ -198,8 +210,21 @@ public final class ChatStore {
         if (files != null) {
             for (File f : files) {
                 try (FileInputStream in = new FileInputStream(f)) {
+                    if (f.length() > Integer.MAX_VALUE) {
+                        Log.w(TAG, "Skipping oversized session file: " + f.getName());
+                        continue;
+                    }
                     byte[] data = new byte[(int) f.length()];
-                    in.read(data);
+                    int offset = 0;
+                    while (offset < data.length) {
+                        int count = in.read(data, offset, data.length - offset);
+                        if (count < 0) break;
+                        offset += count;
+                    }
+                    if (offset != data.length) {
+                        Log.w(TAG, "Skipping incomplete session file: " + f.getName());
+                        continue;
+                    }
                     sessions.add(Session.fromJson(new JSONObject(new String(data, StandardCharsets.UTF_8))));
                 } catch (Exception e) {
                     Log.w(TAG, "Corrupt session file: " + f.getName());
