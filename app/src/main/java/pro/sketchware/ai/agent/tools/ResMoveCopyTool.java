@@ -55,14 +55,20 @@ public final class ResMoveCopyTool implements Tool {
         File parent = destination.getParentFile();
         if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
         if ("copy".equals(op)) {
-            FileUtil.copyFile(fromPath, toPath);
-            if (!sameBytes(source, destination)) {
-                return new ToolResult("Resource copy verification failed.", true);
+            try {
+                FileUtil.copyFile(fromPath, toPath);
+                if (!sameBytes(source, destination)) {
+                    destination.delete();
+                    return new ToolResult("Resource copy verification failed; the partial destination was removed.", true);
+                }
+            } catch (Exception e) {
+                if (destination.exists()) destination.delete();
+                return new ToolResult("Resource copy failed: " + e.getMessage(), true);
             }
         } else {
             FileUtil.moveFile(fromPath, toPath);
             if (source.exists() || !destination.isFile()) {
-                return new ToolResult("Resource move verification failed.", true);
+                return new ToolResult("Resource move verification failed; inspect the source and destination before retrying.", true);
             }
             LiveRegistry.notifyChanged(args.getString("fromFolder"), fromPath);
         }
