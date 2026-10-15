@@ -1314,7 +1314,8 @@ public class AssistantFragment extends Fragment {
                                 currentSession.messages.add(assistantMsg);
                                 chatAdapter.addMessage(assistantMsg);
                                 scrollToBottom(true);
-                            } else if (!configStore.isStreamingEnabled()) {
+                            } else {
+                                // Replace any streamed partial text with the provider's canonical final text.
                                 assistantMsg.text = finalText;
                                 chatAdapter.notifyItemChanged(currentSession.messages.indexOf(assistantMsg));
                             }
