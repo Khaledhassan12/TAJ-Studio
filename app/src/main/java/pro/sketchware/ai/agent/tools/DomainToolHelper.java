@@ -234,8 +234,10 @@ public final class DomainToolHelper {
                 throw new IOException("Copy verification failed: destination differs from source.");
             }
         } catch (IOException e) {
-            try { deleteTree(destination); } catch (IOException ignored) {}
-            throw e;
+            // Never recursively erase a partial destination after a failed copy: a user or
+            // editor may already have created/modified entries there. Preserve it for inspection.
+            throw new IOException("Copy did not complete. The source was preserved and the destination may contain partial output; it was deliberately left untouched to avoid deleting concurrent user changes. Destination: "
+                    + destination.getAbsolutePath() + ". Cause: " + e.getMessage(), e);
         }
     }
 

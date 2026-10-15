@@ -280,7 +280,7 @@ public final class AgentOrchestrator {
      * contents or arbitrary structured payloads in the execution card.
      */
     private static String summarizeToolResult(String toolName, String content, boolean success) {
-        String prefix = success ? "VERIFIED" : "FAILED";
+        String prefix = success ? "EXECUTOR OK" : "EXECUTOR ERROR";
         if (content == null || content.trim().isEmpty()) return prefix + ": executor returned no result details.";
         String name = toolName == null ? "" : toolName.toLowerCase(java.util.Locale.ROOT);
         if (name.contains("read") || name.contains("search") || name.contains("list") || name.contains("info")) {
