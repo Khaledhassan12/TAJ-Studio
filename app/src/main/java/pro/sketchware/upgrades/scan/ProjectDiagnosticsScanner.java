@@ -47,7 +47,7 @@ public final class ProjectDiagnosticsScanner {
             "(?m)^\\s*(?://|/\\*|\\*|#)?\\s*(?:TODO|FIXME|XXX)\\b|" +
             "\\bLog\\.(?:v|d|i)\\s*\\(|\\bSystem\\.out\\.print(?:ln)?\\s*\\(");
     private static final Pattern DYNAMIC_GRADLE_VERSION = Pattern.compile(
-            "(?i)(?:['\\"][^'\\"\\n]+:[^'\\"\\n]+:)(?:[^'\\"\\n]*\\+[^'\\"\\n]*|latest\\.(?:release|integration)|\\[[^\\]]*,[^\\]]*\\])");
+            "(?i)['\"][^'\"]+:[^'\"]+:(?:[^'\"]*\\+[^'\"]*|latest\\.release|latest\\.integration|\\[[^]]*,[^]]*\\])['\"]");
     private static final Pattern TARGET_SDK = Pattern.compile(
             "(?m)\\btargetSdk(?:Version)?\\s*(?:=\\s*|\\s+)([0-9]+)");
     private static final Pattern COMPILE_SDK = Pattern.compile(
