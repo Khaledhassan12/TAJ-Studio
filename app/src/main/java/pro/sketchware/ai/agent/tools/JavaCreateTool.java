@@ -5,6 +5,7 @@ import org.json.JSONArray;
 import java.io.File;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.ProjectPaths;
+import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
 import pro.sketchware.ai.live.LiveRegistry;
 
@@ -49,12 +50,14 @@ public final class JavaCreateTool implements Tool {
             root += File.separator + packagePath.replace(".", File.separator);
         }
         
-        File targetFile = new File(root, name + (type.equals("folder") ? "" : (type.contains("java") ? ".java" : ".kt")));
+        File targetFile = PathResolver.validateProjectPath(sc_id,
+                new File(root, name + (type.equals("folder") ? "" : (type.contains("java") ? ".java" : ".kt"))));
         String path = targetFile.getAbsolutePath();
 
         if (type.equals("folder")) {
+            if (!ctx.checkPermission(path, targetFile.exists())) return new ToolResult("Denied.", true);
             FileUtil.makeDir(path);
-            return new ToolResult("verified: folder created @ " + path, false);
+            return new ToolResult(targetFile.isDirectory() ? "verified: folder created @ " + path : "Failed.", !targetFile.isDirectory());
         }
 
         String content = args.optString("content", "");
