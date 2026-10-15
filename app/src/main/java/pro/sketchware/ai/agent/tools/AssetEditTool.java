@@ -68,6 +68,10 @@ public final class AssetEditTool implements Tool {
         DomainToolHelper.backup(path);
         try {
             FileUtil.writeFile(path, next);
+            if (!f.isFile() || !next.equals(FileUtil.readFile(path))) {
+                DomainToolHelper.restore(path);
+                return new ToolResult("Edit verification failed: persisted content differs from requested content.", true);
+            }
             LiveRegistry.notifyChanged("assets", path);
             return new ToolResult("verified: content matches @ " + path, false);
         } catch (Exception e) {
