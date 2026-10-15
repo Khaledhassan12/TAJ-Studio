@@ -1309,6 +1309,9 @@ public class AssistantFragment extends Fragment {
                         // reconcile against the provider's final text so a successful request
                         // cannot leave the user with no assistant message.
                         String finalText = response == null || response.text == null ? "" : response.text;
+                        if (finalText.isEmpty() && assistantMsg == null) {
+                            finalText = "The provider completed without returning a text response. Check the selected provider/model and retry.";
+                        }
                         if (!finalText.isEmpty()) {
                             if (assistantMsg == null) {
                                 assistantMsg = new ChatStore.Message("assistant", finalText);
