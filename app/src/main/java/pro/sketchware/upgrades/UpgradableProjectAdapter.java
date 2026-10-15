@@ -88,6 +88,7 @@ public class UpgradableProjectAdapter extends RecyclerView.Adapter<UpgradablePro
                 UpgradeReport newR = newReports.get(newItemPosition);
                 return oldR.isUpToDate() == newR.isUpToDate() &&
                         oldR.getUpgradableCount() == newR.getUpgradableCount() &&
+                        oldR.diagnosticCount == newR.diagnosticCount &&
                         oldR.age.equals(newR.age) &&
                         oldR.hasCustomIcon == newR.hasCustomIcon &&
                         oldR.appName.equals(newR.appName);
