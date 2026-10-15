@@ -254,7 +254,7 @@ public final class ProjectDiagnosticsScanner {
         String source = readText(file, MAX_GRADLE_BYTES);
         if (source == null) return;
 
-        String withoutComments = source.replaceAll("(?s)/\\*.*?\\*/", " ").replaceAll("(?m)//.*$", " ");
+        String withoutComments = source.replaceAll("(?s)/\\*.*?\\*/", " ").replaceAll("(?m)^\\s*//.*$", " ");
         String fileName = file.getName().toLowerCase(Locale.ROOT);
         if (fileName.equals("gradle-wrapper.properties")) {
             Matcher wrapper = GRADLE_WRAPPER_VERSION.matcher(withoutComments);
