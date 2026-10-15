@@ -608,6 +608,12 @@ public class AssistantFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull FavoriteHolder holder, int position) {
+            if (entries.isEmpty()) {
+                holder.text.setText("No favorite responses yet. Tap the ☆ button on an assistant reply to save it here.");
+                holder.text.setOnClickListener(null);
+                holder.text.setOnLongClickListener(null);
+                return;
+            }
             FavoriteEntry entry = entries.get(position);
             String body = entry.message.text == null ? "" : entry.message.text;
             holder.text.setText("★  " + (body.length() > 240 ? body.substring(0, 240) + "…" : body) + "\nTap to remove from favorites");
@@ -628,7 +634,7 @@ public class AssistantFragment extends Fragment {
             });
         }
 
-        @Override public int getItemCount() { return entries.size(); }
+        @Override public int getItemCount() { return entries.isEmpty() ? 1 : entries.size(); }
 
         final class FavoriteHolder extends RecyclerView.ViewHolder {
             final TextView text;
