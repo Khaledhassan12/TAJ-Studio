@@ -42,6 +42,9 @@ public final class AssetCreateTool implements Tool {
         if (type.equals("file") && !name.contains(".")) {
             return new ToolResult("Asset file creation WITHOUT extension is refused.", true);
         }
+        if ("file".equals(type) && DomainToolHelper.isKnownBinaryFileName(name)) {
+            return new ToolResult("This tool writes text content and cannot create binary assets. Use a binary-capable import path.", true);
+        }
 
         String relativePath = "assets/" + (dir.isEmpty() ? "" : dir + "/") + name;
         File target = PathResolver.resolve(sc_id, relativePath);
