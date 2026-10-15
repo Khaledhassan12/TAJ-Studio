@@ -21,7 +21,7 @@ public final class JavaEditTool implements Tool {
             props.put("mode", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"replace_all", "search_replace", "append"})));
             props.put("content", new JSONObject().put("type", "string"));
             props.put("search", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("target").put("path").put("mode"));
             return new ToolSpec("java_edit", "Edits a Java/Kotlin file via PathResolver.", params);
