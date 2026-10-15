@@ -139,6 +139,7 @@ public class AssistantFragment extends Fragment {
         
         AIActivityMonitor.setOnTimeoutAction(() -> {
             UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                 addErrorMessage(getString(R.string.ai_timed_out), "", "Retry");
                 // Mark running tools as error
                 View panel = panels.get(R.id.ai_dest_session);
@@ -176,6 +177,7 @@ public class AssistantFragment extends Fragment {
 
     private void updateVoiceIcons() {
         UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
             if (chatAdapter != null) chatAdapter.setCurrentSpeakingText(currentSpeakingText);
         });
     }
@@ -589,6 +591,7 @@ public class AssistantFragment extends Fragment {
             @Override
             public void onStayInChat(int position) {
                 UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                     currentSession.messages.remove(position);
                     chatAdapter.notifyItemRemoved(position);
                 });
@@ -703,6 +706,7 @@ public class AssistantFragment extends Fragment {
             AIActivityMonitor.setState(SessionState.MODEL_STREAMING);
         }
         UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
             if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                 long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                 chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -725,6 +729,7 @@ public class AssistantFragment extends Fragment {
         if (token == null || token.isEmpty()) return;
         pokeWatchdog();
         UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
             if (thinkingMsg == null) {
                 thinkingStart = System.currentTimeMillis();
                 thinkingMsg = new ChatStore.Message("thinking", "");
@@ -758,6 +763,7 @@ public class AssistantFragment extends Fragment {
         pokeWatchdog();
         AIActivityMonitor.setState(SessionState.WAITING_RATE_LIMIT);
         UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
             if (rateLimitMsg == null) {
                 rateLimitMsg = new ChatStore.Message("rate_limit", "");
                 currentSession.messages.add(rateLimitMsg);
@@ -844,6 +850,7 @@ public class AssistantFragment extends Fragment {
                 public void onToolCall(ToolCall call) {
                     pokeWatchdog();
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -857,6 +864,7 @@ public class AssistantFragment extends Fragment {
                     activeToolCount++;
                     AIActivityMonitor.setState(SessionState.TOOL_RUNNING);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         if (toolsCard == null) {
                             toolsCard = new ChatStore.Message("tools_card", "");
                             toolsCard.toolEvents = new ArrayList<>();
@@ -876,6 +884,7 @@ public class AssistantFragment extends Fragment {
                     activeToolCount = Math.max(0, activeToolCount - 1);
                     AIActivityMonitor.setState(activeToolCount > 0 ? SessionState.TOOL_RUNNING : SessionState.MODEL_STREAMING);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         if (toolsCard != null) {
                             for (ChatStore.ToolEvent te : toolsCard.toolEvents) {
                                 if (te.name.equals(name) && "RUNNING".equals(te.status)) {
@@ -894,6 +903,7 @@ public class AssistantFragment extends Fragment {
                 public void onComplete(AIResponse response) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         reconcileTools(toolsCard);
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
@@ -933,6 +943,7 @@ public class AssistantFragment extends Fragment {
                 public void onError(Throwable error) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         reconcileTools(toolsCard);
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
@@ -947,6 +958,7 @@ public class AssistantFragment extends Fragment {
                 public void onCancel() {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         reconcileTools(toolsCard);
                         AIActivityMonitor.setState(SessionState.IDLE);
                     });
@@ -988,6 +1000,7 @@ public class AssistantFragment extends Fragment {
                 public void onComplete(AIResponse response) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -1002,6 +1015,7 @@ public class AssistantFragment extends Fragment {
                 public void onError(Throwable error) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -1016,6 +1030,7 @@ public class AssistantFragment extends Fragment {
                 public void onCancel() {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         AIActivityMonitor.setState(SessionState.IDLE);
                         activeHandle = null;
                     });
@@ -1069,6 +1084,7 @@ public class AssistantFragment extends Fragment {
         new Thread(() -> {
             String verdict = pro.sketchware.ai.net.ModelSyncService.validateKey(profile, key);
             UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                 if (getContext() == null) return;
                 new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                         .setTitle(R.string.ai_test_connection)
@@ -1092,6 +1108,7 @@ public class AssistantFragment extends Fragment {
     @Override
     public void onDestroyView() {
         mainHandler.removeCallbacks(watchdog);
+        forceIdle();
         if (connectionPulseAnimator != null) {
             connectionPulseAnimator.cancel();
             connectionPulseAnimator = null;
