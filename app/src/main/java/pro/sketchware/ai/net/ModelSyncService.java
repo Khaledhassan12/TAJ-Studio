@@ -92,7 +92,7 @@ public final class ModelSyncService {
         }
 
         Request request = builder.build();
-        AIConfigStore store = AIConfigStore.getInstance(null);
+
         boolean autoRetry = store.isAutoRetry();
 
         try (Response response = RetryPolicy.executeWithRetry(() -> CLIENT.newCall(request).execute(), autoRetry)) {
