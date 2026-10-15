@@ -43,6 +43,13 @@ public class UpgradeReport {
         return true;
     }
 
+    public boolean hasActionableUpgrades() {
+        for (UpgradeItem item : items) {
+            if (item.status == UpgradeItem.Status.UPGRADABLE) return true;
+        }
+        return false;
+    }
+
     public int getUpgradableCount() {
         int count = 0;
         for (UpgradeItem item : items) {
