@@ -68,6 +68,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         void onShare(ChatStore.Message message);
         void onRegenerate(ChatStore.Message message, int position);
         void onVoice(ChatStore.Message message, View btnVoice);
+        void onFavorite(ChatStore.Message message);
     }
 
     public void setOnMessageActionListener(OnMessageActionListener listener) {
@@ -238,6 +239,16 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                         safeText.equals(currentSpeakingText) ? R.drawable.ic_msg_voice_stop : R.drawable.ic_msg_voice);
             }
             setupActions(vh.actionsRow, vh.btnCopy, null, vh.btnBranch, vh.btnShare, vh.btnRegenerate, vh.btnVoice, m, position);
+            if (vh.btnFavorite != null) {
+                vh.btnFavorite.setImageResource(m.favorite ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
+                vh.btnFavorite.setContentDescription(m.favorite ? "Remove from favorites" : "Add to favorites");
+                vh.btnFavorite.setOnClickListener(v -> {
+                    m.favorite = !m.favorite;
+                    vh.btnFavorite.setImageResource(m.favorite ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
+                    vh.btnFavorite.setContentDescription(m.favorite ? "Remove from favorites" : "Add to favorites");
+                    if (onMessageActionListener != null) onMessageActionListener.onFavorite(m);
+                });
+            }
         } else if (holder instanceof ToolViewHolder) {
             ToolViewHolder vh = (ToolViewHolder) holder;
             vh.chip.setText(m.text == null ? "" : m.text);
@@ -598,7 +609,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class AssistantViewHolder extends RecyclerView.ViewHolder {
         TextView label, message;
-        View actionsRow, btnCopy, btnRegenerate, btnVoice, btnBranch, btnShare;
+        View actionsRow, btnCopy, btnRegenerate, btnVoice, btnBranch, btnShare, btnFavorite;
         int boundLen = 0;
 
         AssistantViewHolder(View v) {
@@ -611,6 +622,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             btnVoice = v.findViewById(R.id.btn_voice);
             btnBranch = v.findViewById(R.id.btn_branch);
             btnShare = v.findViewById(R.id.btn_share);
+            btnFavorite = v.findViewById(R.id.btn_favorite);
         }
     }
 
