@@ -189,7 +189,7 @@ public class UpgradableProjectAdapter extends RecyclerView.Adapter<UpgradablePro
             });
 
             binding.expand.setImageResource(R.drawable.ic_tab_upgrades);
-            binding.expand.setVisibility(upToDate ? View.GONE : View.VISIBLE);
+            binding.expand.setVisibility(report.hasActionableUpgrades() ? View.VISIBLE : View.GONE);
             binding.expand.setOnClickListener(v -> {
                 if (upgradeClickListener != null) {
                     upgradeClickListener.onUpgradeClick(report);
