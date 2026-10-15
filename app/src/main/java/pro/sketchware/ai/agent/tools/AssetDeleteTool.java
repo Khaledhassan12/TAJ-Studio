@@ -50,10 +50,13 @@ public final class AssetDeleteTool implements Tool {
 
         String trashDir = FileUtil.getExternalStorageDir() + "/.sketchware/.agent_trash";
         FileUtil.makeDir(trashDir);
-        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + f.getName();
+        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + System.nanoTime() + "_" + f.getName();
         
         FileUtil.moveFile(path, trashPath);
-        LiveRegistry.notifyChanged("assets", path);
-        return new ToolResult("verified: moved to trash @ " + trashPath, false);
+        if (!f.exists() && FileUtil.isExistFile(trashPath)) {
+            LiveRegistry.notifyChanged("assets", path);
+            return new ToolResult("verified: moved to trash @ " + trashPath, false);
+        }
+        return new ToolResult("Delete verification failed; the asset was not confirmed in trash.", true);
     }
 }
