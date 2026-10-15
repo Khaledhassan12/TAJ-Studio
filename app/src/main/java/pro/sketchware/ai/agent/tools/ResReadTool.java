@@ -18,7 +18,6 @@ public final class ResReadTool implements Tool {
             JSONObject props = new JSONObject();
             props.put("folder", new JSONObject().put("type", "string"));
             props.put("name", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
             params.put("required", new JSONArray().put("folder").put("name"));
             return new ToolSpec("res_read", "Reads a resource file via PathResolver.", params);
