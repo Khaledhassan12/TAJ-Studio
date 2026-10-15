@@ -65,7 +65,10 @@ public final class ManifestEditTool implements Tool {
             }
             ToolResult permissionResult = verify(ctx, sc_id, perm);
             if (permissionResult.error) DomainToolHelper.restore(path);
-            else LiveRegistry.notifyChanged("manifest", path);
+            else {
+                DomainToolHelper.commitBackup(path);
+                LiveRegistry.notifyChanged("manifest", path);
+            }
             return permissionResult;
         }
 
@@ -143,7 +146,10 @@ public final class ManifestEditTool implements Tool {
         }
         ToolResult manifestResult = verify(ctx, sc_id, args.optString("name", ""));
         if (manifestResult.error) DomainToolHelper.restore(injPath);
-        else LiveRegistry.notifyChanged("manifest", injPath);
+        else {
+            DomainToolHelper.commitBackup(injPath);
+            LiveRegistry.notifyChanged("manifest", injPath);
+        }
         return manifestResult;
     }
 
