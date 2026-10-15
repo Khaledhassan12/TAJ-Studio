@@ -95,8 +95,11 @@ public class UpgradeReportDialog {
             holder.title.setText("[" + f.category + "] " + f.title);
             holder.desc.setText(f.detail);
             
-            if (f.autoFixable) {
+            boolean safelyAutoFixable = f.autoFixable && f.category == Finding.Category.UNUSED_IMPORT;
+            if (safelyAutoFixable) {
                 holder.desc.append("\n" + f.fixDescription);
+            } else {
+                holder.desc.append("\nManual review only; automatic deletion or build changes are disabled for safety.");
             }
 
             // Middle-truncated path for readability
