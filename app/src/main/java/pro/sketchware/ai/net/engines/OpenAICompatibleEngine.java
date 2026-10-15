@@ -40,7 +40,7 @@ public final class OpenAICompatibleEngine extends HttpAI {
         try {
             JSONObject body = new JSONObject();
             AIConfigStore store = AIConfigStore.getInstance(context);
-            body.put("model", store.safeModel());
+            body.put("model", store.safeModelFor(profile.id));
             body.put("stream", true);
             if (request.temperature >= 0f) {
                 body.put("temperature", request.temperature);
@@ -70,12 +70,10 @@ public final class OpenAICompatibleEngine extends HttpAI {
                     .url(buildUrl("/chat/completions"))
                     .post(jsonBody(body.toString()));
             
-            if (!store.safeKey().isEmpty()) {
-                builder.header("Authorization", "Bearer " + store.safeKey());
-                if (baseUrl.contains("openrouter.ai")) {
-                    builder.header("HTTP-Referer", "https://taj.studio");
-                    builder.header("X-Title", "TAJ Studio");
-                }
+            applyHeaders(builder);
+            if (!apiKey.isEmpty() && baseUrl.contains("openrouter.ai")) {
+                builder.header("HTTP-Referer", "https://taj.studio");
+                builder.header("X-Title", "TAJ Studio");
             }
             return builder.build();
         } catch (JSONException e) {
