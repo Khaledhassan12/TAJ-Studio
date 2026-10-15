@@ -57,6 +57,8 @@ public class AssistantFragment extends Fragment {
     private FrameLayout container;
     private final SparseArray<View> panels = new SparseArray<>();
     private ObjectAnimator connectionPulseAnimator;
+    private static final String STATE_SELECTED_PANEL = "ai_selected_panel";
+    private int selectedPanelId = R.id.ai_dest_session;
     private int baseSessionPaddingLeft;
     private int baseSessionPaddingTop;
     private int baseSessionPaddingRight;
@@ -194,13 +196,16 @@ public class AssistantFragment extends Fragment {
         container = view.findViewById(R.id.panel_container);
 
         rail.setOnItemSelectedListener(item -> {
-            showPanel(item.getItemId());
+            selectedPanelId = item.getItemId();
+            showPanel(selectedPanelId);
             return true;
         });
 
-        if (savedInstanceState == null) {
-            rail.setSelectedItemId(R.id.ai_dest_session);
-        }
+        int restoredPanel = savedInstanceState == null
+                ? R.id.ai_dest_session
+                : savedInstanceState.getInt(STATE_SELECTED_PANEL, R.id.ai_dest_session);
+        selectedPanelId = restoredPanel;
+        rail.setSelectedItemId(restoredPanel);
     }
 
     @Override
@@ -211,6 +216,12 @@ public class AssistantFragment extends Fragment {
         if (settings != null) {
             refreshReadback(settings);
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putInt(STATE_SELECTED_PANEL, selectedPanelId);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
