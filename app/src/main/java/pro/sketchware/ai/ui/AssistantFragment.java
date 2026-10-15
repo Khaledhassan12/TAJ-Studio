@@ -322,6 +322,41 @@ public class AssistantFragment extends Fragment {
             });
         }
 
+        com.google.android.material.materialswitch.MaterialSwitch switchStreaming = panel.findViewById(R.id.switch_streaming);
+        if (switchStreaming != null) {
+            switchStreaming.setChecked(configStore.isStreamingEnabled());
+            switchStreaming.setOnCheckedChangeListener((v, checked) -> configStore.setStreamingEnabled(checked));
+        }
+
+        com.google.android.material.materialswitch.MaterialSwitch switchAutoSuggest = panel.findViewById(R.id.switch_auto_suggest);
+        if (switchAutoSuggest != null) {
+            switchAutoSuggest.setChecked(configStore.isAutoSuggestEnabled());
+            switchAutoSuggest.setOnCheckedChangeListener((v, checked) -> configStore.setAutoSuggestEnabled(checked));
+        }
+
+        com.google.android.material.materialswitch.MaterialSwitch switchHaptics = panel.findViewById(R.id.switch_haptics);
+        if (switchHaptics != null) {
+            switchHaptics.setChecked(configStore.isHapticsEnabled());
+            switchHaptics.setOnCheckedChangeListener((v, checked) -> configStore.setHapticsEnabled(checked));
+        }
+
+        com.google.android.material.slider.Slider temperatureSlider = panel.findViewById(R.id.slider_temp);
+        if (temperatureSlider != null) {
+            temperatureSlider.setValue(configStore.getTemperature());
+            temperatureSlider.addOnChangeListener((slider, value, fromUser) -> {
+                if (fromUser) configStore.setTemperature(value);
+            });
+        }
+
+        // ChatAdapter currently displays plain text; disable the misleading control
+        // until markdown rendering is implemented rather than pretending it works.
+        com.google.android.material.materialswitch.MaterialSwitch switchMarkdown = panel.findViewById(R.id.switch_markdown);
+        if (switchMarkdown != null) {
+            switchMarkdown.setChecked(false);
+            switchMarkdown.setEnabled(false);
+            switchMarkdown.setText("Markdown rendering (not available yet)");
+        }
+
         com.google.android.material.materialswitch.MaterialSwitch switchThinking = panel.findViewById(R.id.switch_thinking);
         if (switchThinking != null) {
             switchThinking.setChecked(configStore.isShowThinking());
@@ -652,6 +687,9 @@ public class AssistantFragment extends Fragment {
                 if (input == null) return;
                 String text = input.getText().toString().trim();
                 if (!text.isEmpty()) {
+                    if (configStore.isHapticsEnabled()) {
+                        v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+                    }
                     if (pendingEditIndex != -1) {
                         while (currentSession.messages.size() > pendingEditIndex) {
                             currentSession.messages.remove(pendingEditIndex);
@@ -733,6 +771,7 @@ public class AssistantFragment extends Fragment {
         if (AIActivityMonitor.getState() == SessionState.WAITING_RATE_LIMIT) {
             AIActivityMonitor.setState(SessionState.MODEL_STREAMING);
         }
+        if (!configStore.isStreamingEnabled()) return;
         UiPoster.post(() -> {
             if (!isAdded() || getView() == null) return;
             if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
@@ -754,7 +793,7 @@ public class AssistantFragment extends Fragment {
     }
 
     private void onReasoningToken(String token) {
-        if (token == null || token.isEmpty()) return;
+        if (token == null || token.isEmpty() || !configStore.isShowThinking()) return;
         pokeWatchdog();
         UiPoster.post(() -> {
             if (!isAdded() || getView() == null) return;
@@ -861,7 +900,7 @@ public class AssistantFragment extends Fragment {
 
         if (agentEnabled) {
             orchestrator = new AgentOrchestrator(provider, toolRegistry, new Tool.ToolContext(activity, sc_id));
-            orchestrator.run(AgentOrchestrator.DEFAULT_SYSTEM_PROMPT, history, model, 0.7f, new StreamCallbacks() {
+            orchestrator.run(AgentOrchestrator.DEFAULT_SYSTEM_PROMPT, history, model, configStore.getTemperature(), new StreamCallbacks() {
                 @Override
                 public void onReasoningToken(String token) {
                     AssistantFragment.this.onReasoningToken(token);
@@ -996,7 +1035,7 @@ public class AssistantFragment extends Fragment {
                 }
             });
         } else {
-            if (AgentSuggester.needsAgent(text)) {
+            if (configStore.isAutoSuggestEnabled() && AgentSuggester.needsAgent(text)) {
                 ChatStore.Message suggestion = new ChatStore.Message("suggestion", "locked");
                 currentSession.messages.add(suggestion);
                 chatAdapter.addMessage(suggestion);
