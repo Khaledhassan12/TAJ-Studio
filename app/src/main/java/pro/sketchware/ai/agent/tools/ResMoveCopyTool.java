@@ -42,14 +42,26 @@ public final class ResMoveCopyTool implements Tool {
         String toPath = destination.getAbsolutePath();
         String op = args.getString("op");
 
-        if (!FileUtil.isExistFile(fromPath)) return new ToolResult("Source not found.", true);
+        if (!source.isFile()) return new ToolResult("Resource source not found or is not a regular file.", true);
+        if (!("move".equals(op) || "copy".equals(op))) return new ToolResult("Unsupported resource operation.", true);
+        if (fromPath.equals(toPath)) return new ToolResult("Source and destination are identical.", true);
+        if (destination.exists()) return new ToolResult("Destination already exists. Choose a new destination to avoid overwriting a resource.", true);
         if ("move".equals(op) && !ctx.checkPermission(fromPath, true)) return new ToolResult("Denied.", true);
-        if (!ctx.checkPermission(toPath, FileUtil.isExistFile(toPath))) return new ToolResult("Denied.", true);
+        if (!ctx.checkPermission(toPath, false)) return new ToolResult("Denied.", true);
 
+        File parent = destination.getParentFile();
+        if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
         if ("copy".equals(op)) {
             FileUtil.copyFile(fromPath, toPath);
+            if (!destination.isFile() || source.length() != destination.length()
+                    || !FileUtil.readFile(fromPath).equals(FileUtil.readFile(toPath))) {
+                return new ToolResult("Resource copy verification failed.", true);
+            }
         } else {
             FileUtil.moveFile(fromPath, toPath);
+            if (source.exists() || !destination.isFile()) {
+                return new ToolResult("Resource move verification failed.", true);
+            }
             LiveRegistry.notifyChanged(args.getString("fromFolder"), fromPath);
         }
         LiveRegistry.notifyChanged(args.getString("toFolder"), toPath);
