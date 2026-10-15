@@ -18,7 +18,6 @@ public final class JavaListTool implements Tool {
             params.put("type", "object");
             JSONObject props = new JSONObject();
             props.put("target", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"manager", "project"})));
-            props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
             params.put("required", new JSONArray().put("target"));
             return new ToolSpec("java_list", "Lists Java/Kotlin files.", params);
