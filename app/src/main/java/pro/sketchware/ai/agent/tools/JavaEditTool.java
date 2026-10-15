@@ -78,6 +78,7 @@ public final class JavaEditTool implements Tool {
                 DomainToolHelper.restore(path);
                 return new ToolResult("Edit verification failed: persisted content differs from requested content.", true);
             }
+            DomainToolHelper.commitBackup(path);
             LiveRegistry.notifyChanged("manager".equals(target) ? "java_manager" : "project_java", path);
             return new ToolResult("verified: content matches @ " + path, false);
         } catch (Exception e) {
