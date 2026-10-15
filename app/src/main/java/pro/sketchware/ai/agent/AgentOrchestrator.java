@@ -89,8 +89,7 @@ public final class AgentOrchestrator {
             workerThread = Thread.currentThread();
             AIResponse lastResponse = null;
             boolean terminalCallbackSent = false;
-            boolean lastToolBatchFailed = false;
-            List<String> lastBatchFailures = new ArrayList<>();
+            List<String> taskToolFailures = new ArrayList<>();
             try {
                 List<AIMessage> conversation = new ArrayList<>(messages);
                 int iterations = 0;
@@ -130,8 +129,6 @@ public final class AgentOrchestrator {
                             break;
                         } else {
                             conversation.add(AIMessage.assistantWithToolCalls(response.toolCalls));
-                            lastToolBatchFailed = false;
-                            lastBatchFailures.clear();
                         }
 
                         state = SessionState.TOOL_RUNNING;
@@ -198,8 +195,7 @@ public final class AgentOrchestrator {
                                 conversation.add(AIMessage.toolResult(call.id, "Error executing tool: " + reason));
                             } finally {
                                 if (!success) {
-                                    lastToolBatchFailed = true;
-                                    lastBatchFailures.add(call.name);
+                                    if (!taskToolFailures.contains(call.name)) taskToolFailures.add(call.name);
                                 }
                                 final boolean ok = success;
                                 final String summary = toolSummary;
@@ -241,10 +237,10 @@ public final class AgentOrchestrator {
 
                 if (lastResponse != null) {
                     AIResponse finalResp = lastResponse;
-                    if (lastToolBatchFailed && !lastBatchFailures.isEmpty()) {
-                        String report = "\n\n⚠️ Execution verification warning: one or more project tools failed in the last tool batch ("
-                                + String.join(", ", new java.util.LinkedHashSet<>(lastBatchFailures))
-                                + "). The assistant must not treat the requested task as fully completed until these failures and any partial effects are inspected.";
+                    if (!taskToolFailures.isEmpty()) {
+                        String report = "\n\n⚠️ Execution history warning: these tools failed at least once during this task ("
+                                + String.join(", ", new java.util.LinkedHashSet<>(taskToolFailures))
+                                + "). A later attempt may have repaired some failures, but verify the final file state and all partial effects before treating the task as fully completed.";
                         finalResp = new AIResponse(lastResponse.text + report, lastResponse.toolCalls,
                                 lastResponse.finishReason, lastResponse.promptTokens, lastResponse.completionTokens);
                     }

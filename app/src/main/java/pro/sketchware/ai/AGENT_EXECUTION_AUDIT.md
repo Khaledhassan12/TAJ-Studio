@@ -34,6 +34,7 @@ The foundation already has a real registry, provider tool declarations, an orche
 - Replaced the blanket name-based destructive-call block with explicit risk metadata and one-call approval for filesystem delete/copy/move, resource delete/move/copy, asset delete, library add/remove, shared block create/edit, and manifest changes.
 - Added context-aware write risk classification: creating a new file can proceed under the configured permission policy, while replacing an existing regular file requires a per-call approval even in persistent `full` permission mode.
 - Added a project-wide agent run lock, cancellation-aware approval wait, five-minute runtime deadline, ten-round cap, and explicit error if the budget ends with unresolved tool calls.
+- Tracked executor failures across the entire task, not only the last tool batch, and appended a final warning if any tool failed at least once so later model narration cannot silently erase evidence of a failed or partially applied operation.
 - Added exact UTF-8 read-back and SHA-256 evidence to the updated create/edit/copy/move/delete and metadata writers; the tools now refuse silent overwrite of existing create/copy destinations.
 - Bounded file reads and list/search output; incomplete traversal is marked partial rather than complete success.
 - XML parsing now advances to END_DOCUMENT, and resource/layout/widget tools check persisted content and live Sketchware model parity before reporting full success.
