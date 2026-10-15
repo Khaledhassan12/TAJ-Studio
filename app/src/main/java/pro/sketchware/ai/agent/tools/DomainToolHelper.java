@@ -302,10 +302,8 @@ public final class DomainToolHelper {
             throw new IOException("Could not prepare recoverable trash storage.");
         }
         File destination = new File(trashDir, UUID.randomUUID() + "-" + source.getName());
-        try {
-            // The generated name is unique, but default move semantics still refuse replacement.
-            Files.move(source.toPath(), destination.toPath());
-        }
+        // The generated name is unique, but default move semantics still refuse replacement.
+        Files.move(source.toPath(), destination.toPath());
         if (source.exists() || !destination.isFile() || !expectedHash.equals(sha256(destination))) {
             if (!source.exists() && destination.exists()) {
                 try { Files.move(destination.toPath(), source.toPath()); } catch (IOException ignored) {}
