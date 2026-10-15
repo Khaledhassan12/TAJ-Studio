@@ -230,8 +230,9 @@ public final class DomainToolHelper {
         }
         try {
             copyNode(source, destination, 0);
-            if (!before.equals(fingerprintTree(destination))) {
-                throw new IOException("Copy verification failed: destination differs from source.");
+            if (!before.equals(fingerprintTree(destination))
+                    || !before.equals(fingerprintTree(source))) {
+                throw new IOException("Copy verification failed: source or destination changed during the operation.");
             }
         } catch (IOException e) {
             // Never recursively erase a partial destination after a failed copy: a user or
@@ -246,7 +247,9 @@ public final class DomainToolHelper {
             throw new IOException("Unsafe directory entry encountered during copy.");
         }
         if (source.isDirectory()) {
-            if (!destination.mkdir() && !destination.isDirectory()) throw new IOException("Could not create destination directory.");
+            // mkdir() must succeed; accepting an existing directory could merge into a
+            // destination created concurrently by the user and write into their files.
+            if (!destination.mkdir()) throw new IOException("Destination entry appeared during copy; refusing to merge.");
             File[] children = source.listFiles();
             if (children == null) throw new IOException("Could not read source directory.");
             for (File child : children) copyNode(child, new File(destination, child.getName()), depth + 1);
@@ -257,7 +260,7 @@ public final class DomainToolHelper {
         }
     }
 
-    /** Move with verification; copy-then-delete is used only when atomic rename is unsupported. */
+    /** Move without replacement and verify the resulting tree. A conflict never overwrites a destination. */
     public static void moveTree(File source, File destination) throws IOException {
         String expected = fingerprintTree(source);
         if (destination.exists()) throw new IOException("Destination already exists.");
@@ -265,22 +268,11 @@ public final class DomainToolHelper {
         if (parent == null || !parent.isDirectory() && !parent.mkdirs() && !parent.isDirectory()) {
             throw new IOException("Could not create destination directory.");
         }
-        try {
-            Files.move(source.toPath(), destination.toPath(), StandardCopyOption.ATOMIC_MOVE);
-        } catch (java.nio.file.AtomicMoveNotSupportedException e) {
-            copyTree(source, destination);
-            if (!expected.equals(fingerprintTree(destination))) {
-                throw new IOException("Move copy verification failed; source was preserved.");
-            }
-            try {
-                deleteTree(source);
-            } catch (IOException deleteFailure) {
-                throw new IOException("Destination is a verified copy, but source cleanup was incomplete. Both locations were preserved: "
-                        + destination.getAbsolutePath(), deleteFailure);
-            }
-        }
+        // Do not request ATOMIC_MOVE: Java permits provider-specific replacement behavior
+        // for that option. The default move semantics must fail if a destination appears.
+        Files.move(source.toPath(), destination.toPath());
         if (source.exists() || !destination.exists() || !expected.equals(fingerprintTree(destination))) {
-            throw new IOException("Move could not be verified; inspect both source and destination before retrying.");
+            throw new IOException("Move could not be fully verified; inspect the destination and source paths before retrying.");
         }
     }
 
@@ -311,8 +303,7 @@ public final class DomainToolHelper {
         }
         File destination = new File(trashDir, UUID.randomUUID() + "-" + source.getName());
         try {
-            Files.move(source.toPath(), destination.toPath(), StandardCopyOption.ATOMIC_MOVE);
-        } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+            // The generated name is unique, but default move semantics still refuse replacement.
             Files.move(source.toPath(), destination.toPath());
         }
         if (source.exists() || !destination.isFile() || !expectedHash.equals(sha256(destination))) {

@@ -83,6 +83,7 @@ public final class AgentOrchestrator {
             return;
         }
         isCancelled = false;
+        context.setCancellationCheck(() -> isCancelled);
         state = SessionState.MODEL_STREAMING;
         try {
         executor.execute(() -> {
@@ -155,7 +156,8 @@ public final class AgentOrchestrator {
                                         boolean approved;
                                         waitingForApproval = true;
                                         try {
-                                            approved = context.requestConfirmation(buildApprovalPrompt(call, tool, context));
+                                            approved = context.requestConfirmation(buildApprovalPrompt(call, tool, context),
+                                    () -> isCancelled);
                                         } finally {
                                             waitingForApproval = false;
                                         }
@@ -209,7 +211,16 @@ public final class AgentOrchestrator {
                         if (isCancelled) {
                             UiPoster.post(callbacks::onCancel);
                         } else {
-                            UiPoster.post(() -> callbacks.onError(e));
+                            Throwable reportError = e;
+                            if (!taskToolFailures.isEmpty()) {
+                                reportError = new IllegalStateException(
+                                        "The agent task failed after one or more tool failures (" 
+                                                + String.join(", ", new java.util.LinkedHashSet<>(taskToolFailures))
+                                                + "). Earlier operations may have changed project files; inspect the actual project state before retrying.",
+                                        e);
+                            }
+                            Throwable deliverError = reportError;
+                            UiPoster.post(() -> callbacks.onError(deliverError));
                         }
                         return;
                     }
@@ -252,6 +263,7 @@ public final class AgentOrchestrator {
                 state = SessionState.IDLE;
                 workerThread = null;
                 waitingForApproval = false;
+                context.setCancellationCheck(null);
                 runActive.set(false);
                 projectRun.set(false);
                 if (!terminalCallbackSent && !isCancelled && lastResponse == null) {
@@ -264,6 +276,7 @@ public final class AgentOrchestrator {
             state = SessionState.IDLE;
             workerThread = null;
             waitingForApproval = false;
+            context.setCancellationCheck(null);
             runActive.set(false);
             projectRun.set(false);
             UiPoster.post(() -> callbacks.onError(new IllegalStateException(

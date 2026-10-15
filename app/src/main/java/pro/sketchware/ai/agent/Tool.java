@@ -69,45 +69,87 @@ public interface Tool {
             if (a != null) a.runOnUiThread(r);
         }
 
+        private volatile java.util.function.BooleanSupplier cancellationCheck = () -> false;
+
+        public void setCancellationCheck(java.util.function.BooleanSupplier check) {
+            cancellationCheck = check == null ? () -> false : check;
+        }
+
         public boolean requestConfirmation(String message) {
+            return requestConfirmation(message, cancellationCheck);
+        }
+
+        /** Waits off the UI thread, but observes task cancellation and dismisses its own dialog. */
+        public boolean requestConfirmation(String message, java.util.function.BooleanSupplier cancelled) {
             DesignActivity a = activity.get();
-            if (a == null) return false;
+            if (a == null || isCancelled(cancelled)) return false;
 
             final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-            final boolean[] result = new boolean[1];
+            final java.util.concurrent.atomic.AtomicBoolean result = new java.util.concurrent.atomic.AtomicBoolean(false);
+            final java.util.concurrent.atomic.AtomicReference<androidx.appcompat.app.AlertDialog> dialogRef =
+                    new java.util.concurrent.atomic.AtomicReference<>();
 
             a.runOnUiThread(() -> {
                 try {
-                    if (a.isFinishing() || a.isDestroyed()) {
+                    if (a.isFinishing() || a.isDestroyed() || isCancelled(cancelled)) {
                         latch.countDown();
                         return;
                     }
-                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
-                            .setTitle("TAG Assistant")
-                            .setMessage(message)
-                            .setPositiveButton("Allow", (d, w) -> {
-                                result[0] = true;
-                                latch.countDown();
-                            })
-                            .setNegativeButton("Deny", (d, w) -> {
-                                result[0] = false;
-                                latch.countDown();
-                            })
-                            .setOnDismissListener(d -> latch.countDown())
-                            .setCancelable(false)
-                            .show();
+                    androidx.appcompat.app.AlertDialog dialog =
+                            new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
+                                    .setTitle("TAG Assistant")
+                                    .setMessage(message)
+                                    .setPositiveButton("Allow", (d, w) -> {
+                                        result.set(true);
+                                        latch.countDown();
+                                    })
+                                    .setNegativeButton("Deny", (d, w) -> {
+                                        result.set(false);
+                                        latch.countDown();
+                                    })
+                                    .setOnDismissListener(d -> latch.countDown())
+                                    .setCancelable(false)
+                                    .create();
+                    dialogRef.set(dialog);
+                    if (isCancelled(cancelled) || a.isFinishing() || a.isDestroyed()) {
+                        dialog.dismiss();
+                        latch.countDown();
+                    } else {
+                        dialog.show();
+                    }
                 } catch (RuntimeException e) {
                     latch.countDown();
                 }
             });
 
+            long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.MINUTES.toNanos(2);
             try {
-                if (!latch.await(2, java.util.concurrent.TimeUnit.MINUTES)) return false;
+                while (latch.getCount() > 0) {
+                    if (isCancelled(cancelled) || System.nanoTime() >= deadline) {
+                        dismissConfirmation(a, dialogRef);
+                        return false;
+                    }
+                    latch.await(200, java.util.concurrent.TimeUnit.MILLISECONDS);
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                dismissConfirmation(a, dialogRef);
                 return false;
             }
-            return result[0];
+            return result.get() && !isCancelled(cancelled);
+        }
+
+        private static boolean isCancelled(java.util.function.BooleanSupplier cancelled) {
+            try { return cancelled != null && cancelled.getAsBoolean(); }
+            catch (RuntimeException ignored) { return true; }
+        }
+
+        private static void dismissConfirmation(DesignActivity activity,
+                java.util.concurrent.atomic.AtomicReference<androidx.appcompat.app.AlertDialog> dialogRef) {
+            activity.runOnUiThread(() -> {
+                androidx.appcompat.app.AlertDialog dialog = dialogRef.get();
+                if (dialog != null && dialog.isShowing()) dialog.dismiss();
+            });
         }
 
         public boolean checkPermission(String path, boolean isOverwrite) {

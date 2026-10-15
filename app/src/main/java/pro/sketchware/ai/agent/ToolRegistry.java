@@ -119,20 +119,30 @@ public final class ToolRegistry {
             throw new IllegalArgumentException("Duplicate agent tool name: " + spec.name);
         }
         tools.put(spec.name, tool);
-        specs.put(spec.name, spec);
+        specs.put(spec.name, copySpec(spec));
     }
 
     /** Returns the exact validated schema snapshot advertised for this registered executor. */
     public synchronized Tool.ToolSpec spec(String name) {
-        return specs.get(name);
+        return copySpec(specs.get(name));
     }
 
     /** Looks up the immutable-at-registration spec snapshot for this exact executor instance. */
     public synchronized Tool.ToolSpec spec(Tool tool) {
         for (Map.Entry<String, Tool> entry : tools.entrySet()) {
-            if (entry.getValue() == tool) return specs.get(entry.getKey());
+            if (entry.getValue() == tool) return copySpec(specs.get(entry.getKey()));
         }
         return null;
+    }
+
+    private static Tool.ToolSpec copySpec(Tool.ToolSpec spec) {
+        if (spec == null) return null;
+        try {
+            return new Tool.ToolSpec(spec.name, spec.description,
+                    new JSONObject(spec.parameters.toString()));
+        } catch (org.json.JSONException | RuntimeException e) {
+            throw new IllegalStateException("Could not copy the registered tool schema safely.", e);
+        }
     }
 
     public synchronized Tool get(String name) {
