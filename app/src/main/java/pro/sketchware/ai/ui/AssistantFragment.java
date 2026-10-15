@@ -1198,31 +1198,32 @@ public class AssistantFragment extends Fragment {
                 public void onComplete(AIResponse response) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
-            if (!isAdded() || getView() == null) return;
+                        if (!isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         reconcileTools(toolsCard);
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
-                        
+
+                        // Always reconcile the streamed UI with the provider's final response.
+                        // This is required when streaming is disabled and also covers providers
+                        // that deliver only onComplete without emitting token callbacks.
                         String finalTest = (response == null || response.text == null) ? "" : response.text;
                         if (finalTest.isEmpty()) {
                             int toolCount = toolsCard != null ? toolsCard.toolEvents.size() : 0;
                             if (toolCount > 0) {
                                 finalTest = "Done. Used " + toolCount + " tools.";
-                            } else {
-                                // Check if we were rate limited or cancelled
-                                if (rateLimitMsg != null && "EXHAUSTED".equals(rateLimitMsg.toolState)) {
-                                    finalTest = "Provider is consistently busy. Please try again later or switch models.";
-                                }
+                            } else if (rateLimitMsg != null && "EXHAUSTED".equals(rateLimitMsg.toolState)) {
+                                finalTest = "Provider is consistently busy. Please try again later or switch models.";
                             }
                         }
-                        
+
                         if (!finalTest.isEmpty()) {
                             if (assistantMsg == null) {
                                 assistantMsg = new ChatStore.Message("assistant", finalTest);
                                 currentSession.messages.add(assistantMsg);
                                 chatAdapter.addMessage(assistantMsg);
+                                scrollToBottom(true);
                             } else {
                                 assistantMsg.text = finalTest;
                                 chatAdapter.notifyItemChanged(currentSession.messages.indexOf(assistantMsg));
@@ -1231,6 +1232,7 @@ public class AssistantFragment extends Fragment {
 
                         AIActivityMonitor.setState(SessionState.IDLE);
                         chatStore.saveSession(currentSession);
+                        activeHandle = null;
                     });
                 }
 
