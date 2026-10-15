@@ -53,13 +53,17 @@ public final class AssetCreateTool implements Tool {
             return new ToolResult(target.isDirectory() ? "verified: folder created @ " + path : "Failed.", !target.isDirectory());
         }
 
+        if (target.exists()) return new ToolResult("Asset already exists: " + path + ". Use asset_edit to modify it.", true);
         if (!ctx.checkPermission(path, false)) return new ToolResult("Denied.", true);
 
-        FileUtil.writeFile(path, args.optString("content", ""));
-        if (FileUtil.isExistFile(path)) {
+        String content = args.optString("content", "");
+        File parent = target.getParentFile();
+        if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
+        FileUtil.writeFile(path, content);
+        if (target.isFile() && content.equals(FileUtil.readFile(path))) {
             LiveRegistry.notifyChanged("assets", path);
             return new ToolResult("verified: created @ " + path, false);
         }
-        return new ToolResult("Failed.", true);
+        return new ToolResult("Asset creation verification failed: " + path, true);
     }
 }
