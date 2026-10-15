@@ -51,8 +51,8 @@ public final class FsDeleteTool implements Tool {
         FileUtil.moveFile(path, trashPath);
         if (FileUtil.isExistFile(trashPath) && !f.exists()) {
             return new ToolResult("verified: moved to trash @ " + trashPath, false);
-        } else {
-            return new ToolResult("Delete failed.", true);
         }
+        if (f.exists() && FileUtil.isExistFile(trashPath)) new File(trashPath).delete();
+        return new ToolResult("Delete failed; source remains in place.", true);
     }
 }
