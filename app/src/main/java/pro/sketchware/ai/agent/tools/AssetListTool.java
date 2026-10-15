@@ -31,7 +31,7 @@ public final class AssetListTool implements Tool {
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String dir = args.optString("dir", "");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         String root = ProjectPaths.assetsRoot(sc_id) + (dir.isEmpty() ? "" : "/" + dir);
 
         if (!FileUtil.isExistFile(root)) return new ToolResult("Asset dir not found: " + dir, true);
