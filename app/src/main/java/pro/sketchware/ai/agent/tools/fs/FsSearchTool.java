@@ -19,7 +19,7 @@ public final class FsSearchTool implements Tool {
             JSONObject props = new JSONObject();
             props.put("pattern", new JSONObject().put("type", "string"));
             props.put("path", new JSONObject().put("type", "string").put("description", "Base path to search. Defaults to project root."));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("pattern"));
             return new ToolSpec("fs_search", "Recursive walk of project data to find patterns or files.", params);
