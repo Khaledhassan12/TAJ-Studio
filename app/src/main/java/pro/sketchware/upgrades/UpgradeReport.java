@@ -46,7 +46,7 @@ public class UpgradeReport {
     public int getUpgradableCount() {
         int count = 0;
         for (UpgradeItem item : items) {
-            if (item.status == UpgradeItem.Status.UPGRADABLE) {
+            if (item.status != UpgradeItem.Status.UP_TO_DATE) {
                 count++;
             }
         }
