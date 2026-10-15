@@ -20,7 +20,7 @@ public final class AssetCreateTool implements Tool {
             props.put("dir", new JSONObject().put("type", "string"));
             props.put("type", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"folder", "file"})));
             props.put("content", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("name").put("type"));
             return new ToolSpec("asset_create", "Creates an asset file or folder.", params);
