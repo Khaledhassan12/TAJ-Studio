@@ -45,7 +45,7 @@ public final class AnthropicEngine extends HttpAI {
         try {
             JSONObject body = new JSONObject();
             AIConfigStore store = AIConfigStore.getInstance(context);
-            body.put("model", store.safeModel());
+            body.put("model", store.safeModelFor(profile.id));
             int maxTokens = request.maxTokens > 0 ? request.maxTokens : 1024;
             if (request.thinkingEnabled) {
                 JSONObject thinking = new JSONObject();
@@ -77,8 +77,8 @@ public final class AnthropicEngine extends HttpAI {
             Request.Builder builder = new Request.Builder()
                     .url(buildUrl("/v1/messages"))
                     .post(jsonBody(body.toString()))
-                    .header("x-api-key", store.safeKey())
-                    .header("anthropic-version", "2023-06-01");
+                    .header("x-api-key", apiKey)
+                    .header("anthropic-version", ANTHROPIC_VERSION);
             for (Map.Entry<String, String> header : profile.extraHeaders.entrySet()) {
                 builder.header(header.getKey(), header.getValue());
             }
