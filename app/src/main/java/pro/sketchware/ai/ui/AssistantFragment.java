@@ -1116,6 +1116,11 @@ public class AssistantFragment extends Fragment {
     public void onDestroyView() {
         mainHandler.removeCallbacks(watchdog);
         forceIdle();
+        if (orchestrator != null) {
+            orchestrator.shutdown();
+            orchestrator = null;
+        }
+        activeHandle = null;
         if (voiceReader != null) voiceReader.stop();
         if (currentSession != null) {
             for (ChatStore.Message message : currentSession.messages) {
