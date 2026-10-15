@@ -32,12 +32,47 @@ public final class DomainToolHelper {
     }
 
     public static boolean verifyXml(String content) {
+        if (content == null || content.trim().isEmpty()) return false;
         try {
-            org.xmlpull.v1.XmlPullParserFactory.newInstance().newPullParser().setInput(new java.io.StringReader(content));
-            return true;
+            org.xmlpull.v1.XmlPullParser parser = org.xmlpull.v1.XmlPullParserFactory.newInstance().newPullParser();
+            parser.setInput(new java.io.StringReader(content));
+            boolean seenRoot = false;
+            int depth = 0;
+            int event;
+            while ((event = parser.next()) != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+                if (event == org.xmlpull.v1.XmlPullParser.START_TAG) {
+                    depth++;
+                    if (depth == 1) seenRoot = true;
+                } else if (event == org.xmlpull.v1.XmlPullParser.END_TAG) {
+                    depth--;
+                    if (depth < 0) return false;
+                }
+            }
+            return seenRoot && depth == 0;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static boolean isKnownBinaryFileName(String name) {
+        if (name == null) return false;
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        String[] extensions = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".ico",
+                ".mp3", ".wav", ".ogg", ".m4a", ".mp4", ".webm", ".ttf", ".otf", ".woff",
+                ".woff2", ".zip", ".jar", ".aar", ".class", ".dex", ".so", ".bin", ".pdf",
+                ".db", ".sqlite", ".apk", ".aab", ".keystore", ".jks"};
+        for (String extension : extensions) if (lower.endsWith(extension)) return true;
+        return false;
+    }
+
+    public static boolean isTextEditableFileName(String name) {
+        if (name == null || isKnownBinaryFileName(name)) return false;
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        String[] extensions = {".xml", ".json", ".txt", ".properties", ".html", ".htm", ".css",
+                ".js", ".svg", ".md", ".csv", ".yaml", ".yml", ".gradle", ".java", ".kt",
+                ".xml", ".pro", ".mf", ".toml", ".ini", ".sh"};
+        for (String extension : extensions) if (lower.endsWith(extension)) return true;
+        return false;
     }
 
     public static void refreshEditor(Tool.ToolContext ctx) {
