@@ -4,6 +4,7 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
 import pro.sketchware.ai.agent.Tool;
+import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
 
 public final class FsInfoTool implements Tool {
@@ -26,10 +27,9 @@ public final class FsInfoTool implements Tool {
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String path = args.getString("path");
-        if (!FileUtil.isExistFile(path)) return new ToolResult("Not found.", true);
-        
-        File f = new File(path);
+        File f = PathResolver.resolve(ctx.sc_id, args.getString("path"));
+        String path = f.getAbsolutePath();
+        if (!f.exists()) return new ToolResult("Not found.", true);
         JSONObject res = new JSONObject();
         res.put("path", path);
         res.put("isDirectory", f.isDirectory());
