@@ -12,7 +12,7 @@ public class ListProjectStructureTool implements Tool {
         try {
             JSONObject params = new JSONObject();
             params.put("type", "object");
-            params.put("properties", new JSONObject().put("sc_id", new JSONObject().put("type", "string")));
+            params.put("properties", new JSONObject());
             return new ToolSpec("list_project_structure", "Lists project activities and layout aliases.", params);
         } catch (Exception e) { return null; }
     }
