@@ -39,7 +39,7 @@ public final class GeminiEngine extends HttpAI {
         try {
             JSONObject body = new JSONObject();
             AIConfigStore store = AIConfigStore.getInstance(context);
-            String model = store.safeModel();
+            String model = store.safeModelFor(profile.id);
 
             if (request.systemPrompt != null && !request.systemPrompt.isEmpty()) {
                 JSONObject instruction = new JSONObject();
@@ -83,8 +83,8 @@ public final class GeminiEngine extends HttpAI {
             Request.Builder builder = new Request.Builder()
                     .url(url)
                     .post(jsonBody(body.toString()));
-            if (!store.safeKey().isEmpty()) {
-                builder.header("x-goog-api-key", store.safeKey());
+            if (!apiKey.isEmpty()) {
+                builder.header("x-goog-api-key", apiKey);
             }
             for (java.util.Map.Entry<String, String> header : profile.extraHeaders.entrySet()) {
                 builder.header(header.getKey(), header.getValue());
