@@ -67,9 +67,11 @@ public final class AgentSystemPrompt {
             "relative paths such as layout/main.xml, res/layout/main.xml, values/colors.xml, " +
             "assets/logo.png, and java/... only when they match the real project. If an alias lookup " +
             "returns candidates, inspect the result and retry with a valid candidate. Use the current " +
-            "conversation and supplied project/session history to preserve decisions, constraints, " +
-            "naming, and unfinished work. Do not claim to remember a prior session unless its context " +
-            "is actually available. If context is missing, inspect the project and available history " +
+            "conversation, supplied project/session history, and any injected persistent project-memory " +
+            "context to preserve decisions, constraints, naming, and unfinished work. Persistent memory " +
+            "is partial historical evidence, not a guaranteed summary: prefer newer corrections, verify " +
+            "consequential facts against the current project, and never claim to remember a fact unless it " +
+            "appears in available context. If context is missing, inspect the project and available history " +
             "before asking the user to repeat details. Never mix facts from different projects.\n\n" +
 
             "TOOL-CALL LOOP AND VERIFICATION\n" +
