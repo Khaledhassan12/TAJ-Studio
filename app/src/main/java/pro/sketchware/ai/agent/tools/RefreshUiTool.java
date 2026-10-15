@@ -6,9 +6,18 @@ import pro.sketchware.ai.live.LiveRegistry;
 
 public final class RefreshUiTool implements Tool {
 
+    private static JSONObject emptyObjectSchema() {
+        JSONObject schema = new JSONObject();
+        try {
+            schema.put("type", "object");
+            schema.put("properties", new JSONObject());
+        } catch (org.json.JSONException ignored) {}
+        return schema;
+    }
+
     @Override
     public ToolSpec spec() {
-        return new ToolSpec("refresh_ui", "Triggers a full UI refresh across all active domains.", new JSONObject());
+        return new ToolSpec("refresh_ui", "Triggers a full UI refresh across all active domains.", emptyObjectSchema());
     }
 
     @Override
