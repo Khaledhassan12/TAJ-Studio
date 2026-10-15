@@ -510,18 +510,11 @@ public class AssistantFragment extends Fragment {
             });
         }
         
-        if (cgPerm != null) {
-            cgPerm.setEnabled(false);
-            cgPerm.setContentDescription("Permission modes are not enforced by the current agent runtime");
-            for (int chipId : new int[]{R.id.chip_perm_full, R.id.chip_perm_consent, R.id.chip_perm_strict}) {
-                View permissionChip = panel.findViewById(chipId);
-                if (permissionChip != null) permissionChip.setEnabled(false);
-            }
-        }
+
 
         View btnReset = panel.findViewById(R.id.btn_reset_perm);
         if (btnReset != null) {
-            btnReset.setEnabled(false);
+            btnReset.setEnabled(true);
             btnReset.setOnClickListener(v -> {
                 configStore.clearAgentPermMode();
                 if (cgPerm != null) cgPerm.clearCheck();
@@ -582,10 +575,12 @@ public class AssistantFragment extends Fragment {
     private void setupAgentsPanel(View panel) {
         Chip destructiveOps = panel.findViewById(R.id.chip_destructive_ops);
         if (destructiveOps != null) {
-            destructiveOps.setChecked(false);
-            destructiveOps.setEnabled(false);
-            destructiveOps.setText("Delete / move / copy tools are blocked pending confirmation support");
-            destructiveOps.setContentDescription("Destructive operations are blocked until explicit per-operation confirmation is implemented");
+            destructiveOps.setChecked(configStore.isAgentDestructiveOpsEnabled());
+            destructiveOps.setEnabled(true);
+            destructiveOps.setText("Allow destructive ops (confirm each)");
+            destructiveOps.setContentDescription("When enabled, delete, move, copy, and remove tools ask for approval for every call");
+            destructiveOps.setOnCheckedChangeListener((button, checked) ->
+                    configStore.setAgentDestructiveOpsEnabled(checked));
         }
         RecyclerView rv = panel.findViewById(R.id.ai_rv_tools);
         if (rv != null) {
