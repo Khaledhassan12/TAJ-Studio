@@ -58,6 +58,7 @@ public class ProjectUpgradeScanner {
             }
 
             for (HashMap<String, Object> project : projects) {
+                if (Thread.currentThread().isInterrupted()) break;
                 String scId = null;
                 String appName = "Unknown project";
                 String pkgName = "";
