@@ -48,6 +48,10 @@ public final class ProjectDiagnosticsScanner {
             "\\bLog\\.(?:v|d|i)\\s*\\(|\\bSystem\\.out\\.print(?:ln)?\\s*\\(");
     private static final Pattern DYNAMIC_GRADLE_VERSION = Pattern.compile(
             "(?i)['\"][^'\"]+:[^'\"]+:(?:[^'\"]*\\+[^'\"]*|latest\\.release|latest\\.integration|\\[[^]]*,[^]]*\\])['\"]");
+    private static final Pattern GRADLE_WRAPPER_VERSION = Pattern.compile(
+            "gradle-([0-9]+(?:\\.[0-9]+){1,2})-(?:all|bin)\\.zip");
+    private static final Pattern AGP_VERSION = Pattern.compile(
+            "(?:com\\.android\\.tools\\.build:gradle:|com\\.android\\.application[\\\"']\\s*version\\s*[\\\"'])([0-9]+(?:\\.[0-9]+){1,2})");
     private static final Pattern TARGET_SDK = Pattern.compile(
             "(?m)\\btargetSdk(?:Version)?\\s*(?:=\\s*|\\s+)([0-9]+)");
     private static final Pattern COMPILE_SDK = Pattern.compile(
@@ -106,7 +110,7 @@ public final class ProjectDiagnosticsScanner {
             if (lower.endsWith(".xml") || lower.endsWith(".svg")) inspectXml(file, out);
             else if (lower.endsWith(".java") || lower.endsWith(".kt")) inspectSource(file, out);
             else if (lower.equals("build.gradle") || lower.equals("build.gradle.kts") ||
-                    lower.equals("gradle.properties")) inspectGradle(file, out);
+                    lower.equals("gradle.properties") || lower.equals("gradle-wrapper.properties")) inspectGradle(file, out);
         }
     }
 
@@ -151,10 +155,29 @@ public final class ProjectDiagnosticsScanner {
             }
             // Continue to END_DOCUMENT so malformed trailing XML is also detected.
             while (parser.next() != XmlPullParser.END_DOCUMENT) { /* parse-only */ }
+            if ("androidmanifest.xml".equalsIgnoreCase(file.getName())) inspectManifest(file, out);
         } catch (Exception e) {
             add(out, "malformed_xml", "Malformed XML/SVG",
                     "Android's XML parser rejected this file (" + e.getClass().getSimpleName() +
                             "). Review syntax and encoding; parser failures can also indicate unsupported XML features.", file);
+        }
+    }
+
+    private void inspectManifest(File file, List<Finding> out) {
+        String source = readText(file, MAX_XML_BYTES);
+        if (source == null) return;
+        String withoutComments = source.replaceAll("(?s)<!--.*?-->", " ");
+        if (Pattern.compile("android:debuggable\\s*=\\s*[\\\"']true[\\\"']", Pattern.CASE_INSENSITIVE).matcher(withoutComments).find()) {
+            add(out, "manifest_debuggable", "Debuggable app manifest",
+                    "android:debuggable is explicitly true. Remove it from production variants unless there is a reviewed reason.", file);
+        }
+        if (Pattern.compile("android:usesCleartextTraffic\\s*=\\s*[\\\"']true[\\\"']", Pattern.CASE_INSENSITIVE).matcher(withoutComments).find()) {
+            add(out, "manifest_cleartext_traffic", "Cleartext network traffic is enabled",
+                    "Review whether unencrypted HTTP traffic is required. Prefer HTTPS and a narrow network security configuration.", file);
+        }
+        if (Pattern.compile("android:allowBackup\\s*=\\s*[\\\"']true[\\\"']", Pattern.CASE_INSENSITIVE).matcher(withoutComments).find()) {
+            add(out, "manifest_backup_enabled", "App data backup is enabled",
+                    "Confirm that backed-up data is appropriate and sensitive data is excluded or protected. Backup may be intentional.", file);
         }
     }
 
@@ -233,6 +256,34 @@ public final class ProjectDiagnosticsScanner {
         if (source == null) return;
 
         String withoutComments = source.replaceAll("(?s)/\\*.*?\\*/", " ").replaceAll("(?m)//.*$", " ");
+        String fileName = file.getName().toLowerCase(Locale.ROOT);
+        if (fileName.equals("gradle-wrapper.properties")) {
+            Matcher wrapper = GRADLE_WRAPPER_VERSION.matcher(withoutComments);
+            if (wrapper.find()) {
+                try {
+                    int major = Integer.parseInt(wrapper.group(1).split("\\.")[0]);
+                    if (major < 8) {
+                        add(out, "old_gradle_wrapper", "Gradle wrapper needs compatibility review",
+                                "The wrapper declares Gradle " + wrapper.group(1) +
+                                        ". Review Gradle/AGP/JDK compatibility before updating; no build version was changed.", file);
+                    }
+                } catch (NumberFormatException ignored) { }
+            } else {
+                add(out, "gradle_wrapper_unrecognized", "Gradle wrapper version could not be identified",
+                        "Review distributionUrl and ensure the wrapper points to a trusted Gradle distribution.", file);
+            }
+        }
+        Matcher agp = AGP_VERSION.matcher(withoutComments);
+        if (agp.find()) {
+            try {
+                int major = Integer.parseInt(agp.group(1).split("\\.")[0]);
+                if (major < 8) {
+                    add(out, "old_android_gradle_plugin", "Android Gradle Plugin needs compatibility review",
+                            "The build declares Android Gradle Plugin " + agp.group(1) +
+                                    ". Check required JDK and Gradle versions before upgrading.", file);
+                }
+            } catch (NumberFormatException ignored) { }
+        }
         if (DYNAMIC_GRADLE_VERSION.matcher(withoutComments).find()) {
             add(out, "dynamic_dependency_version", "Non-reproducible dependency version",
                     "A dynamic or ranged dependency version can resolve differently between builds. Pin a tested version after compatibility review.", file);
