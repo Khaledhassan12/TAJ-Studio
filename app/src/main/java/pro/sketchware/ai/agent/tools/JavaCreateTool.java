@@ -65,8 +65,22 @@ public final class JavaCreateTool implements Tool {
             return new ToolResult("packagePath must be a dot-separated package name, not a filesystem path.", true);
         }
 
+        String effectivePackagePath = packagePath;
+        if (effectivePackagePath.isEmpty()) {
+            String javaRoot = new File(ProjectPaths.projectJavaRoot(sc_id)).getAbsolutePath();
+            String defaultPackageRoot = new File(ProjectPaths.packagePath(sc_id)).getAbsolutePath();
+            String prefix = javaRoot + File.separator;
+            if (!defaultPackageRoot.startsWith(prefix)) {
+                return new ToolResult("Could not resolve the active project's default Java package safely.", true);
+            }
+            effectivePackagePath = defaultPackageRoot.substring(prefix.length()).replace(File.separatorChar, '.');
+            if (!effectivePackagePath.matches("[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*")) {
+                return new ToolResult("The active project's default package name is invalid.", true);
+            }
+        }
+
         String root = "manager".equals(target) ? ProjectPaths.javaManagerRoot(sc_id) : ProjectPaths.projectJavaRoot(sc_id);
-        if (!packagePath.isEmpty()) root += File.separator + packagePath.replace(".", File.separator);
+        if (!effectivePackagePath.isEmpty()) root += File.separator + effectivePackagePath.replace(".", File.separator);
 
         File targetFile = PathResolver.validateProjectPath(sc_id,
                 new File(root, name + ("folder".equals(type) ? "" : (type.startsWith("java_") ? ".java" : ".kt"))));
@@ -85,7 +99,7 @@ public final class JavaCreateTool implements Tool {
 
         String content = args.optString("content", "");
         if (content.isEmpty()) {
-            String pkg = packagePath.isEmpty() ? "com.my.app" : packagePath;
+            String pkg = effectivePackagePath;
             if ("java_activity".equals(type)) content = String.format(ACTIVITY_TEMPLATE, pkg, name);
             else if ("kotlin_activity".equals(type)) content = String.format(KOTLIN_ACTIVITY_TEMPLATE, pkg, name);
             else if ("kotlin_class".equals(type)) content = String.format(KOTLIN_CLASS_TEMPLATE, pkg, name);
