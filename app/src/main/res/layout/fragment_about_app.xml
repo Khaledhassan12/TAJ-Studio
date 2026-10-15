@@ -74,7 +74,7 @@
                         <com.google.android.material.imageview.ShapeableImageView
                             android:id="@+id/maintainerPortrait"
                             android:layout_width="112dp"
-                            android:layout_height="104dp"
+                            android:layout_height="112dp"
                             android:contentDescription="@string/taj_maintainer_primary_name"
                             android:scaleType="centerCrop"
                             android:src="@drawable/bg_taj_maintainer_portrait_placeholder"
