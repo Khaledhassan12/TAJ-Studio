@@ -18,7 +18,6 @@ public final class JavaReadTool implements Tool {
             JSONObject props = new JSONObject();
             props.put("target", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"manager", "project"})));
             props.put("path", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
             params.put("required", new JSONArray().put("target").put("path"));
             return new ToolSpec("java_read", "Reads a Java/Kotlin file via PathResolver.", params);
