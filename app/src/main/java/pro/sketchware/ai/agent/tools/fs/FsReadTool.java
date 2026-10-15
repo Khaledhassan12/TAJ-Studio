@@ -17,7 +17,6 @@ public final class FsReadTool implements Tool {
             params.put("type", "object");
             JSONObject props = new JSONObject();
             props.put("path", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
             params.put("required", new org.json.JSONArray().put("path"));
             return new ToolSpec("fs_read", "Reads a file with PathResolver and structured result.", params);
