@@ -25,11 +25,8 @@ import pro.sketchware.ai.core.ToolSpec;
 
 public final class AgentOrchestrator {
 
-    public static final String DEFAULT_SYSTEM_PROMPT = "Project files live under .sketchware/data/{sc_id}. " +
-            "Use relative paths: 'layout/main.xml', 'res/layout/main.xml', 'values/colors.xml', 'assets/logo.png', 'java/...'. " +
-            "Tools auto-resolve aliases; if a tool returns ERROR with candidates, retry using a candidate. " +
-            "For adding widgets to layouts prefer insert_widget with parentId. " +
-            "Plan: read -> modify -> verify. Never claim success without 'verified'.";
+    /** Stable identity and operating policy shared by every agent request/provider. */
+    public static final String DEFAULT_SYSTEM_PROMPT = AgentSystemPrompt.DEFAULT;
 
     private final AIProvider provider;
     private final ToolRegistry registry;
