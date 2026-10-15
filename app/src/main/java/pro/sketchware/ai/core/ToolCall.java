@@ -12,11 +12,17 @@ public final class ToolCall {
     public final String id;
     public final String name;
     public final JSONObject arguments;
+    public final boolean argumentsValid;
 
     public ToolCall(String id, String name, JSONObject arguments) {
+        this(id, name, arguments, true);
+    }
+
+    public ToolCall(String id, String name, JSONObject arguments, boolean argumentsValid) {
         this.id = id == null ? "" : id;
         this.name = name == null ? "" : name;
         this.arguments = arguments == null ? new JSONObject() : arguments;
+        this.argumentsValid = argumentsValid;
     }
 
     /**
@@ -25,14 +31,15 @@ public final class ToolCall {
      */
     public static ToolCall of(String id, String name, String rawArguments) {
         JSONObject parsed = null;
-        if (rawArguments != null && !rawArguments.isEmpty()) {
+        boolean valid = true;
+        if (rawArguments != null && !rawArguments.trim().isEmpty()) {
             try {
                 parsed = new JSONObject(rawArguments);
             } catch (JSONException ignored) {
-                // Malformed tool arguments must never crash the loop.
+                valid = false;
             }
         }
-        return new ToolCall(id, name, parsed);
+        return new ToolCall(id, name, parsed, valid);
     }
 
     public String argString(String key, String defaultValue) {
