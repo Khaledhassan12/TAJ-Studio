@@ -20,7 +20,6 @@ public final class FsWriteTool implements Tool {
             props.put("path", new JSONObject().put("type", "string"));
             props.put("content", new JSONObject().put("type", "string"));
             props.put("expectContains", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
             params.put("required", new JSONArray().put("path").put("content"));
             return new ToolSpec("fs_write", "Writes a file with PathResolver and structured result.", params);
