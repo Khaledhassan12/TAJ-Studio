@@ -59,6 +59,8 @@ public class AssistantFragment extends Fragment {
     private ObjectAnimator connectionPulseAnimator;
     private static final String STATE_SELECTED_PANEL = "ai_selected_panel";
     private int selectedPanelId = R.id.ai_dest_session;
+    private static final String STATE_SESSION_ID = "ai_session_id";
+    private String restoredSessionId;
     private int baseSessionPaddingLeft;
     private int baseSessionPaddingTop;
     private int baseSessionPaddingRight;
@@ -205,6 +207,7 @@ public class AssistantFragment extends Fragment {
                 ? R.id.ai_dest_session
                 : savedInstanceState.getInt(STATE_SELECTED_PANEL, R.id.ai_dest_session);
         selectedPanelId = restoredPanel;
+        restoredSessionId = savedInstanceState == null ? null : savedInstanceState.getString(STATE_SESSION_ID);
         rail.setSelectedItemId(restoredPanel);
     }
 
@@ -221,6 +224,7 @@ public class AssistantFragment extends Fragment {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         outState.putInt(STATE_SELECTED_PANEL, selectedPanelId);
+        if (currentSession != null) outState.putString(STATE_SESSION_ID, currentSession.id);
         super.onSaveInstanceState(outState);
     }
 
@@ -619,6 +623,15 @@ public class AssistantFragment extends Fragment {
             render(panel, PanelState.EMPTY);
         } else {
             currentSession = sessions.get(0);
+            if (restoredSessionId != null) {
+                for (ChatStore.Session savedSession : sessions) {
+                    if (restoredSessionId.equals(savedSession.id)) {
+                        currentSession = savedSession;
+                        break;
+                    }
+                }
+            }
+            restoredSessionId = currentSession.id;
             chatAdapter.setMessages(currentSession.messages);
             render(panel, PanelState.READY);
             rv.post(() -> scrollToBottom(false));
