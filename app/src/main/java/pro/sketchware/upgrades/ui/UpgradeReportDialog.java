@@ -56,7 +56,7 @@ public class UpgradeReportDialog {
                 // Confirmation Dialog
                 new MaterialAlertDialogBuilder(context)
                     .setTitle("Confirm Fixes")
-                    .setMessage("This will delete unused files and apply automated fixes. A backup will be created in .upgrade_backup. Proceed?")
+                    .setMessage("Only verified Java import cleanup is eligible for automatic changes, after a backup is verified. File/resource deletion and Gradle/SDK changes require manual review. Proceed?")
                     .setPositiveButton("Yes, Fix All", (dialog1, which1) -> {
                         if (listener != null) listener.onApplyFixes(report.findings);
                     })
