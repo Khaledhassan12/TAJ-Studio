@@ -25,11 +25,14 @@ import pro.sketchware.ai.core.ToolSpec;
 
 public final class AgentOrchestrator {
 
-    public static final String DEFAULT_SYSTEM_PROMPT = "Project files live under .sketchware/data/{sc_id}. " +
-            "Use relative paths: 'layout/main.xml', 'res/layout/main.xml', 'values/colors.xml', 'assets/logo.png', 'java/...'. " +
-            "Tools auto-resolve aliases; if a tool returns ERROR with candidates, retry using a candidate. " +
+    public static final String DEFAULT_SYSTEM_PROMPT = "You are operating on the project currently open in TAJ Studio. " +
+            "Use the supplied tools to inspect and change that project; do not merely describe edits when a tool can perform them. " +
+            "Never supply a different sc_id: the runtime binds every project operation to the currently open project. " +
+            "Use relative paths such as 'res/layout/main.xml', 'values/colors.xml', 'assets/logo.png', and 'java/...'. " +
+            "Tools auto-resolve supported aliases; if a tool returns ERROR with candidates, retry using an exact candidate. " +
             "For adding widgets to layouts prefer insert_widget with parentId. " +
-            "Plan: read -> modify -> verify. Never claim success without 'verified'.";
+            "For every requested change: inspect the target, execute the appropriate tool, read back or otherwise verify the persisted result, and report the actual result. " +
+            "Never claim an operation succeeded unless the tool returned a verified success. Explain permission denials and failed verification plainly.";
 
     private final AIProvider provider;
     private final ToolRegistry registry;
@@ -152,6 +155,12 @@ public final class AgentOrchestrator {
                     UiPoster.post(callbacks::onCancel);
                     return;
                 }
+                if (iterations >= MAX_ITERATIONS && lastResponse != null && !lastResponse.toolCalls.isEmpty()) {
+                    terminalCallbackSent = true;
+                    UiPoster.post(() -> callbacks.onError(
+                            new Exception("Agent reached the 10-round tool limit before producing a final answer. Review the tool results and send a follow-up request.")));
+                    return;
+                }
 
                 if (lastResponse != null) {
                     final AIResponse finalResp = lastResponse;
@@ -230,8 +239,11 @@ public final class AgentOrchestrator {
         if (errorRef.get() != null) {
             throw errorRef.get();
         }
-
-        return responseRef.get();
+        AIResponse response = responseRef.get();
+        if (response == null) {
+            throw new Exception("Provider completed without an AI response payload.");
+        }
+        return response;
     }
 
     public void shutdown() {
