@@ -17,7 +17,7 @@ public final class AssetListTool implements Tool {
             params.put("type", "object");
             JSONObject props = new JSONObject();
             props.put("dir", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             return new ToolSpec("asset_list", "Lists assets.", params);
         } catch (Exception e) { return null; }
