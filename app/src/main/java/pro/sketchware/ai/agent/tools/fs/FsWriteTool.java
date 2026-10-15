@@ -37,7 +37,7 @@ public final class FsWriteTool implements Tool {
         String userPath = args.getString("path");
         String content = args.getString("content");
         String expect = args.optString("expectContains", "");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
 
         File f = PathResolver.resolve(sc_id, userPath);
         String path = f.getAbsolutePath();
