@@ -59,6 +59,10 @@ public final class AIConfigStore {
     public static final String K_AGENT_ENABLED = "assistant_agent_enabled";
     public static final String K_AGENT_PERM_MODE = "assistant_agent_perm_mode"; // "", full, consent, strict
     public static final String K_AUTO_RETRY = "assistant_auto_retry";
+    private static final String K_STREAMING_ENABLED = "assistant_streaming_enabled";
+    private static final String K_AUTO_SUGGEST = "assistant_auto_suggest";
+    private static final String K_HAPTICS_ENABLED = "assistant_haptics_enabled";
+    private static final String K_TEMPERATURE = "assistant_temperature";
 
     private static final String K_KEY_PREFIX = "api_key_";
     private static final String K_BASE_PREFIX = "base_url_";
@@ -333,6 +337,40 @@ public final class AIConfigStore {
     public void setAutoRetry(boolean retry) {
         if (prefs != null) {
             prefs.edit().putBoolean(K_AUTO_RETRY, retry).apply();
+        }
+    }
+
+    public boolean isStreamingEnabled() {
+        return prefs == null || prefs.getBoolean(K_STREAMING_ENABLED, true);
+    }
+
+    public void setStreamingEnabled(boolean enabled) {
+        if (prefs != null) prefs.edit().putBoolean(K_STREAMING_ENABLED, enabled).apply();
+    }
+
+    public boolean isAutoSuggestEnabled() {
+        return prefs == null || prefs.getBoolean(K_AUTO_SUGGEST, true);
+    }
+
+    public void setAutoSuggestEnabled(boolean enabled) {
+        if (prefs != null) prefs.edit().putBoolean(K_AUTO_SUGGEST, enabled).apply();
+    }
+
+    public boolean isHapticsEnabled() {
+        return prefs == null || prefs.getBoolean(K_HAPTICS_ENABLED, true);
+    }
+
+    public void setHapticsEnabled(boolean enabled) {
+        if (prefs != null) prefs.edit().putBoolean(K_HAPTICS_ENABLED, enabled).apply();
+    }
+
+    public float getTemperature() {
+        return prefs == null ? 0.7f : Math.max(0f, Math.min(1f, prefs.getFloat(K_TEMPERATURE, 0.7f)));
+    }
+
+    public void setTemperature(float temperature) {
+        if (prefs != null && !Float.isNaN(temperature) && !Float.isInfinite(temperature)) {
+            prefs.edit().putFloat(K_TEMPERATURE, Math.max(0f, Math.min(1f, temperature))).apply();
         }
     }
 
