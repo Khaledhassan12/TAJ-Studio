@@ -11,7 +11,12 @@ public class BuildProjectTool implements Tool {
 
     @Override
     public ToolSpec spec() {
-        return new ToolSpec("build_project", "Builds and runs the current Sketchware project", new JSONObject());
+        JSONObject schema = new JSONObject();
+        try {
+            schema.put("type", "object");
+            schema.put("properties", new JSONObject());
+        } catch (Exception ignored) {}
+        return new ToolSpec("build_project", "Builds and runs the current Sketchware project", schema);
     }
 
     @Override
