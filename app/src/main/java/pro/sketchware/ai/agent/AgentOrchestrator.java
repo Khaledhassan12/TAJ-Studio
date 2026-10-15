@@ -62,6 +62,7 @@ public final class AgentOrchestrator {
         state = SessionState.MODEL_STREAMING;
         executor.execute(() -> {
             AIResponse lastResponse = null;
+            boolean terminalCallbackSent = false;
             try {
                 List<AIMessage> conversation = new ArrayList<>(messages);
                 int iterations = 0;
@@ -123,7 +124,10 @@ public final class AgentOrchestrator {
                         }
                     } catch (Exception e) {
                         state = SessionState.IDLE;
-                        if (!isCancelled) {
+                        terminalCallbackSent = true;
+                        if (isCancelled) {
+                            UiPoster.post(callbacks::onCancel);
+                        } else {
                             UiPoster.post(() -> callbacks.onError(e));
                         }
                         return;
@@ -132,17 +136,19 @@ public final class AgentOrchestrator {
 
                 state = SessionState.IDLE;
                 if (isCancelled) {
+                    terminalCallbackSent = true;
                     UiPoster.post(callbacks::onCancel);
                     return;
                 }
 
                 if (lastResponse != null) {
                     final AIResponse finalResp = lastResponse;
+                    terminalCallbackSent = true;
                     UiPoster.post(() -> callbacks.onComplete(finalResp));
                 }
             } finally {
                 state = SessionState.IDLE;
-                if (!isCancelled && lastResponse == null) {
+                if (!terminalCallbackSent && !isCancelled && lastResponse == null) {
                     UiPoster.post(callbacks::onCancel);
                 }
             }
