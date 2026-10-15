@@ -27,7 +27,7 @@ public final class JavaCreateTool implements Tool {
             props.put("type", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"folder", "java_class", "java_activity", "kotlin_class", "kotlin_activity"})));
             props.put("packagePath", new JSONObject().put("type", "string"));
             props.put("content", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("target").put("name").put("type"));
             return new ToolSpec("java_create", "Creates a Java/Kotlin file or folder.", params);
