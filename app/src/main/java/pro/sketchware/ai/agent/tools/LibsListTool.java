@@ -17,7 +17,7 @@ public final class LibsListTool implements Tool {
         try {
             JSONObject params = new JSONObject();
             params.put("type", "object");
-            params.put("properties", new JSONObject().put("sc_id", new JSONObject().put("type", "string")));
+            params.put("properties", new JSONObject());
             return new ToolSpec("libs_list", "Lists libraries in a project.", params);
         } catch (Exception e) { return null; }
     }
@@ -29,7 +29,7 @@ public final class LibsListTool implements Tool {
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         iC libManager = jC.c(sc_id);
         
         JSONObject res = new JSONObject();
