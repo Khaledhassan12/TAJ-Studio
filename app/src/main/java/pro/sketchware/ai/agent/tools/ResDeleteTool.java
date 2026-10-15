@@ -52,10 +52,13 @@ public final class ResDeleteTool implements Tool {
 
         String trashDir = FileUtil.getExternalStorageDir() + "/.sketchware/.agent_trash";
         FileUtil.makeDir(trashDir);
-        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + name;
+        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + System.nanoTime() + "_" + name;
         
         FileUtil.moveFile(path, trashPath);
-        LiveRegistry.notifyChanged(folder, path);
-        return new ToolResult("verified: moved to trash @ " + trashPath, false);
+        if (!f.exists() && FileUtil.isExistFile(trashPath)) {
+            LiveRegistry.notifyChanged(folder, path);
+            return new ToolResult("verified: moved to trash @ " + trashPath, false);
+        }
+        return new ToolResult("Delete verification failed; the resource was not confirmed in trash.", true);
     }
 }
