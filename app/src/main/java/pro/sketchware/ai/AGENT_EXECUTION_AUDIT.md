@@ -30,6 +30,7 @@ The foundation already has a real registry, provider tool declarations, an orche
 ### Additional execution-integrity safeguards in the current candidate update
 
 - Added executor-boundary validation of required fields, JSON types, enums, argument/string sizes, collection sizes and nesting before a tool can run.
+- Registry schemas are defensive copies, and undeclared top-level arguments are rejected rather than silently ignored. The same registered schema contract is used for provider declarations and executor validation.
 - Bound tool calls to the project ID captured at task start and reject an explicitly mismatched project ID.
 - Replaced the blanket name-based destructive-call block with explicit risk metadata and one-call approval for filesystem delete/copy/move, resource delete/move/copy, asset delete, library add/remove, shared block create/edit, and manifest changes.
 - Added context-aware write risk classification: creating a new file can proceed under the configured permission policy, while replacing an existing regular file requires a per-call approval even in persistent `full` permission mode.
