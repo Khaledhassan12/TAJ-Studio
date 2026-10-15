@@ -13,6 +13,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ConcurrentHashMap;
 
 import pro.sketchware.ai.live.UiPoster;
 import pro.sketchware.ai.core.AIMessage;
@@ -33,6 +35,10 @@ public final class AgentOrchestrator {
     private final Tool.ToolContext context;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private volatile boolean isCancelled = false;
+    private final AtomicBoolean runActive = new AtomicBoolean(false);
+    private static final ConcurrentHashMap<String, AtomicBoolean> PROJECT_RUNS = new ConcurrentHashMap<>();
+    private volatile Thread workerThread;
+    private volatile boolean waitingForApproval = false;
     private volatile AIProvider.Handle activeHandle;
     private volatile SessionState state = SessionState.IDLE;
 
@@ -46,8 +52,11 @@ public final class AgentOrchestrator {
 
     public void cancel() {
         isCancelled = true;
-        state = SessionState.IDLE;
-        if (activeHandle != null) activeHandle.cancel();
+        AIProvider.Handle handle = activeHandle;
+        if (handle != null) handle.cancel();
+        // Interrupts blocking approval waits as well as interruptible provider waits.
+        Thread worker = workerThread;
+        if (waitingForApproval && worker != null) worker.interrupt();
     }
 
     public void skipWait() {
@@ -55,17 +64,41 @@ public final class AgentOrchestrator {
     }
 
     public void run(String systemPrompt, List<AIMessage> messages, String model, float temperature, StreamCallbacks callbacks) {
+        final String projectId = context.sc_id;
+        if (projectId == null || projectId.trim().isEmpty()) {
+            UiPoster.post(() -> callbacks.onError(new IllegalStateException(
+                    "Agent task rejected because no active project is bound to it.")));
+            return;
+        }
+        final AtomicBoolean projectRun = PROJECT_RUNS.computeIfAbsent(projectId, key -> new AtomicBoolean(false));
+        if (!projectRun.compareAndSet(false, true)) {
+            UiPoster.post(() -> callbacks.onError(new IllegalStateException(
+                    "Another agent task is already modifying this project. Wait for it to finish or cancel it.")));
+            return;
+        }
+        if (!runActive.compareAndSet(false, true)) {
+            projectRun.set(false);
+            UiPoster.post(() -> callbacks.onError(
+                    new IllegalStateException("This agent instance already has a running task.")));
+            return;
+        }
         isCancelled = false;
         state = SessionState.MODEL_STREAMING;
+        try {
         executor.execute(() -> {
+            workerThread = Thread.currentThread();
             AIResponse lastResponse = null;
             boolean terminalCallbackSent = false;
+            boolean lastToolBatchFailed = false;
+            List<String> lastBatchFailures = new ArrayList<>();
             try {
                 List<AIMessage> conversation = new ArrayList<>(messages);
                 int iterations = 0;
                 final int MAX_ITERATIONS = 10;
+                final long taskDeadline = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5);
 
-                while (iterations < MAX_ITERATIONS && !isCancelled) {
+                while (iterations < MAX_ITERATIONS && !isCancelled
+                        && System.currentTimeMillis() < taskDeadline) {
                     iterations++;
 
                     List<pro.sketchware.ai.core.ToolSpec> toolSpecs = new ArrayList<>();
@@ -83,7 +116,7 @@ public final class AgentOrchestrator {
 
                     try {
                         state = SessionState.MODEL_STREAMING;
-                        AIResponse response = fetchBlocking(request, callbacks);
+                        AIResponse response = fetchBlocking(request, callbacks, taskDeadline);
                         lastResponse = response;
 
                         if (isCancelled) break;
@@ -92,6 +125,8 @@ public final class AgentOrchestrator {
                             break;
                         } else {
                             conversation.add(AIMessage.assistantWithToolCalls(response.toolCalls));
+                            lastToolBatchFailed = false;
+                            lastBatchFailures.clear();
                         }
 
                         state = SessionState.TOOL_RUNNING;
@@ -101,27 +136,62 @@ public final class AgentOrchestrator {
                             UiPoster.post(() -> callbacks.onToolStart(call.name));
 
                             boolean success = false;
+                            String toolSummary = "Tool execution did not produce a result.";
                             try {
                                 Tool tool = registry.get(call.name);
                                 Tool.ToolResult result;
                                 if (tool != null) {
-                                    if (requiresManualConfirmation(call.name)) {
-                                        result = new Tool.ToolResult(
-                                                "Blocked by TAJ safety policy: this operation requires explicit confirmation, which is not available in the current Assistant UI. No file operation was performed.",
-                                                true);
+                                    String validationError = ToolArgumentValidator.validate(tool.spec(), call.arguments);
+                                    if (validationError == null) {
+                                        validationError = validateActiveProjectArgs(call.arguments);
+                                    }
+                                    if (validationError != null) {
+                                        result = Tool.ToolResult.structured(call.name, "INVALID_ARGUMENTS", null,
+                                                validationError, null, true);
+                                    } else if (tool.riskLevel(call.arguments) == Tool.RiskLevel.DESTRUCTIVE) {
+                                        boolean approved;
+                                        waitingForApproval = true;
+                                        try {
+                                            approved = context.requestConfirmation(buildApprovalPrompt(call, tool, context));
+                                        } finally {
+                                            waitingForApproval = false;
+                                        }
+                                        if (!approved || isCancelled) {
+                                            result = Tool.ToolResult.structured(call.name, "DENIED", null,
+                                                    "The user denied or did not complete the required approval. No tool operation was started.",
+                                                    null, true);
+                                        } else {
+                                            context.beginApprovedMutation();
+                                            try {
+                                                result = tool.run(call.arguments, context);
+                                            } finally {
+                                                context.endApprovedMutation();
+                                            }
+                                        }
                                     } else {
                                         result = tool.run(call.arguments, context);
                                     }
                                     conversation.add(AIMessage.toolResult(call.id, result.content));
                                     success = !result.error;
+                                    toolSummary = summarizeToolResult(call.name, result.content, success);
                                 } else {
                                     result = new Tool.ToolResult("Tool not found: " + call.name, true);
                                     conversation.add(AIMessage.toolResult(call.id, result.content));
+                                    toolSummary = "ERROR: No executor is registered for this tool.";
                                 }
                             } catch (Exception e) {
-                                conversation.add(AIMessage.toolResult(call.id, "Error executing tool: " + e.getMessage()));
+                                String reason = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                                if (reason.length() > 240) reason = reason.substring(0, 240) + "…";
+                                toolSummary = "ERROR: " + reason;
+                                conversation.add(AIMessage.toolResult(call.id, "Error executing tool: " + reason));
                             } finally {
+                                if (!success) {
+                                    lastToolBatchFailed = true;
+                                    lastBatchFailures.add(call.name);
+                                }
                                 final boolean ok = success;
+                                final String summary = toolSummary;
+                                UiPoster.post(() -> callbacks.onToolResult(call.name, summary, ok));
                                 UiPoster.post(() -> callbacks.onToolEnd(call.name, ok));
                             }
                         }
@@ -144,34 +214,147 @@ public final class AgentOrchestrator {
                     return;
                 }
 
-                if (lastResponse != null) {
-                    final AIResponse finalResp = lastResponse;
+                if (lastResponse == null) {
                     terminalCallbackSent = true;
-                    UiPoster.post(() -> callbacks.onComplete(finalResp));
+                    UiPoster.post(() -> callbacks.onError(
+                            new java.util.concurrent.TimeoutException("Agent task ended without a model response; no completion is claimed.")));
+                    return;
+                }
+                if (!lastResponse.toolCalls.isEmpty()) {
+                    terminalCallbackSent = true;
+                    UiPoster.post(() -> callbacks.onError(new IllegalStateException(
+                            "Agent reached its step or time budget while tool calls were still pending. Earlier actions may have run; inspect their results before retrying. No full completion is claimed.")));
+                    return;
+                }
+
+                if (lastResponse != null) {
+                    AIResponse finalResp = lastResponse;
+                    if (lastToolBatchFailed && !lastBatchFailures.isEmpty()) {
+                        String report = "\n\n⚠️ Execution verification warning: one or more project tools failed in the last tool batch ("
+                                + String.join(", ", new java.util.LinkedHashSet<>(lastBatchFailures))
+                                + "). The assistant must not treat the requested task as fully completed until these failures and any partial effects are inspected.";
+                        finalResp = new AIResponse(lastResponse.text + report, lastResponse.toolCalls,
+                                lastResponse.finishReason, lastResponse.promptTokens, lastResponse.completionTokens);
+                    }
+                    final AIResponse deliver = finalResp;
+                    terminalCallbackSent = true;
+                    UiPoster.post(() -> callbacks.onComplete(deliver));
                 }
             } finally {
                 state = SessionState.IDLE;
+                workerThread = null;
+                waitingForApproval = false;
+                runActive.set(false);
+                projectRun.set(false);
                 if (!terminalCallbackSent && !isCancelled && lastResponse == null) {
-                    UiPoster.post(callbacks::onCancel);
+                    UiPoster.post(() -> callbacks.onError(
+                            new IllegalStateException("Agent stopped without a verified terminal result.")));
                 }
             }
         });
+        } catch (RuntimeException e) {
+            state = SessionState.IDLE;
+            workerThread = null;
+            waitingForApproval = false;
+            runActive.set(false);
+            projectRun.set(false);
+            UiPoster.post(() -> callbacks.onError(new IllegalStateException(
+                    "Agent task could not be scheduled: " + e.getClass().getSimpleName(), e)));
+        }
     }
 
     /**
-     * Deletion and relocation can irreversibly lose user project data. Until the
-     * UI has a real per-call approval handshake, fail closed for these operations.
+     * Produces a small UI-safe summary from the executor result. Never display raw read-file
+     * contents or arbitrary structured payloads in the execution card.
      */
-    private static boolean requiresManualConfirmation(String toolName) {
-        if (toolName == null) return false;
-        String name = toolName.toLowerCase(java.util.Locale.ROOT);
-        return name.contains("delete")
-                || name.contains("remove")
-                || name.contains("move")
-                || name.contains("copy");
+    private static String summarizeToolResult(String toolName, String content, boolean success) {
+        String prefix = success ? "VERIFIED" : "FAILED";
+        if (content == null || content.trim().isEmpty()) return prefix + ": executor returned no result details.";
+        String name = toolName == null ? "" : toolName.toLowerCase(java.util.Locale.ROOT);
+        if (name.contains("read") || name.contains("search") || name.contains("list") || name.contains("info")) {
+            try {
+                JSONObject json = new JSONObject(content);
+                String status = json.optString("status", success ? "SUCCESS" : "ERROR");
+                String path = json.optString("absolutePath", json.optString("path", json.optString("root", "")));
+                String message = json.optString("message", "");
+                String bytes = json.has("bytes") ? "bytes=" + json.optLong("bytes") : "";
+                String truncated = json.optBoolean("truncated", false) ? "results truncated/partial" : "";
+                StringBuilder summary = new StringBuilder(prefix).append(": ").append(status);
+                if (!path.isEmpty()) summary.append(" • ").append(path);
+                if (!message.isEmpty()) summary.append(" • ").append(message);
+                if (!bytes.isEmpty()) summary.append(" • ").append(bytes);
+                if (!truncated.isEmpty()) summary.append(" • ").append(truncated);
+                return truncateSummary(summary.toString());
+            } catch (Exception ignored) {
+                return prefix + ": bounded read/search output returned to the model; content intentionally omitted.";
+            }
+        }
+        try {
+            JSONObject json = new JSONObject(content);
+            String status = json.optString("status", success ? "SUCCESS" : "ERROR");
+            String path = json.optString("absolutePath", json.optString("path", ""));
+            String message = json.optString("message", "");
+            StringBuilder summary = new StringBuilder(prefix).append(": ").append(status);
+            if (!path.isEmpty()) summary.append(" • ").append(path);
+            if (!message.isEmpty()) summary.append(" • ").append(message);
+            if (json.has("candidates")) summary.append(" • candidates=").append(json.optJSONArray("candidates").length());
+            return truncateSummary(summary.toString());
+        } catch (Exception ignored) {
+            String singleLine = content.replaceAll("[\\p{Cntrl}]+", " ").trim();
+            return truncateSummary(prefix + ": " + singleLine);
+        }
     }
 
-    private AIResponse fetchBlocking(AIRequest request, StreamCallbacks outerCallbacks) throws Exception {
+    private static String truncateSummary(String summary) {
+        if (summary == null) return "";
+        return summary.length() > 260 ? summary.substring(0, 257) + "…" : summary;
+    }
+
+    private String validateActiveProjectArgs(org.json.JSONObject args) {
+        if (args != null && args.has("sc_id") && !args.isNull("sc_id")) {
+            String requested = args.optString("sc_id", "");
+            if (context.sc_id == null || !context.sc_id.equals(requested)) {
+                return "The requested project ID does not match the project bound to this task. No operation was executed.";
+            }
+        }
+        if (context.sc_id == null || context.sc_id.trim().isEmpty()) {
+            return "No active Sketchware project is bound to this agent task.";
+        }
+        return null;
+    }
+
+    private static String buildApprovalPrompt(ToolCall call, Tool tool, Tool.ToolContext context) {
+        StringBuilder message = new StringBuilder();
+        message.append("TAJ Agent requests approval for a potentially destructive operation.\n")
+                .append("Tool: ").append(sanitizeForDialog(call.name, 80)).append('\n');
+        String summary = tool.approvalSummary(call.arguments, context);
+        if (summary != null && !summary.trim().isEmpty()) {
+            message.append("Scope: ").append(sanitizeForDialog(summary, 240)).append('\n');
+        }
+        org.json.JSONObject args = call.arguments;
+        String[] relevant = {"path", "src", "dst", "folder", "name", "fromFolder",
+                "fromName", "toFolder", "toName", "op", "id"};
+        if (args != null) {
+            for (String key : relevant) {
+                if (args.has(key) && !args.isNull(key)) {
+                    message.append(key).append(": ")
+                            .append(sanitizeForDialog(args.optString(key, String.valueOf(args.opt(key))), 160))
+                            .append('\n');
+                }
+            }
+        }
+        message.append("No changes will be attempted unless you approve this specific call.");
+        return message.toString();
+    }
+
+    private static String sanitizeForDialog(String value, int maxLength) {
+        if (value == null) return "";
+        String sanitized = value.replaceAll("[\\\\p{Cntrl}]", " ").trim();
+        if (sanitized.length() > maxLength) sanitized = sanitized.substring(0, maxLength) + "…";
+        return sanitized;
+    }
+
+    private AIResponse fetchBlocking(AIRequest request, StreamCallbacks outerCallbacks, long taskDeadline) throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<AIResponse> responseRef = new AtomicReference<>();
         AtomicReference<Exception> errorRef = new AtomicReference<>();
@@ -211,8 +394,15 @@ public final class AgentOrchestrator {
         });
 
         try {
-            if (!latch.await(120, TimeUnit.SECONDS)) {
-                throw new Exception("AI Request timed out");
+            while (latch.getCount() > 0) {
+                if (isCancelled) {
+                    throw new java.util.concurrent.CancellationException("Agent task cancelled.");
+                }
+                long remaining = taskDeadline - System.currentTimeMillis();
+                if (remaining <= 0) {
+                    throw new java.util.concurrent.TimeoutException("Agent task exceeded its five-minute execution budget.");
+                }
+                latch.await(Math.min(250L, remaining), TimeUnit.MILLISECONDS);
             }
         } finally {
             activeHandle = null;

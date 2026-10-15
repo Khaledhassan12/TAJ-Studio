@@ -7,6 +7,11 @@ import com.besome.sketch.design.DesignActivity;
 
 public interface Tool {
 
+    enum RiskLevel { STANDARD, DESTRUCTIVE }
+
+    /** Explicit operation risk; destructive operations require per-call approval. */
+    default RiskLevel riskLevel(org.json.JSONObject args) { return RiskLevel.STANDARD; }
+
     class ToolSpec {
         public final String name;
         public final String description;
@@ -44,6 +49,10 @@ public interface Tool {
     class ToolContext {
         public final WeakReference<DesignActivity> activity;
         public final String sc_id;
+        private final ThreadLocal<Boolean> approvedMutation = new ThreadLocal<>();
+
+        public void beginApprovedMutation() { approvedMutation.set(Boolean.TRUE); }
+        public void endApprovedMutation() { approvedMutation.remove(); }
 
         public ToolContext(DesignActivity activity, String sc_id) {
             this.activity = new WeakReference<>(activity);
@@ -97,6 +106,9 @@ public interface Tool {
         }
 
         public boolean checkPermission(String path, boolean isOverwrite) {
+            // A scoped per-call approval is granted by AgentOrchestrator only after a real
+            // confirmation dialog. It expires when that tool invocation returns.
+            if (Boolean.TRUE.equals(approvedMutation.get())) return true;
             DesignActivity a = activity.get();
             if (a == null) return false;
 
@@ -171,6 +183,9 @@ public interface Tool {
     enum Domain {
         JAVA, RES, ASSET, BLOCK, MANIFEST, PROJECT, FS, LIB
     }
+
+    /** Safe, concise context shown to the user before a destructive operation. */
+    default String approvalSummary(JSONObject args, ToolContext ctx) { return ""; }
 
     ToolSpec spec();
     Domain domain();

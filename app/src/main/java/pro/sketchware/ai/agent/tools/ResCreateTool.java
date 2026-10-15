@@ -3,6 +3,8 @@ package pro.sketchware.ai.agent.tools;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
@@ -49,16 +51,26 @@ public final class ResCreateTool implements Tool {
             return new ToolResult("Malformed XML content.", true);
         }
 
-        FileUtil.writeFile(path, content);
-        if (FileUtil.isExistFile(path)) {
+        try {
+            DomainToolHelper.atomicWrite(f, content, null);
+            if (!f.isFile() || !content.equals(DomainToolHelper.readUtf8(f))) {
+                return ToolResult.structured("res_create", "VERIFICATION_FAILED", path,
+                        "The new resource did not match the requested content after read-back.", null, true);
+            }
             if ("layout".equals(folder)) {
-                try {
-                    DomainToolHelper.syncLayoutToDesigner(sc_id, name, content);
-                } catch (Exception ignored) {}
+                DomainToolHelper.syncLayoutToDesigner(sc_id, name, content);
+                if (!DomainToolHelper.verifyLiveLayout(sc_id, name, content)) {
+                    return ToolResult.structured("res_create", "DESIGNER_SYNC_FAILED", path,
+                            "The resource file was created and read-back verified, but the live Sketchware designer model could not be verified. The file was preserved for inspection; this is not a full success.", null, true);
+                }
             }
             LiveRegistry.notifyChanged(folder, path);
-            return new ToolResult("verified: created @ " + path, false);
+            return ToolResult.structured("res_create", "SUCCESS", path,
+                    "Exact resource read-back verified" + ("layout".equals(folder) ? "; live designer model also verified." : "."), null, false);
+        } catch (Exception e) {
+            return ToolResult.structured("res_create", "ERROR", path,
+                    (e.getMessage() == null ? "Resource creation failed." : e.getMessage())
+                            + " Inspect the target before retrying because a partial create may have occurred.", null, true);
         }
-        return new ToolResult("Failed to create file.", true);
     }
 }

@@ -117,6 +117,7 @@ public final class ChatStore {
         public String domain; // JAVA, RES, ASSET, BLOCK, MANIFEST
         public long startedAt;
         public long finishedAt;
+        public String resultSummary;
 
         public ToolEvent(String name) {
             this(name, null);
@@ -137,6 +138,7 @@ public final class ChatStore {
                 if (domain != null) json.put("domain", domain);
                 json.put("startedAt", startedAt);
                 json.put("finishedAt", finishedAt);
+                if (resultSummary != null) json.put("resultSummary", resultSummary);
             } catch (JSONException ignored) {}
             return json;
         }
@@ -146,6 +148,7 @@ public final class ChatStore {
             te.status = json.optString("status", "OK");
             te.startedAt = json.optLong("startedAt");
             te.finishedAt = json.optLong("finishedAt");
+            te.resultSummary = json.optString("resultSummary", null);
             return te;
         }
     }

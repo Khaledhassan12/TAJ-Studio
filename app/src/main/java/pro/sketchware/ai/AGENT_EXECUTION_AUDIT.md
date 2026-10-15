@@ -26,17 +26,30 @@ The foundation already has a real registry, provider tool declarations, an orche
 3. **Invalid build tool schema.** `BuildProjectTool` advertised an empty JSON object without the required `type: object` and `properties` fields. Its schema is now valid.
 4. **False-positive build reporting.** The build tool previously returned “Build started” even if the Activity or Run button was absent. It now checks the active editor, waits a bounded time for UI dispatch, reports dispatch failures, and explicitly states that compilation/install/runtime success is not verified by this UI hook.
 
+
+### Additional execution-integrity safeguards in the current candidate update
+
+- Added executor-boundary validation of required fields, JSON types, enums, argument/string sizes, collection sizes and nesting before a tool can run.
+- Bound tool calls to the project ID captured at task start and reject an explicitly mismatched project ID.
+- Replaced the blanket name-based destructive-call block with explicit risk metadata and one-call approval for filesystem delete/copy/move, resource delete/move/copy, asset delete, library add/remove, shared block create/edit, and manifest changes.
+- Added a project-wide agent run lock, cancellation-aware approval wait, five-minute runtime deadline, ten-round cap, and explicit error if the budget ends with unresolved tool calls.
+- Added exact UTF-8 read-back and SHA-256 evidence to the updated create/edit/copy/move/delete and metadata writers; the tools now refuse silent overwrite of existing create/copy destinations.
+- Bounded file reads and list/search output; incomplete traversal is marked partial rather than complete success.
+- XML parsing now advances to END_DOCUMENT, and resource/layout/widget tools check persisted content and live Sketchware model parity before reporting full success.
+
+These are code-level changes only until CI compiles this exact commit and the acceptance tests below pass on Android. They do not constitute proof of device-visible behavior.
+
 ## High-risk gaps requiring deeper implementation and tests
 
 These are not marked complete until implemented and tested on-device:
 
-- **Destructive operations currently fail closed in the orchestrator.** Delete/remove/move/copy calls are blocked because the current Assistant UI does not provide a per-call approval handshake. This protects data but means these tools are not yet fully usable through the agent. Replace the name-based check with explicit risk metadata on each tool and a real asynchronous approval flow; never unblock destructive calls merely to make them appear functional.
+- **Consent-flow lifecycle and usability.** Destructive executors now have explicit risk metadata and per-call consent. The confirmation helper still waits on a latch; Activity recreation, app backgrounding, timeout, cancellation, and rapid task changes require device tests. A lifecycle-aware asynchronous confirmation contract is still preferable to a blocking worker wait.
 - **Permission dialog synchronization.** The current `ToolContext` waits on a latch for UI confirmation. It must be verified against Activity recreation, cancellation, UI-thread invocation, and timeout. A lifecycle-aware asynchronous approval contract is preferable to blocking a worker on a dialog.
 - **Path boundary.** `PathResolver` canonicalizes paths and restricts access to the active project's known roots, which is a valuable defense. Add tests for traversal, absolute paths, symlink escapes, nonexistent destination paths, nested project roots, and paths that resolve differently before/after a filesystem change. Ensure all tools use the same resolver and revalidate immediately before mutation.
-- **Backup integrity.** Some writers use a fixed `.bak` suffix. That can collide with a user's own backup, and backup/restore failures must not be ignored. Introduce task-scoped snapshots with content hashes and explicit restore outcomes; preserve pre-existing user files.
-- **Atomic writes and conflict detection.** Before write, compare the current file fingerprint with the fingerprint read by the task. Write to a sibling temporary file, flush, then replace atomically where supported. On mismatch, return a conflict without overwriting.
-- **Copy/move verification.** Verify directory support, destination parent creation, destination collision behavior, source/destination content hashes, and rollback on partial failure. Do not equate a path existence check with successful content transfer.
-- **UI-visible design edits.** File writes alone do not prove the Sketchware designer's in-memory model changed. For layout changes, verify parse success, update the designer model through the native Sketchware path, confirm the target widget exists in the live model, and refresh the editor. Report file persistence and designer synchronization as separate outcomes.
+- **Durable undo and snapshot lifecycle.** Modified writers use unique hash-verified backups and guarded restore outcomes. The backup index is in memory, there is no user-facing task-scoped undo manager, and retention/cleanup after process death still needs a durable design. Some unmodified executors may still use legacy backups.
+- **External-writer race and shared mutation locks.** The new writer checks a SHA-256 fingerprint before committing and uses an atomic sibling-temp replacement where supported. This reduces, but cannot eliminate, a race with an external editor between the last check and filesystem move; cross-process file locking is not implemented.
+- **Copy/move recovery edge cases.** Updated helpers verify source/destination fingerprints and refuse collisions/symlinks. Cross-filesystem moves, interruption mid-copy, insufficient storage, partial parent creation, and rollback failure still require on-device tests.
+- **UI-visible design edits.** Layout helpers now check exact disk read-back and live-model widget count/IDs after native synchronization. A device test must still prove the requested view is visibly present in the open designer, survives navigation/reopen, and stays consistent with generated sources/blocks. This has not yet been device-verified.
 - **Build result observability.** The current Run button hook confirms only dispatch. Wire into the actual build lifecycle and report queued/running/succeeded/failed/cancelled with the build log/result. Until then, do not claim a successful build.
 - **Tool argument validation.** Validate required fields, types, enums, maximum lengths, and unexpected fields at the execution boundary. Malformed tool-call JSON must be surfaced as an invalid call, not silently normalized to an empty argument object.
 - **Orchestrator termination.** Add explicit result states for step-budget exhaustion, timeout, cancellation, provider failure, tool failure, and partial completion. A final model response after the iteration cap must not be mistaken for task completion when it still requests tools.
@@ -44,6 +57,11 @@ These are not marked complete until implemented and tested on-device:
 - **Result provenance.** Tool results should carry structured status, path, operation ID, verification evidence, and error category. UI success indicators must derive from executor results and verification, not from model narration.
 - **Secret hygiene and untrusted content.** Treat project files and tool outputs as untrusted data, redact credentials from diagnostics, cap output sizes, and ensure instructions embedded in project files cannot expand the executor's permissions.
 - **Sketchware source of truth.** Determine whether each edit targets canonical project files, generated files, block metadata, or designer state. Prefer native Sketchware editing APIs for layouts/blocks where needed; validate the persisted artifact and the live editor model separately.
+
+
+## Current candidate verification gate
+
+Still unproven: clean Android compilation of the exact revision; temporary-project tests for create/edit/copy/move/delete/rollback; traversal/symlink/stale-hash/cross-project rejection tests; approval cancellation and Activity lifecycle tests; visible layout/widget updates in the live designer; every provider/model's actual tool calling; durable task resume/undo; and actual build/install/runtime terminal status. The build hook currently confirms dispatch, not successful compilation or launch.
 
 ## Required acceptance matrix
 

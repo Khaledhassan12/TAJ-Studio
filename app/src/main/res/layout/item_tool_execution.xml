@@ -2,45 +2,62 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="40dp"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingHorizontal="16dp">
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="6dp">
 
-    <TextView
-        android:id="@+id/ai_tool_domain"
-        android:layout_width="wrap_content"
-        android:layout_height="20dp"
-        android:layout_marginEnd="8dp"
-        android:background="@drawable/bg_domain_tag"
-        android:gravity="center"
-        android:paddingHorizontal="6dp"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="9sp"
-        android:textStyle="bold"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/ai_tool_name"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:fontFamily="monospace"
-        android:textSize="12sp"
-        android:textColor="?attr/colorOnSurface" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-    <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/ai_tool_progress"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
-        android:indeterminate="true"
-        app:indicatorSize="16dp"
-        app:trackThickness="2dp" />
+        <TextView
+            android:id="@+id/ai_tool_domain"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_domain_tag"
+            android:gravity="center"
+            android:paddingHorizontal="6dp"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
 
-    <ImageView
-        android:id="@+id/ai_tool_status"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
+        <TextView
+            android:id="@+id/ai_tool_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="monospace"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="12sp" />
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/ai_tool_progress"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:indeterminate="true"
+            app:indicatorSize="16dp"
+            app:trackThickness="2dp" />
+
+        <ImageView
+            android:id="@+id/ai_tool_status"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/ai_tool_result_summary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="10sp"
         android:visibility="gone" />
-
 </LinearLayout>

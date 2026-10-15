@@ -1,65 +1,76 @@
 package pro.sketchware.ai.agent.tools;
 
-import org.json.JSONObject;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import java.io.File;
+
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.PathResolver;
-import pro.sketchware.utility.FileUtil;
 import pro.sketchware.ai.live.LiveRegistry;
 
 public final class AssetCreateTool implements Tool {
-
-    @Override
-    public ToolSpec spec() {
+    @Override public ToolSpec spec() {
         try {
-            JSONObject params = new JSONObject();
-            params.put("type", "object");
             JSONObject props = new JSONObject();
-            props.put("name", new JSONObject().put("type", "string"));
-            props.put("dir", new JSONObject().put("type", "string"));
+            props.put("name", new JSONObject().put("type", "string").put("maxLength", 4096));
+            props.put("dir", new JSONObject().put("type", "string").put("maxLength", 4096));
             props.put("type", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"folder", "file"})));
-            props.put("content", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
-            params.put("properties", props);
-            params.put("required", new JSONArray().put("name").put("type"));
-            return new ToolSpec("asset_create", "Creates an asset file or folder.", params);
-        } catch (Exception e) { return null; }
+            props.put("content", new JSONObject().put("type", "string").put("maxLength", 262144));
+            JSONObject schema = new JSONObject(); schema.put("type", "object"); schema.put("properties", props);
+            schema.put("required", new JSONArray().put("name").put("type"));
+            return new ToolSpec("asset_create", "Creates a new asset file or folder without overwriting existing user data.", schema);
+        } catch (Exception e) { throw new IllegalStateException("Could not construct asset_create schema.", e); }
     }
+    @Override public Domain domain() { return Domain.ASSET; }
 
-    @Override
-    public Domain domain() {
-        return Domain.ASSET;
-    }
+    @Override public ToolResult run(JSONObject args, ToolContext ctx) {
+        File target = null;
+        String path = null;
+        String type = "";
+        String content = "";
+        try {
+            String name = args.getString("name");
+            type = args.getString("type");
+            content = args.optString("content", "");
+            String dir = args.optString("dir", "");
+            if (!"folder".equals(type) && !"file".equals(type)) {
+                return ToolResult.structured("asset_create", "INVALID_ARGUMENTS", null, "Unsupported asset type.", null, true);
+            }
+            if ("file".equals(type) && !name.contains(".")) {
+                return ToolResult.structured("asset_create", "INVALID_ARGUMENTS", null,
+                        "Asset file creation without an extension is refused; specify the correct file type.", null, true);
+            }
 
-    @Override
-    public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String name = args.getString("name");
-        String type = args.getString("type");
-        String dir = args.optString("dir", "");
-        String sc_id = ctx.sc_id;
+            String relative = "assets/" + (dir.isEmpty() ? "" : dir + "/") + name;
+            target = PathResolver.resolve(ctx.sc_id, relative);
+            path = target.getAbsolutePath();
+            if (target.exists()) return ToolResult.structured("asset_create", "CONFLICT", path,
+                    "Destination already exists and was not overwritten.", null, true);
+            if (!ctx.checkPermission(path, false)) return ToolResult.structured("asset_create", "DENIED", path, "Create permission was denied.", null, true);
 
-        if (type.equals("file") && !name.contains(".")) {
-            return new ToolResult("Asset file creation WITHOUT extension is refused.", true);
-        }
+            if ("folder".equals(type)) {
+                if (!target.mkdirs() && !target.isDirectory()) {
+                    return ToolResult.structured("asset_create", "ERROR", path,
+                            "Folder creation failed; inspect the path for partial parent-directory creation.", null, true);
+                }
+                if (!target.isDirectory()) return ToolResult.structured("asset_create", "VERIFICATION_FAILED", path,
+                        "The requested folder is not present after creation.", null, true);
+                LiveRegistry.notifyChanged("assets", path);
+                return ToolResult.structured("asset_create", "SUCCESS", path, "Folder exists and was verified.", null, false);
+            }
 
-        String relativePath = "assets/" + (dir.isEmpty() ? "" : dir + "/") + name;
-        File target = PathResolver.resolve(sc_id, relativePath);
-        String path = target.getAbsolutePath();
-
-        if (type.equals("folder")) {
-            if (!ctx.checkPermission(path, target.exists())) return new ToolResult("Denied.", true);
-            FileUtil.makeDir(path);
-            return new ToolResult(target.isDirectory() ? "verified: folder created @ " + path : "Failed.", !target.isDirectory());
-        }
-
-        if (!ctx.checkPermission(path, false)) return new ToolResult("Denied.", true);
-
-        FileUtil.writeFile(path, args.optString("content", ""));
-        if (FileUtil.isExistFile(path)) {
+            DomainToolHelper.atomicWrite(target, content, null);
+            if (!target.isFile() || !content.equals(DomainToolHelper.readUtf8(target))) {
+                return ToolResult.structured("asset_create", "VERIFICATION_FAILED", path,
+                        "Created asset content did not match after read-back.", null, true);
+            }
             LiveRegistry.notifyChanged("assets", path);
-            return new ToolResult("verified: created @ " + path, false);
+            return ToolResult.structured("asset_create", "SUCCESS", path,
+                    "New asset file content verified by exact UTF-8 read-back.", null, false);
+        } catch (Exception e) {
+            String message = e.getMessage() == null ? "Asset creation failed." : e.getMessage();
+            return ToolResult.structured("asset_create", "ERROR", path,
+                    message + " Inspect the destination before retrying; a partial create may have occurred.", null, true);
         }
-        return new ToolResult("Failed.", true);
     }
 }

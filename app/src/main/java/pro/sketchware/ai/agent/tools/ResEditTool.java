@@ -3,6 +3,8 @@ package pro.sketchware.ai.agent.tools;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
@@ -54,7 +56,11 @@ public final class ResEditTool implements Tool {
         
         if (!ctx.checkPermission(path, true)) return new ToolResult("Denied.", true);
 
-        String original = FileUtil.readFile(path);
+        String beforeHash = DomainToolHelper.sha256(f);
+        String original = DomainToolHelper.readUtf8(f);
+        if (!beforeHash.equals(DomainToolHelper.sha256(f))) {
+            return new ToolResult("Conflict: the resource changed while it was being read. No edit was applied.", true);
+        }
         String next = "";
         switch (mode) {
             case "replace_all" -> next = args.getString("content");
@@ -73,13 +79,33 @@ public final class ResEditTool implements Tool {
 
         DomainToolHelper.backup(path);
         try {
-            FileUtil.writeFile(path, next);
-            if ("layout".equals(folder)) DomainToolHelper.syncLayoutToDesigner(sc_id, name, next);
+            DomainToolHelper.atomicWrite(f, next, beforeHash);
+            String actual = DomainToolHelper.readUtf8(f);
+            if (!next.equals(actual)) throw new java.io.IOException("Read-back differs from the intended resource content.");
+            if ("layout".equals(folder)) {
+                DomainToolHelper.syncLayoutToDesigner(sc_id, name, next);
+                if (!DomainToolHelper.verifyLiveLayout(sc_id, name, next)) {
+                    throw new java.io.IOException("Persisted layout differs from the live Sketchware designer model.");
+                }
+            }
             LiveRegistry.notifyChanged(folder, path);
-            return new ToolResult("verified: content matches @ " + path, false);
+            return ToolResult.structured("res_edit", "SUCCESS", path,
+                    "Exact file read-back verified" + ("layout".equals(folder) ? "; live designer model verified." : "."), null, false);
         } catch (Exception e) {
-            DomainToolHelper.restore(path);
-            return new ToolResult("Edit failed: " + e.getMessage(), true);
+            boolean restored = false;
+            try {
+                if (f.isFile() && DomainToolHelper.contentSha256(next).equals(DomainToolHelper.sha256(f))) {
+                    restored = DomainToolHelper.restoreIfUnchanged(path, DomainToolHelper.contentSha256(next));
+                    if (restored && "layout".equals(folder)) {
+                        DomainToolHelper.syncLayoutToDesigner(sc_id, name, original);
+                        if (!DomainToolHelper.verifyLiveLayout(sc_id, name, original)) restored = false;
+                    }
+                }
+            } catch (Exception ignored) {}
+            String message = e.getMessage() == null ? "Edit failed." : e.getMessage();
+            if (restored) message += " Original file/designer state restoration was verified.";
+            else message += " Any partial disk/designer effect was not fully verified; inspect the project before retrying.";
+            return ToolResult.structured("res_edit", "ERROR", path, message, null, true);
         }
     }
 }

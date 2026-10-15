@@ -1,61 +1,43 @@
 package pro.sketchware.ai.agent.tools;
 
-import org.json.JSONObject;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import java.io.File;
-import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.PathResolver;
-import pro.sketchware.utility.FileUtil;
+import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.live.LiveRegistry;
 
 public final class ResDeleteTool implements Tool {
-
-    @Override
-    public ToolSpec spec() {
+    @Override public ToolSpec spec() {
         try {
-            JSONObject params = new JSONObject();
-            params.put("type", "object");
             JSONObject props = new JSONObject();
-            props.put("folder", new JSONObject().put("type", "string"));
-            props.put("name", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
-            params.put("properties", props);
-            params.put("required", new JSONArray().put("folder").put("name"));
-            return new ToolSpec("res_delete", "Deletes a resource file via PathResolver.", params);
-        } catch (Exception e) { return null; }
+            props.put("folder", new JSONObject().put("type", "string").put("maxLength", 128));
+            props.put("name", new JSONObject().put("type", "string").put("maxLength", 4096));
+            JSONObject schema = new JSONObject();
+            schema.put("type", "object"); schema.put("properties", props);
+            schema.put("required", new JSONArray().put("folder").put("name"));
+            return new ToolSpec("res_delete", "Moves one resource file to verified recoverable trash; directory deletion is unsupported.", schema);
+        } catch (Exception e) { throw new IllegalStateException("Could not construct res_delete schema.", e); }
     }
+    @Override public Domain domain() { return Domain.RES; }
+    @Override public RiskLevel riskLevel(JSONObject args) { return RiskLevel.DESTRUCTIVE; }
 
-    @Override
-    public Domain domain() {
-        return Domain.RES;
-    }
-
-    @Override
-    public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String folder = args.getString("folder");
-        String name = args.getString("name");
-        String sc_id = ctx.sc_id;
-        
-        File f = PathResolver.resolve(sc_id, "res/" + folder + "/" + name);
-        String path = f.getAbsolutePath();
-
-        if (!f.exists()) {
-            JSONObject err = new JSONObject();
-            err.put("status", "ERROR");
-            err.put("message", "Not found: " + path);
-            err.put("absolutePath", path);
-            err.put("candidates", new JSONArray(PathResolver.candidates(sc_id, name)));
-            return new ToolResult(err.toString(), true);
+    @Override public ToolResult run(JSONObject args, ToolContext ctx) {
+        String path = null;
+        try {
+            File target = PathResolver.resolve(ctx.sc_id, "res/" + args.getString("folder") + "/" + args.getString("name"));
+            path = target.getAbsolutePath();
+            if (!target.exists()) return ToolResult.structured("res_delete", "NOT_FOUND", path, "Resource does not exist.", null, true);
+            if (!target.isFile()) return ToolResult.structured("res_delete", "UNSUPPORTED", path, "Only a single resource file can be moved to trash.", null, true);
+            if (!ctx.checkPermission(path, true)) return ToolResult.structured("res_delete", "DENIED", path, "Delete permission was denied.", null, true);
+            String trash = DomainToolHelper.moveFileToTrash(path, ctx.sc_id);
+            if (target.exists() || !new File(trash).isFile()) {
+                return ToolResult.structured("res_delete", "VERIFICATION_FAILED", path, "Original path or trash verification failed.", null, true);
+            }
+            LiveRegistry.notifyChanged(args.getString("folder"), path);
+            return ToolResult.structured("res_delete", "SUCCESS", path, "Original path is absent; verified recoverable trash: " + trash, null, false);
+        } catch (Exception e) {
+            return ToolResult.structured("res_delete", "ERROR", path, e.getMessage() == null ? "Resource deletion failed." : e.getMessage(), null, true);
         }
-        
-        if (!ctx.checkPermission(path, true)) return new ToolResult("Denied.", true);
-
-        String trashDir = FileUtil.getExternalStorageDir() + "/.sketchware/.agent_trash";
-        FileUtil.makeDir(trashDir);
-        String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + name;
-        
-        FileUtil.moveFile(path, trashPath);
-        LiveRegistry.notifyChanged(folder, path);
-        return new ToolResult("verified: moved to trash @ " + trashPath, false);
     }
 }

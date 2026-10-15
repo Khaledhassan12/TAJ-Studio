@@ -26,6 +26,10 @@ public interface StreamCallbacks {
     default void onToolStart(String name) {
     }
 
+    /** Actual executor output summary, separate from model narration and bounded by the agent. */
+    default void onToolResult(String name, String summary, boolean success) {
+    }
+
     /** Called when an agent finishes executing a tool. */
     default void onToolEnd(String name, boolean success) {
     }

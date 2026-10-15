@@ -3,8 +3,12 @@ package pro.sketchware.ai.agent.tools;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.util.ArrayList;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import pro.sketchware.ai.agent.Tool;
+import pro.sketchware.ai.agent.tools.DomainToolHelper;
 import pro.sketchware.ai.agent.ProjectPaths;
 import pro.sketchware.utility.FileUtil;
 import pro.sketchware.utility.GsonUtils;
@@ -38,6 +42,15 @@ public final class ManifestEditTool implements Tool {
         return Domain.MANIFEST;
     }
 
+    @Override public RiskLevel riskLevel(JSONObject args) { return RiskLevel.DESTRUCTIVE; }
+    @Override public String approvalSummary(JSONObject args, ToolContext ctx) {
+        String op = args == null ? "(operation missing)" : args.optString("op", "(operation missing)");
+        String path = ProjectPaths.manifestInjectionPath(ctx.sc_id);
+        if ("add_permission".equals(op)) path = new FilePathUtil().getPathPermission(ctx.sc_id);
+        return "Active-project manifest/permission metadata: " + path + "; requested operation: " + op
+                + "; name: " + (args == null ? "" : args.optString("name", ""));
+    }
+
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String op = args.getString("op");
@@ -46,15 +59,32 @@ public final class ManifestEditTool implements Tool {
 
         if ("add_permission".equals(op)) {
             String perm = args.getString("name");
-            String path = new FilePathUtil().getPathPermission(sc_id);
+            if (perm == null || !perm.matches("[A-Za-z0-9_.]+")) {
+                return ToolResult.structured("manifest_edit", "INVALID_ARGUMENTS", null,
+                        "Permission must use a fully qualified Android permission name.", null, true);
+            }
+            String permissionPath = new FilePathUtil().getPathPermission(sc_id);
+            File permissionFile = new File(permissionPath);
             ArrayList<String> perms = new ArrayList<>();
-            if (FileUtil.isExistFile(path)) {
-                perms = GsonUtils.getGson().fromJson(FileUtil.readFile(path), new com.google.gson.reflect.TypeToken<ArrayList<String>>(){}.getType());
+            if (permissionFile.isFile()) {
+                perms = GsonUtils.getGson().fromJson(DomainToolHelper.readUtf8(permissionFile),
+                        new com.google.gson.reflect.TypeToken<ArrayList<String>>(){}.getType());
             }
             if (perms == null) perms = new ArrayList<>();
-            if (!perms.contains(perm)) perms.add(perm);
-            if (!ctx.checkPermission(path, FileUtil.isExistFile(path))) return new ToolResult("Denied.", true);
-            FileUtil.writeFile(path, GsonUtils.getGson().toJson(perms));
+            boolean changed = false;
+            if (!perms.contains(perm)) { perms.add(perm); changed = true; }
+            if (!changed) return verify(ctx, sc_id, perm);
+            if (!ctx.checkPermission(permissionPath, permissionFile.exists())) {
+                return ToolResult.structured("manifest_edit", "DENIED", permissionPath, "Permission was denied.", null, true);
+            }
+            String beforeHash = permissionFile.isFile() ? DomainToolHelper.sha256(permissionFile) : null;
+            if (permissionFile.isFile()) DomainToolHelper.backup(permissionPath);
+            String serialized = GsonUtils.getGson().toJson(perms);
+            DomainToolHelper.atomicWrite(permissionFile, serialized, beforeHash);
+            if (!serialized.equals(DomainToolHelper.readUtf8(permissionFile))) {
+                return ToolResult.structured("manifest_edit", "VERIFICATION_FAILED", permissionPath,
+                        "Permission metadata read-back did not match the requested update.", null, true);
+            }
             return verify(ctx, sc_id, perm);
         }
 
@@ -80,9 +110,18 @@ public final class ManifestEditTool implements Tool {
             data.add(item);
         }
 
-        if (!ctx.checkPermission(injPath, FileUtil.isExistFile(injPath))) return new ToolResult("Denied.", true);
-        DomainToolHelper.backup(injPath);
-        FileUtil.writeFile(injPath, GsonUtils.getGson().toJson(data));
+        File injectionFile = new File(injPath);
+        if (!ctx.checkPermission(injPath, injectionFile.exists())) {
+            return ToolResult.structured("manifest_edit", "DENIED", injPath, "Permission was denied.", null, true);
+        }
+        String beforeHash = injectionFile.isFile() ? DomainToolHelper.sha256(injectionFile) : null;
+        if (injectionFile.isFile()) DomainToolHelper.backup(injPath);
+        String serialized = GsonUtils.getGson().toJson(data);
+        DomainToolHelper.atomicWrite(injectionFile, serialized, beforeHash);
+        if (!serialized.equals(DomainToolHelper.readUtf8(injectionFile))) {
+            return ToolResult.structured("manifest_edit", "VERIFICATION_FAILED", injPath,
+                    "Manifest injection data did not match after read-back.", null, true);
+        }
         LiveRegistry.notifyChanged("manifest", injPath);
         return verify(ctx, sc_id, args.optString("name", ""));
     }
@@ -93,6 +132,7 @@ public final class ManifestEditTool implements Tool {
         if (generated.contains(marker)) {
             return new ToolResult("verified: '" + marker + "' present in generated manifest.", false);
         }
-        return new ToolResult("Write successful, but verification failed in generated view.", false);
+        return ToolResult.structured("manifest_edit", "VERIFICATION_FAILED", ProjectPaths.manifestFile(sc_id),
+                "Metadata write completed, but the requested marker was not found in the generated AndroidManifest.xml. The operation is not considered successful.", null, true);
     }
 }

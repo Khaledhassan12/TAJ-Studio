@@ -1,73 +1,111 @@
 package pro.sketchware.ai.agent.tools.fs;
 
-import org.json.JSONObject;
 import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.File;
-import pro.sketchware.ai.agent.Tool;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+
 import pro.sketchware.ai.agent.PathResolver;
+import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.tools.DomainToolHelper;
-import pro.sketchware.utility.FileUtil;
 import pro.sketchware.ai.live.LiveRegistry;
 
 public final class FsWriteTool implements Tool {
-
     @Override
     public ToolSpec spec() {
         try {
-            JSONObject params = new JSONObject();
-            params.put("type", "object");
             JSONObject props = new JSONObject();
-            props.put("path", new JSONObject().put("type", "string"));
-            props.put("content", new JSONObject().put("type", "string"));
-            props.put("expectContains", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
-            params.put("properties", props);
-            params.put("required", new JSONArray().put("path").put("content"));
-            return new ToolSpec("fs_write", "Writes a file with PathResolver and structured result.", params);
-        } catch (Exception e) { return null; }
-    }
-
-    @Override
-    public Domain domain() {
-        return Domain.FS;
-    }
-
-    @Override
-    public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String userPath = args.getString("path");
-        String content = args.getString("content");
-        String expect = args.optString("expectContains", "");
-        String sc_id = ctx.sc_id;
-
-        File f = PathResolver.resolve(sc_id, userPath);
-        String path = f.getAbsolutePath();
-
-        if (!ctx.checkPermission(path, f.exists())) return new ToolResult("Write denied.", true);
-
-        File parent = f.getParentFile();
-        if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
-
-        DomainToolHelper.backup(path);
-        try {
-            FileUtil.writeFile(path, content);
-            String rb = FileUtil.readFile(path);
-            if (!expect.isEmpty() && !rb.contains(expect)) {
-                DomainToolHelper.restore(path);
-                return ToolResult.structured("fs_write", "ERROR", path, "Verification failed: '" + expect + "' not found.", null, true);
-            }
-            
-            notifyLive(path);
-            
-            return ToolResult.structured("fs_write", "SUCCESS", path, "verified", null, false);
+            props.put("path", new JSONObject().put("type", "string").put("maxLength", 4096));
+            props.put("content", new JSONObject().put("type", "string").put("maxLength", 262144));
+            props.put("expectContains", new JSONObject().put("type", "string").put("maxLength", 4096));
+            props.put("sc_id", new JSONObject().put("type", "string").put("maxLength", 128));
+            JSONObject schema = new JSONObject();
+            schema.put("type", "object");
+            schema.put("properties", props);
+            schema.put("required", new JSONArray().put("path").put("content"));
+            return new ToolSpec("fs_write", "Atomically writes a project file with conflict detection and exact read-back verification.", schema);
         } catch (Exception e) {
-            DomainToolHelper.restore(path);
-            return ToolResult.structured("fs_write", "ERROR", path, e.getMessage(), new JSONArray(PathResolver.candidates(sc_id, f.getName())), true);
+            throw new IllegalStateException("Could not construct fs_write schema.", e);
         }
     }
 
+    @Override public Domain domain() { return Domain.FS; }
+
+    @Override
+    public ToolResult run(JSONObject args, ToolContext ctx) {
+        File target = null;
+        String path = null;
+        String requestedContent = null;
+        boolean existed = false;
+        try {
+            String userPath = args.getString("path");
+            requestedContent = args.getString("content");
+            String expect = args.optString("expectContains", "");
+            if (!expect.isEmpty() && !requestedContent.contains(expect)) {
+                return ToolResult.structured("fs_write", "INVALID_ARGUMENTS", null,
+                        "expectContains is not present in the requested content; no file was changed.", null, true);
+            }
+
+            target = PathResolver.resolve(ctx.sc_id, userPath);
+            path = target.getAbsolutePath();
+            if (target.exists() && !target.isFile()) {
+                return ToolResult.structured("fs_write", "ERROR", path,
+                        "The target exists but is not a regular file.", null, true);
+            }
+            existed = target.isFile();
+            if (!ctx.checkPermission(path, existed)) {
+                return ToolResult.structured("fs_write", "DENIED", path, "Write permission was denied.", null, true);
+            }
+
+            String beforeHash = existed ? DomainToolHelper.sha256(target) : null;
+            if (existed) DomainToolHelper.backup(path);
+            DomainToolHelper.atomicWrite(target, requestedContent, beforeHash);
+
+            String actual = DomainToolHelper.readUtf8(target);
+            if (!requestedContent.equals(actual) || (!expect.isEmpty() && !actual.contains(expect))) {
+                boolean restored = existed && DomainToolHelper.restoreIfUnchanged(
+                        path, DomainToolHelper.contentSha256(requestedContent));
+                return ToolResult.structured("fs_write", "VERIFICATION_FAILED", path,
+                        "Read-back did not match the requested content. Original restoration "
+                                + (restored ? "was verified." : "could not be safely verified; inspect the file before retrying."),
+                        null, true);
+            }
+
+            String hash = DomainToolHelper.sha256(target);
+            notifyLive(path);
+            return ToolResult.structured("fs_write", "SUCCESS", path,
+                    "Exact UTF-8 read-back verified; SHA-256=" + hash, null, false);
+        } catch (Exception e) {
+            boolean restored = false;
+            try {
+                if (existed && path != null && requestedContent != null && target != null && target.isFile()
+                        && DomainToolHelper.contentSha256(requestedContent).equals(DomainToolHelper.sha256(target))) {
+                    restored = DomainToolHelper.restoreIfUnchanged(
+                            path, DomainToolHelper.contentSha256(requestedContent));
+                }
+            } catch (Exception ignored) {}
+            String message = safeMessage(e);
+            if (restored) message += " Original file restoration was verified.";
+            else if (path != null) message += " No unguarded rollback was attempted; inspect the target if the write may have started.";
+            return ToolResult.structured("fs_write", "ERROR", path, message, null, true);
+        }
+    }
+
+    private static String safeMessage(Exception error) {
+        if (error == null || error.getMessage() == null || error.getMessage().trim().isEmpty()) {
+            return "Write failed; the file state must be inspected before retrying.";
+        }
+        String message = error.getMessage().replaceAll("[\\p{Cntrl}]", " ");
+        return message.length() > 400 ? message.substring(0, 400) : message;
+    }
+
     private void notifyLive(String path) {
-        if (path.contains("/layout/")) LiveRegistry.notifyChanged("layout", path);
-        else if (path.contains("/values/")) LiveRegistry.notifyChanged("values", path);
-        else if (path.contains("/java/")) LiveRegistry.notifyChanged("project_java", path);
+        if (path == null) return;
+        String normalized = path.replace('\\', '/');
+        if (normalized.contains("/layout/")) LiveRegistry.notifyChanged("layout", path);
+        else if (normalized.contains("/values/")) LiveRegistry.notifyChanged("values", path);
+        else if (normalized.contains("/java/")) LiveRegistry.notifyChanged("project_java", path);
     }
 }

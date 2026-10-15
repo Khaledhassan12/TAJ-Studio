@@ -404,10 +404,19 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 
                 TextView name = row.findViewById(R.id.ai_tool_name);
                 TextView domain = row.findViewById(R.id.ai_tool_domain);
+                TextView resultSummary = row.findViewById(R.id.ai_tool_result_summary);
                 View progress = row.findViewById(R.id.ai_tool_progress);
                 ImageView status = row.findViewById(R.id.ai_tool_status);
-                
+
                 name.setText(te.name);
+                if (resultSummary != null) {
+                    if (te.resultSummary == null || te.resultSummary.isEmpty()) {
+                        resultSummary.setVisibility(View.GONE);
+                    } else {
+                        resultSummary.setVisibility(View.VISIBLE);
+                        resultSummary.setText(te.resultSummary);
+                    }
+                }
                 if (te.domain != null) {
                     domain.setVisibility(View.VISIBLE);
                     domain.setText(te.domain);

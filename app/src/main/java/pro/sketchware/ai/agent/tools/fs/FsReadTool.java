@@ -6,6 +6,7 @@ import java.io.File;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.FormatRegistry;
 import pro.sketchware.ai.agent.PathResolver;
+import pro.sketchware.ai.agent.tools.DomainToolHelper;
 import pro.sketchware.utility.FileUtil;
 
 public final class FsReadTool implements Tool {
@@ -37,15 +38,19 @@ public final class FsReadTool implements Tool {
         File f = PathResolver.resolve(sc_id, userPath);
         String path = f.getAbsolutePath();
         
-        if (!f.exists()) {
+        if (!f.exists() || !f.isFile()) {
             return ToolResult.structured("fs_read", "ERROR", path, "File not found.", new JSONArray(PathResolver.candidates(sc_id, f.getName())), true);
         }
         
+        if (f.length() > 16L * 1024L * 1024L) {
+            return ToolResult.structured("fs_read", "TOO_LARGE", path,
+                    "File exceeds the 16 MiB safe-read limit. No full-file read was attempted.", null, true);
+        }
         JSONObject res = FormatRegistry.parse(path);
         res.put("tool", "fs_read");
         res.put("status", "SUCCESS");
         res.put("path", path);
-        String content = FileUtil.readFile(path);
+        String content = DomainToolHelper.readUtf8(f);
         if (content.length() > 20000) {
             res.put("raw", content.substring(0, 20000));
             res.put("truncated", true);

@@ -3,6 +3,8 @@ package pro.sketchware.ai.agent.tools;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
@@ -54,7 +56,11 @@ public final class JavaEditTool implements Tool {
         
         if (!ctx.checkPermission(path, true)) return new ToolResult("Denied.", true);
 
-        String original = FileUtil.readFile(path);
+        String beforeHash = DomainToolHelper.sha256(f);
+        String original = DomainToolHelper.readUtf8(f);
+        if (!beforeHash.equals(DomainToolHelper.sha256(f))) {
+            return new ToolResult("Conflict: the source changed while it was being read. No edit was applied.", true);
+        }
         String next = "";
         switch (mode) {
             case "replace_all" -> next = args.getString("content");
@@ -69,12 +75,26 @@ public final class JavaEditTool implements Tool {
 
         DomainToolHelper.backup(path);
         try {
-            FileUtil.writeFile(path, next);
+            DomainToolHelper.atomicWrite(f, next, beforeHash);
+            String actual = DomainToolHelper.readUtf8(f);
+            if (!next.equals(actual)) {
+                boolean restored = DomainToolHelper.restoreIfUnchanged(path, DomainToolHelper.contentSha256(next));
+                return ToolResult.structured("java_edit", "VERIFICATION_FAILED", path,
+                        "Saved source does not match the requested edit. Original restoration " + (restored ? "was verified." : "could not be safely verified."), null, true);
+            }
             LiveRegistry.notifyChanged("manager".equals(target) ? "java_manager" : "project_java", path);
-            return new ToolResult("verified: content matches @ " + path, false);
+            return ToolResult.structured("java_edit", "SUCCESS", path,
+                    "Exact UTF-8 read-back verified; syntax/build validation was not performed by this tool.", null, false);
         } catch (Exception e) {
-            DomainToolHelper.restore(path);
-            return new ToolResult("Edit failed: " + e.getMessage(), true);
+            boolean restored = false;
+            try {
+                if (f.isFile() && DomainToolHelper.contentSha256(next).equals(DomainToolHelper.sha256(f))) {
+                    restored = DomainToolHelper.restoreIfUnchanged(path, DomainToolHelper.contentSha256(next));
+                }
+            } catch (Exception ignored) {}
+            String message = e.getMessage() == null ? "Edit failed." : e.getMessage();
+            if (restored) message += " Original source restoration was verified.";
+            return ToolResult.structured("java_edit", "ERROR", path, message, null, true);
         }
     }
 }

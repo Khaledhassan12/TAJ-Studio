@@ -1237,6 +1237,24 @@ public class AssistantFragment extends Fragment {
                 }
 
                 @Override
+                public void onToolResult(String name, String summary, boolean success) {
+                    UiPoster.post(() -> {
+                        if (!isAdded() || getView() == null || currentSession == null) return;
+                        if (toolsCard != null && toolsCard.toolEvents != null) {
+                            for (int i = toolsCard.toolEvents.size() - 1; i >= 0; i--) {
+                                ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
+                                if (event.name.equals(name)) {
+                                    event.resultSummary = summary;
+                                    break;
+                                }
+                            }
+                            int idx = currentSession.messages.indexOf(toolsCard);
+                            if (idx >= 0) chatAdapter.notifyItemChanged(idx, "tool_events");
+                        }
+                    });
+                }
+
+                @Override
                 public void onToolEnd(String name, boolean success) {
                     pokeWatchdog();
                     activeToolCount = Math.max(0, activeToolCount - 1);

@@ -3,6 +3,8 @@ package pro.sketchware.ai.agent.tools;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
@@ -47,7 +49,12 @@ public final class InsertWidgetTool implements Tool {
 
         if (!ctx.checkPermission(path, true)) return new ToolResult("Write denied.", true);
 
-        String original = FileUtil.readFile(path);
+        String beforeHash = DomainToolHelper.sha256(f);
+        String original = DomainToolHelper.readUtf8(f);
+        if (!beforeHash.equals(DomainToolHelper.sha256(f))) {
+            return ToolResult.structured("insert_widget", "CONFLICT", path,
+                    "The layout changed while it was being read. No widget was inserted.", null, true);
+        }
         
         // Find parent tag and its close tag. 
         // For simplicity and since we can't easily get offsets from XmlPullParser, 
@@ -88,20 +95,38 @@ public final class InsertWidgetTool implements Tool {
 
         DomainToolHelper.backup(path);
         try {
-            FileUtil.writeFile(path, next);
+            DomainToolHelper.atomicWrite(f, next, beforeHash);
+            String actual = DomainToolHelper.readUtf8(f);
+            if (!next.equals(actual)) throw new java.io.IOException("Saved layout does not match the requested XML.");
             DomainToolHelper.syncLayoutToDesigner(sc_id, f.getName(), next);
-            LiveRegistry.notifyChanged("layout", path);
-            
-            // Verify ID in live model
+            if (!DomainToolHelper.verifyLiveLayout(sc_id, f.getName(), next)) {
+                throw new java.io.IOException("The layout file was written, but the live Sketchware designer model did not match the saved XML.");
+            }
+
             String newId = extractId(widgetXml);
             if (newId != null && !DomainToolHelper.verifyLiveModel(sc_id, f.getName(), newId)) {
-                Log.w("AGENT", "Widget inserted but not found in live model verification.");
+                throw new java.io.IOException("The layout model was updated, but the newly requested widget ID could not be found in the live model.");
             }
-            
-            return ToolResult.structured("insert_widget", "SUCCESS", path, "verified: widget inserted", null, false);
+
+            LiveRegistry.notifyChanged("layout", path);
+            return ToolResult.structured("insert_widget", "SUCCESS", path,
+                    "Exact XML read-back, live layout model parity, and requested widget identity verified.", null, false);
         } catch (Exception e) {
-            DomainToolHelper.restore(path);
-            return ToolResult.structured("insert_widget", "ERROR", path, "Insertion failed: " + e.getMessage(), null, true);
+            boolean diskRestored = false;
+            boolean modelRestored = false;
+            try {
+                if (f.isFile() && DomainToolHelper.contentSha256(next).equals(DomainToolHelper.sha256(f))) {
+                    diskRestored = DomainToolHelper.restoreIfUnchanged(path, DomainToolHelper.contentSha256(next));
+                    if (diskRestored) {
+                        DomainToolHelper.syncLayoutToDesigner(sc_id, f.getName(), original);
+                        modelRestored = DomainToolHelper.verifyLiveLayout(sc_id, f.getName(), original);
+                    }
+                }
+            } catch (Exception ignored) {}
+            String message = e.getMessage() == null ? "Widget insertion failed." : e.getMessage();
+            message += " Disk rollback " + (diskRestored ? "verified" : "not verified")
+                    + "; designer rollback " + (modelRestored ? "verified." : "not verified.");
+            return ToolResult.structured("insert_widget", "ERROR", path, message, null, true);
         }
     }
 
