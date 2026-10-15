@@ -26,7 +26,6 @@ public final class ManifestEditTool implements Tool {
             props.put("op", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"add_permission", "set_application_attribute", "add_activity_entry"})));
             props.put("name", new JSONObject().put("type", "string"));
             props.put("value", new JSONObject().put("type", "string"));
-            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("op"));
             return new ToolSpec("manifest_edit", "Edits the manifest injection model.", params);
@@ -54,8 +53,17 @@ public final class ManifestEditTool implements Tool {
             if (perms == null) perms = new ArrayList<>();
             if (!perms.contains(perm)) perms.add(perm);
             if (!ctx.checkPermission(path, FileUtil.isExistFile(path))) return new ToolResult("Denied.", true);
-            FileUtil.writeFile(path, GsonUtils.getGson().toJson(perms));
-            return verify(ctx, sc_id, perm);
+            String nextPermissions = GsonUtils.getGson().toJson(perms);
+            DomainToolHelper.backup(path);
+            FileUtil.writeFile(path, nextPermissions);
+            if (!nextPermissions.equals(FileUtil.readFile(path))) {
+                DomainToolHelper.restore(path);
+                return new ToolResult("Permission list persistence verification failed.", true);
+            }
+            ToolResult permissionResult = verify(ctx, sc_id, perm);
+            if (permissionResult.error) DomainToolHelper.restore(path);
+            else LiveRegistry.notifyChanged("manifest", path);
+            return permissionResult;
         }
 
         ArrayList<HashMap<String, Object>> data = new ArrayList<>();
@@ -80,11 +88,21 @@ public final class ManifestEditTool implements Tool {
             data.add(item);
         }
 
+        if (!("set_application_attribute".equals(op) || "add_activity_entry".equals(op))) {
+            return new ToolResult("Unsupported manifest operation: " + op, true);
+        }
         if (!ctx.checkPermission(injPath, FileUtil.isExistFile(injPath))) return new ToolResult("Denied.", true);
+        String nextData = GsonUtils.getGson().toJson(data);
         DomainToolHelper.backup(injPath);
-        FileUtil.writeFile(injPath, GsonUtils.getGson().toJson(data));
-        LiveRegistry.notifyChanged("manifest", injPath);
-        return verify(ctx, sc_id, args.optString("name", ""));
+        FileUtil.writeFile(injPath, nextData);
+        if (!nextData.equals(FileUtil.readFile(injPath))) {
+            DomainToolHelper.restore(injPath);
+            return new ToolResult("Manifest injection persistence verification failed.", true);
+        }
+        ToolResult manifestResult = verify(ctx, sc_id, args.optString("name", ""));
+        if (manifestResult.error) DomainToolHelper.restore(injPath);
+        else LiveRegistry.notifyChanged("manifest", injPath);
+        return manifestResult;
     }
 
     private ToolResult verify(ToolContext ctx, String sc_id, String marker) {
@@ -93,6 +111,6 @@ public final class ManifestEditTool implements Tool {
         if (generated.contains(marker)) {
             return new ToolResult("verified: '" + marker + "' present in generated manifest.", false);
         }
-        return new ToolResult("Write successful, but verification failed in generated view.", false);
+        return new ToolResult("Manifest update was not verified in the generated manifest; the operation was rolled back.", true);
     }
 }
