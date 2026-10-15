@@ -115,6 +115,7 @@ public final class JavaCreateTool implements Tool {
             LiveRegistry.notifyChanged("manager".equals(target) ? "java_manager" : "project_java", path);
             return new ToolResult("verified: file created @ " + path, false);
         }
-        return new ToolResult("File creation verification failed: " + path, true);
+        if (targetFile.isFile()) targetFile.delete();
+        return new ToolResult("File creation verification failed; the incomplete new file was removed: " + path, true);
     }
 }
