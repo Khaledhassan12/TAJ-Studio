@@ -63,24 +63,34 @@ public interface Tool {
             final boolean[] result = new boolean[1];
 
             a.runOnUiThread(() -> {
-                new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
-                        .setTitle("TAG Assistant")
-                        .setMessage(message)
-                        .setPositiveButton("Allow", (d, w) -> {
-                            result[0] = true;
-                            latch.countDown();
-                        })
-                        .setNegativeButton("Deny", (d, w) -> {
-                            result[0] = false;
-                            latch.countDown();
-                        })
-                        .setCancelable(false)
-                        .show();
+                try {
+                    if (a.isFinishing() || a.isDestroyed()) {
+                        latch.countDown();
+                        return;
+                    }
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
+                            .setTitle("TAG Assistant")
+                            .setMessage(message)
+                            .setPositiveButton("Allow", (d, w) -> {
+                                result[0] = true;
+                                latch.countDown();
+                            })
+                            .setNegativeButton("Deny", (d, w) -> {
+                                result[0] = false;
+                                latch.countDown();
+                            })
+                            .setOnDismissListener(d -> latch.countDown())
+                            .setCancelable(false)
+                            .show();
+                } catch (RuntimeException e) {
+                    latch.countDown();
+                }
             });
 
             try {
-                latch.await();
+                if (!latch.await(2, java.util.concurrent.TimeUnit.MINUTES)) return false;
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 return false;
             }
             return result[0];
@@ -112,36 +122,46 @@ public interface Tool {
             final boolean[] result = new boolean[1];
 
             a.runOnUiThread(() -> {
-                android.view.View view = a.getLayoutInflater().inflate(pro.sketchware.R.layout.dialog_agent_permission, null);
-                android.widget.TextView tvBody = view.findViewById(pro.sketchware.R.id.tv_body);
-                tvBody.setText("The assistant wants to write to " + path);
+                try {
+                    if (a.isFinishing() || a.isDestroyed()) {
+                        latch.countDown();
+                        return;
+                    }
+                    android.view.View view = a.getLayoutInflater().inflate(pro.sketchware.R.layout.dialog_agent_permission, null);
+                    android.widget.TextView tvBody = view.findViewById(pro.sketchware.R.id.tv_body);
+                    tvBody.setText("The assistant wants to write to " + path);
 
-                android.widget.RadioGroup rg = view.findViewById(pro.sketchware.R.id.rg_modes);
+                    android.widget.RadioGroup rg = view.findViewById(pro.sketchware.R.id.rg_modes);
 
-                new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
-                        .setTitle("TAG Assistant")
-                        .setView(view)
-                        .setPositiveButton(pro.sketchware.R.string.ai_allow_and_remember, (d, w) -> {
-                            int checked = rg.getCheckedRadioButtonId();
-                            String chosenMode = "consent";
-                            if (checked == pro.sketchware.R.id.rb_full) chosenMode = "full";
-                            else if (checked == pro.sketchware.R.id.rb_strict) chosenMode = "strict";
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
+                            .setTitle("TAG Assistant")
+                            .setView(view)
+                            .setPositiveButton(pro.sketchware.R.string.ai_allow_and_remember, (d, w) -> {
+                                int checked = rg.getCheckedRadioButtonId();
+                                String chosenMode = "consent";
+                                if (checked == pro.sketchware.R.id.rb_full) chosenMode = "full";
+                                else if (checked == pro.sketchware.R.id.rb_strict) chosenMode = "strict";
 
-                            store.setAgentPermMode(chosenMode);
-                            result[0] = true;
-                            latch.countDown();
-                        })
-                        .setNegativeButton(pro.sketchware.R.string.ai_deny, (d, w) -> {
-                            result[0] = false;
-                            latch.countDown();
-                        })
-                        .setCancelable(false)
-                        .show();
+                                store.setAgentPermMode(chosenMode);
+                                result[0] = true;
+                                latch.countDown();
+                            })
+                            .setNegativeButton(pro.sketchware.R.string.ai_deny, (d, w) -> {
+                                result[0] = false;
+                                latch.countDown();
+                            })
+                            .setOnDismissListener(d -> latch.countDown())
+                            .setCancelable(false)
+                            .show();
+                } catch (RuntimeException e) {
+                    latch.countDown();
+                }
             });
 
             try {
-                latch.await();
+                if (!latch.await(2, java.util.concurrent.TimeUnit.MINUTES)) return false;
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 return false;
             }
             return result[0];
