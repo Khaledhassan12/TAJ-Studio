@@ -4,6 +4,7 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
 import pro.sketchware.ai.agent.Tool;
+import pro.sketchware.ai.agent.tools.DomainToolHelper;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
 
@@ -48,7 +49,7 @@ public final class FsDeleteTool implements Tool {
         FileUtil.makeDir(trashDir);
         String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + System.nanoTime() + "_" + f.getName();
         
-        FileUtil.moveFile(path, trashPath);
+        DomainToolHelper.moveVerified(f, new File(trashPath));
         if (FileUtil.isExistFile(trashPath) && !f.exists()) {
             return new ToolResult("verified: moved to trash @ " + trashPath, false);
         }
