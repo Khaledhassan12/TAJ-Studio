@@ -44,20 +44,34 @@ public final class FsCopyTool implements Tool {
         if (!ctx.checkPermission(dst, false)) return new ToolResult("Denied.", true);
 
         try {
+            File parent = destination.getParentFile();
+            if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
             if (source.isDirectory()) {
                 FileUtil.copyDirectory(source, destination);
             } else {
-                File parent = destination.getParentFile();
-                if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
                 FileUtil.copyFile(src, dst);
             }
             if (!verifyTree(source, destination)) {
-                return new ToolResult("Copy verification failed: destination does not match source.", true);
+                boolean cleaned = deleteTree(destination);
+                return new ToolResult("Copy verification failed: destination does not match source."
+                        + (cleaned ? " Partial destination was removed." : " WARNING: partial destination could not be removed: " + dst), true);
             }
             return new ToolResult("verified: copied to " + dst, false);
         } catch (Exception e) {
-            return new ToolResult("Copy failed: " + e.getMessage(), true);
+            boolean cleaned = deleteTree(destination);
+            return new ToolResult("Copy failed: " + e.getMessage()
+                    + (cleaned ? " Partial destination was removed." : " WARNING: partial destination could not be removed: " + dst), true);
         }
+    }
+
+    private static boolean deleteTree(File file) {
+        if (file == null || !file.exists()) return true;
+        if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            if (children == null) return false;
+            for (File child : children) if (!deleteTree(child)) return false;
+        }
+        return file.delete();
     }
 
     private static boolean verifyTree(File source, File destination) throws IOException {
