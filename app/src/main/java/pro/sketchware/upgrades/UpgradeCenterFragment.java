@@ -91,7 +91,7 @@ public class UpgradeCenterFragment extends Fragment {
                     @Override
                     public void onUpgradeFinished(boolean success, String message) {
                         applyingIds.remove(report.scId);
-                        if (isAdded()) {
+                        if (isAdded() && getContext() != null) {
                             Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
                             if (success) performScan();
                         }
@@ -174,17 +174,19 @@ public class UpgradeCenterFragment extends Fragment {
 
             @Override
             public void onScanFinished(pro.sketchware.upgrades.model.DoctorReport doctorReport) {
-                if (!isAdded()) return;
+                if (!isAdded() || getContext() == null) return;
                 pro.sketchware.upgrades.ui.UpgradeReportDialog.show(requireContext(), doctorReport, selectedFindings -> {
                     fixApplier.applyFixes(report.scId, selectedFindings, new SafeFixApplier.FixCallback() {
                         @Override
                         public void onFixStarted() {
-                            Toast.makeText(requireContext(), "Applying fixes...", Toast.LENGTH_SHORT).show();
+                            if (isAdded() && getContext() != null) {
+                                Toast.makeText(requireContext(), "Applying fixes...", Toast.LENGTH_SHORT).show();
+                            }
                         }
 
                         @Override
                         public void onFixFinished(boolean success, List<String> appliedFixes) {
-                            if (isAdded()) {
+                            if (isAdded() && getContext() != null) {
                                 if (success) {
                                     StringBuilder sb = new StringBuilder("Fixed items:\n");
                                     for (String s : appliedFixes) sb.append("✔ ").append(s).append("\n");
