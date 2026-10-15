@@ -34,7 +34,7 @@ public final class JavaReadTool implements Tool {
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String target = args.getString("target");
         String userPath = args.getString("path");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
 
         File f = PathResolver.resolve(sc_id, ("manager".equals(target) ? userPath : "java/" + userPath));
         String path = f.getAbsolutePath();
