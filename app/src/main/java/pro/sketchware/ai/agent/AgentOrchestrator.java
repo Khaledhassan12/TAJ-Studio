@@ -32,6 +32,7 @@ public final class AgentOrchestrator {
             "Tools auto-resolve supported aliases; if a tool returns ERROR with candidates, retry using an exact candidate. " +
             "For adding widgets to layouts prefer insert_widget with parentId. " +
             "For every requested change: inspect the target, execute the appropriate tool, read back or otherwise verify the persisted result, and report the actual result. " +
+            "The block_create and block_edit tools update the shared custom-block manager catalog, not project-private files; disclose that scope. " +
             "Never claim an operation succeeded unless the tool returned a verified success. Explain permission denials and failed verification plainly.";
 
     private final AIProvider provider;
@@ -186,7 +187,9 @@ public final class AgentOrchestrator {
         return name.contains("delete")
                 || name.contains("remove")
                 || name.contains("move")
-                || name.contains("copy");
+                || name.contains("copy")
+                || "block_create".equals(name)
+                || "block_edit".equals(name);
     }
 
     private AIResponse fetchBlocking(AIRequest request, StreamCallbacks outerCallbacks) throws Exception {
