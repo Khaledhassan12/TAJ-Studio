@@ -76,8 +76,8 @@ public final class AgentOrchestrator {
                     iterations++;
 
                     List<pro.sketchware.ai.core.ToolSpec> toolSpecs = new ArrayList<>();
-                    for (Tool t : registry.all()) {
-                        toolSpecs.add(new pro.sketchware.ai.core.ToolSpec(t.spec().name, t.spec().description, t.spec().parameters));
+                    for (Tool.ToolSpec spec : registry.specs()) {
+                        toolSpecs.add(new pro.sketchware.ai.core.ToolSpec(spec.name, spec.description, spec.parameters));
                     }
 
                     AIRequest request = new AIRequest.Builder()
