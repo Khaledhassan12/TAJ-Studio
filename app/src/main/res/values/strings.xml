@@ -2543,7 +2543,7 @@ Please try again later"</string>
     <string name="lib_github">GitHub</string>
 
     <!-- Project Doctor & Upgrades -->
-    <string name="scan_summary_text">Scanned %1$d • %2$d upgradable • %3$d clean</string>
+    <string name="scan_summary_text">Scanned %1$d • %2$d needing attention • %3$d clean</string>
     <string name="upgrade_confirm_title">Confirm Upgrades</string>
     <string name="upgrade_confirm_msg">The following items will be upgraded for %1$s:\n%2$s</string>
     <string name="finding_empty_java">Empty/Abandoned Java file</string>
