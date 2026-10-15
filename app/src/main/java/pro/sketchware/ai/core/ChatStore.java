@@ -40,6 +40,7 @@ public final class ChatStore {
         public String action; // Action button text
         public String reasoning;
         public int reasoningSeconds;
+        public boolean favorite;
         public List<ToolEvent> toolEvents;
 
         public Message(String role, String text) {
@@ -63,6 +64,7 @@ public final class ChatStore {
                 json.put("role", role);
                 json.put("text", text == null ? "" : text);
                 json.put("time", time);
+                if (favorite) json.put("favorite", true);
                 if (toolState != null) json.put("toolState", toolState);
                 if (action != null) json.put("action", action);
                 if (reasoning != null) json.put("reasoning", reasoning);
@@ -84,6 +86,7 @@ public final class ChatStore {
             // Re-sanitize text just in case legacy data is loaded
             m.text = sanitize(m.text);
             m.time = json.optLong("time");
+            m.favorite = json.optBoolean("favorite", false);
             m.toolState = json.optString("toolState", null);
 
             // History sanitation: never load rate limit card in WAITING/RESUMED state
