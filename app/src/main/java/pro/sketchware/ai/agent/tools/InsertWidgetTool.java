@@ -39,7 +39,7 @@ public final class InsertWidgetTool implements Tool {
         String parentId = args.getString("parentId");
         String widgetXml = args.getString("widgetXml");
         String position = args.optString("position", "end");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
 
         File f = PathResolver.resolve(sc_id, layoutName);
         if (!f.exists()) return new ToolResult("Layout not found: " + f.getAbsolutePath(), true);
