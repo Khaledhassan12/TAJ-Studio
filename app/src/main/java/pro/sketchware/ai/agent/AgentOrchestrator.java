@@ -109,9 +109,13 @@ public final class AgentOrchestrator {
 
                             boolean success = false;
                             try {
-                                Tool tool = registry.get(call.name);
-                                Tool.ToolResult result;
-                                if (tool != null) {
+                                if (!call.argumentsValid) {
+                                    conversation.add(AIMessage.toolResult(call.id,
+                                            "ERROR: the provider returned malformed JSON for this tool's arguments. No operation was executed. Request a corrected tool call."));
+                                } else {
+                                    Tool tool = registry.get(call.name);
+                                    Tool.ToolResult result;
+                                    if (tool != null) {
                                     boolean destructive = requiresManualConfirmation(call.name);
                                     if (destructive && !context.confirmDestructiveOperation(call.name, call.arguments)) {
                                         result = new Tool.ToolResult(
@@ -127,9 +131,10 @@ public final class AgentOrchestrator {
                                     }
                                     conversation.add(AIMessage.toolResult(call.id, result.content));
                                     success = !result.error;
-                                } else {
-                                    result = new Tool.ToolResult("Tool not found: " + call.name, true);
-                                    conversation.add(AIMessage.toolResult(call.id, result.content));
+                                    } else {
+                                        result = new Tool.ToolResult("Tool not found: " + call.name, true);
+                                        conversation.add(AIMessage.toolResult(call.id, result.content));
+                                    }
                                 }
                             } catch (Exception e) {
                                 conversation.add(AIMessage.toolResult(call.id, "Error executing tool: " + e.getMessage()));
