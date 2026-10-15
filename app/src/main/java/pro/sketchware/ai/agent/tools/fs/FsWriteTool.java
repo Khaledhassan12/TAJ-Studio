@@ -34,6 +34,22 @@ public final class FsWriteTool implements Tool {
     @Override public Domain domain() { return Domain.FS; }
 
     @Override
+    public RiskLevel riskLevel(JSONObject args, ToolContext ctx) {
+        try {
+            if (args == null || !args.has("path")) return RiskLevel.DESTRUCTIVE;
+            File target = PathResolver.resolve(ctx.sc_id, args.getString("path"));
+            // New-file creation is non-destructive; replacing an existing file requires
+            // a one-call approval even when persistent permission mode is set to "full".
+            return target.isFile() ? RiskLevel.DESTRUCTIVE : RiskLevel.STANDARD;
+        } catch (Exception e) {
+            // Treat an unresolvable target conservatively; the executor will still reject it.
+            return RiskLevel.DESTRUCTIVE;
+        }
+    }
+
+
+
+    @Override
     public ToolResult run(JSONObject args, ToolContext ctx) {
         File target = null;
         String path = null;

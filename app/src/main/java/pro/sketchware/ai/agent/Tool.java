@@ -12,6 +12,11 @@ public interface Tool {
     /** Explicit operation risk; destructive operations require per-call approval. */
     default RiskLevel riskLevel(org.json.JSONObject args) { return RiskLevel.STANDARD; }
 
+    /** Context-aware risk classification for operations such as overwrite-vs-create. */
+    default RiskLevel riskLevel(org.json.JSONObject args, ToolContext context) {
+        return riskLevel(args);
+    }
+
     class ToolSpec {
         public final String name;
         public final String description;

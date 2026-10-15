@@ -154,7 +154,7 @@ public final class AgentOrchestrator {
                                     if (validationError != null) {
                                         result = Tool.ToolResult.structured(call.name, "INVALID_ARGUMENTS", null,
                                                 validationError, null, true);
-                                    } else if (tool.riskLevel(call.arguments) == Tool.RiskLevel.DESTRUCTIVE) {
+                                    } else if (tool.riskLevel(call.arguments, context) == Tool.RiskLevel.DESTRUCTIVE) {
                                         boolean approved;
                                         waitingForApproval = true;
                                         try {
@@ -167,11 +167,17 @@ public final class AgentOrchestrator {
                                                     "The user denied or did not complete the required approval. No tool operation was started.",
                                                     null, true);
                                         } else {
-                                            context.beginApprovedMutation();
-                                            try {
-                                                result = tool.run(call.arguments, context);
-                                            } finally {
-                                                context.endApprovedMutation();
+                                            String projectChanged = validateActiveProjectArgs(call.arguments);
+                                            if (projectChanged != null) {
+                                                result = Tool.ToolResult.structured(call.name, "PROJECT_CHANGED", null,
+                                                        projectChanged + " The approved operation was not started.", null, true);
+                                            } else {
+                                                context.beginApprovedMutation();
+                                                try {
+                                                    result = tool.run(call.arguments, context);
+                                                } finally {
+                                                    context.endApprovedMutation();
+                                                }
                                             }
                                         }
                                     } else {
@@ -325,6 +331,14 @@ public final class AgentOrchestrator {
         }
         if (context.sc_id == null || context.sc_id.trim().isEmpty()) {
             return "No active Sketchware project is bound to this agent task.";
+        }
+        com.besome.sketch.design.DesignActivity activity = context.activity.get();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return "The project editor that started this task is no longer active. No new operation was started.";
+        }
+        String currentlyOpenProject = com.besome.sketch.design.DesignActivity.sc_id;
+        if (currentlyOpenProject == null || !context.sc_id.equals(currentlyOpenProject)) {
+            return "The active project changed after this task started. This task remains bound to its original project and will not continue writing.";
         }
         return null;
     }

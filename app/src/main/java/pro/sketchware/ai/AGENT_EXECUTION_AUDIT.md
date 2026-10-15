@@ -32,6 +32,7 @@ The foundation already has a real registry, provider tool declarations, an orche
 - Added executor-boundary validation of required fields, JSON types, enums, argument/string sizes, collection sizes and nesting before a tool can run.
 - Bound tool calls to the project ID captured at task start and reject an explicitly mismatched project ID.
 - Replaced the blanket name-based destructive-call block with explicit risk metadata and one-call approval for filesystem delete/copy/move, resource delete/move/copy, asset delete, library add/remove, shared block create/edit, and manifest changes.
+- Added context-aware write risk classification: creating a new file can proceed under the configured permission policy, while replacing an existing regular file requires a per-call approval even in persistent `full` permission mode.
 - Added a project-wide agent run lock, cancellation-aware approval wait, five-minute runtime deadline, ten-round cap, and explicit error if the budget ends with unresolved tool calls.
 - Added exact UTF-8 read-back and SHA-256 evidence to the updated create/edit/copy/move/delete and metadata writers; the tools now refuse silent overwrite of existing create/copy destinations.
 - Bounded file reads and list/search output; incomplete traversal is marked partial rather than complete success.
