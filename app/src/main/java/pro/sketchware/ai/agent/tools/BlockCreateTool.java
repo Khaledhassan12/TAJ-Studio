@@ -41,20 +41,30 @@ public final class BlockCreateTool implements Tool {
             blocks = GsonUtils.getGson().fromJson(FileUtil.readFile(path), Helper.TYPE_MAP_LIST);
         }
         if (blocks == null) blocks = new ArrayList<>();
+        for (HashMap<String, Object> block : blocks) {
+            if (id.equals(String.valueOf(block.get("name")))) {
+                return new ToolResult("A custom block named '" + id + "' already exists. Use block_edit to modify it.", true);
+            }
+        }
         if (!ctx.checkPermission(path, FileUtil.isExistFile(path))) return new ToolResult("Denied.", true);
 
         HashMap<String, Object> nextMap = GsonUtils.getGson().fromJson(newSpec.toString(), Helper.TYPE_MAP);
         blocks.add(nextMap);
+        String next = GsonUtils.getGson().toJson(blocks);
 
         DomainToolHelper.backup(path);
         try {
-            FileUtil.writeFile(path, GsonUtils.getGson().toJson(blocks));
+            java.io.File parent = new java.io.File(path).getParentFile();
+            if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
+            FileUtil.writeFile(path, next);
+            if (!next.equals(FileUtil.readFile(path))) throw new IllegalStateException("Persisted custom-block catalog did not match the requested update.");
             BlockLoader.refresh();
             LiveRegistry.notifyChanged("blocks", path);
             return new ToolResult("verified: block '" + id + "' created @ " + path, false);
         } catch (Exception e) {
             DomainToolHelper.restore(path);
-            return new ToolResult("Failed: " + e.getMessage(), true);
+            try { BlockLoader.refresh(); } catch (Exception ignored) {}
+            return new ToolResult("Block creation failed: " + e.getMessage(), true);
         }
     }
 }
