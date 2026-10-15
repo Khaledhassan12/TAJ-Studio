@@ -82,11 +82,18 @@ public class AssistantFragment extends Fragment {
     private long lastEventTime = 0;
     private final Runnable watchdog = this::handleWatchdogTimeout;
 
+    /** Keeps the pending-response row in sync with the request lifecycle. */
+    private void setTypingIndicator(boolean visible) {
+        ChatAdapter adapter = chatAdapter;
+        if (adapter != null) adapter.setTyping(visible);
+    }
+
     private void handleWatchdogTimeout() {
         if (AIActivityMonitor.getState() != SessionState.IDLE) {
             long now = System.currentTimeMillis();
             if (now - lastEventTime > 120000) { // 120s
                 forceIdle();
+                setTypingIndicator(false);
                 addErrorMessage(getString(R.string.ai_timed_out), "Watchdog triggered: No event for 120s", "Retry");
             } else {
                 mainHandler.postDelayed(watchdog, 10000);
@@ -105,6 +112,7 @@ public class AssistantFragment extends Fragment {
 
     private void forceIdle() {
         AIActivityMonitor.setState(SessionState.IDLE);
+        setTypingIndicator(false);
         if (orchestrator != null) orchestrator.cancel();
         if (activeHandle != null) activeHandle.cancel();
     }
@@ -796,6 +804,7 @@ public class AssistantFragment extends Fragment {
                     }
                     chatAdapter.setMessages(currentSession.messages);
                     AIActivityMonitor.setState(SessionState.IDLE);
+                    setTypingIndicator(false);
                     sendMessage(lastUserText, true);
                 }
             }
@@ -862,6 +871,7 @@ public class AssistantFragment extends Fragment {
                         }
                         chatAdapter.setMessages(currentSession.messages);
                         AIActivityMonitor.setState(SessionState.IDLE);
+                        setTypingIndicator(false);
                         sendMessage(prev.text, true);
                     }
                 }
@@ -1111,6 +1121,7 @@ public class AssistantFragment extends Fragment {
         }
 
         AIActivityMonitor.setState(SessionState.MODEL_STREAMING);
+        setTypingIndicator(true);
         updateStreamingUi(true);
 
         boolean agentEnabled = configStore.isAgentEnabled();
@@ -1231,6 +1242,8 @@ public class AssistantFragment extends Fragment {
                         }
 
                         AIActivityMonitor.setState(SessionState.IDLE);
+
+                        setTypingIndicator(false);
                         chatStore.saveSession(currentSession);
                         activeHandle = null;
                     });
@@ -1247,6 +1260,7 @@ public class AssistantFragment extends Fragment {
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
                         AIActivityMonitor.setState(SessionState.IDLE);
+                        setTypingIndicator(false);
                         handleChatError(error);
                     });
                 }
@@ -1258,6 +1272,7 @@ public class AssistantFragment extends Fragment {
             if (!isAdded() || getView() == null) return;
                         reconcileTools(toolsCard);
                         AIActivityMonitor.setState(SessionState.IDLE);
+                        setTypingIndicator(false);
                     });
                 }
             });
@@ -1326,6 +1341,8 @@ public class AssistantFragment extends Fragment {
                         }
 
                         AIActivityMonitor.setState(SessionState.IDLE);
+
+                        setTypingIndicator(false);
                         chatStore.saveSession(currentSession);
                         activeHandle = null;
                     });
@@ -1341,6 +1358,7 @@ public class AssistantFragment extends Fragment {
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
                         AIActivityMonitor.setState(SessionState.IDLE);
+                        setTypingIndicator(false);
                         addAssistantMessage("Error: " + error.getMessage());
                         activeHandle = null;
                     });
@@ -1352,6 +1370,7 @@ public class AssistantFragment extends Fragment {
                     UiPoster.post(() -> {
             if (!isAdded() || getView() == null) return;
                         AIActivityMonitor.setState(SessionState.IDLE);
+                        setTypingIndicator(false);
                         activeHandle = null;
                     });
                 }
@@ -1428,6 +1447,7 @@ public class AssistantFragment extends Fragment {
     @Override
     public void onDestroyView() {
         mainHandler.removeCallbacks(watchdog);
+        setTypingIndicator(false);
         forceIdle();
         if (orchestrator != null) {
             orchestrator.shutdown();
@@ -1483,6 +1503,7 @@ public class AssistantFragment extends Fragment {
             activeHandle = null;
         }
         AIActivityMonitor.setState(SessionState.IDLE);
+        setTypingIndicator(false);
 
         if (voiceReader != null) voiceReader.shutdown();
         super.onDestroy();
