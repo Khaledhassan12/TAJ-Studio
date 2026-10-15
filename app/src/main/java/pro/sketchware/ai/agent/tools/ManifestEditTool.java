@@ -26,7 +26,7 @@ public final class ManifestEditTool implements Tool {
             props.put("op", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"add_permission", "set_application_attribute", "add_activity_entry"})));
             props.put("name", new JSONObject().put("type", "string"));
             props.put("value", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("op"));
             return new ToolSpec("manifest_edit", "Edits the manifest injection model.", params);
