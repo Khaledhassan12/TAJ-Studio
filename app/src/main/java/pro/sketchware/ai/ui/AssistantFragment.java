@@ -1295,11 +1295,29 @@ public class AssistantFragment extends Fragment {
                 public void onComplete(AIResponse response) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
-            if (!isAdded() || getView() == null) return;
+                        if (!isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
+
+                        // The token callback may be suppressed when streaming is disabled,
+                        // and some providers only deliver the completed response. Always
+                        // reconcile against the provider's final text so a successful request
+                        // cannot leave the user with no assistant message.
+                        String finalText = response == null || response.text == null ? "" : response.text;
+                        if (!finalText.isEmpty()) {
+                            if (assistantMsg == null) {
+                                assistantMsg = new ChatStore.Message("assistant", finalText);
+                                currentSession.messages.add(assistantMsg);
+                                chatAdapter.addMessage(assistantMsg);
+                                scrollToBottom(true);
+                            } else if (!configStore.isStreamingEnabled()) {
+                                assistantMsg.text = finalText;
+                                chatAdapter.notifyItemChanged(currentSession.messages.indexOf(assistantMsg));
+                            }
+                        }
+
                         AIActivityMonitor.setState(SessionState.IDLE);
                         chatStore.saveSession(currentSession);
                         activeHandle = null;
