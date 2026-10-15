@@ -19,6 +19,7 @@ import a.a.a.wq;
 import a.a.a.yB;
 import mod.hey.studios.project.ProjectSettings;
 import pro.sketchware.R;
+import pro.sketchware.upgrades.scan.ProjectDiagnosticsScanner;
 
 /**
  * Background scanner that analyzes projects for potential upgrades.
@@ -123,6 +124,40 @@ public class ProjectUpgradeScanner {
                 if (libConfig.e != null && "Y".equals(libConfig.e.useYn)) libsCount++;
                 if (libConfig.f != null && "Y".equals(libConfig.f.useYn)) libsCount++;
                 report.libsCount = libsCount;
+
+                // Run bounded read-only diagnostics for every discovered project, not only
+                // after the user opens a project's detailed report.
+                try {
+                    String diagnosticPath = wq.b(scId);
+                    File diagnosticRoot = diagnosticPath == null ? null : new File(diagnosticPath);
+                    if (diagnosticRoot != null && diagnosticRoot.isDirectory()) {
+                        List<pro.sketchware.upgrades.model.Finding> diagnostics =
+                                new ProjectDiagnosticsScanner().scan(diagnosticPath);
+                        if (!diagnostics.isEmpty()) {
+                            report.diagnosticCount = diagnostics.size();
+                            StringBuilder summary = new StringBuilder();
+                            int shown = Math.min(3, diagnostics.size());
+                            for (int i = 0; i < shown; i++) {
+                                if (i > 0) summary.append(", ");
+                                summary.append(diagnostics.get(i).title);
+                            }
+                            if (diagnostics.size() > shown) summary.append(", and more");
+                            report.items.add(new UpgradeItem(
+                                    UpgradeItem.Type.PROJECT_HEALTH,
+                                    UpgradeItem.Status.RECOMMENDED_MANUAL,
+                                    "Project Doctor: " + diagnostics.size() + " finding(s)",
+                                    summary.toString() + ". Open the project report for details; no files were changed."));
+                        }
+                    }
+                } catch (Exception diagnosticError) {
+                    report.items.add(new UpgradeItem(
+                            UpgradeItem.Type.PROJECT_HEALTH,
+                            UpgradeItem.Status.RECOMMENDED_MANUAL,
+                            "Project Doctor could not finish",
+                            "Some diagnostics could not be collected (" +
+                                    diagnosticError.getClass().getSimpleName() +
+                                    "). Open the project report and review the project path."));
+                }
 
                 reports.add(report);
             }
