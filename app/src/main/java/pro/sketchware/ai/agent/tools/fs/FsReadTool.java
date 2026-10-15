@@ -42,6 +42,9 @@ public final class FsReadTool implements Tool {
         if (!f.isFile()) {
             return ToolResult.structured("fs_read", "ERROR", path, "Path is not a regular file.", null, true);
         }
+        if (pro.sketchware.ai.agent.tools.DomainToolHelper.isKnownBinaryFileName(f.getName())) {
+            return new ToolResult("Binary file was not decoded as text: " + path + " (" + f.length() + " bytes). Use copy/move tools for binary files.", false);
+        }
 
         JSONObject res = FormatRegistry.parse(path);
         res.put("tool", "fs_read");
