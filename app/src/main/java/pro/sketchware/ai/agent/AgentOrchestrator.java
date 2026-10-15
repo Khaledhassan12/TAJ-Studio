@@ -108,7 +108,13 @@ public final class AgentOrchestrator {
                                 Tool tool = registry.get(call.name);
                                 Tool.ToolResult result;
                                 if (tool != null) {
-                                    result = tool.run(call.arguments, context);
+                                    if (requiresManualConfirmation(call.name)) {
+                                        result = new Tool.ToolResult(
+                                                "Blocked by TAJ safety policy: this operation requires explicit confirmation, which is not available in the current Assistant UI. No file operation was performed.",
+                                                true);
+                                    } else {
+                                        result = tool.run(call.arguments, context);
+                                    }
                                     conversation.add(AIMessage.toolResult(call.id, result.content));
                                     success = !result.error;
                                 } else {
@@ -153,6 +159,19 @@ public final class AgentOrchestrator {
                 }
             }
         });
+    }
+
+    /**
+     * Deletion and relocation can irreversibly lose user project data. Until the
+     * UI has a real per-call approval handshake, fail closed for these operations.
+     */
+    private static boolean requiresManualConfirmation(String toolName) {
+        if (toolName == null) return false;
+        String name = toolName.toLowerCase(java.util.Locale.ROOT);
+        return name.contains("delete")
+                || name.contains("remove")
+                || name.contains("move")
+                || name.contains("copy");
     }
 
     private AIResponse fetchBlocking(AIRequest request, StreamCallbacks outerCallbacks) throws Exception {
