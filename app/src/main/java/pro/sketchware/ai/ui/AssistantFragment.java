@@ -273,6 +273,8 @@ public class AssistantFragment extends Fragment {
             setupModelsPanel(panel);
         } else if (id == R.id.ai_dest_agents) {
             setupAgentsPanel(panel);
+        } else if (id == R.id.ai_dest_favorites) {
+            setupFavoritesPanel(panel);
         } else if (id == R.id.ai_dest_history) {
             setupHistoryPanel(panel);
         } else if (id == R.id.ai_dest_files) {
@@ -566,6 +568,80 @@ public class AssistantFragment extends Fragment {
         }
     }
 
+    private void setupFavoritesPanel(View panel) {
+        RecyclerView rv = panel.findViewById(R.id.rv_favorites);
+        if (rv == null) return;
+        rv.setLayoutManager(new LinearLayoutManager(panel.getContext()));
+        FavoritesAdapter adapter = new FavoritesAdapter();
+        rv.setAdapter(adapter);
+        adapter.reload();
+    }
+
+    private final class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.FavoriteHolder> {
+        private final List<FavoriteEntry> entries = new ArrayList<>();
+
+        void reload() {
+            entries.clear();
+            for (ChatStore.Session session : chatStore.loadAllSessions()) {
+                if (session.messages == null) continue;
+                for (ChatStore.Message message : session.messages) {
+                    if (message.favorite && "assistant".equals(message.role)) entries.add(new FavoriteEntry(session, message));
+                }
+            }
+            notifyDataSetChanged();
+        }
+
+        @NonNull
+        @Override
+        public FavoriteHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            TextView text = new TextView(parent.getContext());
+            int padding = (int) (14 * parent.getResources().getDisplayMetrics().density);
+            text.setPadding(padding, padding, padding, padding);
+            text.setTextSize(14);
+            text.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            text.setBackgroundResource(android.R.drawable.list_selector_background);
+            return new FavoriteHolder(text);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull FavoriteHolder holder, int position) {
+            FavoriteEntry entry = entries.get(position);
+            String body = entry.message.text == null ? "" : entry.message.text;
+            holder.text.setText("★  " + (body.length() > 240 ? body.substring(0, 240) + "…" : body) + "\nTap to remove from favorites");
+            holder.text.setOnClickListener(v -> {
+                entry.message.favorite = false;
+                chatStore.saveSession(entry.session);
+                reload();
+                Snackbar.make(holder.text, "Removed from favorites", Snackbar.LENGTH_SHORT).show();
+            });
+            holder.text.setOnLongClickListener(v -> {
+                rail.setSelectedItemId(R.id.ai_dest_session);
+                currentSession = entry.session;
+                if (chatAdapter != null) chatAdapter.setMessages(entry.session.messages);
+                View sessionPanel = panels.get(R.id.ai_dest_session);
+                if (sessionPanel != null) render(sessionPanel, PanelState.READY);
+                scrollToBottom(false);
+                return true;
+            });
+        }
+
+        @Override public int getItemCount() { return entries.size(); }
+
+        final class FavoriteHolder extends RecyclerView.ViewHolder {
+            final TextView text;
+            FavoriteHolder(TextView text) { super(text); this.text = text; }
+        }
+    }
+
+    private static final class FavoriteEntry {
+        final ChatStore.Session session;
+        final ChatStore.Message message;
+        FavoriteEntry(ChatStore.Session session, ChatStore.Message message) {
+            this.session = session;
+            this.message = message;
+        }
+    }
+
     private void setupHistoryPanel(View panel) {
         RecyclerView rv = panel.findViewById(R.id.ai_rv_history);
         if (rv != null) {
@@ -696,6 +772,19 @@ public class AssistantFragment extends Fragment {
                     AIActivityMonitor.setState(SessionState.IDLE);
                     sendMessage(lastUserText, true);
                 }
+            }
+
+            @Override
+            public void onFavorite(ChatStore.Message message) {
+                if (currentSession != null) chatStore.saveSession(currentSession);
+                View favoritesPanel = panels.get(R.id.ai_dest_favorites);
+                if (favoritesPanel != null) {
+                    RecyclerView favoritesList = favoritesPanel.findViewById(R.id.rv_favorites);
+                    if (favoritesList != null && favoritesList.getAdapter() instanceof FavoritesAdapter) {
+                        ((FavoritesAdapter) favoritesList.getAdapter()).reload();
+                    }
+                }
+                Snackbar.make(panel, message.favorite ? "Added to favorites" : "Removed from favorites", Snackbar.LENGTH_SHORT).show();
             }
 
             @Override
