@@ -101,6 +101,17 @@
             android:contentDescription="@string/ai_tooltip_branch" />
 
         <ImageButton
+            android:id="@+id/btn_favorite"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@android:drawable/btn_star_big_off"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="?attr/colorOnSurfaceVariant"
+            android:contentDescription="Add to favorites" />
+
+        <ImageButton
             android:id="@+id/btn_share"
             android:layout_width="32dp"
             android:layout_height="32dp"
