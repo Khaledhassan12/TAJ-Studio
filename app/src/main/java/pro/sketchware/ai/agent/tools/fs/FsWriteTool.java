@@ -50,7 +50,15 @@ public final class FsWriteTool implements Tool {
         DomainToolHelper.backup(path);
         try {
             FileUtil.writeFile(path, content);
+            if (!f.isFile()) {
+                DomainToolHelper.restore(path);
+                return ToolResult.structured("fs_write", "ERROR", path, "Write did not produce a regular file.", null, true);
+            }
             String rb = FileUtil.readFile(path);
+            if (rb == null || !content.equals(rb)) {
+                DomainToolHelper.restore(path);
+                return ToolResult.structured("fs_write", "ERROR", path, "Verification failed: persisted content differs from requested content.", null, true);
+            }
             if (!expect.isEmpty() && !rb.contains(expect)) {
                 DomainToolHelper.restore(path);
                 return ToolResult.structured("fs_write", "ERROR", path, "Verification failed: '" + expect + "' not found.", null, true);
