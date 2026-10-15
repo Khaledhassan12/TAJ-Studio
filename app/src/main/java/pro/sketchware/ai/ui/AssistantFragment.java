@@ -360,11 +360,14 @@ public class AssistantFragment extends Fragment {
                     String canonical = child.getCanonicalPath();
                     if (!canonical.startsWith(canonicalRoot + java.io.File.separator)) continue;
                     if (child.isDirectory()) {
-                        if (!child.getName().startsWith(".") && current.toPath().getNameCount() - root.toPath().getNameCount() < 8) {
-                            queue.addLast(child);
-                        }
+                        String currentCanonical = current.getCanonicalPath();
+                        int depth = currentCanonical.equals(canonicalRoot) ? 0
+                                : currentCanonical.substring(canonicalRoot.length() + 1)
+                                        .split(java.util.regex.Pattern.quote(java.io.File.separator)).length;
+                        if (!child.getName().startsWith(".") && depth < 8) queue.addLast(child);
                     } else if (child.isFile()) {
-                        String relative = root.toPath().relativize(child.toPath()).toString().replace(java.io.File.separatorChar, '/');
+                        String relative = canonical.substring(canonicalRoot.length() + 1)
+                                .replace(java.io.File.separatorChar, '/');
                         output.add(prefix + relative);
                     }
                 } catch (Exception ignored) {
