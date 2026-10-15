@@ -5,6 +5,7 @@ import org.json.JSONArray;
 import java.io.File;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.ProjectPaths;
+import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
 import pro.sketchware.ai.live.LiveRegistry;
 
@@ -43,12 +44,14 @@ public final class AssetCreateTool implements Tool {
             return new ToolResult("Asset file creation WITHOUT extension is refused.", true);
         }
 
-        String root = ProjectPaths.assetsRoot(sc_id) + (dir.isEmpty() ? "" : "/" + dir);
-        String path = root + "/" + name;
+        String relativePath = "assets/" + (dir.isEmpty() ? "" : dir + "/") + name;
+        File target = PathResolver.resolve(sc_id, relativePath);
+        String path = target.getAbsolutePath();
 
         if (type.equals("folder")) {
+            if (!ctx.checkPermission(path, target.exists())) return new ToolResult("Denied.", true);
             FileUtil.makeDir(path);
-            return new ToolResult("verified: folder created @ " + path, false);
+            return new ToolResult(target.isDirectory() ? "verified: folder created @ " + path : "Failed.", !target.isDirectory());
         }
 
         if (!ctx.checkPermission(path, false)) return new ToolResult("Denied.", true);
