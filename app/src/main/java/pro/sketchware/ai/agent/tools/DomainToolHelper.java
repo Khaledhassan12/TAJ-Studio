@@ -41,12 +41,84 @@ public final class DomainToolHelper {
         File backup = new File(path + ".bak");
         File absentMarker = new File(path + ".bak.absent");
         if (backup.isFile()) {
-            FileUtil.moveFile(backup.getAbsolutePath(), path);
-            if (absentMarker.exists()) absentMarker.delete();
+            FileUtil.copyFile(backup.getAbsolutePath(), path);
+            if (sameBytes(backup, target)) {
+                backup.delete();
+                if (absentMarker.exists()) absentMarker.delete();
+            }
         } else if (absentMarker.exists()) {
             if (target.isFile()) target.delete();
             absentMarker.delete();
         }
+    }
+
+    /**
+     * Move without using FileUtil.moveFile, which deletes the source even when its copy fails.
+     * Directories are moved only by rename; files may use a verified copy fallback.
+     */
+    public static boolean moveVerified(File source, File destination) {
+        if (source == null || destination == null || !source.exists() || destination.exists()) return false;
+        File parent = destination.getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) return false;
+        if (source.renameTo(destination)) {
+            if (!source.exists() && destination.exists()) return true;
+            if (source.exists() && destination.exists()) deleteTree(destination);
+            return false;
+        }
+        if (source.isDirectory()) return false;
+        try {
+            FileUtil.copyFile(source.getAbsolutePath(), destination.getAbsolutePath());
+            if (!sameBytes(source, destination)) {
+                if (destination.exists()) destination.delete();
+                return false;
+            }
+            if (!source.delete()) {
+                destination.delete();
+                return false;
+            }
+            return !source.exists() && destination.isFile();
+        } catch (RuntimeException e) {
+            if (destination.exists()) destination.delete();
+            return false;
+        }
+    }
+
+    private static boolean sameBytes(File a, File b) {
+        if (a == null || b == null || !a.isFile() || !b.isFile() || a.length() != b.length()) return false;
+        try (java.io.BufferedInputStream left = new java.io.BufferedInputStream(new java.io.FileInputStream(a));
+             java.io.BufferedInputStream right = new java.io.BufferedInputStream(new java.io.FileInputStream(b))) {
+            byte[] x = new byte[8192];
+            byte[] y = new byte[8192];
+            while (true) {
+                int n = readChunk(left, x);
+                int m = readChunk(right, y);
+                if (n != m) return false;
+                if (n < 0) return true;
+                for (int i = 0; i < n; i++) if (x[i] != y[i]) return false;
+            }
+        } catch (java.io.IOException e) {
+            return false;
+        }
+    }
+
+    private static int readChunk(java.io.InputStream input, byte[] buffer) throws java.io.IOException {
+        int total = 0;
+        while (total < buffer.length) {
+            int count = input.read(buffer, total, buffer.length - total);
+            if (count < 0) return total == 0 ? -1 : total;
+            total += count;
+        }
+        return total;
+    }
+
+    private static boolean deleteTree(File file) {
+        if (file == null || !file.exists()) return true;
+        if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            if (children == null) return false;
+            for (File child : children) if (!deleteTree(child)) return false;
+        }
+        return file.delete();
     }
 
     /** Finalize a successful transaction while retaining any pre-existing-file backup for manual recovery. */
