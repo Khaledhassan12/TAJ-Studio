@@ -21,7 +21,6 @@ public final class InsertWidgetTool implements Tool {
             props.put("parentId", new JSONObject().put("type", "string").put("description", "ID of the parent widget (e.g. linear1)"));
             props.put("widgetXml", new JSONObject().put("type", "string").put("description", "Full XML of the widget to insert"));
             props.put("position", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"start", "end"})).put("default", "end"));
-            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("layout").put("parentId").put("widgetXml"));
             return new ToolSpec("insert_widget", "Inserts a widget into a layout safely.", params);
@@ -42,13 +41,14 @@ public final class InsertWidgetTool implements Tool {
         String sc_id = ctx.sc_id;
 
         File f = PathResolver.resolve(sc_id, layoutName);
-        if (!f.exists()) return new ToolResult("Layout not found: " + f.getAbsolutePath(), true);
+        if (!f.isFile()) return new ToolResult("Layout file not found: " + f.getAbsolutePath(), true);
         String path = f.getAbsolutePath();
 
         if (!ctx.checkPermission(path, true)) return new ToolResult("Write denied.", true);
 
         String original = FileUtil.readFile(path);
-        
+        if (original == null) return new ToolResult("Layout could not be read: " + path, true);
+
         // Find parent tag and its close tag. 
         // For simplicity and since we can't easily get offsets from XmlPullParser, 
         // we'll look for the android:id attribute.
@@ -66,7 +66,7 @@ public final class InsertWidgetTool implements Tool {
             // Self-closing tag. Convert to open/close.
             String base = original.substring(0, startTagEnd - 1);
             int tagStart = original.lastIndexOf("<", markerIdx);
-            String tagName = original.substring(tagStart + 1, original.indexOf(" ", tagStart + 1));
+            String tagName = original.substring(tagStart + 1).split("[\\s/>]")[0];
             next = base + ">\n" + widgetXml + "\n</" + tagName + ">" + original.substring(startTagEnd + 1);
         } else {
             if (position.equals("start")) {
@@ -76,7 +76,7 @@ public final class InsertWidgetTool implements Tool {
                 // Simple search for next close tag of same name at same level would be better.
                 // For now, we'll try to find the LAST close tag before the next sibling or end.
                 int tagStart = original.lastIndexOf("<", markerIdx);
-                String tagName = original.substring(tagStart + 1).split("[ >]")[0];
+                String tagName = original.substring(tagStart + 1).split("[\\s/>]")[0];
                 String closeTag = "</" + tagName + ">";
                 int closeIdx = findMatchingCloseTag(original, tagStart, tagName);
                 if (closeIdx == -1) return new ToolResult("Could not locate close tag for " + tagName, true);
@@ -89,16 +89,20 @@ public final class InsertWidgetTool implements Tool {
         DomainToolHelper.backup(path);
         try {
             FileUtil.writeFile(path, next);
+            if (!f.isFile() || !next.equals(FileUtil.readFile(path))) {
+                DomainToolHelper.restore(path);
+                return ToolResult.structured("insert_widget", "ERROR", path, "Layout persistence verification failed.", null, true);
+            }
             DomainToolHelper.syncLayoutToDesigner(sc_id, f.getName(), next);
-            LiveRegistry.notifyChanged("layout", path);
-            
-            // Verify ID in live model
+
             String newId = extractId(widgetXml);
             if (newId != null && !DomainToolHelper.verifyLiveModel(sc_id, f.getName(), newId)) {
-                Log.w("AGENT", "Widget inserted but not found in live model verification.");
+                DomainToolHelper.restore(path);
+                DomainToolHelper.syncLayoutToDesigner(sc_id, f.getName(), original);
+                return ToolResult.structured("insert_widget", "ERROR", path, "Widget was not found in the live designer model; the layout edit was rolled back.", null, true);
             }
-            
-            return ToolResult.structured("insert_widget", "SUCCESS", path, "verified: widget inserted", null, false);
+            LiveRegistry.notifyChanged("layout", path);
+            return ToolResult.structured("insert_widget", "SUCCESS", path, "verified: widget inserted and persisted", null, false);
         } catch (Exception e) {
             DomainToolHelper.restore(path);
             return ToolResult.structured("insert_widget", "ERROR", path, "Insertion failed: " + e.getMessage(), null, true);
