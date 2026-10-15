@@ -33,7 +33,7 @@ public final class JavaListTool implements Tool {
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String target = args.getString("target");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         String root = "manager".equals(target) ? ProjectPaths.javaManagerRoot(sc_id) : ProjectPaths.projectJavaRoot(sc_id);
 
         if (!FileUtil.isExistFile(root)) return new ToolResult("Root not found: " + root, true);
