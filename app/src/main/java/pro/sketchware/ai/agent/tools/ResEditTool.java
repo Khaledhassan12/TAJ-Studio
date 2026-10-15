@@ -83,6 +83,7 @@ public final class ResEditTool implements Tool {
                 return new ToolResult("Edit verification failed: persisted content differs from requested content.", true);
             }
             if ("layout".equals(folder)) DomainToolHelper.syncLayoutToDesigner(sc_id, name, next);
+            DomainToolHelper.commitBackup(path);
             LiveRegistry.notifyChanged(folder, path);
             return new ToolResult("verified: content matches @ " + path, false);
         } catch (Exception e) {
