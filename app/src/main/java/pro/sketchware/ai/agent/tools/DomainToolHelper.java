@@ -384,9 +384,9 @@ public final class DomainToolHelper {
             ViewBean expectedBean = expected.get(i);
             ViewBean actualBean = actual.get(i);
             if (expectedBean == null || actualBean == null) return false;
-            String expectedId = expectedBean.id;
-            String actualId = actualBean.id;
-            if (expectedId == null ? actualId != null : !expectedId.equals(actualId)) return false;
+            // Includes type, IDs/parents, text/layout/image attributes and widget settings,
+            // rather than accepting matching IDs when properties failed to synchronize.
+            if (!expectedBean.isEqual(actualBean)) return false;
         }
         return true;
     }

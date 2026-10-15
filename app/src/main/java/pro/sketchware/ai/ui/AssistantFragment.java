@@ -1243,7 +1243,7 @@ public class AssistantFragment extends Fragment {
                         if (toolsCard != null && toolsCard.toolEvents != null) {
                             for (int i = toolsCard.toolEvents.size() - 1; i >= 0; i--) {
                                 ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
-                                if (event.name.equals(name)) {
+                                if (java.util.Objects.equals(event.name, name)) {
                                     event.resultSummary = summary;
                                     break;
                                 }
@@ -1261,16 +1261,16 @@ public class AssistantFragment extends Fragment {
                     AIActivityMonitor.setState(activeToolCount > 0 ? SessionState.TOOL_RUNNING : SessionState.MODEL_STREAMING);
                     UiPoster.post(() -> {
             if (!isAdded() || getView() == null) return;
-                        if (toolsCard != null) {
+                        if (toolsCard != null && toolsCard.toolEvents != null && currentSession != null) {
                             for (ChatStore.ToolEvent te : toolsCard.toolEvents) {
-                                if (te.name.equals(name) && "RUNNING".equals(te.status)) {
+                                if (java.util.Objects.equals(te.name, name) && "RUNNING".equals(te.status)) {
                                     te.status = success ? "OK" : "ERROR";
                                     te.finishedAt = System.currentTimeMillis();
                                     break;
                                 }
                             }
                             int idx = currentSession.messages.indexOf(toolsCard);
-                            chatAdapter.notifyItemChanged(idx, "tool_events");
+                            if (idx >= 0) chatAdapter.notifyItemChanged(idx, "tool_events");
                         }
                     });
                 }
