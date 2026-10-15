@@ -123,6 +123,7 @@ public class UpgradeCenterFragment extends Fragment {
         scanner.scan(new ProjectUpgradeScanner.ScanCallback() {
             @Override
             public void onScanStarted() {
+                if (!isAdded() || binding == null || currentGen != scanGeneration.get()) return;
                 binding.btnRecheck.setVisibility(View.INVISIBLE);
                 binding.progressRecheck.setVisibility(View.VISIBLE);
             }
@@ -130,7 +131,7 @@ public class UpgradeCenterFragment extends Fragment {
             @Override
             public void onScanFinished(List<UpgradeReport> reports) {
                 // G6: Ignore results if a newer scan has been started
-                if (!isAdded() || currentGen != scanGeneration.get()) return;
+                if (!isAdded() || binding == null || currentGen != scanGeneration.get()) return;
                 
                 CACHED_REPORTS = reports;
                 
@@ -165,6 +166,7 @@ public class UpgradeCenterFragment extends Fragment {
         doctor.runHealthCheck(report.scId, new ProjectDoctorOrchestrator.DoctorCallback() {
             @Override
             public void onScanStarted() {
+                if (!isAdded() || getContext() == null) return;
                 Toast.makeText(requireContext(), "Checking project health...", Toast.LENGTH_SHORT).show();
             }
 
