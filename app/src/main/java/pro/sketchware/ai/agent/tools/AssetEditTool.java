@@ -76,6 +76,7 @@ public final class AssetEditTool implements Tool {
                 DomainToolHelper.restore(path);
                 return new ToolResult("Edit verification failed: persisted content differs from requested content.", true);
             }
+            DomainToolHelper.commitBackup(path);
             LiveRegistry.notifyChanged("assets", path);
             return new ToolResult("verified: content matches @ " + path, false);
         } catch (Exception e) {
