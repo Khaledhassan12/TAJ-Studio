@@ -41,7 +41,7 @@ public final class ManifestEditTool implements Tool {
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String op = args.getString("op");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         String injPath = ProjectPaths.manifestInjectionPath(sc_id);
 
         if ("add_permission".equals(op)) {
