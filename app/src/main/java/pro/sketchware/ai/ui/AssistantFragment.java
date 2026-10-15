@@ -1216,11 +1216,22 @@ public class AssistantFragment extends Fragment {
                         // that deliver only onComplete without emitting token callbacks.
                         String finalTest = (response == null || response.text == null) ? "" : response.text;
                         if (finalTest.isEmpty()) {
-                            int toolCount = toolsCard != null ? toolsCard.toolEvents.size() : 0;
+                            int toolCount = toolsCard != null && toolsCard.toolEvents != null ? toolsCard.toolEvents.size() : 0;
+                            int succeeded = 0;
+                            int failed = 0;
+                            if (toolsCard != null && toolsCard.toolEvents != null) {
+                                for (ChatStore.ToolEvent event : toolsCard.toolEvents) {
+                                    if ("OK".equals(event.status)) succeeded++;
+                                    else if ("ERROR".equals(event.status)) failed++;
+                                }
+                            }
                             if (toolCount > 0) {
-                                finalTest = "Done. Used " + toolCount + " tools.";
+                                finalTest = "Agent tool operations: " + succeeded + " succeeded, " + failed
+                                        + " failed out of " + toolCount + ". Review the tool card for each operation's result.";
                             } else if (rateLimitMsg != null && "EXHAUSTED".equals(rateLimitMsg.toolState)) {
                                 finalTest = "Provider is consistently busy. Please try again later or switch models.";
+                            } else {
+                                finalTest = "The provider returned an empty response without executing a tool. Check the selected model/provider configuration and retry.";
                             }
                         }
 
