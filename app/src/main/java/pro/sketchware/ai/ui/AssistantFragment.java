@@ -1271,6 +1271,7 @@ public class AssistantFragment extends Fragment {
             pro.sketchware.ai.core.AIRequest request = new pro.sketchware.ai.core.AIRequest.Builder()
                     .model(model)
                     .messages(history)
+                    .temperature(configStore.getTemperature())
                     .thinkingEnabled(configStore.isShowThinking() && ThinkingDetector.hint(model))
                     .build();
 
