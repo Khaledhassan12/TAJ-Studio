@@ -609,7 +609,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class AssistantViewHolder extends RecyclerView.ViewHolder {
         TextView label, message;
-        View actionsRow, btnCopy, btnRegenerate, btnVoice, btnBranch, btnShare, btnFavorite;
+        View actionsRow, btnCopy, btnRegenerate, btnVoice, btnBranch, btnShare;
+        ImageView btnFavorite;
         int boundLen = 0;
 
         AssistantViewHolder(View v) {
