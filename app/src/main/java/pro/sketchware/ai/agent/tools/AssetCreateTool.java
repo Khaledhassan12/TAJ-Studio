@@ -67,6 +67,7 @@ public final class AssetCreateTool implements Tool {
             LiveRegistry.notifyChanged("assets", path);
             return new ToolResult("verified: created @ " + path, false);
         }
-        return new ToolResult("Asset creation verification failed: " + path, true);
+        if (target.isFile()) target.delete();
+        return new ToolResult("Asset creation verification failed; the incomplete new file was removed: " + path, true);
     }
 }
