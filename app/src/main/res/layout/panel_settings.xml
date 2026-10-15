@@ -134,6 +134,15 @@
 
         </com.google.android.material.chip.ChipGroup>
 
+        <TextView
+            android:id="@+id/tv_perm_mode_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:alpha="0.75"
+            android:text="Permission modes are disabled until the agent runtime enforces them."
+            android:textAppearance="?attr/textAppearanceBodySmall" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_reset_perm"
             style="@style/Widget.Material3.Button.TextButton"
