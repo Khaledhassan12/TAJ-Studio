@@ -52,7 +52,7 @@ public final class AssetDeleteTool implements Tool {
         FileUtil.makeDir(trashDir);
         String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + System.nanoTime() + "_" + f.getName();
         
-        FileUtil.moveFile(path, trashPath);
+        DomainToolHelper.moveVerified(f, new File(trashPath));
         if (!f.exists() && FileUtil.isExistFile(trashPath)) {
             LiveRegistry.notifyChanged("assets", path);
             return new ToolResult("verified: moved to trash @ " + trashPath, false);
