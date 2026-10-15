@@ -51,7 +51,7 @@ public final class ProjectDiagnosticsScanner {
     private static final Pattern GRADLE_WRAPPER_VERSION = Pattern.compile(
             "gradle-([0-9]+(?:\\.[0-9]+){1,2})-(?:all|bin)\\.zip");
     private static final Pattern AGP_VERSION = Pattern.compile(
-            "com\\.android\\.tools\\.build:gradle:([0-9]+(?:\\.[0-9]+){1,2})");
+            "(?:com\\.android\\.tools\\.build:gradle:|id\\s*\\(\\s*['\"]com\\.android\\.application['\"]\\s*\\)\\s*version\\s*['\"])([0-9]+(?:\\.[0-9]+){1,2})");
     private static final Pattern TARGET_SDK = Pattern.compile(
             "(?m)\\btargetSdk(?:Version)?\\s*(?:=\\s*|\\s+)([0-9]+)");
     private static final Pattern COMPILE_SDK = Pattern.compile(
