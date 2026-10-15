@@ -63,6 +63,7 @@ public final class BlockEditTool implements Tool {
             FileUtil.writeFile(path, next);
             if (!next.equals(FileUtil.readFile(path))) throw new IllegalStateException("Persisted custom-block catalog did not match the requested update.");
             BlockLoader.refresh();
+            DomainToolHelper.commitBackup(path);
             LiveRegistry.notifyChanged("blocks", path);
             return new ToolResult("verified: block '" + id + "' edited @ " + path, false);
         } catch (Exception e) {
