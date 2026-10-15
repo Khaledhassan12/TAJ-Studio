@@ -41,6 +41,7 @@ public final class BlockCreateTool implements Tool {
             blocks = GsonUtils.getGson().fromJson(FileUtil.readFile(path), Helper.TYPE_MAP_LIST);
         }
         if (blocks == null) blocks = new ArrayList<>();
+        if (!ctx.checkPermission(path, FileUtil.isExistFile(path))) return new ToolResult("Denied.", true);
 
         HashMap<String, Object> nextMap = GsonUtils.getGson().fromJson(newSpec.toString(), Helper.TYPE_MAP);
         blocks.add(nextMap);
