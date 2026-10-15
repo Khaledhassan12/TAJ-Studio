@@ -17,7 +17,7 @@ public final class AssetDeleteTool implements Tool {
             params.put("type", "object");
             JSONObject props = new JSONObject();
             props.put("path", new JSONObject().put("type", "string"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("path"));
             return new ToolSpec("asset_delete", "Deletes an asset via PathResolver.", params);
