@@ -326,7 +326,7 @@ public class AssistantFragment extends Fragment {
             }
             final List<String> result = files;
             UiPoster.post(() -> {
-                if (!isAdded() || getView() == null || panel.getParent() == null) return;
+                if (!isAdded() || getView() == null || panels.get(R.id.ai_dest_files) != panel) return;
                 adapter.setFiles(result);
                 if (refreshButton != null) refreshButton.setEnabled(true);
                 if (result.isEmpty()) {
