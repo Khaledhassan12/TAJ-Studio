@@ -42,7 +42,7 @@ public final class JavaCreateTool implements Tool {
         String name = args.getString("name");
         String type = args.getString("type");
         String packagePath = args.optString("packagePath", "");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
 
         String root = "manager".equals(target) ? ProjectPaths.javaManagerRoot(sc_id) : ProjectPaths.projectJavaRoot(sc_id);
         if (!packagePath.isEmpty()) {
