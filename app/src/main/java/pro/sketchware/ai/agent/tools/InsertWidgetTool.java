@@ -21,7 +21,7 @@ public final class InsertWidgetTool implements Tool {
             props.put("parentId", new JSONObject().put("type", "string").put("description", "ID of the parent widget (e.g. linear1)"));
             props.put("widgetXml", new JSONObject().put("type", "string").put("description", "Full XML of the widget to insert"));
             props.put("position", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"start", "end"})).put("default", "end"));
-            props.put("sc_id", new JSONObject().put("type", "string"));
+            props;
             params.put("properties", props);
             params.put("required", new JSONArray().put("layout").put("parentId").put("widgetXml"));
             return new ToolSpec("insert_widget", "Inserts a widget into a layout safely.", params);
