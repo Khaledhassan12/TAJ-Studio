@@ -66,9 +66,8 @@ public final class ResMoveCopyTool implements Tool {
                 return new ToolResult("Resource copy failed: " + e.getMessage(), true);
             }
         } else {
-            FileUtil.moveFile(fromPath, toPath);
-            if (source.exists() || !destination.isFile()) {
-                return new ToolResult("Resource move verification failed; inspect the source and destination before retrying.", true);
+            if (!DomainToolHelper.moveVerified(source, destination)) {
+                return new ToolResult("Resource move failed safely; the source was preserved because a verified move could not be completed.", true);
             }
             LiveRegistry.notifyChanged(args.getString("fromFolder"), fromPath);
         }
