@@ -51,7 +51,14 @@ public class UpgradeReportDialog {
         builder.setView(rv);
         builder.setPositiveButton("Close", null);
         
-        if (!report.isEmpty()) {
+        boolean hasSafeFix = false;
+        for (Finding finding : report.findings) {
+            if (finding.autoFixable && finding.category == Finding.Category.UNUSED_IMPORT) {
+                hasSafeFix = true;
+                break;
+            }
+        }
+        if (hasSafeFix) {
             builder.setNeutralButton("Apply Safe Fixes", (dialog, which) -> {
                 // Confirmation Dialog
                 new MaterialAlertDialogBuilder(context)
@@ -101,7 +108,7 @@ public class UpgradeReportDialog {
                 holder.desc.append("\nPath: " + path);
             }
 
-            if (f.autoFixable) {
+            if (safelyAutoFixable) {
                 holder.statusIcon.setImageResource(R.drawable.ic_expire_48dp);
                 holder.statusIcon.setVisibility(View.VISIBLE);
             } else {
