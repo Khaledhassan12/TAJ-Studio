@@ -4,7 +4,6 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
 import pro.sketchware.ai.agent.Tool;
-import pro.sketchware.ai.agent.ProjectPaths;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
 import pro.sketchware.ai.live.LiveRegistry;
