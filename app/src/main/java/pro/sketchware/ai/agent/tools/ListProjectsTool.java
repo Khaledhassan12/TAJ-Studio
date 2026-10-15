@@ -11,9 +11,18 @@ import pro.sketchware.utility.FileUtil;
 
 public final class ListProjectsTool implements Tool {
 
+    private static JSONObject emptyObjectSchema() {
+        JSONObject schema = new JSONObject();
+        try {
+            schema.put("type", "object");
+            schema.put("properties", new JSONObject());
+        } catch (org.json.JSONException ignored) {}
+        return schema;
+    }
+
     @Override
     public ToolSpec spec() {
-        return new ToolSpec("list_projects", "Lists all available Sketchware projects.", new JSONObject());
+        return new ToolSpec("list_projects", "Lists all available Sketchware projects.", emptyObjectSchema());
     }
 
     @Override
