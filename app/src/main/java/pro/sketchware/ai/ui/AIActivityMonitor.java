@@ -67,7 +67,7 @@ public final class AIActivityMonitor {
         watchdogHandler.postDelayed(watchdogRunnable, 120000);
     }
 
-    public static void poke() {
+    public static synchronized void poke() {
         resetWatchdog();
     }
 }
