@@ -20,15 +20,39 @@ import java.util.Map;
 public final class DomainToolHelper {
 
     public static void backup(String path) {
-        if (FileUtil.isExistFile(path)) {
-            FileUtil.copyFile(path, path + ".bak");
+        File target = new File(path);
+        File backup = new File(path + ".bak");
+        File absentMarker = new File(path + ".bak.absent");
+        if (absentMarker.exists()) absentMarker.delete();
+        if (target.isFile()) {
+            FileUtil.copyFile(path, backup.getAbsolutePath());
+        } else if (!target.exists()) {
+            if (backup.exists()) backup.delete();
+            try {
+                absentMarker.createNewFile();
+            } catch (java.io.IOException ignored) {
+                // If the marker cannot be written, callers still verify the operation before reporting success.
+            }
         }
     }
 
     public static void restore(String path) {
-        if (FileUtil.isExistFile(path + ".bak")) {
-            FileUtil.moveFile(path + ".bak", path);
+        File target = new File(path);
+        File backup = new File(path + ".bak");
+        File absentMarker = new File(path + ".bak.absent");
+        if (backup.isFile()) {
+            FileUtil.moveFile(backup.getAbsolutePath(), path);
+            if (absentMarker.exists()) absentMarker.delete();
+        } else if (absentMarker.exists()) {
+            if (target.isFile()) target.delete();
+            absentMarker.delete();
         }
+    }
+
+    /** Finalize a successful transaction while retaining any pre-existing-file backup for manual recovery. */
+    public static void commitBackup(String path) {
+        File absentMarker = new File(path + ".bak.absent");
+        if (absentMarker.exists()) absentMarker.delete();
     }
 
     public static boolean verifyXml(String content) {
