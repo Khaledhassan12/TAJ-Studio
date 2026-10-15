@@ -56,6 +56,15 @@ public class AssistantFragment extends Fragment {
     private NavigationRailView rail;
     private FrameLayout container;
     private final SparseArray<View> panels = new SparseArray<>();
+    private ObjectAnimator connectionPulseAnimator;
+    private static final String STATE_SELECTED_PANEL = "ai_selected_panel";
+    private int selectedPanelId = R.id.ai_dest_session;
+    private static final String STATE_SESSION_ID = "ai_session_id";
+    private String restoredSessionId;
+    private int baseSessionPaddingLeft;
+    private int baseSessionPaddingTop;
+    private int baseSessionPaddingRight;
+    private int baseSessionPaddingBottom;
 
     private AIConfigStore configStore;
     private ChatStore chatStore;
@@ -105,7 +114,7 @@ public class AssistantFragment extends Fragment {
         if (panel == null) return true;
         RecyclerView rv = panel.findViewById(R.id.ai_rv_chat);
         LinearLayoutManager lm = (LinearLayoutManager) rv.getLayoutManager();
-        if (lm == null || chatAdapter.getItemCount() == 0) return true;
+        if (lm == null || chatAdapter == null || chatAdapter.getItemCount() == 0) return true;
         return lm.findLastVisibleItemPosition() >= chatAdapter.getItemCount() - 2;
     }
 
@@ -113,7 +122,9 @@ public class AssistantFragment extends Fragment {
         View panel = panels.get(R.id.ai_dest_session);
         if (panel == null) return;
         RecyclerView rv = panel.findViewById(R.id.ai_rv_chat);
+        if (rv == null || chatAdapter == null) return;
         rv.post(() -> {
+            if (chatAdapter == null || rv.getAdapter() != chatAdapter) return;
             int n = chatAdapter.getItemCount();
             if (n == 0) return;
             if (smooth) rv.smoothScrollToPosition(n - 1);
@@ -132,6 +143,7 @@ public class AssistantFragment extends Fragment {
         
         AIActivityMonitor.setOnTimeoutAction(() -> {
             UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                 addErrorMessage(getString(R.string.ai_timed_out), "", "Retry");
                 // Mark running tools as error
                 View panel = panels.get(R.id.ai_dest_session);
@@ -169,6 +181,7 @@ public class AssistantFragment extends Fragment {
 
     private void updateVoiceIcons() {
         UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
             if (chatAdapter != null) chatAdapter.setCurrentSpeakingText(currentSpeakingText);
         });
     }
@@ -185,13 +198,17 @@ public class AssistantFragment extends Fragment {
         container = view.findViewById(R.id.panel_container);
 
         rail.setOnItemSelectedListener(item -> {
-            showPanel(item.getItemId());
+            selectedPanelId = item.getItemId();
+            showPanel(selectedPanelId);
             return true;
         });
 
-        if (savedInstanceState == null) {
-            rail.setSelectedItemId(R.id.ai_dest_session);
-        }
+        int restoredPanel = savedInstanceState == null
+                ? R.id.ai_dest_session
+                : savedInstanceState.getInt(STATE_SELECTED_PANEL, R.id.ai_dest_session);
+        selectedPanelId = restoredPanel;
+        restoredSessionId = savedInstanceState == null ? null : savedInstanceState.getString(STATE_SESSION_ID);
+        rail.setSelectedItemId(restoredPanel);
     }
 
     @Override
@@ -202,6 +219,13 @@ public class AssistantFragment extends Fragment {
         if (settings != null) {
             refreshReadback(settings);
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putInt(STATE_SELECTED_PANEL, selectedPanelId);
+        if (currentSession != null) outState.putString(STATE_SESSION_ID, currentSession.id);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -407,6 +431,8 @@ public class AssistantFragment extends Fragment {
             adapter.setSessions(chatStore.loadAllSessions());
             adapter.setOnSessionClickListener(session -> {
                 currentSession = session;
+                View sessionPanel = panels.get(R.id.ai_dest_session);
+                if (sessionPanel != null) render(sessionPanel, PanelState.READY);
                 rail.setSelectedItemId(R.id.ai_dest_session);
                 if (chatAdapter != null) {
                     chatAdapter.setMessages(session.messages);
@@ -419,6 +445,8 @@ public class AssistantFragment extends Fragment {
         if (btnNew != null) {
             btnNew.setOnClickListener(v -> {
                 currentSession = new ChatStore.Session();
+                View sessionPanel = panels.get(R.id.ai_dest_session);
+                if (sessionPanel != null) render(sessionPanel, PanelState.EMPTY);
                 if (chatAdapter != null) {
                     chatAdapter.setMessages(new ArrayList<>());
                     scrollToBottom(false);
@@ -429,9 +457,14 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupSessionPanel(View panel) {
+        baseSessionPaddingLeft = panel.getPaddingLeft();
+        baseSessionPaddingTop = panel.getPaddingTop();
+        baseSessionPaddingRight = panel.getPaddingRight();
+        baseSessionPaddingBottom = panel.getPaddingBottom();
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(panel, (v, insets) -> {
             int ime = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime()).bottom;
-            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), ime);
+            v.setPadding(baseSessionPaddingLeft, baseSessionPaddingTop, baseSessionPaddingRight,
+                    baseSessionPaddingBottom + ime);
             return insets;
         });
 
@@ -577,6 +610,7 @@ public class AssistantFragment extends Fragment {
             @Override
             public void onStayInChat(int position) {
                 UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                     currentSession.messages.remove(position);
                     chatAdapter.notifyItemRemoved(position);
                 });
@@ -589,6 +623,15 @@ public class AssistantFragment extends Fragment {
             render(panel, PanelState.EMPTY);
         } else {
             currentSession = sessions.get(0);
+            if (restoredSessionId != null) {
+                for (ChatStore.Session savedSession : sessions) {
+                    if (restoredSessionId.equals(savedSession.id)) {
+                        currentSession = savedSession;
+                        break;
+                    }
+                }
+            }
+            restoredSessionId = currentSession.id;
             chatAdapter.setMessages(currentSession.messages);
             render(panel, PanelState.READY);
             rv.post(() -> scrollToBottom(false));
@@ -634,11 +677,16 @@ public class AssistantFragment extends Fragment {
         }
 
         View dot = panel.findViewById(R.id.ai_connection_dot);
-        ObjectAnimator pulse = ObjectAnimator.ofFloat(dot, "alpha", 0.4f, 1.0f);
-        pulse.setDuration(1200);
-        pulse.setRepeatCount(ValueAnimator.INFINITE);
-        pulse.setRepeatMode(ValueAnimator.REVERSE);
-        pulse.start();
+        if (connectionPulseAnimator != null) {
+            connectionPulseAnimator.cancel();
+        }
+        if (dot != null) {
+            connectionPulseAnimator = ObjectAnimator.ofFloat(dot, "alpha", 0.4f, 1.0f);
+            connectionPulseAnimator.setDuration(1200);
+            connectionPulseAnimator.setRepeatCount(ValueAnimator.INFINITE);
+            connectionPulseAnimator.setRepeatMode(ValueAnimator.REVERSE);
+            connectionPulseAnimator.start();
+        }
 
         Chip chipAgent = panel.findViewById(R.id.ai_chip_agent_state);
         if (chipAgent != null) {
@@ -686,6 +734,7 @@ public class AssistantFragment extends Fragment {
             AIActivityMonitor.setState(SessionState.MODEL_STREAMING);
         }
         UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
             if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                 long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                 chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -708,6 +757,7 @@ public class AssistantFragment extends Fragment {
         if (token == null || token.isEmpty()) return;
         pokeWatchdog();
         UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
             if (thinkingMsg == null) {
                 thinkingStart = System.currentTimeMillis();
                 thinkingMsg = new ChatStore.Message("thinking", "");
@@ -741,6 +791,7 @@ public class AssistantFragment extends Fragment {
         pokeWatchdog();
         AIActivityMonitor.setState(SessionState.WAITING_RATE_LIMIT);
         UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
             if (rateLimitMsg == null) {
                 rateLimitMsg = new ChatStore.Message("rate_limit", "");
                 currentSession.messages.add(rateLimitMsg);
@@ -761,11 +812,14 @@ public class AssistantFragment extends Fragment {
     }
 
     private void sendMessage(String text, boolean isRegen) {
+        if (!isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
         if (AIActivityMonitor.isBusy()) {
             Snackbar.make(requireView(), R.string.ai_busy, Snackbar.LENGTH_SHORT).show();
             return;
         }
 
+        View sessionPanel = panels.get(R.id.ai_dest_session);
+        if (sessionPanel != null) render(sessionPanel, PanelState.READY);
         if (!isRegen) {
             ChatStore.Message userMsg = new ChatStore.Message("user", text);
             currentSession.messages.add(userMsg);
@@ -827,6 +881,7 @@ public class AssistantFragment extends Fragment {
                 public void onToolCall(ToolCall call) {
                     pokeWatchdog();
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -840,6 +895,7 @@ public class AssistantFragment extends Fragment {
                     activeToolCount++;
                     AIActivityMonitor.setState(SessionState.TOOL_RUNNING);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         if (toolsCard == null) {
                             toolsCard = new ChatStore.Message("tools_card", "");
                             toolsCard.toolEvents = new ArrayList<>();
@@ -859,6 +915,7 @@ public class AssistantFragment extends Fragment {
                     activeToolCount = Math.max(0, activeToolCount - 1);
                     AIActivityMonitor.setState(activeToolCount > 0 ? SessionState.TOOL_RUNNING : SessionState.MODEL_STREAMING);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         if (toolsCard != null) {
                             for (ChatStore.ToolEvent te : toolsCard.toolEvents) {
                                 if (te.name.equals(name) && "RUNNING".equals(te.status)) {
@@ -877,6 +934,7 @@ public class AssistantFragment extends Fragment {
                 public void onComplete(AIResponse response) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         reconcileTools(toolsCard);
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
@@ -916,6 +974,7 @@ public class AssistantFragment extends Fragment {
                 public void onError(Throwable error) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         reconcileTools(toolsCard);
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
@@ -930,6 +989,7 @@ public class AssistantFragment extends Fragment {
                 public void onCancel() {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         reconcileTools(toolsCard);
                         AIActivityMonitor.setState(SessionState.IDLE);
                     });
@@ -971,6 +1031,7 @@ public class AssistantFragment extends Fragment {
                 public void onComplete(AIResponse response) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -985,6 +1046,7 @@ public class AssistantFragment extends Fragment {
                 public void onError(Throwable error) {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -999,6 +1061,7 @@ public class AssistantFragment extends Fragment {
                 public void onCancel() {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                         AIActivityMonitor.setState(SessionState.IDLE);
                         activeHandle = null;
                     });
@@ -1052,6 +1115,7 @@ public class AssistantFragment extends Fragment {
         new Thread(() -> {
             String verdict = pro.sketchware.ai.net.ModelSyncService.validateKey(profile, key);
             UiPoster.post(() -> {
+            if (!isAdded() || getView() == null) return;
                 if (getContext() == null) return;
                 new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                         .setTitle(R.string.ai_test_connection)
@@ -1070,6 +1134,46 @@ public class AssistantFragment extends Fragment {
                 fab.setImageResource(AIActivityMonitor.getState() == SessionState.IDLE ? R.drawable.ic_mtrl_send : R.drawable.ic_mtrl_stop);
             }
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        mainHandler.removeCallbacks(watchdog);
+        forceIdle();
+        if (orchestrator != null) {
+            orchestrator.shutdown();
+            orchestrator = null;
+        }
+        activeHandle = null;
+        if (voiceReader != null) voiceReader.stop();
+        if (currentSession != null) {
+            for (ChatStore.Message message : currentSession.messages) {
+                if (message.toolEvents == null) continue;
+                for (ChatStore.ToolEvent event : message.toolEvents) {
+                    if ("RUNNING".equals(event.status)) {
+                        event.status = "ERROR";
+                        event.finishedAt = System.currentTimeMillis();
+                    }
+                }
+            }
+            if (chatStore != null) chatStore.saveSession(currentSession);
+        }
+        if (connectionPulseAnimator != null) {
+            connectionPulseAnimator.cancel();
+            connectionPulseAnimator = null;
+        }
+        for (int i = 0; i < panels.size(); i++) {
+            View panel = panels.valueAt(i);
+            if (panel != null) {
+                panel.animate().cancel();
+                androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(panel, null);
+            }
+        }
+        panels.clear();
+        rail = null;
+        container = null;
+        chatAdapter = null;
+        super.onDestroyView();
     }
 
     @Override
