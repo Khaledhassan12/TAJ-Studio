@@ -57,15 +57,18 @@ public final class BlockEditTool implements Tool {
 
         if (!found) return new ToolResult("Block not found: " + id, true);
 
+        String next = GsonUtils.getGson().toJson(blocks);
         DomainToolHelper.backup(path);
         try {
-            FileUtil.writeFile(path, GsonUtils.getGson().toJson(blocks));
+            FileUtil.writeFile(path, next);
+            if (!next.equals(FileUtil.readFile(path))) throw new IllegalStateException("Persisted custom-block catalog did not match the requested update.");
             BlockLoader.refresh();
             LiveRegistry.notifyChanged("blocks", path);
             return new ToolResult("verified: block '" + id + "' edited @ " + path, false);
         } catch (Exception e) {
             DomainToolHelper.restore(path);
-            return new ToolResult("Failed: " + e.getMessage(), true);
+            try { BlockLoader.refresh(); } catch (Exception ignored) {}
+            return new ToolResult("Block edit failed: " + e.getMessage(), true);
         }
     }
 }
