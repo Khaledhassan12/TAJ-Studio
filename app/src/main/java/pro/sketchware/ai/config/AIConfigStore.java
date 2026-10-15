@@ -30,9 +30,9 @@ import pro.sketchware.ai.core.Protocol;
 import pro.sketchware.ai.core.ProviderProfile;
 
 /**
- * Persistent TAG Assistant configuration. API keys live in
- * EncryptedSharedPreferences when the device allows it, with a plain
- * SharedPreferences fallback so the feature never crashes the host app.
+ * Persistent TAG Assistant configuration. Preferences use EncryptedSharedPreferences
+ * when available; API keys are additionally wrapped with an Android Keystore AES-GCM
+ * key so the private-preferences fallback never stores credentials in plaintext.
  * Keys are sanitized on write and on read; they are never written to logs.
  * Per-provider model caches (id + optional pricing flag + sync timestamp)
  * are persisted here too.
@@ -88,7 +88,7 @@ public final class AIConfigStore {
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM);
         } catch (Exception e) {
             // Isolation principle: encryption must never break the feature.
-            Log.w(TAG, "EncryptedSharedPreferences unavailable, using plain fallback");
+            Log.w(TAG, "Encrypted preferences unavailable; API keys remain separately encrypted");
         }
         if (candidate == null) {
             try {
