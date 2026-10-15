@@ -502,8 +502,18 @@ public class AssistantFragment extends Fragment {
             });
         }
         
+        if (cgPerm != null) {
+            cgPerm.setEnabled(false);
+            cgPerm.setContentDescription("Permission modes are not enforced by the current agent runtime");
+            for (int chipId : new int[]{R.id.chip_perm_full, R.id.chip_perm_consent, R.id.chip_perm_strict}) {
+                View permissionChip = panel.findViewById(chipId);
+                if (permissionChip != null) permissionChip.setEnabled(false);
+            }
+        }
+
         View btnReset = panel.findViewById(R.id.btn_reset_perm);
         if (btnReset != null) {
+            btnReset.setEnabled(false);
             btnReset.setOnClickListener(v -> {
                 configStore.clearAgentPermMode();
                 if (cgPerm != null) cgPerm.clearCheck();
@@ -562,6 +572,13 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupAgentsPanel(View panel) {
+        Chip destructiveOps = panel.findViewById(R.id.chip_destructive_ops);
+        if (destructiveOps != null) {
+            destructiveOps.setChecked(false);
+            destructiveOps.setEnabled(false);
+            destructiveOps.setText("Delete / move / copy tools are blocked pending confirmation support");
+            destructiveOps.setContentDescription("Destructive operations are blocked until explicit per-operation confirmation is implemented");
+        }
         RecyclerView rv = panel.findViewById(R.id.ai_rv_tools);
         if (rv != null) {
             rv.setLayoutManager(new LinearLayoutManager(getContext()));
