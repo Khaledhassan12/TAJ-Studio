@@ -298,9 +298,119 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupFilesPanel(View panel) {
-        panel.findViewById(R.id.btn_refresh_context).setOnClickListener(v -> {
-            Snackbar.make(panel, "Context refreshed from project", Snackbar.LENGTH_SHORT).show();
-        });
+        RecyclerView rv = panel.findViewById(R.id.rv_context_files);
+        if (rv == null) return;
+        rv.setLayoutManager(new LinearLayoutManager(panel.getContext()));
+        ContextFilesAdapter adapter = new ContextFilesAdapter();
+        rv.setAdapter(adapter);
+
+        View refresh = panel.findViewById(R.id.btn_refresh_context);
+        if (refresh != null) refresh.setOnClickListener(v -> refreshContextFiles(panel, adapter, refresh));
+        refreshContextFiles(panel, adapter, refresh);
+    }
+
+    private void refreshContextFiles(View panel, ContextFilesAdapter adapter, View refreshButton) {
+        if (refreshButton != null) refreshButton.setEnabled(false);
+        final String projectId = sc_id;
+        new Thread(() -> {
+            List<String> files = new ArrayList<>();
+            try {
+                addProjectFiles(new java.io.File(pro.sketchware.ai.agent.ProjectPaths.resourceRoot(projectId)), "res/", files, 250);
+                addProjectFiles(new java.io.File(pro.sketchware.ai.agent.ProjectPaths.assetsRoot(projectId)), "assets/", files, 250);
+                addProjectFiles(new java.io.File(pro.sketchware.ai.agent.ProjectPaths.projectJavaRoot(projectId)), "java/", files, 250);
+                java.util.Collections.sort(files, String.CASE_INSENSITIVE_ORDER);
+            } catch (Exception e) {
+                android.util.Log.w("AssistantFragment", "Could not refresh project context files", e);
+            }
+            final List<String> result = files;
+            UiPoster.post(() -> {
+                if (!isAdded() || getView() == null || panel.getParent() == null) return;
+                adapter.setFiles(result);
+                if (refreshButton != null) refreshButton.setEnabled(true);
+                if (result.isEmpty()) {
+                    Snackbar.make(panel, "No project files found (or project storage is unavailable)", Snackbar.LENGTH_SHORT).show();
+                } else {
+                    Snackbar.make(panel, "Context files refreshed: " + result.size(), Snackbar.LENGTH_SHORT).show();
+                }
+            });
+        }, "ai-context-files").start();
+    }
+
+    private void addProjectFiles(java.io.File root, String prefix, List<String> output, int limit) {
+        if (root == null || !root.isDirectory() || output.size() >= limit) return;
+        final String canonicalRoot;
+        try {
+            canonicalRoot = root.getCanonicalPath();
+        } catch (java.io.IOException e) {
+            return;
+        }
+        java.util.ArrayDeque<java.io.File> queue = new java.util.ArrayDeque<>();
+        queue.add(root);
+        int visited = 0;
+        while (!queue.isEmpty() && output.size() < limit && visited < 3000) {
+            java.io.File current = queue.removeFirst();
+            visited++;
+            java.io.File[] children = current.listFiles();
+            if (children == null) continue;
+            for (java.io.File child : children) {
+                if (output.size() >= limit) break;
+                try {
+                    String canonical = child.getCanonicalPath();
+                    if (!canonical.startsWith(canonicalRoot + java.io.File.separator)) continue;
+                    if (child.isDirectory()) {
+                        if (!child.getName().startsWith(".") && current.toPath().getNameCount() - root.toPath().getNameCount() < 8) {
+                            queue.addLast(child);
+                        }
+                    } else if (child.isFile()) {
+                        String relative = root.toPath().relativize(child.toPath()).toString().replace(java.io.File.separatorChar, '/');
+                        output.add(prefix + relative);
+                    }
+                } catch (Exception ignored) {
+                    // Skip inaccessible entries and paths that cannot be canonicalized.
+                }
+            }
+        }
+    }
+
+    private static final class ContextFilesAdapter extends RecyclerView.Adapter<ContextFilesAdapter.FileHolder> {
+        private final List<String> files = new ArrayList<>();
+
+        void setFiles(List<String> values) {
+            files.clear();
+            if (values == null || values.isEmpty()) files.add("No project files found");
+            else files.addAll(values);
+            notifyDataSetChanged();
+        }
+
+        @NonNull
+        @Override
+        public FileHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            TextView text = new TextView(parent.getContext());
+            int padding = (int) (12 * parent.getResources().getDisplayMetrics().density);
+            text.setPadding(padding, padding, padding, padding);
+            text.setTextSize(14);
+            text.setLayoutParams(new RecyclerView.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            return new FileHolder(text);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull FileHolder holder, int position) {
+            holder.text.setText(files.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return files.size();
+        }
+
+        static final class FileHolder extends RecyclerView.ViewHolder {
+            final TextView text;
+            FileHolder(TextView itemView) {
+                super(itemView);
+                text = itemView;
+            }
+        }
     }
 
     private void setupSettingsPanel(View panel) {
