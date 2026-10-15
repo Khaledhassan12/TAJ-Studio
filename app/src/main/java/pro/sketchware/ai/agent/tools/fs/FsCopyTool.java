@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.utility.FileUtil;
@@ -94,12 +93,22 @@ public final class FsCopyTool implements Tool {
             byte[] left = new byte[8192];
             byte[] right = new byte[8192];
             while (true) {
-                int n = a.read(left);
-                int m = b.read(right);
+                int n = readChunk(a, left);
+                int m = readChunk(b, right);
                 if (n != m) return false;
                 if (n == -1) return true;
-                if (!Arrays.equals(Arrays.copyOf(left, n), Arrays.copyOf(right, m))) return false;
+                for (int i = 0; i < n; i++) if (left[i] != right[i]) return false;
             }
         }
+    }
+
+    private static int readChunk(java.io.InputStream input, byte[] buffer) throws IOException {
+        int total = 0;
+        while (total < buffer.length) {
+            int count = input.read(buffer, total, buffer.length - total);
+            if (count < 0) return total == 0 ? -1 : total;
+            total += count;
+        }
+        return total;
     }
 }
