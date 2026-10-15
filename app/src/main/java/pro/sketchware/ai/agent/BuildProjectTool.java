@@ -38,6 +38,10 @@ public final class BuildProjectTool implements Tool {
             return ToolResult.structured("build_project", "EDITOR_UNAVAILABLE", null,
                     "Build was not started because the active project editor is no longer available.", null, true);
         }
+        if (ctx.isCancellationRequested()) {
+            return ToolResult.structured("build_project", "CANCELLED", null,
+                    "Build was not started because the agent task was cancelled.", null, true);
+        }
 
         final BuildLogHub hub = BuildLogHub.getInstance();
         final long previousGeneration = hub.getSessionGeneration();
@@ -72,6 +76,14 @@ public final class BuildProjectTool implements Tool {
                 try {
                     if (activity.isFinishing() || activity.isDestroyed()) {
                         dispatchFailure.set("The active project editor closed before the build action could run.");
+                        return;
+                    }
+                    if (ctx.isCancellationRequested()) {
+                        dispatchFailure.set("Build was not started because the agent task was cancelled before dispatch.");
+                        return;
+                    }
+                    if (ctx.sc_id == null || !ctx.sc_id.equals(DesignActivity.sc_id)) {
+                        dispatchFailure.set("The active project changed before build dispatch. No build was started.");
                         return;
                     }
                     View runButton = activity.findViewById(pro.sketchware.R.id.btn_run);
