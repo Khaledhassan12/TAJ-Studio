@@ -32,6 +32,7 @@ public final class FsMoveTool implements Tool {
         String src = source.getAbsolutePath();
         String dst = destination.getAbsolutePath();
         if (!FileUtil.isExistFile(src)) return new ToolResult("Source not found.", true);
+        if (!ctx.checkPermission(src, true)) return new ToolResult("Denied.", true);
         if (!ctx.checkPermission(dst, FileUtil.isExistFile(dst))) return new ToolResult("Denied.", true);
 
         FileUtil.moveFile(src, dst);
