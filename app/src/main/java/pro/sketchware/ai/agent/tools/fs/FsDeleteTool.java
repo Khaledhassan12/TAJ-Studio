@@ -14,7 +14,7 @@ public final class FsDeleteTool implements Tool {
         try {
             JSONObject params = new JSONObject();
             params.put("type", "object");
-            params.put("properties", new JSONObject().put("path", new JSONObject().put("type", "string")).put("sc_id", new JSONObject().put("type", "string")));
+            params.put("properties", new JSONObject().put("path", new JSONObject().put("type", "string")));
             params.put("required", new org.json.JSONArray().put("path"));
             return new ToolSpec("fs_delete", "Moves a file to trash via PathResolver.", params);
         } catch (Exception e) { return null; }
