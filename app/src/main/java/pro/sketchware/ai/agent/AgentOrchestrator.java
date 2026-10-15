@@ -108,12 +108,18 @@ public final class AgentOrchestrator {
                                 Tool tool = registry.get(call.name);
                                 Tool.ToolResult result;
                                 if (tool != null) {
-                                    if (requiresManualConfirmation(call.name)) {
+                                    boolean destructive = requiresManualConfirmation(call.name);
+                                    if (destructive && !context.confirmDestructiveOperation(call.name, call.arguments)) {
                                         result = new Tool.ToolResult(
-                                                "Blocked by TAJ safety policy: this operation requires explicit confirmation, which is not available in the current Assistant UI. No file operation was performed.",
+                                                "Operation not executed: destructive operations are disabled or confirmation was denied/dismissed.",
                                                 true);
                                     } else {
-                                        result = tool.run(call.arguments, context);
+                                        if (destructive) context.beginConfirmedOperation();
+                                        try {
+                                            result = tool.run(call.arguments, context);
+                                        } finally {
+                                            if (destructive) context.endConfirmedOperation();
+                                        }
                                     }
                                     conversation.add(AIMessage.toolResult(call.id, result.content));
                                     success = !result.error;
