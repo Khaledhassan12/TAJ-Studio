@@ -19,6 +19,12 @@ The foundation already has a real registry, provider tool declarations, an orche
 
 ## Confirmed issues and changes
 
+### Assistant session and UI lifecycle audit
+
+- Session persistence now stores a display title and last-updated timestamp, sorts history by recent activity, and provides queued disk writes so token streaming does not fsync the entire transcript on every token.
+- The history panel refreshes when revisited and after request completion. Tool and thinking indicators are terminalized when a request is stopped; orphaned RUNNING tool events are repaired when a saved session is restored.
+- Device acceptance tests are still required for process-death persistence, provider completion/cancellation races, UI-thread responsiveness, and actual project-tool latency.
+
 ### Fixed in this audit
 
 1. **Non-deterministic tool catalog.** The registry used `HashMap`, so tool advertisement order was unstable. It now uses `LinkedHashMap` to keep registration order stable.

@@ -46,17 +46,20 @@ public class SessionAdapter extends RecyclerView.Adapter<SessionAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatStore.Session s = sessions.get(position);
-        String title = "New Session";
-        for (ChatStore.Message m : s.messages) {
-            if ("user".equals(m.role)) {
-                title = m.text;
-                if (title.length() > 30) title = title.substring(0, 30) + "...";
+        String title = s.title == null || s.title.trim().isEmpty() ? "New chat" : s.title;
+        holder.title.setText(title);
+        holder.time.setText(dateFormat.format(new Date(s.updatedAt > 0 ? s.updatedAt : s.createdAt)));
+        String preview = "";
+        for (int i = s.messages.size() - 1; i >= 0; i--) {
+            ChatStore.Message message = s.messages.get(i);
+            if (message != null && ("assistant".equals(message.role) || "user".equals(message.role))
+                    && message.text != null && !message.text.trim().isEmpty()) {
+                preview = message.text.trim().replaceAll("\\s+", " ");
+                if (preview.length() > 48) preview = preview.substring(0, 45) + "...";
                 break;
             }
         }
-        holder.title.setText(title);
-        holder.time.setText(dateFormat.format(new Date(s.createdAt)));
-        holder.count.setText(s.messages.size() + " messages");
+        holder.count.setText(s.messages.size() + " messages" + (preview.isEmpty() ? "" : " · " + preview));
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onSessionClick(s);
         });

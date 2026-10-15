@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Persists chat sessions as JSON files in app-private storage.
@@ -23,6 +25,11 @@ import java.util.List;
 public final class ChatStore {
 
     private static final String TAG = "ChatStore";
+    private static final ExecutorService SAVE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "ai-chat-persistence");
+        thread.setDaemon(true);
+        return thread;
+    });
     private final File baseDir;
 
     public ChatStore(Context context, String sc_id) {
@@ -104,7 +111,15 @@ public final class ChatStore {
                 m.toolEvents = new ArrayList<>();
                 for (int i = 0; i < teArr.length(); i++) {
                     JSONObject teObj = teArr.optJSONObject(i);
-                    if (teObj != null) m.toolEvents.add(ToolEvent.fromJson(teObj));
+                    if (teObj != null) {
+                        ToolEvent event = ToolEvent.fromJson(teObj);
+                        if ("RUNNING".equals(event.status)) {
+                            event.status = "ERROR";
+                            event.finishedAt = System.currentTimeMillis();
+                            event.resultSummary = "Execution interrupted before the session was restored";
+                        }
+                        m.toolEvents.add(event);
+                    }
                 }
             }
             return m;
@@ -155,19 +170,25 @@ public final class ChatStore {
 
     public static class Session {
         public String id;
+        public String title = "";
         public long createdAt;
+        public long updatedAt;
         public List<Message> messages = new ArrayList<>();
 
         public Session() {
-            id = String.valueOf(System.currentTimeMillis());
-            createdAt = System.currentTimeMillis();
+            long now = System.currentTimeMillis();
+            id = String.valueOf(now);
+            createdAt = now;
+            updatedAt = now;
         }
 
         public JSONObject toJson() {
             JSONObject json = new JSONObject();
             try {
                 json.put("id", id);
+                json.put("title", title == null ? "" : title);
                 json.put("createdAt", createdAt);
+                json.put("updatedAt", updatedAt > 0 ? updatedAt : createdAt);
                 JSONArray msgs = new JSONArray();
                 for (Message m : messages) msgs.put(m.toJson());
                 json.put("messages", msgs);
@@ -178,7 +199,9 @@ public final class ChatStore {
         public static Session fromJson(JSONObject json) {
             Session s = new Session();
             s.id = json.optString("id");
-            s.createdAt = json.optLong("createdAt");
+            s.title = json.optString("title", "");
+            s.createdAt = json.optLong("createdAt", s.createdAt);
+            s.updatedAt = json.optLong("updatedAt", s.createdAt);
             JSONArray msgs = json.optJSONArray("messages");
             if (msgs != null) {
                 for (int i = 0; i < msgs.length(); i++) {
@@ -186,27 +209,72 @@ public final class ChatStore {
                     if (m != null) s.messages.add(Message.fromJson(m));
                 }
             }
+            if (s.updatedAt <= 0) s.updatedAt = s.createdAt;
+            for (Message message : s.messages) {
+                if (message != null) s.updatedAt = Math.max(s.updatedAt, message.time);
+                if ((s.title == null || s.title.trim().isEmpty()) && message != null
+                        && "user".equals(message.role) && message.text != null && !message.text.trim().isEmpty()) {
+                    s.title = normalizeTitle(message.text);
+                }
+            }
             return s;
         }
     }
 
-    public synchronized void saveSession(Session session) {
+    public void saveSession(Session session) {
         if (session == null || session.id == null || session.id.trim().isEmpty()) return;
+        prepareSessionForSave(session);
+        writeSession(session.id, session.toJson().toString());
+    }
+
+    /**
+     * Capture a consistent transcript snapshot now, then perform disk I/O and fsync off the UI
+     * thread. A single writer keeps repeated updates to the same session in order.
+     */
+    public void saveSessionAsync(Session session) {
+        if (session == null || session.id == null || session.id.trim().isEmpty()) return;
+        prepareSessionForSave(session);
+        final String sessionId = session.id;
+        final String snapshot = session.toJson().toString();
+        SAVE_EXECUTOR.execute(() -> writeSession(sessionId, snapshot));
+    }
+
+    private void prepareSessionForSave(Session session) {
+        session.updatedAt = Math.max(System.currentTimeMillis(), session.updatedAt);
+        if (session.title == null || session.title.trim().isEmpty()) {
+            for (Message message : session.messages) {
+                if (message != null && "user".equals(message.role)
+                        && message.text != null && !message.text.trim().isEmpty()) {
+                    session.title = normalizeTitle(message.text);
+                    break;
+                }
+            }
+        }
+    }
+
+    private static String normalizeTitle(String text) {
+        if (text == null) return "New chat";
+        String normalized = text.trim().replaceAll("\\s+", " ");
+        if (normalized.isEmpty()) return "New chat";
+        return normalized.length() > 64 ? normalized.substring(0, 61).trim() + "..." : normalized;
+    }
+
+    private synchronized void writeSession(String sessionId, String serialized) {
         if (!baseDir.exists() && !baseDir.mkdirs() && !baseDir.isDirectory()) {
-            Log.e(TAG, "Failed to create session directory");
+            Log.e(TAG, "Failed to create session directory: " + baseDir.getAbsolutePath());
             return;
         }
-        File file = new File(baseDir, session.id + ".json");
+        File file = new File(baseDir, sessionId + ".json");
         AtomicFile atomicFile = new AtomicFile(file);
         FileOutputStream out = null;
         try {
             out = atomicFile.startWrite();
-            out.write(session.toJson().toString().getBytes(StandardCharsets.UTF_8));
+            out.write(serialized.getBytes(StandardCharsets.UTF_8));
             out.getFD().sync();
             atomicFile.finishWrite(out);
         } catch (IOException e) {
             if (out != null) atomicFile.failWrite(out);
-            Log.e(TAG, "Failed to save session", e);
+            Log.e(TAG, "Failed to save session " + sessionId, e);
         }
     }
 
@@ -240,7 +308,7 @@ public final class ChatStore {
                 }
             }
         }
-        sessions.sort((a, b) -> Long.compare(b.createdAt, a.createdAt));
+        sessions.sort((a, b) -> Long.compare(b.updatedAt, a.updatedAt));
         return sessions;
     }
 
