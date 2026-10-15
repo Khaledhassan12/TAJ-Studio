@@ -25,7 +25,7 @@ public class ListProjectStructureTool implements Tool {
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) {
         try {
-            String sc_id = args.optString("sc_id", ctx.sc_id);
+            String sc_id = ctx.sc_id;
             JSONObject res = new JSONObject();
             JSONArray activities = new JSONArray();
             for (ProjectFileBean file : jC.b(sc_id).b()) {
