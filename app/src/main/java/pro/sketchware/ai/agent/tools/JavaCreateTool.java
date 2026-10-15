@@ -61,7 +61,7 @@ public final class JavaCreateTool implements Tool {
         if (!"folder".equals(type) && !name.matches("[A-Za-z_$][A-Za-z0-9_$]*")) {
             return new ToolResult("Class names must be valid Java/Kotlin identifiers.", true);
         }
-        if (!packagePath.isEmpty() && !packagePath.matches("[A-Za-z_$][A-Za-z0-9_$]*(\\\\.[A-Za-z_$][A-Za-z0-9_$]*)*")) {
+        if (!packagePath.isEmpty() && !packagePath.matches("[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*")) {
             return new ToolResult("packagePath must be a dot-separated package name, not a filesystem path.", true);
         }
 
