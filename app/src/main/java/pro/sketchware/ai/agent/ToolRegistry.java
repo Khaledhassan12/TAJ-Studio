@@ -98,6 +98,17 @@ public final class ToolRegistry {
             throw new IllegalArgumentException("Tool description must not be empty: " + spec.name);
         }
         JSONObject schema = spec.parameters;
+        // An empty schema is the legacy representation used by no-argument tools.
+        // Normalize it to the provider-compatible JSON Schema shape instead of crashing
+        // the Assistant fragment during project opening.
+        if (schema != null && schema.length() == 0) {
+            try {
+                schema.put("type", "object");
+                schema.put("properties", new JSONObject());
+            } catch (org.json.JSONException e) {
+                throw new IllegalArgumentException("Could not normalize no-argument tool schema: " + spec.name, e);
+            }
+        }
         if (schema == null || !"object".equals(schema.optString("type"))
                 || schema.optJSONObject("properties") == null) {
             throw new IllegalArgumentException("Tool must expose an object JSON schema with properties: "
