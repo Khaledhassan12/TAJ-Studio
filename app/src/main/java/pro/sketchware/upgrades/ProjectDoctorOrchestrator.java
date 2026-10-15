@@ -119,7 +119,7 @@ public class ProjectDoctorOrchestrator {
 
     private void discoverPaths(File dir, List<String> javaDirs, List<String> resDirs,
                                List<String> assetsDirs, Set<String> visited, int[] visitedDirs, int depth) {
-        if (dir == null || depth > 32 || visitedDirs[0] >= 5000) return;
+        if (Thread.currentThread().isInterrupted() || dir == null || depth > 32 || visitedDirs[0] >= 5000) return;
         String canonical;
         try {
             canonical = dir.getCanonicalPath();
