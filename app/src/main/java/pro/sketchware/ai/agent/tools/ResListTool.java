@@ -32,7 +32,7 @@ public final class ResListTool implements Tool {
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String folder = args.getString("folder");
-        String sc_id = args.optString("sc_id", ctx.sc_id);
+        String sc_id = ctx.sc_id;
         
         File rootDir = PathResolver.resolve(sc_id, "res/" + folder);
         String path = rootDir.getAbsolutePath();
