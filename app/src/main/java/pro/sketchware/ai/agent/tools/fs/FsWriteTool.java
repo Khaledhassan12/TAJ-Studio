@@ -40,6 +40,9 @@ public final class FsWriteTool implements Tool {
 
         File f = PathResolver.resolve(sc_id, userPath);
         String path = f.getAbsolutePath();
+        if (DomainToolHelper.isKnownBinaryFileName(f.getName())) {
+            return ToolResult.structured("fs_write", "ERROR", path, "Text writes are refused for known binary formats.", null, true);
+        }
 
         if (!ctx.checkPermission(path, f.exists())) return new ToolResult("Write denied.", true);
 
