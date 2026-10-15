@@ -3,6 +3,9 @@ package pro.sketchware.ai.agent.tools;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.File;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
@@ -53,8 +56,7 @@ public final class ResMoveCopyTool implements Tool {
         if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
         if ("copy".equals(op)) {
             FileUtil.copyFile(fromPath, toPath);
-            if (!destination.isFile() || source.length() != destination.length()
-                    || !FileUtil.readFile(fromPath).equals(FileUtil.readFile(toPath))) {
+            if (!sameBytes(source, destination)) {
                 return new ToolResult("Resource copy verification failed.", true);
             }
         } else {
@@ -67,4 +69,30 @@ public final class ResMoveCopyTool implements Tool {
         LiveRegistry.notifyChanged(args.getString("toFolder"), toPath);
         return new ToolResult("verified: " + op + " done to " + toPath, false);
     }
+    private static boolean sameBytes(File source, File destination) throws IOException {
+        if (!source.isFile() || !destination.isFile() || source.length() != destination.length()) return false;
+        try (BufferedInputStream a = new BufferedInputStream(new FileInputStream(source));
+             BufferedInputStream b = new BufferedInputStream(new FileInputStream(destination))) {
+            byte[] left = new byte[8192];
+            byte[] right = new byte[8192];
+            while (true) {
+                int n = readChunk(a, left);
+                int m = readChunk(b, right);
+                if (n != m) return false;
+                if (n == -1) return true;
+                for (int i = 0; i < n; i++) if (left[i] != right[i]) return false;
+            }
+        }
+    }
+
+    private static int readChunk(java.io.InputStream input, byte[] buffer) throws IOException {
+        int total = 0;
+        while (total < buffer.length) {
+            int count = input.read(buffer, total, buffer.length - total);
+            if (count < 0) return total == 0 ? -1 : total;
+            total += count;
+        }
+        return total;
+    }
+
 }
