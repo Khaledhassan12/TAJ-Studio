@@ -54,7 +54,7 @@ public final class ResDeleteTool implements Tool {
         FileUtil.makeDir(trashDir);
         String trashPath = trashDir + "/" + System.currentTimeMillis() + "_" + System.nanoTime() + "_" + name;
         
-        FileUtil.moveFile(path, trashPath);
+        DomainToolHelper.moveVerified(f, new File(trashPath));
         if (!f.exists() && FileUtil.isExistFile(trashPath)) {
             LiveRegistry.notifyChanged(folder, path);
             return new ToolResult("verified: moved to trash @ " + trashPath, false);
