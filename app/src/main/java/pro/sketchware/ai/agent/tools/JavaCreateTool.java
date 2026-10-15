@@ -54,7 +54,7 @@ public final class JavaCreateTool implements Tool {
                 || "kotlin_class".equals(type) || "kotlin_activity".equals(type))) {
             return new ToolResult("Unsupported Java/Kotlin creation type.", true);
         }
-        if (name.isEmpty() || name.contains("/") || name.contains("\\\\")
+        if (name.isEmpty() || name.contains("/") || name.contains("\\")
                 || name.equals(".") || name.equals("..")) {
             return new ToolResult("Name must be a single file or folder name.", true);
         }
