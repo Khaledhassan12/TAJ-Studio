@@ -37,10 +37,11 @@ public final class FsCopyTool implements Tool {
         String dst = destination.getAbsolutePath();
         if (!source.exists()) return new ToolResult("Source not found.", true);
         if (src.equals(dst)) return new ToolResult("Source and destination are identical.", true);
+        if (destination.exists()) return new ToolResult("Destination already exists. Choose a new destination to avoid merging or overwriting project data.", true);
         if (source.isDirectory() && dst.startsWith(src + File.separator)) {
             return new ToolResult("Cannot copy a directory into itself or one of its descendants.", true);
         }
-        if (!ctx.checkPermission(dst, destination.exists())) return new ToolResult("Denied.", true);
+        if (!ctx.checkPermission(dst, false)) return new ToolResult("Denied.", true);
 
         try {
             if (source.isDirectory()) {
