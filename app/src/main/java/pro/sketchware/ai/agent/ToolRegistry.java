@@ -1,19 +1,22 @@
 package pro.sketchware.ai.agent;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import pro.sketchware.ai.agent.tools.*;
 import pro.sketchware.ai.agent.tools.fs.*;
 
+/**
+ * Single source of truth for tools exposed to model providers and executed by the runtime.
+ * Stable ordering makes provider payloads, logs, and tests deterministic.
+ */
 public final class ToolRegistry {
 
-    private final Map<String, Tool> tools = new HashMap<>();
+    private final Map<String, Tool> tools = new LinkedHashMap<>();
 
     public ToolRegistry() {
         // Project Tools
@@ -23,7 +26,7 @@ public final class ToolRegistry {
         register(new ListProjectsTool());
         register(new ProjectInfoTool());
         register(new RefreshUiTool());
-        
+
         // Filesystem Tools
         register(new FsListTool());
         register(new FsReadTool());
@@ -73,15 +76,44 @@ public final class ToolRegistry {
         register(new LibRemoveTool());
     }
 
-    public void register(Tool tool) {
-        tools.put(tool.spec().name, tool);
+    /**
+     * Fail fast during registry construction rather than silently exposing an incomplete
+     * or ambiguous tool catalog to the model.
+     */
+    public synchronized void register(Tool tool) {
+        if (tool == null) {
+            throw new IllegalArgumentException("Cannot register a null tool.");
+        }
+
+        Tool.ToolSpec spec = tool.spec();
+        if (spec == null) {
+            throw new IllegalArgumentException("Tool returned a null specification: "
+                    + tool.getClass().getName());
+        }
+        if (spec.name == null || spec.name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tool name must not be empty: "
+                    + tool.getClass().getName());
+        }
+        if (spec.description == null || spec.description.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tool description must not be empty: " + spec.name);
+        }
+        JSONObject schema = spec.parameters;
+        if (schema == null || !"object".equals(schema.optString("type"))
+                || schema.optJSONObject("properties") == null) {
+            throw new IllegalArgumentException("Tool must expose an object JSON schema with properties: "
+                    + spec.name);
+        }
+        if (tools.containsKey(spec.name)) {
+            throw new IllegalArgumentException("Duplicate agent tool name: " + spec.name);
+        }
+        tools.put(spec.name, tool);
     }
 
-    public Tool get(String name) {
+    public synchronized Tool get(String name) {
         return tools.get(name);
     }
 
-    public List<Tool> all() {
+    public synchronized List<Tool> all() {
         return new ArrayList<>(tools.values());
     }
 }
