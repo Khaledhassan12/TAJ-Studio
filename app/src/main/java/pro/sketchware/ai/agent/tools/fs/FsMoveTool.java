@@ -5,6 +5,7 @@ import org.json.JSONArray;
 import java.io.File;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.ai.agent.Tool;
+import pro.sketchware.ai.agent.tools.DomainToolHelper;
 import pro.sketchware.utility.FileUtil;
 
 public final class FsMoveTool implements Tool {
@@ -40,12 +41,9 @@ public final class FsMoveTool implements Tool {
         if (!ctx.checkPermission(src, true)) return new ToolResult("Denied.", true);
         if (!ctx.checkPermission(dst, false)) return new ToolResult("Denied.", true);
 
-        File parent = destination.getParentFile();
-        if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
-        FileUtil.moveFile(src, dst);
-        if (destination.exists() && !source.exists()) {
+        if (DomainToolHelper.moveVerified(source, destination)) {
             return new ToolResult("verified: moved to " + dst, false);
         }
-        return new ToolResult("Move verification failed; source or destination state did not match the requested move.", true);
+        return new ToolResult("Move failed safely: the source was preserved because a verified move could not be completed.", true);
     }
 }
