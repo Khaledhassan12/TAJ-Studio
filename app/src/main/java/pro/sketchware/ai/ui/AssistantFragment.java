@@ -1116,6 +1116,19 @@ public class AssistantFragment extends Fragment {
     public void onDestroyView() {
         mainHandler.removeCallbacks(watchdog);
         forceIdle();
+        if (voiceReader != null) voiceReader.stop();
+        if (currentSession != null) {
+            for (ChatStore.Message message : currentSession.messages) {
+                if (message.toolEvents == null) continue;
+                for (ChatStore.ToolEvent event : message.toolEvents) {
+                    if ("RUNNING".equals(event.status)) {
+                        event.status = "ERROR";
+                        event.finishedAt = System.currentTimeMillis();
+                    }
+                }
+            }
+            if (chatStore != null) chatStore.saveSession(currentSession);
+        }
         if (connectionPulseAnimator != null) {
             connectionPulseAnimator.cancel();
             connectionPulseAnimator = null;
