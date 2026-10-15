@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.ArrayList;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.ProjectPaths;
+import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
 
 public final class AssetListTool implements Tool {
@@ -32,9 +33,9 @@ public final class AssetListTool implements Tool {
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String dir = args.optString("dir", "");
         String sc_id = ctx.sc_id;
-        String root = ProjectPaths.assetsRoot(sc_id) + (dir.isEmpty() ? "" : "/" + dir);
+        String root = PathResolver.resolve(sc_id, "assets/" + dir).getAbsolutePath();
 
-        if (!FileUtil.isExistFile(root)) return new ToolResult("Asset dir not found: " + dir, true);
+        if (!new File(root).isDirectory()) return new ToolResult("Asset dir not found: " + dir, true);
 
         ArrayList<String> files = new ArrayList<>();
         FileUtil.listDir(root, files);
