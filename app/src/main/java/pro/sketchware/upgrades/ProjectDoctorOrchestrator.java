@@ -18,6 +18,7 @@ import pro.sketchware.upgrades.scan.DuplicateHashFinder;
 import pro.sketchware.upgrades.scan.EmptyArtifactDetector;
 import pro.sketchware.upgrades.scan.ImportCleaner;
 import pro.sketchware.upgrades.scan.LibraryHealthDetector;
+import pro.sketchware.upgrades.scan.ProjectDiagnosticsScanner;
 import pro.sketchware.upgrades.scan.ReferenceIndexBuilder;
 import pro.sketchware.upgrades.scan.UnusedResourceDetector;
 import pro.sketchware.upgrades.scan.UnusedValuesDetector;
@@ -41,7 +42,7 @@ public class ProjectDoctorOrchestrator {
     }
 
     public void runHealthCheck(String scId, DoctorCallback callback) {
-        if (callback != null) callback.onScanStarted();
+        if (callback != null) mainHandler.post(callback::onScanStarted);
         executor.execute(() -> {
             long startTime = System.currentTimeMillis();
             String projectPath = wq.b(scId);
@@ -82,6 +83,10 @@ public class ProjectDoctorOrchestrator {
 
             // 5. Libraries
             allFindings.addAll(new LibraryHealthDetector().scan(scId));
+
+            // 6. Conservative XML/SVG, lifecycle, debug-marker and Gradle diagnostics.
+            // Findings are advisory only and are never auto-fixed.
+            allFindings.addAll(new ProjectDiagnosticsScanner().scan(projectPath));
             
             DoctorReport report = new DoctorReport(scId, allFindings, System.currentTimeMillis() - startTime);
 
