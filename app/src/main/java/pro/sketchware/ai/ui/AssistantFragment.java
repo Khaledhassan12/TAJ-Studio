@@ -1071,6 +1071,9 @@ public class AssistantFragment extends Fragment {
 
     @Override
     public void onDestroy() {
+        mainHandler.removeCallbacks(watchdog);
+        AIActivityMonitor.removeListener(stateListener);
+        AIActivityMonitor.setOnTimeoutAction(null);
         if (getActivity() != null && getActivity().isFinishing()) {
             if (orchestrator != null) orchestrator.shutdown();
             if (activeHandle != null) activeHandle.cancel();
