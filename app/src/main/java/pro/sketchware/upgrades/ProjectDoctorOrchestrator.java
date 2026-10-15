@@ -7,6 +7,8 @@ import android.os.Looper;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -53,7 +55,7 @@ public class ProjectDoctorOrchestrator {
             List<String> resDirs = new ArrayList<>();
             List<String> assetsDirs = new ArrayList<>();
             
-            discoverPaths(new File(projectPath), javaDirs, resDirs, assetsDirs);
+            discoverPaths(new File(projectPath), javaDirs, resDirs, assetsDirs, new HashSet<>(), new int[]{0}, 0);
 
             ReferenceIndexBuilder index = new ReferenceIndexBuilder();
             index.buildIndex(projectPath, javaDirs, resDirs);
@@ -96,32 +98,41 @@ public class ProjectDoctorOrchestrator {
         });
     }
 
-    private void discoverPaths(File dir, List<String> javaDirs, List<String> resDirs, List<String> assetsDirs) {
+    private void discoverPaths(File dir, List<String> javaDirs, List<String> resDirs,
+                               List<String> assetsDirs, Set<String> visited, int[] visitedDirs, int depth) {
+        if (dir == null || depth > 32 || visitedDirs[0] >= 5000) return;
+        String canonical;
+        try {
+            canonical = dir.getCanonicalPath();
+            if (!visited.add(canonical)) return;
+        } catch (Exception ignored) {
+            return;
+        }
+        visitedDirs[0]++;
+        String dirName = dir.getName().toLowerCase(java.util.Locale.ROOT);
+        if (dirName.equals(".upgrade_backup") || dirName.equals(".git") ||
+                dirName.equals(".gradle") || dirName.equals("build") ||
+                dirName.equals("outputs") || dirName.equals("generated") ||
+                dirName.equals("node_modules") || dirName.equals(".cxx") ||
+                dirName.equals("captures") || dirName.equals("builds")) return;
+
         File[] files = dir.listFiles();
         if (files == null) return;
-
         for (File file : files) {
+            if (visitedDirs[0] >= 5000) break;
+            if (!file.isDirectory()) continue;
             String name = file.getName();
-            // G6: Skip backups and mysc (though mysc is usually outside data root, check just in case)
-            if (name.equals(".upgrade_backup") || name.contains("mysc")) continue;
-
-            if (file.isDirectory()) {
-                if (name.equals("java")) {
-                    javaDirs.add(file.getAbsolutePath());
-                } else if (name.equals("assets")) {
-                    assetsDirs.add(file.getAbsolutePath());
-                } else if (isResourceFolder(name)) {
-                    // If it's a direct resource folder (like drawable-xhdpi), its parent might be the res root
-                    // But usually in Sketchware, 'resource' or 'res' folder contains these.
-                    // The rule G1 says: collect resDirs if dir name matches drawable*/mipmap*/etc.
-                    // This implies the PARENT of these folders is what detectors expect as resPath.
-                    File parent = file.getParentFile();
-                    if (parent != null && !resDirs.contains(parent.getAbsolutePath())) {
-                        resDirs.add(parent.getAbsolutePath());
-                    }
+            if (name.equals("java")) {
+                if (!javaDirs.contains(file.getAbsolutePath())) javaDirs.add(file.getAbsolutePath());
+            } else if (name.equals("assets")) {
+                if (!assetsDirs.contains(file.getAbsolutePath())) assetsDirs.add(file.getAbsolutePath());
+            } else if (isResourceFolder(name)) {
+                File parent = file.getParentFile();
+                if (parent != null && !resDirs.contains(parent.getAbsolutePath())) {
+                    resDirs.add(parent.getAbsolutePath());
                 }
-                discoverPaths(file, javaDirs, resDirs, assetsDirs);
             }
+            discoverPaths(file, javaDirs, resDirs, assetsDirs, visited, visitedDirs, depth + 1);
         }
     }
 
