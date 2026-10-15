@@ -57,7 +57,7 @@
                         android:alpha="0.24"
                         android:contentDescription="@string/taj_maintainer_primary_name"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/bg_taj_maintainer_portrait_placeholder" />
+                        android:src="@drawable/taj_maintainer_backdrop" />
 
                     <View
                         android:layout_width="match_parent"
@@ -77,7 +77,7 @@
                             android:layout_height="112dp"
                             android:contentDescription="@string/taj_maintainer_primary_name"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/bg_taj_maintainer_portrait_placeholder"
+                            android:src="@drawable/taj_maintainer_portrait"
                             app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.SketchwarePro.MaintainerPortrait"
                             app:strokeColor="?attr/colorPrimary"
                             app:strokeWidth="3dp" />
