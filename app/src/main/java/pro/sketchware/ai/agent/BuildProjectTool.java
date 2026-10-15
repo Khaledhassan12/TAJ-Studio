@@ -52,6 +52,8 @@ public final class BuildProjectTool implements Tool {
         final AtomicReference<String> terminalMessage = new AtomicReference<>("");
         final AtomicBoolean armed = new AtomicBoolean(false);
         final AtomicBoolean started = new AtomicBoolean(false);
+        final AtomicBoolean dispatchExpired = new AtomicBoolean(false);
+        final Object dispatchGate = new Object();
 
         BuildLogHub.BuildListener listener = (phase, message, history) -> {
             if (!armed.get() || hub.getSessionGeneration() <= previousGeneration) return;
@@ -73,7 +75,12 @@ public final class BuildProjectTool implements Tool {
 
         try {
             activity.runOnUiThread(() -> {
+                synchronized (dispatchGate) {
                 try {
+                    if (dispatchExpired.get()) {
+                        dispatchFailure.set("Build was not started because the UI dispatch deadline expired.");
+                        return;
+                    }
                     if (activity.isFinishing() || activity.isDestroyed()) {
                         dispatchFailure.set("The active project editor closed before the build action could run.");
                         return;
@@ -102,11 +109,15 @@ public final class BuildProjectTool implements Tool {
                 } finally {
                     dispatched.countDown();
                 }
+                }
             });
 
             if (!dispatched.await(5, TimeUnit.SECONDS)) {
+                synchronized (dispatchGate) {
+                    dispatchExpired.set(true);
+                }
                 return ToolResult.structured("build_project", "DISPATCH_TIMEOUT", null,
-                        "The UI did not confirm build dispatch within five seconds. Build status is unknown.", null, true);
+                        "The UI dispatch exceeded five seconds. A queued action was blocked from starting after timeout; if the UI had already begun dispatch, inspect the build monitor because status is unknown.", null, true);
             }
             if (dispatchFailure.get() != null) {
                 return ToolResult.structured("build_project", "NOT_STARTED", null, dispatchFailure.get(), null, true);

@@ -49,14 +49,10 @@ public final class ToolArgumentValidator {
                 Object value = args.opt(key);
                 JSONObject propertySchema = properties.optJSONObject(key);
                 if (propertySchema == null) {
-                    if (schema.has("additionalProperties")
-                            && !schema.optBoolean("additionalProperties", true)) {
-                        return "Unexpected argument: " + safeName(key);
-                    }
-                    // Bound unknown fields too; they must never bypass size/depth limits.
-                    String genericError = validateGeneric(value, key, 0);
-                    if (genericError != null) return genericError;
-                    continue;
+                    // All registered tools have a fixed top-level argument contract. Reject
+                    // unknown fields here rather than sending provider-specific JSON Schema
+                    // extensions that some function-calling APIs do not support.
+                    return "Unexpected argument: " + safeName(key);
                 }
                 String error = validateValue(key, value, propertySchema, 0);
                 if (error != null) return error;
@@ -103,10 +99,30 @@ public final class ToolArgumentValidator {
             if (text.indexOf('\u0000') >= 0) {
                 return "Argument '" + safeName(name) + "' contains an invalid character.";
             }
+        } else if (value instanceof Number) {
+            double number = ((Number) value).doubleValue();
+            if (Double.isNaN(number) || Double.isInfinite(number)) {
+                return "Argument '" + safeName(name) + "' must be a finite number.";
+            }
+            if (schema.has("minimum") && number < schema.optDouble("minimum")) {
+                return "Argument '" + safeName(name) + "' is below its minimum.";
+            }
+            if (schema.has("maximum") && number > schema.optDouble("maximum")) {
+                return "Argument '" + safeName(name) + "' exceeds its maximum.";
+            }
+            if (schema.has("exclusiveMinimum") && number <= schema.optDouble("exclusiveMinimum")) {
+                return "Argument '" + safeName(name) + "' does not exceed its exclusive minimum.";
+            }
+            if (schema.has("exclusiveMaximum") && number >= schema.optDouble("exclusiveMaximum")) {
+                return "Argument '" + safeName(name) + "' does not meet its exclusive maximum.";
+            }
         } else if (value instanceof JSONArray) {
             JSONArray array = (JSONArray) value;
             int max = Math.min(schema.optInt("maxItems", MAX_COLLECTION_ITEMS), MAX_COLLECTION_ITEMS);
             if (array.length() > max) return "Argument '" + safeName(name) + "' contains too many items.";
+            if (schema.has("minItems") && array.length() < schema.optInt("minItems")) {
+                return "Argument '" + safeName(name) + "' contains too few items.";
+            }
             JSONObject itemSchema = schema.optJSONObject("items");
             if (itemSchema != null) {
                 for (int i = 0; i < array.length(); i++) {
@@ -118,6 +134,15 @@ public final class ToolArgumentValidator {
             JSONObject object = (JSONObject) value;
             if (object.length() > MAX_COLLECTION_ITEMS) {
                 return "Argument '" + safeName(name) + "' contains too many fields.";
+            }
+            JSONArray requiredFields = schema.optJSONArray("required");
+            if (requiredFields != null) {
+                for (int i = 0; i < requiredFields.length(); i++) {
+                    String requiredName = requiredFields.optString(i, "");
+                    if (requiredName.isEmpty() || !object.has(requiredName) || object.isNull(requiredName)) {
+                        return "Missing required nested argument in '" + safeName(name) + "'.";
+                    }
+                }
             }
             JSONObject childProperties = schema.optJSONObject("properties");
             if (childProperties != null) {
@@ -177,8 +202,11 @@ public final class ToolArgumentValidator {
             case "string": return value instanceof String;
             case "boolean": return value instanceof Boolean;
             case "integer":
-                return value instanceof Number
-                        && ((Number) value).doubleValue() == ((Number) value).longValue();
+                if (!(value instanceof Number)) return false;
+                double integer = ((Number) value).doubleValue();
+                return !Double.isNaN(integer) && !Double.isInfinite(integer)
+                        && integer == Math.rint(integer)
+                        && integer >= Long.MIN_VALUE && integer < 9223372036854775808d;
             case "number": return value instanceof Number;
             default: return false; // Unsupported schema types fail closed.
         }

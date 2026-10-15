@@ -115,15 +115,6 @@ public final class ToolRegistry {
             throw new IllegalArgumentException("Tool must expose an object JSON schema with properties: "
                     + spec.name);
         }
-        // Every executor has a fixed top-level contract. Reject undeclared model fields
-        // instead of silently ignoring them; nested free-form maps remain tool-specific.
-        if (!schema.has("additionalProperties")) {
-            try {
-                schema.put("additionalProperties", false);
-            } catch (org.json.JSONException e) {
-                throw new IllegalArgumentException("Could not finalize tool schema: " + spec.name, e);
-            }
-        }
         if (tools.containsKey(spec.name)) {
             throw new IllegalArgumentException("Duplicate agent tool name: " + spec.name);
         }
