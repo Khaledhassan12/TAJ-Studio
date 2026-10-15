@@ -49,16 +49,20 @@ public final class ResCreateTool implements Tool {
             return new ToolResult("Malformed XML content.", true);
         }
 
+        File parent = f.getParentFile();
+        if (parent != null && !parent.exists()) FileUtil.makeDir(parent.getAbsolutePath());
         FileUtil.writeFile(path, content);
-        if (FileUtil.isExistFile(path)) {
+        if (f.isFile() && content.equals(FileUtil.readFile(path))) {
             if ("layout".equals(folder)) {
                 try {
                     DomainToolHelper.syncLayoutToDesigner(sc_id, name, content);
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    return new ToolResult("Resource was written but designer synchronization failed: " + e.getMessage(), true);
+                }
             }
             LiveRegistry.notifyChanged(folder, path);
             return new ToolResult("verified: created @ " + path, false);
         }
-        return new ToolResult("Failed to create file.", true);
+        return new ToolResult("Resource creation verification failed: " + path, true);
     }
 }
