@@ -56,6 +56,11 @@ public class AssistantFragment extends Fragment {
     private NavigationRailView rail;
     private FrameLayout container;
     private final SparseArray<View> panels = new SparseArray<>();
+    private ObjectAnimator connectionPulseAnimator;
+    private int baseSessionPaddingLeft;
+    private int baseSessionPaddingTop;
+    private int baseSessionPaddingRight;
+    private int baseSessionPaddingBottom;
 
     private AIConfigStore configStore;
     private ChatStore chatStore;
@@ -105,7 +110,7 @@ public class AssistantFragment extends Fragment {
         if (panel == null) return true;
         RecyclerView rv = panel.findViewById(R.id.ai_rv_chat);
         LinearLayoutManager lm = (LinearLayoutManager) rv.getLayoutManager();
-        if (lm == null || chatAdapter.getItemCount() == 0) return true;
+        if (lm == null || chatAdapter == null || chatAdapter.getItemCount() == 0) return true;
         return lm.findLastVisibleItemPosition() >= chatAdapter.getItemCount() - 2;
     }
 
@@ -113,7 +118,9 @@ public class AssistantFragment extends Fragment {
         View panel = panels.get(R.id.ai_dest_session);
         if (panel == null) return;
         RecyclerView rv = panel.findViewById(R.id.ai_rv_chat);
+        if (rv == null || chatAdapter == null) return;
         rv.post(() -> {
+            if (chatAdapter == null || rv.getAdapter() != chatAdapter) return;
             int n = chatAdapter.getItemCount();
             if (n == 0) return;
             if (smooth) rv.smoothScrollToPosition(n - 1);
@@ -429,9 +436,14 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupSessionPanel(View panel) {
+        baseSessionPaddingLeft = panel.getPaddingLeft();
+        baseSessionPaddingTop = panel.getPaddingTop();
+        baseSessionPaddingRight = panel.getPaddingRight();
+        baseSessionPaddingBottom = panel.getPaddingBottom();
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(panel, (v, insets) -> {
             int ime = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime()).bottom;
-            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), ime);
+            v.setPadding(baseSessionPaddingLeft, baseSessionPaddingTop, baseSessionPaddingRight,
+                    baseSessionPaddingBottom + ime);
             return insets;
         });
 
@@ -634,11 +646,16 @@ public class AssistantFragment extends Fragment {
         }
 
         View dot = panel.findViewById(R.id.ai_connection_dot);
-        ObjectAnimator pulse = ObjectAnimator.ofFloat(dot, "alpha", 0.4f, 1.0f);
-        pulse.setDuration(1200);
-        pulse.setRepeatCount(ValueAnimator.INFINITE);
-        pulse.setRepeatMode(ValueAnimator.REVERSE);
-        pulse.start();
+        if (connectionPulseAnimator != null) {
+            connectionPulseAnimator.cancel();
+        }
+        if (dot != null) {
+            connectionPulseAnimator = ObjectAnimator.ofFloat(dot, "alpha", 0.4f, 1.0f);
+            connectionPulseAnimator.setDuration(1200);
+            connectionPulseAnimator.setRepeatCount(ValueAnimator.INFINITE);
+            connectionPulseAnimator.setRepeatMode(ValueAnimator.REVERSE);
+            connectionPulseAnimator.start();
+        }
 
         Chip chipAgent = panel.findViewById(R.id.ai_chip_agent_state);
         if (chipAgent != null) {
@@ -1070,6 +1087,27 @@ public class AssistantFragment extends Fragment {
                 fab.setImageResource(AIActivityMonitor.getState() == SessionState.IDLE ? R.drawable.ic_mtrl_send : R.drawable.ic_mtrl_stop);
             }
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        mainHandler.removeCallbacks(watchdog);
+        if (connectionPulseAnimator != null) {
+            connectionPulseAnimator.cancel();
+            connectionPulseAnimator = null;
+        }
+        for (int i = 0; i < panels.size(); i++) {
+            View panel = panels.valueAt(i);
+            if (panel != null) {
+                panel.animate().cancel();
+                androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(panel, null);
+            }
+        }
+        panels.clear();
+        rail = null;
+        container = null;
+        chatAdapter = null;
+        super.onDestroyView();
     }
 
     @Override
