@@ -140,7 +140,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:alpha="0.75"
-            android:text="Permission modes are disabled until the agent runtime enforces them."
+            android:text="Full allows project writes; Consent asks before each write; Strict asks before overwrites. Destructive tools always require separate approval."
             android:textAppearance="?attr/textAppearanceBodySmall" />
 
         <com.google.android.material.button.MaterialButton
