@@ -321,7 +321,6 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                 boolean verified = verdict != null && verdict.startsWith("Key accepted by provider.");
                 store.setVerifiedFor(testedProviderId, verified);
                 setSyncUi(false, true);
-                updateStatusUi();
                 new MaterialAlertDialogBuilder(TagAssistantActivity.this)
                         .setTitle(R.string.ai_test_connection)
                         .setMessage(verdict)
