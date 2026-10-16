@@ -52,17 +52,28 @@ public final class JavaCreateTool implements Tool {
             }
 
             String root;
-            String declaredPackage = packagePath;
-            if (packagePath.isEmpty()) {
-                // Match ManageJavaActivity's default package for both user-managed files
-                // and generated project source files.
-                declaredPackage = JavaToolHelper.getPackageName(ctx.sc_id);
+            String projectPackage = JavaToolHelper.getPackageName(ctx.sc_id);
+            if (projectPackage == null || projectPackage.trim().isEmpty()
+                    || !projectPackage.matches("[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*")) {
+                return ToolResult.structured("java_create", "PACKAGE_UNVERIFIED", null,
+                        "The active project's package name could not be verified. Inspect project metadata/manifest before creating this source file.", null, true);
             }
-            if ("project".equals(target) && packagePath.isEmpty()) {
-                root = ProjectPaths.packagePath(ctx.sc_id);
+            String declaredPackage = projectPackage;
+            if (!packagePath.isEmpty()) {
+                // packagePath may name the project package itself or a subpackage.
+                // Never allow the model to accidentally replace the active project's package.
+                if (packagePath.equals(projectPackage) || packagePath.startsWith(projectPackage + ".")) {
+                    declaredPackage = packagePath;
+                } else {
+                    declaredPackage = projectPackage + "." + packagePath;
+                }
+            }
+            if ("project".equals(target)) {
+                root = ProjectPaths.projectJavaRoot(ctx.sc_id) + File.separator
+                        + declaredPackage.replace(".", File.separator);
             } else {
-                root = "manager".equals(target) ? ProjectPaths.javaManagerRoot(ctx.sc_id) : ProjectPaths.projectJavaRoot(ctx.sc_id);
-                if (!packagePath.isEmpty()) root += File.separator + packagePath.replace(".", File.separator);
+                root = ProjectPaths.javaManagerRoot(ctx.sc_id) + File.separator
+                        + declaredPackage.replace(".", File.separator);
             }
             String suffix = folder ? "" : (type.startsWith("java_") ? ".java" : ".kt");
             targetFile = PathResolver.validateProjectPath(ctx.sc_id, new File(root, name + suffix));
@@ -80,8 +91,19 @@ public final class JavaCreateTool implements Tool {
             }
 
             content = args.optString("content", "");
+            String pkg = declaredPackage;
+            if (!content.isEmpty()) {
+                // Enforce agreement between the file path and package declaration even
+                // when the model supplies a complete custom source body.
+                if (type.startsWith("java_")) {
+                    content = content.replaceFirst("(?m)^\\s*package\\s+[A-Za-z_$][A-Za-z0-9_$.]*\\s*;\\s*\\r?\\n?", "");
+                    content = "package " + pkg + ";\\n\\n" + content;
+                } else if (type.startsWith("kotlin_")) {
+                    content = content.replaceFirst("(?m)^\\s*package\\s+[A-Za-z_$][A-Za-z0-9_$.]*\\s*\\r?\\n?", "");
+                    content = "package " + pkg + "\\n\\n" + content;
+                }
+            }
             if (content.isEmpty()) {
-                String pkg = declaredPackage == null ? "" : declaredPackage;
                 String prefix = pkg.isEmpty() ? "" : "package " + pkg + ";\n\n";
                 if ("java_activity".equals(type)) {
                     content = prefix + "import android.app.Activity;\nimport android.os.Bundle;\n\n"
