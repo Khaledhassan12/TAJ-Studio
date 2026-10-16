@@ -178,7 +178,8 @@ public class AssistantFragment extends Fragment {
         activeRequestId = 0L;
         requestSequence++;
         mainHandler.removeCallbacks(watchdog);
-        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "CANCELLED";
+        if (rateLimitMsg != null && ("WAITING".equals(rateLimitMsg.toolState)
+                || "RETRYING".equals(rateLimitMsg.toolState))) rateLimitMsg.toolState = "CANCELLED";
         activeToolCount.set(0);
         if (currentSession != null) {
             long finishedAt = System.currentTimeMillis();
@@ -854,8 +855,16 @@ public class AssistantFragment extends Fragment {
                     Snackbar.make(panel, "This card has no active provider wait to skip.", Snackbar.LENGTH_LONG).show();
                     return;
                 }
+                if (orchestrator == null && activeHandle == null) {
+                    Snackbar.make(panel, "The provider no longer has an active retry wait.", Snackbar.LENGTH_LONG).show();
+                    return;
+                }
                 if (orchestrator != null) orchestrator.skipWait();
                 if (activeHandle != null) activeHandle.skipWait();
+                // The skip was dispatched, but only provider progress may confirm it resumed.
+                card.toolState = "RETRYING";
+                chatAdapter.notifyDataSetChanged();
+                scheduleSessionSave();
                 Snackbar.make(panel, "Retry requested; waiting for provider progress.", Snackbar.LENGTH_SHORT).show();
             }
 
@@ -1231,7 +1240,8 @@ public class AssistantFragment extends Fragment {
     /** Only mark a wait as resumed after a real request/tool callback arrives. */
     private void markRateLimitResumed(long requestId) {
         if (!isCurrentRequest(requestId) || rateLimitMsg == null
-                || !"WAITING".equals(rateLimitMsg.toolState)) return;
+                || !("WAITING".equals(rateLimitMsg.toolState)
+                    || "RETRYING".equals(rateLimitMsg.toolState))) return;
         rateLimitMsg.toolState = "RESUMED";
         if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
         scheduleSessionSave();
@@ -1517,7 +1527,8 @@ public class AssistantFragment extends Fragment {
                         }
 
                         activeToolCount.set(0);
-                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "COLLAPSED";
+                        if (rateLimitMsg != null && ("WAITING".equals(rateLimitMsg.toolState)
+                                || "RETRYING".equals(rateLimitMsg.toolState))) rateLimitMsg.toolState = "COLLAPSED";
                         AIActivityMonitor.setState(SessionState.IDLE);
                         setTypingIndicator(false);
                         saveSessionNow();
@@ -1538,7 +1549,8 @@ public class AssistantFragment extends Fragment {
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
                         activeToolCount.set(0);
-                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "EXHAUSTED";
+                        if (rateLimitMsg != null && ("WAITING".equals(rateLimitMsg.toolState)
+                                || "RETRYING".equals(rateLimitMsg.toolState))) rateLimitMsg.toolState = "EXHAUSTED";
                         AIActivityMonitor.setState(SessionState.IDLE);
                         setTypingIndicator(false);
                         if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
@@ -1557,7 +1569,8 @@ public class AssistantFragment extends Fragment {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         reconcileTools(toolsCard);
                         activeToolCount.set(0);
-                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "CANCELLED";
+                        if (rateLimitMsg != null && ("WAITING".equals(rateLimitMsg.toolState)
+                || "RETRYING".equals(rateLimitMsg.toolState))) rateLimitMsg.toolState = "CANCELLED";
                         AIActivityMonitor.setState(SessionState.IDLE);
                         setTypingIndicator(false);
                         if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
@@ -1632,7 +1645,8 @@ public class AssistantFragment extends Fragment {
                             }
                         }
 
-                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "COLLAPSED";
+                        if (rateLimitMsg != null && ("WAITING".equals(rateLimitMsg.toolState)
+                                || "RETRYING".equals(rateLimitMsg.toolState))) rateLimitMsg.toolState = "COLLAPSED";
                         AIActivityMonitor.setState(SessionState.IDLE);
                         setTypingIndicator(false);
                         saveSessionNow();
@@ -1651,7 +1665,8 @@ public class AssistantFragment extends Fragment {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
-                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "EXHAUSTED";
+                        if (rateLimitMsg != null && ("WAITING".equals(rateLimitMsg.toolState)
+                                || "RETRYING".equals(rateLimitMsg.toolState))) rateLimitMsg.toolState = "EXHAUSTED";
                         AIActivityMonitor.setState(SessionState.IDLE);
                         setTypingIndicator(false);
                         if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
@@ -1668,7 +1683,8 @@ public class AssistantFragment extends Fragment {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
-                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "CANCELLED";
+                        if (rateLimitMsg != null && ("WAITING".equals(rateLimitMsg.toolState)
+                || "RETRYING".equals(rateLimitMsg.toolState))) rateLimitMsg.toolState = "CANCELLED";
                         AIActivityMonitor.setState(SessionState.IDLE);
                         setTypingIndicator(false);
                         saveSessionNow();
