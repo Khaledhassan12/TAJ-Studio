@@ -265,8 +265,10 @@ public class ViewCodeEditorActivity extends BaseAppCompatActivity {
             }
             cc.a(filename);
             cc.a(filename, bean);
-            // Replace the view beans with the parsed layout
+            // Replace and persist the parsed layout so the visual designer and subsequent
+            // XML editor opens use the same saved model.
             jC.a(sc_id).c.put(filename, parsedLayout);
+            jC.a(sc_id).i();
             setResult(RESULT_OK);
         } catch (Exception e) {
             SketchwareUtil.toastError(e.toString());
