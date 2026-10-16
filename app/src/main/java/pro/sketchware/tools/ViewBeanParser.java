@@ -56,6 +56,15 @@ public class ViewBeanParser {
     }
 
     public static String generateUniqueId(Set<String> ids, int type, String className) {
+        return generateUniqueId(ids, type, className, viewsCount);
+    }
+
+    /**
+     * Generates IDs with caller-owned counters. Parsing a layout must not mutate a
+     * process-wide counter: reparsing the same XML otherwise changes IDs for widgets
+     * without explicit android:id attributes, breaking selection and logic references.
+     */
+    private static String generateUniqueId(Set<String> ids, int type, String className, int[] counts) {
         String prefix = wq.b(type);
         var name = ViewBean.getViewTypeName(type);
         // Skip these types as they're the only ones with a different view type name: VScrollView
@@ -71,11 +80,11 @@ public class ViewBeanParser {
                 prefix = getSnakeCaseId(className);
             }
         }
-        int count = ++viewsCount[type];
+        int count = ++counts[type];
         String id = prefix + count;
 
         while (ids.contains(id)) {
-            count = ++viewsCount[type];
+            count = ++counts[type];
             id = prefix + count;
         }
 
@@ -158,6 +167,10 @@ public class ViewBeanParser {
         Map<String, Map<String, String>> beansAttributes = new HashMap<>();
         Stack<ViewBean> viewStack = new Stack<>();
         int index = 0;
+        // IDs for views lacking android:id are deterministic for each layout parse.
+        // A parser-local counter also prevents concurrent projects/layouts from
+        // influencing one another through the old static counter array.
+        int[] parseViewCounts = new int[viewsCount.length];
         boolean isRootSkipped = !skipRoot;
 
         while (parser.getEventType() != XmlPullParser.END_DOCUMENT) {
@@ -188,7 +201,7 @@ public class ViewBeanParser {
                     String id =
                             attrId != null && !ids.contains(parseReferName(attrId, "/"))
                                     ? parseReferName(attrId, "/")
-                                    : generateUniqueId(ids, type, className);
+                                    : generateUniqueId(ids, type, className, parseViewCounts);
 
                     // Special case for 'include' tag with layout reference, treated as ID in
                     // ViewBean
