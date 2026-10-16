@@ -592,9 +592,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     tvSub.setVisibility(View.VISIBLE);
                     tvSub.setText("Retry requested; waiting for provider progress");
                     actions.setVisibility(View.VISIBLE);
-                    btnRetry.setText("Retrying…");
+                    ((com.google.android.material.button.MaterialButton) btnRetry).setText("Retrying…");
                     btnRetry.setEnabled(false);
-                    btnCancel.setText("Cancel");
+                    ((com.google.android.material.button.MaterialButton) btnCancel).setText("Cancel");
                     btnCancel.setEnabled(true);
                     tvFinal.setVisibility(View.GONE);
                 } else if ("RESUMED".equals(status)) {
