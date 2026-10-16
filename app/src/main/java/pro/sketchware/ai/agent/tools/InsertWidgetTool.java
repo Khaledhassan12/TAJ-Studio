@@ -240,11 +240,15 @@ public final class InsertWidgetTool implements Tool {
     }
 
     private String extractId(String xml) {
-        int idx = xml.indexOf("android:id=\"@+id/");
-        if (idx == -1) return null;
-        int start = idx + 17;
-        int end = xml.indexOf("\"", start);
-        if (end == -1) return null;
-        return xml.substring(start, end);
+        // Only inspect the inserted widget's root tag. A nested child's ID must not
+        // be mistaken for the identity of the widget that was requested.
+        int tagStart = findFirstStartTag(xml);
+        int tagEnd = findTagEnd(xml, tagStart);
+        if (tagStart < 0 || tagEnd < 0) return null;
+        String rootTag = xml.substring(tagStart, tagEnd + 1);
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("android:id\\s*=\\s*(['\"])@\\+?id/([^'\"]+)\\1")
+                .matcher(rootTag);
+        return matcher.find() ? matcher.group(2).trim() : null;
     }
 }
