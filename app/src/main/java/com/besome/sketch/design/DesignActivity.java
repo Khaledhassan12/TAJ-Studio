@@ -179,7 +179,9 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         if (result.getResultCode() == RESULT_OK) {
             if (viewTabAdapter != null) {
                 viewTabAdapter.i();
+                refreshViewTabAdapter();
             }
+            refreshFileSelector();
         }
     });
     private rs eventTabAdapter;
@@ -951,24 +953,50 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
      * Opens {@link ViewCodeEditorActivity}.
      */
     void toViewCodeEditor() {
-        if (projectFile == null) return;
+        if (projectFile == null) {
+            SketchwareUtil.toastError("No visual-design screen is selected.");
+            return;
+        }
         k();
         new Thread(() -> {
-            String filename = Helper.getText(fileName);
-            // var yq = new yq(getApplicationContext(), sc_id);
-            var xmlGenerator = new Ox(q.N, projectFile);
-            var projectDataManager = jC.a(sc_id);
-            var viewBeans = projectDataManager.d(filename);
-            var viewFab = projectDataManager.h(filename);
-            xmlGenerator.setExcludeAppCompat(true);
-            xmlGenerator.a(eC.a(viewBeans), viewFab);
-            String content = xmlGenerator.b();
-            runOnUiThread(() -> {
-                if (isFinishing()) return;
-                h();
-                launchActivity(ViewCodeEditorActivity.class, openViewCodeEditor, new Pair<>("title", filename), new Pair<>("content", content));
-            });
-        }).start();
+            try {
+                // Use the selected ProjectFileBean as the source of truth. fileName is a
+                // presentation label and may show a Java filename when another tab is active.
+                String filename = projectFile.getXmlName();
+                if (filename == null || filename.trim().isEmpty()) {
+                    throw new IllegalStateException("The selected screen has no XML layout name.");
+                }
+                var xmlGenerator = new Ox(q.N, projectFile);
+                var projectDataManager = jC.a(sc_id);
+                var viewBeans = projectDataManager.d(filename);
+                var viewFab = projectDataManager.h(filename);
+                xmlGenerator.setExcludeAppCompat(true);
+                xmlGenerator.a(eC.a(viewBeans), viewFab);
+                String content = xmlGenerator.b();
+                if (content == null || content.trim().isEmpty()) {
+                    content = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                            + "<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\" "
+                            + "android:layout_width=\"match_parent\" "
+                            + "android:layout_height=\"match_parent\" "
+                            + "android:orientation=\"vertical\" />";
+                }
+                final String editorContent = content;
+                runOnUiThread(() -> {
+                    h();
+                    if (isFinishing() || isDestroyed()) return;
+                    launchActivity(ViewCodeEditorActivity.class, openViewCodeEditor,
+                            new Pair<>("title", filename), new Pair<>("content", editorContent));
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    h();
+                    if (!isFinishing()) {
+                        SketchwareUtil.toastError("Could not generate XML for the selected screen: "
+                                + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+                    }
+                });
+            }
+        }, "taj-direct-xml-editor").start();
     }
 
     /**
