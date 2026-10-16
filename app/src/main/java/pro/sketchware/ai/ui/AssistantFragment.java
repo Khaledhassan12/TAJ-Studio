@@ -96,9 +96,12 @@ public class AssistantFragment extends Fragment {
         if (finishedAgent != null) finishedAgent.shutdown();
     }
 
-    private String findLastUserPrompt() {
+    private String findLastUserPromptBefore(ChatStore.Message card) {
         if (currentSession == null || currentSession.messages == null) return null;
-        for (int i = currentSession.messages.size() - 1; i >= 0; i--) {
+        int limit = currentSession.messages.size();
+        int cardIndex = card == null ? -1 : currentSession.messages.indexOf(card);
+        if (cardIndex >= 0) limit = cardIndex;
+        for (int i = limit - 1; i >= 0; i--) {
             ChatStore.Message message = currentSession.messages.get(i);
             if (message != null && "user".equals(message.role)
                     && message.text != null && !message.text.trim().isEmpty()) return message.text;
@@ -821,27 +824,34 @@ public class AssistantFragment extends Fragment {
 
         chatAdapter.setOnRateLimitActionListener(new ChatAdapter.OnRateLimitActionListener() {
             @Override
-            public void onRetryNow() {
-                String status = rateLimitMsg == null ? null : rateLimitMsg.toolState;
+            public void onRetryNow(ChatStore.Message card) {
+                if (card == null || currentSession == null || !currentSession.messages.contains(card)) {
+                    Snackbar.make(panel, "This retry card is no longer part of the active conversation.", Snackbar.LENGTH_LONG).show();
+                    return;
+                }
+                String status = card.toolState;
                 if ("EXHAUSTED".equals(status) || "FAILED".equals(status)) {
                     if (AIActivityMonitor.isBusy()) {
-                        Snackbar.make(panel, "Stop the active request before retrying the previous message.", Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(panel, "Stop the active request before retrying this message.", Snackbar.LENGTH_LONG).show();
                         return;
                     }
-                    String prompt = findLastUserPrompt();
+                    String prompt = findLastUserPromptBefore(card);
                     if (prompt == null) {
-                        Snackbar.make(panel, "The original prompt is unavailable; no retry was started.", Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(panel, "No earlier user prompt is associated with this retry card.", Snackbar.LENGTH_LONG).show();
                         return;
                     }
-                    rateLimitMsg.toolState = "COLLAPSED";
+                    card.toolState = "COLLAPSED";
                     chatAdapter.notifyDataSetChanged();
                     scheduleSessionSave();
                     sendMessage(prompt, true);
                     return;
                 }
-                if (!isCurrentRequest(activeRequestId)
-                        || AIActivityMonitor.getState() != SessionState.WAITING_RATE_LIMIT) {
-                    Snackbar.make(panel, "There is no active provider retry wait to skip.", Snackbar.LENGTH_LONG).show();
+
+                // A stale card must never skip the wait of a different request.
+                if (card != rateLimitMsg || !isCurrentRequest(activeRequestId)
+                        || AIActivityMonitor.getState() != SessionState.WAITING_RATE_LIMIT
+                        || !"WAITING".equals(card.toolState)) {
+                    Snackbar.make(panel, "This card has no active provider wait to skip.", Snackbar.LENGTH_LONG).show();
                     return;
                 }
                 if (orchestrator != null) orchestrator.skipWait();
@@ -850,17 +860,25 @@ public class AssistantFragment extends Fragment {
             }
 
             @Override
-            public void onCancel() {
-                if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) {
-                    rateLimitMsg.toolState = "CANCELLED";
-                    if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
+            public void onCancel(ChatStore.Message card) {
+                if (card == null || currentSession == null || !currentSession.messages.contains(card)) return;
+                if (card != rateLimitMsg || !isCurrentRequest(activeRequestId)
+                        || AIActivityMonitor.getState() != SessionState.WAITING_RATE_LIMIT) {
+                    // This is a historical/stale card. Close only this card; never cancel an unrelated run.
+                    card.toolState = "COLLAPSED";
+                    chatAdapter.notifyDataSetChanged();
                     scheduleSessionSave();
+                    Snackbar.make(panel, "This wait is no longer active; the current request was not cancelled.", Snackbar.LENGTH_LONG).show();
+                    return;
                 }
+                card.toolState = "CANCELLED";
+                chatAdapter.notifyDataSetChanged();
+                scheduleSessionSave();
                 forceIdle();
             }
 
             @Override
-            public void onRetryExhausted() {
+            public void onRetryExhausted(ChatStore.Message card) {
                 startActivity(new Intent(getActivity(), TagAssistantActivity.class));
             }
         });
