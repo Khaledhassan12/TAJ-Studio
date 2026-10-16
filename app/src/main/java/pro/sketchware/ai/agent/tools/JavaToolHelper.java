@@ -30,10 +30,22 @@ public final class JavaToolHelper {
     }
 
     public static String getPackageName(String sc_id) {
+        String verified = getVerifiedPackageName(sc_id);
+        return verified != null ? verified : "com.my.app";
+    }
+
+    /**
+     * Returns the package stored for the currently selected project, without silently
+     * substituting a sample/default package when project metadata is unavailable.
+     */
+    public static String getVerifiedPackageName(String sc_id) {
         HashMap<String, Object> metadata = lC.b(sc_id);
-        if (metadata == null) return "com.my.app";
-        String pkg = (String) metadata.get("my_sc_pkg_name");
-        return pkg != null ? pkg : "com.my.app";
+        if (metadata == null) return null;
+        Object value = metadata.get("my_sc_pkg_name");
+        if (!(value instanceof String)) return null;
+        String pkg = ((String) value).trim();
+        if (pkg.isEmpty() || !pkg.matches("[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*")) return null;
+        return pkg;
     }
 
     public static void backup(String path) {
