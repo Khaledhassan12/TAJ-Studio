@@ -316,14 +316,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    @Override
-    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
-        if (holder instanceof RateLimitViewHolder) {
-            ((RateLimitViewHolder) holder).stopTicker();
-        }
-        super.onViewRecycled(holder);
-    }
-
     private void setupActions(View row, View copy, View edit, View branch, View share, View regen, View voice, ChatStore.Message m, int pos) {
         row.setAlpha(0f);
         row.animate().alpha(1f).setDuration(300).setStartDelay(100).start();
@@ -337,6 +329,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+        if (holder instanceof RateLimitViewHolder) {
+            ((RateLimitViewHolder) holder).stopTicker();
+        }
         if (holder instanceof ThinkingViewHolder) {
             ((ThinkingViewHolder) holder).stopTimer();
         }
