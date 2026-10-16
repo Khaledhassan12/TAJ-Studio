@@ -366,6 +366,12 @@ public class AssistantFragment extends Fragment {
 
         if (panel != null) {
             if (id == R.id.ai_dest_history) refreshHistory();
+            if (id == R.id.ai_dest_favorites) {
+                RecyclerView favoritesList = panel.findViewById(R.id.rv_favorites);
+                if (favoritesList != null && favoritesList.getAdapter() instanceof FavoritesAdapter) {
+                    ((FavoritesAdapter) favoritesList.getAdapter()).reload();
+                }
+            }
             container.removeAllViews();
             container.addView(panel);
             panel.setAlpha(0);
@@ -583,14 +589,9 @@ public class AssistantFragment extends Fragment {
             });
         }
 
-        // ChatAdapter currently displays plain text; disable the misleading control
-        // until markdown rendering is implemented rather than pretending it works.
-        com.google.android.material.materialswitch.MaterialSwitch switchMarkdown = panel.findViewById(R.id.switch_markdown);
-        if (switchMarkdown != null) {
-            switchMarkdown.setChecked(false);
-            switchMarkdown.setEnabled(false);
-            switchMarkdown.setText("Markdown rendering (not available yet)");
-        }
+        // Keep the legacy resource ID, but do not present an unsupported feature as a setting.
+        View switchMarkdown = panel.findViewById(R.id.switch_markdown);
+        if (switchMarkdown != null) switchMarkdown.setVisibility(View.GONE);
 
         com.google.android.material.materialswitch.MaterialSwitch switchThinking = panel.findViewById(R.id.switch_thinking);
         if (switchThinking != null) {
@@ -604,41 +605,16 @@ public class AssistantFragment extends Fragment {
             switchAutoRetry.setOnCheckedChangeListener((v, checked) -> configStore.setAutoRetry(checked));
         }
 
-        com.google.android.material.chip.ChipGroup cgPerm = panel.findViewById(R.id.cg_perm_mode);
-        if (cgPerm != null) {
-            String current = configStore.getAgentPermMode();
-            if ("full".equals(current)) cgPerm.check(R.id.chip_perm_full);
-            else if ("consent".equals(current)) cgPerm.check(R.id.chip_perm_consent);
-            else if ("strict".equals(current)) cgPerm.check(R.id.chip_perm_strict);
-            
-            cgPerm.setOnCheckedStateChangeListener((group, checkedIds) -> {
-                if (checkedIds.isEmpty()) configStore.clearAgentPermMode();
-                else {
-                    int id = checkedIds.get(0);
-                    if (id == R.id.chip_perm_full) configStore.setAgentPermMode("full");
-                    else if (id == R.id.chip_perm_consent) configStore.setAgentPermMode("consent");
-                    else if (id == R.id.chip_perm_strict) configStore.setAgentPermMode("strict");
-                }
-            });
-        }
-        
-        if (cgPerm != null) {
-            cgPerm.setEnabled(false);
-            cgPerm.setContentDescription("Permission modes are not enforced by the current agent runtime");
-            for (int chipId : new int[]{R.id.chip_perm_full, R.id.chip_perm_consent, R.id.chip_perm_strict}) {
-                View permissionChip = panel.findViewById(chipId);
-                if (permissionChip != null) permissionChip.setEnabled(false);
-            }
-        }
-
-        View btnReset = panel.findViewById(R.id.btn_reset_perm);
-        if (btnReset != null) {
-            btnReset.setEnabled(false);
-            btnReset.setOnClickListener(v -> {
-                configStore.clearAgentPermMode();
-                if (cgPerm != null) cgPerm.clearCheck();
-                Snackbar.make(panel, "Permissions reset — will ask next time", Snackbar.LENGTH_SHORT).show();
-            });
+        // Permission profiles are intentionally not exposed until the runtime enforces
+        // them. Keep their resource IDs for compatibility, but hide the inert controls.
+        View permissionModes = panel.findViewById(R.id.cg_perm_mode);
+        if (permissionModes != null) permissionModes.setVisibility(View.GONE);
+        View resetPermissions = panel.findViewById(R.id.btn_reset_perm);
+        if (resetPermissions != null) resetPermissions.setVisibility(View.GONE);
+        TextView permissionStatus = panel.findViewById(R.id.tv_perm_mode_status);
+        if (permissionStatus != null) {
+            permissionStatus.setVisibility(View.VISIBLE);
+            permissionStatus.setText("Permission profiles are unavailable because the current agent runtime does not enforce them.");
         }
 
         refreshReadback(panel);
@@ -656,39 +632,51 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupModelsPanel(View panel) {
+        String providerId = configStore.getSelectedProviderId();
+        TextView tvProvider = panel.findViewById(R.id.ai_tv_provider_name);
+        TextView tvModel = panel.findViewById(R.id.ai_tv_current_model);
+        ProviderProfile selectedProfile = AIProviderRegistry.getInstance(requireContext()).get(providerId);
+        if (tvProvider != null) {
+            tvProvider.setText(selectedProfile == null ? providerId : selectedProfile.displayName);
+        }
+        if (tvModel != null) {
+            String selectedModel = configStore.getModel(providerId);
+            tvModel.setText(selectedModel == null || selectedModel.trim().isEmpty()
+                    ? "No model selected" : selectedModel);
+        }
+
         RecyclerView rv = panel.findViewById(R.id.ai_rv_models);
         if (rv != null) {
-            rv.setLayoutManager(new LinearLayoutManager(getContext()));
+            rv.setLayoutManager(new LinearLayoutManager(panel.getContext()));
             ModelAdapter adapter = new ModelAdapter();
             rv.setAdapter(adapter);
-
-            String providerId = configStore.getSelectedProviderId();
-            List<pro.sketchware.ai.core.ModelItem> cached = configStore.loadModelsCache(providerId);
-            adapter.setModels(cached);
-
+            adapter.setModels(configStore.loadModelsCache(providerId));
             adapter.setOnModelClickListener(model -> {
+                if (model == null || model.id == null || model.id.trim().isEmpty()) return;
                 configStore.setModel(providerId, model.id);
+                if (tvModel != null) tvModel.setText(model.id);
                 View sessionPanel = panels.get(R.id.ai_dest_session);
                 if (sessionPanel != null) updateSessionHeader(sessionPanel);
                 Snackbar.make(panel, "Model switched to " + model.id, Snackbar.LENGTH_SHORT).show();
             });
+
+            android.widget.EditText search = panel.findViewById(R.id.ai_et_search);
+            if (search != null) {
+                search.addTextChangedListener(new android.text.TextWatcher() {
+                    @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                        adapter.filterModels(s == null ? "" : s.toString());
+                    }
+                    @Override public void afterTextChanged(android.text.Editable editable) {}
+                });
+            }
         }
 
         View btnSync = panel.findViewById(R.id.ai_btn_sync);
         if (btnSync != null) {
-            btnSync.setOnClickListener(v -> {
-                Snackbar.make(panel, "Open Settings to sync models", Snackbar.LENGTH_LONG)
-                        .setAction("Open", v2 -> {
-                            startActivity(new Intent(getActivity(), TagAssistantActivity.class));
-                        }).show();
-            });
+            btnSync.setOnClickListener(v ->
+                    startActivity(new Intent(requireActivity(), TagAssistantActivity.class)));
         }
-
-        TextView tvProvider = panel.findViewById(R.id.ai_tv_provider_name);
-        TextView tvModel = panel.findViewById(R.id.ai_tv_current_model);
-        String providerId = configStore.getSelectedProviderId();
-        if (tvProvider != null) tvProvider.setText(AIProviderRegistry.getInstance(getContext()).get(providerId).displayName);
-        if (tvModel != null) tvModel.setText(configStore.getModel(providerId));
     }
 
     private void setupAgentsPanel(View panel) {
