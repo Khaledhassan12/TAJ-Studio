@@ -170,17 +170,31 @@ public final class AgentOrchestrator {
                                             if (projectChanged != null) {
                                                 result = Tool.ToolResult.structured(call.name, "PROJECT_CHANGED", null,
                                                         projectChanged + " The approved operation was not started.", null, true);
+                                            } else if (isCancelled) {
+                                                result = Tool.ToolResult.structured(call.name, "CANCELLED", null,
+                                                        "The task was cancelled before the approved operation started. No tool operation was executed.", null, true);
                                             } else {
                                                 context.beginApprovedMutation();
                                                 try {
-                                                    result = tool.run(call.arguments, context);
+                                                    result = isCancelled
+                                                            ? Tool.ToolResult.structured(call.name, "CANCELLED", null,
+                                                                    "The task was cancelled before the operation started.", null, true)
+                                                            : tool.run(call.arguments, context);
                                                 } finally {
                                                     context.endApprovedMutation();
                                                 }
                                             }
                                         }
+                                    } else if (isCancelled) {
+                                        result = Tool.ToolResult.structured(call.name, "CANCELLED", null,
+                                                "The task was cancelled before the operation started. No tool operation was executed.", null, true);
                                     } else {
-                                        result = tool.run(call.arguments, context);
+                                        // Recheck cancellation at the execution boundary so a
+                                        // cancellation received after validation does not start a new tool.
+                                        result = isCancelled
+                                                ? Tool.ToolResult.structured(call.name, "CANCELLED", null,
+                                                        "The task was cancelled before the operation started.", null, true)
+                                                : tool.run(call.arguments, context);
                                     }
                                     conversation.add(AIMessage.toolResult(call.id, result.content));
                                     success = !result.error;
