@@ -301,6 +301,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         store.setKeyFor(currentProfile.id, key);
         store.setBaseUrlFor(currentProfile.id, url);
         store.setModelFor(currentProfile.id, model);
+        // Saving credentials/model invalidates the previous verification state.
+        updateStatusUi();
 
         Snackbar.make(binding.getRoot(), R.string.ai_saved, Snackbar.LENGTH_SHORT).show();
     }
