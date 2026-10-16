@@ -55,6 +55,11 @@ public final class ConformanceDiagnostics {
             } else if (!(base.startsWith("https://") || base.startsWith("http://"))) {
                 issues.add("Default base URL does not use HTTP or HTTPS.");
             }
+            String upperBase = base.toUpperCase(java.util.Locale.ROOT);
+            if (upperBase.contains("YOUR-RESOURCE") || upperBase.contains("YOUR-DEPLOYMENT")
+                    || upperBase.contains("YOUR_API_KEY")) {
+                issues.add("Default base URL still contains a setup placeholder.");
+            }
 
             report.append(issues.isEmpty() ? "[OK] " : "[WARN] ")
                     .append(profile.displayName == null || profile.displayName.trim().isEmpty()
