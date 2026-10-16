@@ -1500,7 +1500,7 @@ public class AssistantFragment extends Fragment {
                 public void onError(Throwable error) {
                     if (!isCurrentRequest(requestId)) return;
                     mainHandler.removeCallbacks(watchdog);
-                    UiPoster.post(() => {
+                    UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         reconcileTools(toolsCard);
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
@@ -1574,7 +1574,7 @@ public class AssistantFragment extends Fragment {
                 public void onComplete(AIResponse response) {
                     if (!isCurrentRequest(requestId)) return;
                     mainHandler.removeCallbacks(watchdog);
-                    UiPoster.post(() => {
+                    UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
@@ -1615,7 +1615,7 @@ public class AssistantFragment extends Fragment {
                 public void onError(Throwable error) {
                     if (!isCurrentRequest(requestId)) return;
                     mainHandler.removeCallbacks(watchdog);
-                    UiPoster.post(() => {
+                    UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
