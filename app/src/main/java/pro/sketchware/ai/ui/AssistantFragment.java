@@ -109,6 +109,29 @@ public class AssistantFragment extends Fragment {
         return null;
     }
 
+    private boolean hasToolEventsBeforeRetryCard(ChatStore.Message card) {
+        if (currentSession == null || currentSession.messages == null || card == null) return false;
+        int cardIndex = currentSession.messages.indexOf(card);
+        if (cardIndex < 0) return false;
+        int userIndex = -1;
+        for (int i = cardIndex - 1; i >= 0; i--) {
+            ChatStore.Message message = currentSession.messages.get(i);
+            if (message != null && "user".equals(message.role)) {
+                userIndex = i;
+                break;
+            }
+        }
+        if (userIndex < 0) return false;
+        for (int i = userIndex + 1; i < cardIndex; i++) {
+            ChatStore.Message message = currentSession.messages.get(i);
+            if (message != null && "tools_card".equals(message.role)
+                    && message.toolEvents != null && !message.toolEvents.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private String sc_id;
     private int pendingEditIndex = -1;
     private String currentSpeakingText = null;
@@ -832,6 +855,12 @@ public class AssistantFragment extends Fragment {
                 }
                 String status = card.toolState;
                 if ("EXHAUSTED".equals(status) || "FAILED".equals(status)) {
+                    // Only the current task's retry card can restart work. Historical cards cannot
+                    // accidentally replay a different task after the session has moved on.
+                    if (card != rateLimitMsg) {
+                        Snackbar.make(panel, "This retry card belongs to an earlier task. Use the current task's controls instead.", Snackbar.LENGTH_LONG).show();
+                        return;
+                    }
                     if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
                         Snackbar.make(panel, "Stop the active request before retrying this message.", Snackbar.LENGTH_LONG).show();
                         return;
@@ -841,10 +870,35 @@ public class AssistantFragment extends Fragment {
                         Snackbar.make(panel, "No earlier user prompt is associated with this retry card.", Snackbar.LENGTH_LONG).show();
                         return;
                     }
-                    card.toolState = "COLLAPSED";
-                    chatAdapter.notifyDataSetChanged();
-                    scheduleSessionSave();
-                    sendMessage(prompt, true);
+
+                    Runnable restartTask = () -> {
+                        // Revalidate after a confirmation dialog has been displayed; the user
+                        // may have switched or created another session while it was open.
+                        if (!isAdded() || currentSession == null || !currentSession.messages.contains(card)
+                                || card != rateLimitMsg
+                                || (!"EXHAUSTED".equals(card.toolState) && !"FAILED".equals(card.toolState))
+                                || AIActivityMonitor.isBusy() || activeRequestId != 0L) {
+                            if (isAdded() && getView() != null) {
+                                Snackbar.make(getView(), "The task changed while the retry dialog was open. No retry was started.", Snackbar.LENGTH_LONG).show();
+                            }
+                            return;
+                        }
+                        card.toolState = "COLLAPSED";
+                        chatAdapter.notifyDataSetChanged();
+                        scheduleSessionSave();
+                        sendMessage(prompt, true);
+                    };
+
+                    if (hasToolEventsBeforeRetryCard(card)) {
+                        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                                .setTitle("Retry agent task?")
+                                .setMessage("This task already executed one or more tools. Restarting the original prompt may repeat file changes or other project operations. Inspect the current project state before continuing.")
+                                .setNegativeButton("Cancel", (dialog, which) -> { })
+                                .setPositiveButton("Retry anyway", (dialog, which) -> restartTask.run())
+                                .show();
+                    } else {
+                        restartTask.run();
+                    }
                     return;
                 }
 
