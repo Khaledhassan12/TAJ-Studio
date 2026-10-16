@@ -165,6 +165,15 @@ public interface Tool {
 
             pro.sketchware.ai.config.AIConfigStore store = pro.sketchware.ai.config.AIConfigStore.getInstance(a);
             String mode = store.getAgentPermMode();
+            if (mode == null) mode = "";
+
+            // Recover from unknown values written by older builds instead of silently
+            // denying every project write without explaining how to recover.
+            if (!mode.isEmpty() && !"full".equals(mode)
+                    && !"consent".equals(mode) && !"strict".equals(mode)) {
+                store.clearAgentPermMode();
+                mode = "";
+            }
 
             if (mode.isEmpty()) {
                 return showPermissionDialog(a, store, path);
