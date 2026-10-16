@@ -52,9 +52,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     public interface OnRateLimitActionListener {
-        void onRetryNow();
-        void onCancel();
-        void onRetryExhausted();
+        void onRetryNow(ChatStore.Message card);
+        void onCancel(ChatStore.Message card);
+        void onRetryExhausted(ChatStore.Message card);
     }
 
     public void setOnRateLimitActionListener(OnRateLimitActionListener listener) {
@@ -614,13 +614,13 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 }
             }
 
-            btnRetry.setOnClickListener(v -> { if (listener != null) listener.onRetryNow(); });
+            btnRetry.setOnClickListener(v -> { if (listener != null) listener.onRetryNow(m); });
             btnCancel.setOnClickListener(v -> {
                 if (listener != null) {
                     if ("EXHAUSTED".equals(m.toolState)) {
-                         listener.onRetryExhausted();
+                         listener.onRetryExhausted(m);
                     } else {
-                        listener.onCancel();
+                        listener.onCancel(m);
                     }
                 }
             });
