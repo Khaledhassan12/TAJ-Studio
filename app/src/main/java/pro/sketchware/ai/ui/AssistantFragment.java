@@ -606,16 +606,39 @@ public class AssistantFragment extends Fragment {
             switchAutoRetry.setOnCheckedChangeListener((v, checked) -> configStore.setAutoRetry(checked));
         }
 
-        // Permission profiles are intentionally not exposed until the runtime enforces
-        // them. Keep their resource IDs for compatibility, but hide the inert controls.
-        View permissionModes = panel.findViewById(R.id.cg_perm_mode);
-        if (permissionModes != null) permissionModes.setVisibility(View.GONE);
-        View resetPermissions = panel.findViewById(R.id.btn_reset_perm);
-        if (resetPermissions != null) resetPermissions.setVisibility(View.GONE);
+        com.google.android.material.chip.ChipGroup cgPerm = panel.findViewById(R.id.cg_perm_mode);
+        if (cgPerm != null) {
+            String current = configStore.getAgentPermMode();
+            if ("full".equals(current)) cgPerm.check(R.id.chip_perm_full);
+            else if ("consent".equals(current)) cgPerm.check(R.id.chip_perm_consent);
+            else if ("strict".equals(current)) cgPerm.check(R.id.chip_perm_strict);
+
+            cgPerm.setOnCheckedStateChangeListener((group, checkedIds) -> {
+                if (checkedIds.isEmpty()) {
+                    configStore.clearAgentPermMode();
+                } else {
+                    int checkedId = checkedIds.get(0);
+                    if (checkedId == R.id.chip_perm_full) configStore.setAgentPermMode("full");
+                    else if (checkedId == R.id.chip_perm_consent) configStore.setAgentPermMode("consent");
+                    else if (checkedId == R.id.chip_perm_strict) configStore.setAgentPermMode("strict");
+                }
+            });
+        }
+
         TextView permissionStatus = panel.findViewById(R.id.tv_perm_mode_status);
         if (permissionStatus != null) {
             permissionStatus.setVisibility(View.VISIBLE);
-            permissionStatus.setText("Permission profiles are unavailable because the current agent runtime does not enforce them.");
+            permissionStatus.setText("Full allows project writes; Consent asks before each write; Strict asks before overwrites. Destructive tools always require separate approval.");
+        }
+
+        View btnReset = panel.findViewById(R.id.btn_reset_perm);
+        if (btnReset != null) {
+            btnReset.setEnabled(true);
+            btnReset.setOnClickListener(v -> {
+                configStore.clearAgentPermMode();
+                if (cgPerm != null) cgPerm.clearCheck();
+                Snackbar.make(panel, "Permission mode cleared. The assistant will ask you to choose a mode on the next write.", Snackbar.LENGTH_LONG).show();
+            });
         }
 
         refreshReadback(panel);
@@ -683,10 +706,13 @@ public class AssistantFragment extends Fragment {
     private void setupAgentsPanel(View panel) {
         Chip destructiveOps = panel.findViewById(R.id.chip_destructive_ops);
         if (destructiveOps != null) {
-            destructiveOps.setChecked(false);
-            destructiveOps.setEnabled(false);
-            destructiveOps.setText("Delete / move / copy tools are blocked pending confirmation support");
-            destructiveOps.setContentDescription("Destructive operations are blocked until explicit per-operation confirmation is implemented");
+            // This is a status label, not a switch. AgentOrchestrator requests explicit
+            // per-operation approval for tools classified as destructive.
+            destructiveOps.setCheckable(false);
+            destructiveOps.setClickable(false);
+            destructiveOps.setEnabled(true);
+            destructiveOps.setText("Destructive tools require per-operation approval");
+            destructiveOps.setContentDescription("Destructive agent operations require explicit approval for each operation");
         }
         RecyclerView rv = panel.findViewById(R.id.ai_rv_tools);
         if (rv != null) {
