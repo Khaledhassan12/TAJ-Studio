@@ -489,7 +489,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    static class RateLimitViewHolder extends RecyclerView.ViewHolder {
+    static class RateLimitViewHolder extends RecyclerView.ViewHolder implements LiveTicker.TickListener {
         com.google.android.material.card.MaterialCardView card;
         ImageView ivIcon;
         TextView tvTitle, tvCount, tvSub, tvFinal;
@@ -526,6 +526,11 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (status == null) status = "WAITING";
 
             if ("WAITING".equals(status)) {
+                boundMessage = m;
+                if (!tickerRegistered) {
+                    LiveTicker.add(this);
+                    tickerRegistered = true;
+                }
                 card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), R.attr.colorTertiaryContainer));
                 tvTitle.setText(R.string.ai_rate_title);
                 tvTitle.setVisibility(View.VISIBLE);
@@ -537,7 +542,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 if (!pulse.isRunning()) pulse.start();
                 updateTick(m);
             } else {
-                pulse.cancel();
+                stopTicker();
                 ivIcon.setAlpha(1.0f);
                 tvCount.setVisibility(View.GONE);
                 progress.setVisibility(View.GONE);
@@ -585,20 +590,46 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             });
         }
 
+        private ChatStore.Message boundMessage;
+        private boolean tickerRegistered;
+
         private void updateTick(ChatStore.Message m) {
+            if (m == null) return;
             try {
                 String[] parts = m.text.split("\\|");
-                long elapsed = Long.parseLong(parts[0]);
-                long total = Long.parseLong(parts[1]);
+                long baseElapsed = Long.parseLong(parts[0]);
+                long total = Math.max(1L, Long.parseLong(parts[1]));
                 int attempt = Integer.parseInt(parts[2]);
                 int max = Integer.parseInt(parts[3]);
 
-                long remaining = Math.max(0, (total - elapsed) / 1000);
+                // Message.time anchors the wait to wall-clock time; RecyclerView rebinding
+                // and backgrounding must not freeze the countdown at its initial value.
+                long elapsed = Math.min(total, baseElapsed + Math.max(0L, System.currentTimeMillis() - m.time));
+                long remaining = Math.max(0L, (total - elapsed + 999L) / 1000L);
                 tvCount.setText(String.format(Locale.getDefault(), "%02d:%02d", remaining / 60, remaining % 60));
-                progress.setProgress((int) (elapsed * 100 / total));
-                tvSub.setText(itemView.getContext().getString(R.string.ai_rate_retry, attempt, max, (total / 1000)));
+                progress.setProgress((int) Math.min(100L, elapsed * 100L / total));
+                tvSub.setText(itemView.getContext().getString(R.string.ai_rate_retry, attempt, max, (total / 1000L)));
             } catch (Exception ignored) {}
         }
+
+        @Override
+        public void onTick(long elapsedMs) {
+            if (boundMessage != null && "WAITING".equals(boundMessage.toolState)) {
+                updateTick(boundMessage);
+            } else {
+                stopTicker();
+            }
+        }
+
+        private void stopTicker() {
+            if (tickerRegistered) {
+                LiveTicker.remove(this);
+                tickerRegistered = false;
+            }
+            boundMessage = null;
+            if (pulse != null) pulse.cancel();
+        }
+    }
     }
 
     static class UserViewHolder extends RecyclerView.ViewHolder {
