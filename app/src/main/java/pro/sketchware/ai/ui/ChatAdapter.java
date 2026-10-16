@@ -548,6 +548,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             progress.setVisibility(View.GONE);
             tvSub.setVisibility(View.GONE);
             actions.setVisibility(View.GONE);
+            btnRetry.setEnabled(true);
+            btnCancel.setEnabled(true);
 
             if ("WAITING".equals(status)) {
                 progress.setIndeterminate(false);
@@ -589,7 +591,11 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     progress.setIndeterminate(true);
                     tvSub.setVisibility(View.VISIBLE);
                     tvSub.setText("Retry requested; waiting for provider progress");
-                    actions.setVisibility(View.GONE);
+                    actions.setVisibility(View.VISIBLE);
+                    btnRetry.setText("Retrying…");
+                    btnRetry.setEnabled(false);
+                    btnCancel.setText("Cancel");
+                    btnCancel.setEnabled(true);
                     tvFinal.setVisibility(View.GONE);
                 } else if ("RESUMED".equals(status)) {
                     card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), android.R.attr.colorBackground));
