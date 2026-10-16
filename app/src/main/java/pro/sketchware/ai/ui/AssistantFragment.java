@@ -1223,7 +1223,6 @@ public class AssistantFragment extends Fragment {
             });
         }
 
-        View dot = panel.findViewById(R.id.ai_connection_dot);
         Chip chipAgent = panel.findViewById(R.id.ai_chip_agent_state);
         if (chipAgent != null) {
             chipAgent.setOnClickListener(v -> {
