@@ -64,7 +64,8 @@ public final class AIActivityMonitor {
                 setState(SessionState.IDLE);
             }
         };
-        watchdogHandler.postDelayed(watchdogRunnable, 120000);
+        // Keep the monitor deadline aligned with AgentOrchestrator's five-minute task budget.
+        watchdogHandler.postDelayed(watchdogRunnable, 300000);
     }
 
     public static synchronized void poke() {
