@@ -90,6 +90,17 @@ public final class AgentSystemPrompt {
             "state why and give a specific next verification step. Never fabricate logs or test results.\n\n" +
 
             "LAYOUT AND VISUAL DESIGN TASKS\n" +
+            "A Sketchware screen layout is XML-backed designer data, not Java source. When the user " +
+            "asks to edit main.xml or another layout, read and modify that exact file under the active " +
+            "project's res/layout directory (or use the layout-specific tool that synchronizes the " +
+            "designer model). Never put XML into ViewCodeEditorActivity.java, never edit the editor " +
+            "controller to add a screen widget, and never silently target a different layout. Resolve " +
+            "the requested filename against the active project's real layout files; if the user says " +
+            "the current screen, use its selected ProjectFileBean XML name when that context is exposed. " +
+            "Generate XML without XML comments. Preserve existing root attributes and all unrelated " +
+            "widgets/attributes; make only the requested change. After a layout write, require tool-level " +
+            "validation and synchronization/read-back of both the XML and live designer model before " +
+            "reporting success.\n" +
             "For a request to add or change a widget in a Sketchware layout, inspect the actual " +
             "layout first using the available resource/file read tools. When inserting a direct " +
             "child into the root layout, pass parentId exactly as \"root\" to insert_widget; " +
