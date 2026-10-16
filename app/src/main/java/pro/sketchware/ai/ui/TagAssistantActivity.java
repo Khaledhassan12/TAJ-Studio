@@ -312,12 +312,16 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         }
         setSyncUi(true, true);
         ProviderProfile effective = resolveEffectiveProfile();
+        String testedProviderId = effective.id;
         String key = AIConfigStore.sanitizeKey(textOf(binding.editApiKey));
         executor.execute(() -> {
             String verdict = ModelSyncService.validateKey(effective, key);
             runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed()) return;
+                boolean verified = verdict != null && verdict.startsWith("Key accepted by provider.");
+                store.setVerifiedFor(testedProviderId, verified);
                 setSyncUi(false, true);
+                updateStatusUi();
                 new MaterialAlertDialogBuilder(TagAssistantActivity.this)
                         .setTitle(R.string.ai_test_connection)
                         .setMessage(verdict)
@@ -342,8 +346,14 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         executor.execute(() -> {
             try {
                 ModelSyncService.Result result = ModelSyncService.fetch(effective, key);
-                store.saveModelsCache(effective.id, result.models);
-                store.setVerifiedFor(effective.id, true);
+                // A provider without a model-list endpoint is not a successful sync.
+                // Preserve its last usable cache and do not mark the connection verified.
+                if (result.modelListUnavailable) {
+                    store.setVerifiedFor(effective.id, false);
+                } else {
+                    store.saveModelsCache(effective.id, result.models);
+                    store.setVerifiedFor(effective.id, true);
+                }
                 runOnUiThread(() -> {
                     if (isFinishing() || isDestroyed()) {
                         return;
@@ -409,6 +419,12 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.btnSyncModels.setEnabled(!inProgress);
         binding.btnChooseModel.setEnabled(!inProgress);
         binding.btnSave.setEnabled(!inProgress);
+        // Freeze the provider form while an operation is in flight so its result cannot
+        // be applied to a different provider selected midway through the request.
+        binding.dropdownProvider.setEnabled(!inProgress);
+        binding.editApiKey.setEnabled(!inProgress);
+        binding.editBaseUrl.setEnabled(!inProgress);
+        binding.editModel.setEnabled(!inProgress);
         if (testMode) {
             binding.progressTest.setVisibility(inProgress ? View.VISIBLE : View.GONE);
             binding.btnTest.setEnabled(!inProgress);
