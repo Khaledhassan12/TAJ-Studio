@@ -630,7 +630,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (pulse != null) pulse.cancel();
         }
     }
-    }
 
     static class UserViewHolder extends RecyclerView.ViewHolder {
         TextView label, message;
