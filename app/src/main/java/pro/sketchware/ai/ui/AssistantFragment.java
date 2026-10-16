@@ -584,7 +584,12 @@ public class AssistantFragment extends Fragment {
 
         com.google.android.material.slider.Slider temperatureSlider = panel.findViewById(R.id.slider_temp);
         if (temperatureSlider != null) {
-            temperatureSlider.setValue(configStore.getTemperature());
+            float savedTemperature = configStore.getTemperature();
+            if (Float.isNaN(savedTemperature) || Float.isInfinite(savedTemperature)) savedTemperature = 0.7f;
+            // The XML slider advances in 0.1 steps; normalize legacy/corrupt preferences
+            // before calling setValue so opening Settings cannot throw.
+            savedTemperature = Math.max(0f, Math.min(1f, Math.round(savedTemperature * 10f) / 10f));
+            temperatureSlider.setValue(savedTemperature);
             temperatureSlider.addOnChangeListener((slider, value, fromUser) -> {
                 if (fromUser) configStore.setTemperature(value);
             });
@@ -609,6 +614,12 @@ public class AssistantFragment extends Fragment {
         com.google.android.material.chip.ChipGroup cgPerm = panel.findViewById(R.id.cg_perm_mode);
         if (cgPerm != null) {
             String current = configStore.getAgentPermMode();
+            if (!current.isEmpty() && !"full".equals(current)
+                    && !"consent".equals(current) && !"strict".equals(current)) {
+                // Fail closed on legacy/corrupt values, then let the runtime ask for a valid mode.
+                configStore.clearAgentPermMode();
+                current = "";
+            }
             if ("full".equals(current)) cgPerm.check(R.id.chip_perm_full);
             else if ("consent".equals(current)) cgPerm.check(R.id.chip_perm_consent);
             else if ("strict".equals(current)) cgPerm.check(R.id.chip_perm_strict);
