@@ -242,8 +242,9 @@ public class AssistantFragment extends Fragment {
         View panel = panels.get(R.id.ai_dest_session);
         if (panel == null) return true;
         RecyclerView rv = panel.findViewById(R.id.ai_rv_chat);
+        if (rv == null || !(rv.getLayoutManager() instanceof LinearLayoutManager)) return true;
         LinearLayoutManager lm = (LinearLayoutManager) rv.getLayoutManager();
-        if (lm == null || chatAdapter == null || chatAdapter.getItemCount() == 0) return true;
+        if (chatAdapter == null || chatAdapter.getItemCount() == 0) return true;
         return lm.findLastVisibleItemPosition() >= chatAdapter.getItemCount() - 2;
     }
 
@@ -749,8 +750,16 @@ public class AssistantFragment extends Fragment {
                 Snackbar.make(holder.text, "Removed from favorites", Snackbar.LENGTH_SHORT).show();
             });
             holder.text.setOnLongClickListener(v -> {
-                rail.setSelectedItemId(R.id.ai_dest_session);
+                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
+                    Snackbar.make(holder.text, "Finish or cancel the active request before opening a favorite's session.", Snackbar.LENGTH_LONG).show();
+                    return true;
+                }
+                if (entry.session == null || entry.session.messages == null) {
+                    Snackbar.make(holder.text, "This saved session is unavailable or corrupted.", Snackbar.LENGTH_LONG).show();
+                    return true;
+                }
                 currentSession = entry.session;
+                rail.setSelectedItemId(R.id.ai_dest_session);
                 if (chatAdapter != null) chatAdapter.setMessages(entry.session.messages);
                 View sessionPanel = panels.get(R.id.ai_dest_session);
                 if (sessionPanel != null) render(sessionPanel, PanelState.READY);
@@ -785,6 +794,14 @@ public class AssistantFragment extends Fragment {
 
             refreshHistory();
             sessionAdapter.setOnSessionClickListener(session -> {
+                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
+                    Snackbar.make(panel, "Finish or cancel the active request before switching sessions.", Snackbar.LENGTH_LONG).show();
+                    return;
+                }
+                if (session == null || session.messages == null) {
+                    Snackbar.make(panel, "This saved session is unavailable or corrupted.", Snackbar.LENGTH_LONG).show();
+                    return;
+                }
                 currentSession = session;
                 restoredSessionId = session.id;
                 View sessionPanel = panels.get(R.id.ai_dest_session);
@@ -1113,6 +1130,20 @@ public class AssistantFragment extends Fragment {
         }
 
         EditText input = panel.findViewById(R.id.ai_et_input);
+        com.google.android.material.chip.ChipGroup suggestions = panel.findViewById(R.id.ai_empty_suggestions);
+        if (suggestions != null && input != null) {
+            for (int i = 0; i < suggestions.getChildCount(); i++) {
+                View child = suggestions.getChildAt(i);
+                if (child instanceof Chip) {
+                    child.setOnClickListener(v -> {
+                        CharSequence suggestion = ((Chip) v).getText();
+                        input.setText(suggestion);
+                        input.setSelection(input.getText().length());
+                        input.requestFocus();
+                    });
+                }
+            }
+        }
         FloatingActionButton send = panel.findViewById(R.id.ai_fab_send);
         if (send != null) {
             send.setOnClickListener(v -> {
