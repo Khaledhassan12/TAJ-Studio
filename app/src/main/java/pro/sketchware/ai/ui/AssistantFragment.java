@@ -1196,6 +1196,15 @@ public class AssistantFragment extends Fragment {
     private void updateSessionHeader(View panel) {
         TextView modelInfo = panel.findViewById(R.id.ai_tv_model_info);
         Chip chipAgent = panel.findViewById(R.id.ai_chip_agent_state);
+        Chip projectScope = panel.findViewById(R.id.ai_chip_project_scope);
+
+        // Make the execution boundary visible: every agent tool call is scoped to this
+        // Sketchware project ID, not to an inferred project name or a previous session.
+        if (projectScope != null) {
+            String boundProjectId = sc_id == null || sc_id.trim().isEmpty() ? "unknown" : sc_id.trim();
+            projectScope.setText("ACTIVE PROJECT · #" + boundProjectId);
+            projectScope.setContentDescription("Agent tools are scoped to active project " + boundProjectId);
+        }
 
         if (chipAgent != null) {
             boolean enabled = configStore.isAgentEnabled();
