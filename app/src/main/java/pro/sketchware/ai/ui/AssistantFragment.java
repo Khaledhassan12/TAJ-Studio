@@ -1348,68 +1348,76 @@ public class AssistantFragment extends Fragment {
 
                 @Override
                 public void onToolCall(ToolCall call) {
+                    if (!isCurrentRequest(requestId)) return;
                     pokeWatchdog();
                     UiPoster.post(() -> {
-            if (!isAdded() || getView() == null) return;
+                        if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+                        markRateLimitResumed(requestId);
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
-                            chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
+                            int idx = currentSession.messages.indexOf(thinkingMsg);
+                            if (idx >= 0) chatAdapter.completeThinking(idx, elapsed);
                         }
                     });
                 }
 
                 @Override
                 public void onToolStart(String name) {
+                    if (!isCurrentRequest(requestId)) return;
                     pokeWatchdog();
-                    activeToolCount++;
-                    AIActivityMonitor.setState(SessionState.TOOL_RUNNING);
                     UiPoster.post(() -> {
-            if (!isAdded() || getView() == null) return;
-                        if (toolsCard == null) {
+                        if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+                        markRateLimitResumed(requestId);
+                        activeToolCount.incrementAndGet();
+                        AIActivityMonitor.setState(SessionState.TOOL_RUNNING);
+                        if (toolsCard == null || !currentSession.messages.contains(toolsCard)) {
                             toolsCard = new ChatStore.Message("tools_card", "");
                             toolsCard.toolEvents = new ArrayList<>();
                             currentSession.messages.add(toolsCard);
                             chatAdapter.addMessage(toolsCard);
                             scrollToBottom(true);
                         }
+                        if (toolsCard.toolEvents == null) toolsCard.toolEvents = new ArrayList<>();
                         toolsCard.toolEvents.add(new ChatStore.ToolEvent(name, getToolDomain(name)));
-                        scheduleSessionSave();
                         int idx = currentSession.messages.indexOf(toolsCard);
-                        chatAdapter.notifyItemChanged(idx, "tool_events");
+                        if (idx >= 0) chatAdapter.notifyItemChanged(idx, "tool_events");
+                        scheduleSessionSave();
                     });
                 }
 
                 @Override
                 public void onToolResult(String name, String summary, boolean success) {
+                    if (!isCurrentRequest(requestId)) return;
                     UiPoster.post(() -> {
-                        if (!isAdded() || getView() == null || currentSession == null) return;
-                        if (toolsCard != null && toolsCard.toolEvents != null) {
-                            for (int i = toolsCard.toolEvents.size() - 1; i >= 0; i--) {
-                                ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
-                                if (java.util.Objects.equals(event.name, name)) {
-                                    event.resultSummary = summary;
-                                    break;
-                                }
+                        if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+                        markRateLimitResumed(requestId);
+                        if (toolsCard == null || toolsCard.toolEvents == null) return;
+                        for (int i = toolsCard.toolEvents.size() - 1; i >= 0; i--) {
+                            ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
+                            if (java.util.Objects.equals(event.name, name) && "RUNNING".equals(event.status)) {
+                                event.resultSummary = summary;
+                                break;
                             }
-                            int idx = currentSession.messages.indexOf(toolsCard);
-                            if (idx >= 0) chatAdapter.notifyItemChanged(idx, "tool_events");
-                            scheduleSessionSave();
                         }
+                        int idx = currentSession.messages.indexOf(toolsCard);
+                        if (idx >= 0) chatAdapter.notifyItemChanged(idx, "tool_events");
+                        scheduleSessionSave();
                     });
                 }
 
                 @Override
                 public void onToolEnd(String name, boolean success) {
+                    if (!isCurrentRequest(requestId)) return;
                     pokeWatchdog();
-                    activeToolCount = Math.max(0, activeToolCount - 1);
-                    AIActivityMonitor.setState(activeToolCount > 0 ? SessionState.TOOL_RUNNING : SessionState.MODEL_STREAMING);
                     UiPoster.post(() -> {
-            if (!isAdded() || getView() == null) return;
-                        if (toolsCard != null && toolsCard.toolEvents != null && currentSession != null) {
-                            for (ChatStore.ToolEvent te : toolsCard.toolEvents) {
-                                if (java.util.Objects.equals(te.name, name) && "RUNNING".equals(te.status)) {
-                                    te.status = success ? "OK" : "ERROR";
-                                    te.finishedAt = System.currentTimeMillis();
+                        if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+                        markRateLimitResumed(requestId);
+                        if (toolsCard != null && toolsCard.toolEvents != null) {
+                            for (int i = toolsCard.toolEvents.size() - 1; i >= 0; i--) {
+                                ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
+                                if (java.util.Objects.equals(event.name, name) && "RUNNING".equals(event.status)) {
+                                    event.status = success ? "OK" : "ERROR";
+                                    event.finishedAt = System.currentTimeMillis();
                                     break;
                                 }
                             }
@@ -1417,14 +1425,17 @@ public class AssistantFragment extends Fragment {
                             if (idx >= 0) chatAdapter.notifyItemChanged(idx, "tool_events");
                             scheduleSessionSave();
                         }
+                        int runningTools = activeToolCount.updateAndGet(value -> Math.max(0, value - 1));
+                        AIActivityMonitor.setState(runningTools > 0 ? SessionState.TOOL_RUNNING : SessionState.MODEL_STREAMING);
                     });
                 }
 
                 @Override
                 public void onComplete(AIResponse response) {
+                    if (!isCurrentRequest(requestId)) return;
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
-                        if (!isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+                        if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         reconcileTools(toolsCard);
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
@@ -1457,45 +1468,53 @@ public class AssistantFragment extends Fragment {
                         }
 
                         activeToolCount.set(0);
+                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "COLLAPSED";
                         AIActivityMonitor.setState(SessionState.IDLE);
-
                         setTypingIndicator(false);
                         saveSessionNow();
-                        activeHandle = null;
                         updateStreamingUi(false);
+                        retireRequest(requestId);
                     });
                 }
 
                 @Override
                 public void onError(Throwable error) {
+                    if (!isCurrentRequest(requestId)) return;
                     mainHandler.removeCallbacks(watchdog);
-                    UiPoster.post(() -> {
-            if (!isAdded() || getView() == null) return;
+                    UiPoster.post(() => {
+                        if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         reconcileTools(toolsCard);
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
                         activeToolCount.set(0);
+                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "EXHAUSTED";
                         AIActivityMonitor.setState(SessionState.IDLE);
                         setTypingIndicator(false);
+                        if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
                         handleChatError(error);
                         saveSessionNow();
                         updateStreamingUi(false);
+                        retireRequest(requestId);
                     });
                 }
 
                 @Override
                 public void onCancel() {
+                    if (!isCurrentRequest(requestId)) return;
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
-            if (!isAdded() || getView() == null) return;
+                        if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         reconcileTools(toolsCard);
                         activeToolCount.set(0);
+                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "CANCELLED";
                         AIActivityMonitor.setState(SessionState.IDLE);
                         setTypingIndicator(false);
+                        if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
                         saveSessionNow();
                         updateStreamingUi(false);
+                        retireRequest(requestId);
                     });
                 }
             });
@@ -1534,9 +1553,10 @@ public class AssistantFragment extends Fragment {
 
                 @Override
                 public void onComplete(AIResponse response) {
+                    if (!isCurrentRequest(requestId)) return;
                     mainHandler.removeCallbacks(watchdog);
-                    UiPoster.post(() -> {
-                        if (!isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+                    UiPoster.post(() => {
+                        if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -1563,38 +1583,48 @@ public class AssistantFragment extends Fragment {
                             }
                         }
 
+                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "COLLAPSED";
                         AIActivityMonitor.setState(SessionState.IDLE);
-
                         setTypingIndicator(false);
-                        chatStore.saveSession(currentSession);
-                        activeHandle = null;
+                        saveSessionNow();
+                        updateStreamingUi(false);
+                        retireRequest(requestId);
                     });
                 }
 
                 @Override
                 public void onError(Throwable error) {
+                    if (!isCurrentRequest(requestId)) return;
                     mainHandler.removeCallbacks(watchdog);
-                    UiPoster.post(() -> {
-            if (!isAdded() || getView() == null) return;
+                    UiPoster.post(() => {
+                        if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
                         }
+                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "EXHAUSTED";
                         AIActivityMonitor.setState(SessionState.IDLE);
                         setTypingIndicator(false);
+                        if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
                         addAssistantMessage("Error: " + error.getMessage());
-                        activeHandle = null;
+                        saveSessionNow();
+                        updateStreamingUi(false);
+                        retireRequest(requestId);
                     });
                 }
 
                 @Override
                 public void onCancel() {
+                    if (!isCurrentRequest(requestId)) return;
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
-            if (!isAdded() || getView() == null) return;
+                        if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+                        if (rateLimitMsg != null && "WAITING".equals(rateLimitMsg.toolState)) rateLimitMsg.toolState = "CANCELLED";
                         AIActivityMonitor.setState(SessionState.IDLE);
                         setTypingIndicator(false);
-                        activeHandle = null;
+                        saveSessionNow();
+                        updateStreamingUi(false);
+                        retireRequest(requestId);
                     });
                 }
             });
