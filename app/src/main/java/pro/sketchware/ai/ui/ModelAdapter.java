@@ -17,6 +17,7 @@ import pro.sketchware.ai.core.ModelItem;
 public class ModelAdapter extends RecyclerView.Adapter<ModelAdapter.ViewHolder> {
 
     private final List<ModelItem> models = new ArrayList<>();
+    private final List<ModelItem> allModels = new ArrayList<>();
     private OnModelClickListener listener;
 
     public interface OnModelClickListener {
@@ -24,8 +25,25 @@ public class ModelAdapter extends RecyclerView.Adapter<ModelAdapter.ViewHolder> 
     }
 
     public void setModels(List<ModelItem> newModels) {
+        allModels.clear();
+        if (newModels != null) allModels.addAll(newModels);
+        applyFilter("");
+    }
+
+    /** Filters the visible list without destroying the cached provider catalog. */
+    public void filterModels(String query) {
+        applyFilter(query);
+    }
+
+    private void applyFilter(String query) {
+        String needle = query == null ? "" : query.trim().toLowerCase(java.util.Locale.ROOT);
         models.clear();
-        models.addAll(newModels);
+        for (ModelItem model : allModels) {
+            if (model == null || model.id == null) continue;
+            if (needle.isEmpty() || model.id.toLowerCase(java.util.Locale.ROOT).contains(needle)) {
+                models.add(model);
+            }
+        }
         notifyDataSetChanged();
     }
 
