@@ -16,7 +16,7 @@ public final class JavaCreateTool implements Tool {
             props.put("target", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"manager", "project"})).put("description", "Use manager for new user-editable Java/Kotlin source files that must appear in ManageJavaActivity; use project only when explicitly modifying the generated project Java source root."));
             props.put("name", new JSONObject().put("type", "string").put("maxLength", 256));
             props.put("type", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"folder", "java_class", "java_activity", "kotlin_class", "kotlin_activity"})));
-            props.put("packagePath", new JSONObject().put("type", "string").put("maxLength", 512));
+            props.put("packagePath", new JSONObject().put("type", "string").put("maxLength", 512).put("description", "Optional full package name. Must be the active project package or a subpackage beginning with it; omit to use the active project package automatically."));
             props.put("content", new JSONObject().put("type", "string").put("maxLength", 262144));
             JSONObject schema = new JSONObject(); schema.put("type", "object"); schema.put("properties", props);
             schema.put("required", new JSONArray().put("target").put("name").put("type"));
@@ -52,7 +52,7 @@ public final class JavaCreateTool implements Tool {
             }
 
             String root;
-            String projectPackage = JavaToolHelper.getPackageName(ctx.sc_id);
+            String projectPackage = JavaToolHelper.getVerifiedPackageName(ctx.sc_id);
             if (projectPackage == null || projectPackage.trim().isEmpty()
                     || !projectPackage.matches("[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*")) {
                 return ToolResult.structured("java_create", "PACKAGE_UNVERIFIED", null,
@@ -65,7 +65,8 @@ public final class JavaCreateTool implements Tool {
                 if (packagePath.equals(projectPackage) || packagePath.startsWith(projectPackage + ".")) {
                     declaredPackage = packagePath;
                 } else {
-                    declaredPackage = projectPackage + "." + packagePath;
+                    return ToolResult.structured("java_create", "PACKAGE_MISMATCH", null,
+                            "packagePath must equal the active project's package or be a subpackage of it: " + projectPackage, null, true);
                 }
             }
             if ("project".equals(target)) {
