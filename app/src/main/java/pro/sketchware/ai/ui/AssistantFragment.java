@@ -152,7 +152,7 @@ public class AssistantFragment extends Fragment {
     private void handleWatchdogTimeout() {
         if (AIActivityMonitor.getState() != SessionState.IDLE) {
             long now = System.currentTimeMillis();
-            if (now - lastEventTime > 120000) { // 120s
+            if (now - lastEventTime > 300000) { // Match the agent's five-minute hard deadline
                 forceIdle();
                 setTypingIndicator(false);
                 addErrorMessage(getString(R.string.ai_timed_out), "Watchdog triggered: No event for 120s", "Retry");
@@ -1123,13 +1123,17 @@ public class AssistantFragment extends Fragment {
     private void onContentToken(String token, long requestId) {
         if (token == null || token.isEmpty() || !isCurrentRequest(requestId)) return;
         pokeWatchdog();
-        if (AIActivityMonitor.getState() == SessionState.WAITING_RATE_LIMIT) AIActivityMonitor.setState(SessionState.MODEL_STREAMING);
         if (!configStore.isStreamingEnabled()) {
-            UiPoster.post(() -> markRateLimitResumed(requestId));
+            UiPoster.post(() -> {
+                if (!isCurrentRequest(requestId)) return;
+                if (AIActivityMonitor.getState() == SessionState.WAITING_RATE_LIMIT) AIActivityMonitor.setState(SessionState.MODEL_STREAMING);
+                markRateLimitResumed(requestId);
+            });
             return;
         }
         UiPoster.post(() -> {
             if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+            if (AIActivityMonitor.getState() == SessionState.WAITING_RATE_LIMIT) AIActivityMonitor.setState(SessionState.MODEL_STREAMING);
             markRateLimitResumed(requestId);
             if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                 long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
@@ -1188,12 +1192,21 @@ public class AssistantFragment extends Fragment {
 
     private final AtomicInteger activeToolCount = new AtomicInteger(0);
 
+    /** Only mark a wait as resumed after a real request/tool callback arrives. */
+    private void markRateLimitResumed(long requestId) {
+        if (!isCurrentRequest(requestId) || rateLimitMsg == null
+                || !"WAITING".equals(rateLimitMsg.toolState)) return;
+        rateLimitMsg.toolState = "RESUMED";
+        if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
+        scheduleSessionSave();
+    }
+
     private void onRateLimitWait(long waitMs, int attempt, int maxAttempts, long requestId) {
         if (!isCurrentRequest(requestId)) return;
         pokeWatchdog();
-        AIActivityMonitor.setState(SessionState.WAITING_RATE_LIMIT);
         UiPoster.post(() -> {
             if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+            AIActivityMonitor.setState(SessionState.WAITING_RATE_LIMIT);
             if (rateLimitMsg == null || !"rate_limit".equals(rateLimitMsg.role)) {
                 rateLimitMsg = new ChatStore.Message("rate_limit", "");
                 currentSession.messages.add(rateLimitMsg);
