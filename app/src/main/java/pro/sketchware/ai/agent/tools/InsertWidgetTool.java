@@ -26,7 +26,7 @@ public final class InsertWidgetTool implements Tool {
             props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
             params.put("required", new JSONArray().put("layout").put("parentId").put("widgetXml"));
-            return new ToolSpec("insert_widget", "Inserts a widget into a layout safely.", params);
+            return new ToolSpec("insert_widget", "Inserts a widget into a Sketchware layout and verifies the live designer model. Use parentId='root' for a direct child of the root layout; otherwise pass the existing parent widget ID.", params);
         } catch (Exception e) { return null; }
     }
 
