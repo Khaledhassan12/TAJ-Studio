@@ -1001,6 +1001,14 @@ public class AssistantFragment extends Fragment {
         chatAdapter.setOnSuggestionListener(new ChatAdapter.OnSuggestionListener() {
             @Override
             public void onSwitchToAgent(int position) {
+                // This action replays a user prompt under a different execution mode. It must not
+                // reset IDLE or start a second request while the current provider/agent still runs.
+                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
+                    Snackbar.make(panel, "Stop or finish the current assistant request before switching to Agent mode.", Snackbar.LENGTH_LONG).show();
+                    return;
+                }
+                if (currentSession == null || chatAdapter == null
+                        || position <= 0 || position >= currentSession.messages.size()) return;
                 configStore.setAgentEnabled(true);
                 View sessionPanel = panels.get(R.id.ai_dest_session);
                 if (sessionPanel != null) updateSessionHeader(sessionPanel);
@@ -1011,8 +1019,6 @@ public class AssistantFragment extends Fragment {
                             currentSession.messages.remove(position);
                         }
                         chatAdapter.setMessages(currentSession.messages);
-                        AIActivityMonitor.setState(SessionState.IDLE);
-                        setTypingIndicator(false);
                         sendMessage(prev.text, true);
                     }
                 }
@@ -1021,9 +1027,15 @@ public class AssistantFragment extends Fragment {
             @Override
             public void onStayInChat(int position) {
                 UiPoster.post(() -> {
-            if (!isAdded() || getView() == null) return;
+                    if (!isAdded() || getView() == null || currentSession == null || chatAdapter == null) return;
+                    if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
+                        Snackbar.make(panel, "Stop or finish the current assistant request before editing this suggestion.", Snackbar.LENGTH_LONG).show();
+                        return;
+                    }
+                    if (position < 0 || position >= currentSession.messages.size()) return;
                     currentSession.messages.remove(position);
                     chatAdapter.notifyItemRemoved(position);
+                    scheduleSessionSave();
                 });
             }
         });
