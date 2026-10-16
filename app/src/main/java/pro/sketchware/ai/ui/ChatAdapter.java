@@ -556,6 +556,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if ("WAITING".equals(status)) {
                 ((com.google.android.material.button.MaterialButton) btnRetry).setText("Retry now");
                 ((com.google.android.material.button.MaterialButton) btnCancel).setText("Cancel");
+                ivIcon.setImageResource(R.drawable.ic_hourglass);
                 boundMessage = m;
                 if (!tickerRegistered) {
                     LiveTicker.add(this);
@@ -581,6 +582,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 tvFinal.setVisibility(View.VISIBLE);
 
                 if ("RESUMED".equals(status)) {
+                    card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), android.R.attr.colorBackground));
                     ivIcon.setImageResource(R.drawable.ic_check_circle);
                     tvTitle.setVisibility(View.VISIBLE);
                     tvTitle.setText(R.string.ai_rate_resumed);
