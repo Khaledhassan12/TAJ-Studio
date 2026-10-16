@@ -68,9 +68,11 @@ public final class InsertWidgetTool implements Tool {
                 return new ToolResult("Malformed XML: could not identify the root layout tag.", true);
             }
             if (isSelfClosingTag(original, rootEnd)) {
-                return new ToolResult("Cannot insert a widget into a self-closing root layout.", true);
-            }
-            if ("start".equals(position)) {
+                String openingTag = original.substring(rootStart, rootEnd).replaceFirst("/\\s*$", "");
+                next = original.substring(0, rootStart) + openingTag + ">\n"
+                        + widgetXml + "\n</" + rootName + ">"
+                        + original.substring(rootEnd + 1);
+            } else if ("start".equals(position)) {
                 next = original.substring(0, rootEnd + 1) + "\n"
                         + widgetXml + "\n" + original.substring(rootEnd + 1);
             } else {
