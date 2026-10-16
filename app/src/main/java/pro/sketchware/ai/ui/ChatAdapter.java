@@ -197,28 +197,37 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         ChatStore.Message m = messages.get(position);
         
         if (!payloads.isEmpty()) {
-            if (holder instanceof AssistantViewHolder) {
+            boolean handled = false;
+            if (holder instanceof AssistantViewHolder && payloads.contains("token")) {
                 AssistantViewHolder vh = (AssistantViewHolder) holder;
-                if (payloads.contains("token")) {
-                    if (m.text.length() > vh.boundLen) {
-                        vh.message.append(m.text.substring(vh.boundLen));
-                        vh.boundLen = m.text.length();
-                    }
+                String text = m.text == null ? "" : m.text;
+                if (text.length() > vh.boundLen) {
+                    vh.message.append(text.substring(vh.boundLen));
+                    vh.boundLen = text.length();
                 }
+                handled = true;
             } else if (holder instanceof ThinkingViewHolder) {
                 ThinkingViewHolder vh = (ThinkingViewHolder) holder;
                 if (payloads.contains("reasoning")) {
-                    vh.tvFull.setText(m.reasoning);
+                    vh.tvFull.setText(m.reasoning == null ? "" : m.reasoning);
                     vh.updatePreview(m.reasoning);
-                    if (vh.isExpanded) {
-                        vh.scrollThink.post(() -> vh.scrollThink.fullScroll(View.FOCUS_DOWN));
-                    }
+                    if (vh.isExpanded) vh.scrollThink.post(() -> vh.scrollThink.fullScroll(View.FOCUS_DOWN));
+                    handled = true;
                 }
                 if (payloads.contains("think_done")) {
-                    vh.bind(m); 
+                    vh.bind(m);
+                    handled = true;
                 }
+            } else if (holder instanceof ToolsViewHolder && payloads.contains("tool_events")) {
+                // Tool events must be rebound on partial updates too. Returning early before
+                // this dispatch is why completed tools could retain an infinite spinner.
+                ((ToolsViewHolder) holder).bind(m, true);
+                handled = true;
+            } else if (holder instanceof RateLimitViewHolder && payloads.contains("rate_tick")) {
+                ((RateLimitViewHolder) holder).bind(m, payloads, onRateLimitActionListener);
+                handled = true;
             }
-            return;
+            if (handled) return;
         }
 
         String time = timeFormat.format(new Date(m.time));
@@ -305,6 +314,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     .start();
             lastAnimatedPosition = position;
         }
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+        if (holder instanceof RateLimitViewHolder) {
+            ((RateLimitViewHolder) holder).stopTicker();
+        }
+        super.onViewRecycled(holder);
     }
 
     private void setupActions(View row, View copy, View edit, View branch, View share, View regen, View voice, ChatStore.Message m, int pos) {
