@@ -537,18 +537,20 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             String status = m.toolState;
             if (status == null) status = "WAITING";
 
-            // RecyclerView reuses this holder across WAITING, RESUMED, CANCELLED and EXHAUSTED.
-            // Reset reusable visuals before rendering the current lifecycle state.
+            // RecyclerView reuses this holder across every wait lifecycle state.
+            // Reset reusable visuals before rendering the current state.
             card.setAlpha(1f);
             ivIcon.setVisibility(View.VISIBLE);
             ivIcon.clearColorFilter();
             tvTitle.setVisibility(View.VISIBLE);
             tvFinal.setVisibility(View.GONE);
+            progress.setIndeterminate(false);
             progress.setVisibility(View.GONE);
             tvSub.setVisibility(View.GONE);
             actions.setVisibility(View.GONE);
 
             if ("WAITING".equals(status)) {
+                progress.setIndeterminate(false);
                 ((com.google.android.material.button.MaterialButton) btnRetry).setText("Retry now");
                 ((com.google.android.material.button.MaterialButton) btnCancel).setText("Cancel");
                 ivIcon.setImageResource(R.drawable.ic_hourglass);
@@ -576,7 +578,20 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 actions.setVisibility(View.GONE);
                 tvFinal.setVisibility(View.VISIBLE);
 
-                if ("RESUMED".equals(status)) {
+                if ("RETRYING".equals(status)) {
+                    card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), R.attr.colorSurfaceContainerHigh));
+                    ivIcon.setImageResource(R.drawable.ic_hourglass);
+                    tvTitle.setVisibility(View.VISIBLE);
+                    tvTitle.setText("Retrying with provider…");
+                    tvCount.setVisibility(View.VISIBLE);
+                    tvCount.setText("…");
+                    progress.setVisibility(View.VISIBLE);
+                    progress.setIndeterminate(true);
+                    tvSub.setVisibility(View.VISIBLE);
+                    tvSub.setText("Retry requested; waiting for provider progress");
+                    actions.setVisibility(View.GONE);
+                    tvFinal.setVisibility(View.GONE);
+                } else if ("RESUMED".equals(status)) {
                     card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), android.R.attr.colorBackground));
                     ivIcon.setImageResource(R.drawable.ic_check_circle);
                     tvTitle.setVisibility(View.VISIBLE);
