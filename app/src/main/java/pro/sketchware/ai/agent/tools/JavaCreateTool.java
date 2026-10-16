@@ -13,14 +13,14 @@ public final class JavaCreateTool implements Tool {
     @Override public ToolSpec spec() {
         try {
             JSONObject props = new JSONObject();
-            props.put("target", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"manager", "project"})));
+            props.put("target", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"manager", "project"})).put("description", "Use manager for new user-editable Java/Kotlin source files that must appear in ManageJavaActivity; use project only when explicitly modifying the generated project Java source root."));
             props.put("name", new JSONObject().put("type", "string").put("maxLength", 256));
             props.put("type", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"folder", "java_class", "java_activity", "kotlin_class", "kotlin_activity"})));
             props.put("packagePath", new JSONObject().put("type", "string").put("maxLength", 512));
             props.put("content", new JSONObject().put("type", "string").put("maxLength", 262144));
             JSONObject schema = new JSONObject(); schema.put("type", "object"); schema.put("properties", props);
             schema.put("required", new JSONArray().put("target").put("name").put("type"));
-            return new ToolSpec("java_create", "Creates a Java/Kotlin class, Activity or folder without overwriting existing project files.", schema);
+            return new ToolSpec("java_create", "Creates a Java/Kotlin class, Activity or folder without overwriting existing files. Use target=manager for user-editable files shown in ManageJavaActivity; target=project only for the generated project Java source root.", schema);
         } catch (Exception e) { throw new IllegalStateException("Could not construct java_create schema.", e); }
     }
     @Override public Domain domain() { return Domain.JAVA; }
