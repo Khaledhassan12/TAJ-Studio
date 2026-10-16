@@ -887,6 +887,10 @@ public class AssistantFragment extends Fragment {
 
             @Override
             public void onBranch(ChatStore.Message message, int position) {
+                if (AIActivityMonitor.isBusy()) {
+                    Snackbar.make(panel, "Cancel the active request before branching this conversation.", Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
                 ChatStore.Session branch = ChatStore.branchSession(currentSession, position);
                 chatStore.saveSession(branch);
                 currentSession = branch;
