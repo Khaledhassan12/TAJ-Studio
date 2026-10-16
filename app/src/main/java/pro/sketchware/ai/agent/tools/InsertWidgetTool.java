@@ -131,6 +131,8 @@ public final class InsertWidgetTool implements Tool {
                 throw new java.io.IOException("The layout model was updated, but the newly requested widget ID could not be found in the live model.");
             }
 
+            // Rebind the active View tab to the updated persisted model immediately.
+            DomainToolHelper.refreshEditor(ctx);
             LiveRegistry.notifyChanged("layout", path);
             return ToolResult.structured("insert_widget", "SUCCESS", path,
                     "Exact XML read-back, live layout model parity, and requested widget identity verified.", null, false);
