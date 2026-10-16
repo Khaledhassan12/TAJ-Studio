@@ -801,7 +801,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 ivSparkle.setVisibility(View.GONE);
                 progress.setVisibility(View.VISIBLE);
                 progress.setAlpha(1f);
-                tvTitle.setText("Thinking…");
+                seconds = Math.max(0, (int) ((System.currentTimeMillis() - m.time) / 1000L));
+                tvSeconds.setText(seconds + "s");
+                tvTitle.setText("Thinking… " + seconds + "s");
                 startTimer();
                 btnExpand.setRotation(isExpanded ? 90 : 0);
             }
@@ -826,8 +828,21 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         @Override
         public void onTick(long elapsedMs) {
-            seconds++;
-            UiPoster.post(() -> tvSeconds.setText(seconds + "s"));
+            final ChatStore.Message bound = currentMessage;
+            if (bound == null || !"thinking".equals(bound.role)) {
+                stopTimer();
+                return;
+            }
+            // Derive elapsed time from the message timestamp instead of counting ticker
+            // callbacks; delayed frames/backgrounding can no longer make the timer drift.
+            final int elapsedSeconds = Math.max(0,
+                    (int) ((System.currentTimeMillis() - bound.time) / 1000L));
+            seconds = elapsedSeconds;
+            UiPoster.post(() -> {
+                if (currentMessage != bound || !"thinking".equals(bound.role)) return;
+                tvSeconds.setText(elapsedSeconds + "s");
+                tvTitle.setText("Thinking… " + elapsedSeconds + "s");
+            });
         }
 
         private void startTimer() {
