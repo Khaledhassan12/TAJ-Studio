@@ -1,7 +1,5 @@
 package pro.sketchware.ai.ui;
 
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -57,7 +55,6 @@ public class AssistantFragment extends Fragment {
     private NavigationRailView rail;
     private FrameLayout container;
     private final SparseArray<View> panels = new SparseArray<>();
-    private ObjectAnimator connectionPulseAnimator;
     private static final String STATE_SELECTED_PANEL = "ai_selected_panel";
     private int selectedPanelId = R.id.ai_dest_session;
     private static final String STATE_SESSION_ID = "ai_session_id";
@@ -339,6 +336,8 @@ public class AssistantFragment extends Fragment {
         if (settings != null) {
             refreshReadback(settings);
         }
+        View session = panels.get(R.id.ai_dest_session);
+        if (session != null) updateSessionHeader(session);
     }
 
     @Override
@@ -1225,17 +1224,6 @@ public class AssistantFragment extends Fragment {
         }
 
         View dot = panel.findViewById(R.id.ai_connection_dot);
-        if (connectionPulseAnimator != null) {
-            connectionPulseAnimator.cancel();
-        }
-        if (dot != null) {
-            connectionPulseAnimator = ObjectAnimator.ofFloat(dot, "alpha", 0.4f, 1.0f);
-            connectionPulseAnimator.setDuration(1200);
-            connectionPulseAnimator.setRepeatCount(ValueAnimator.INFINITE);
-            connectionPulseAnimator.setRepeatMode(ValueAnimator.REVERSE);
-            connectionPulseAnimator.start();
-        }
-
         Chip chipAgent = panel.findViewById(R.id.ai_chip_agent_state);
         if (chipAgent != null) {
             chipAgent.setOnClickListener(v -> {
@@ -1270,8 +1258,43 @@ public class AssistantFragment extends Fragment {
             chipAgent.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(bgColor));
         }
 
+        String providerId = configStore.getSelectedProviderId();
         String model = configStore.safeModel();
         if (modelInfo != null) modelInfo.setText(model.isEmpty() ? "No model selected" : model);
+
+        ProviderProfile profile = AIProviderRegistry.getInstance(requireContext()).get(providerId);
+        String baseUrl = configStore.getBaseUrlFor(providerId);
+        if ((baseUrl == null || baseUrl.trim().isEmpty()) && profile != null) {
+            baseUrl = profile.defaultBaseUrl;
+        }
+        String normalizedBase = baseUrl == null ? "" : baseUrl.toLowerCase(java.util.Locale.ROOT);
+        boolean localProvider = "ollama".equals(providerId)
+                || normalizedBase.contains("localhost")
+                || normalizedBase.contains("127.0.0.1")
+                || normalizedBase.contains("10.0.2.2")
+                || normalizedBase.contains("192.168.");
+        Chip locationChip = panel.findViewById(R.id.ai_chip_location);
+        if (locationChip != null) {
+            locationChip.setText(localProvider ? "Local" : ProviderProfile.CUSTOM_ID.equals(providerId) ? "Custom" : "Cloud");
+            locationChip.setContentDescription(localProvider
+                    ? "Local or LAN model endpoint"
+                    : ProviderProfile.CUSTOM_ID.equals(providerId)
+                            ? "Custom model endpoint"
+                            : "Cloud model provider");
+        }
+
+        View dot = panel.findViewById(R.id.ai_connection_dot);
+        if (dot != null) {
+            boolean verified = configStore.isVerifiedFor(providerId);
+            int statusColor = pro.sketchware.utility.ThemeUtils.getColor(requireContext(),
+                    verified ? R.attr.colorSecondary : R.attr.colorOutline);
+            androidx.core.view.ViewCompat.setBackgroundTintList(dot,
+                    android.content.res.ColorStateList.valueOf(statusColor));
+            dot.setAlpha(verified ? 1f : 0.55f);
+            dot.setContentDescription(verified
+                    ? "Provider configuration verified"
+                    : "Provider configuration not verified");
+        }
     }
 
     private ChatStore.Message assistantMsg;
@@ -1932,10 +1955,6 @@ public class AssistantFragment extends Fragment {
                 }
             }
             if (chatStore != null) chatStore.saveSession(currentSession);
-        }
-        if (connectionPulseAnimator != null) {
-            connectionPulseAnimator.cancel();
-            connectionPulseAnimator = null;
         }
         for (int i = 0; i < panels.size(); i++) {
             View panel = panels.valueAt(i);
