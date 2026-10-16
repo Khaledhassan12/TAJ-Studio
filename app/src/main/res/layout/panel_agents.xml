@@ -17,7 +17,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:checkable="true"
+        android:checkable="false"
+        android:clickable="false"
         android:text="Allow destructive ops (confirm each)"
         app:chipIcon="@drawable/ic_mtrl_warning" />
 
