@@ -243,12 +243,14 @@ public class AssistantFragment extends Fragment {
         chatStore = new ChatStore(activity, sc_id);
         toolRegistry = new ToolRegistry();
         
-        AIActivityMonitor.setOnTimeoutAction(() -> UiPoster.post(() -> {
+        // AIActivityMonitor invokes this action on the main looper. Do not enqueue a second
+        // runnable: the monitor transitions to IDLE immediately after this callback returns.
+        AIActivityMonitor.setOnTimeoutAction(() -> {
             if (!isAdded() || getView() == null || !AIActivityMonitor.isBusy()) return;
             forceIdle();
             addErrorMessage(getString(R.string.ai_timed_out), "Assistant lifecycle watchdog expired", "Retry");
             saveSessionNow();
-        }));
+        });
         
         voiceReader = new VoiceReader(activity, new VoiceReader.OnStateListener() {
             @Override public void onStart() {}
