@@ -791,12 +791,31 @@ public class AssistantFragment extends Fragment {
         chatAdapter.setOnRateLimitActionListener(new ChatAdapter.OnRateLimitActionListener() {
             @Override
             public void onRetryNow() {
-                if (orchestrator != null) orchestrator.skipWait();
-                if (activeHandle != null) activeHandle.skipWait();
+                boolean resumed = false;
+                if (orchestrator != null) {
+                    orchestrator.skipWait();
+                    resumed = true;
+                }
+                if (activeHandle != null) {
+                    activeHandle.skipWait();
+                    resumed = true;
+                }
+                if (resumed && rateLimitMsg != null) {
+                    rateLimitMsg.toolState = "RESUMED";
+                    chatAdapter.notifyDataSetChanged();
+                    scheduleSessionSave();
+                } else if (isAdded() && getView() != null) {
+                    Snackbar.make(getView(), "No active provider wait to retry. The request may already have ended.", Snackbar.LENGTH_LONG).show();
+                }
             }
 
             @Override
             public void onCancel() {
+                if (rateLimitMsg != null) {
+                    rateLimitMsg.toolState = "CANCELLED";
+                    if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
+                }
+                mainHandler.removeCallbacks(watchdog);
                 forceIdle();
             }
 
@@ -1136,11 +1155,14 @@ public class AssistantFragment extends Fragment {
                 scrollToBottom(true);
             }
             rateLimitMsg.toolState = "WAITING";
-            rateLimitStartTime = System.currentTimeMillis();
-            rateLimitTotalWait = waitMs;
+            rateLimitMsg.time = System.currentTimeMillis();
+            rateLimitMsg.text = "0|" + Math.max(1000L, waitMs) + "|" + attempt + "|" + maxAttempts;
+            rateLimitStartTime = rateLimitMsg.time;
+            rateLimitTotalWait = Math.max(1000L, waitMs);
             rateLimitAttempt = attempt;
             rateLimitMax = maxAttempts;
-            chatStore.saveSession(currentSession);
+            chatAdapter.notifyDataSetChanged();
+            scheduleSessionSave();
         });
     }
 
@@ -1582,13 +1604,38 @@ public class AssistantFragment extends Fragment {
 
     private void updateStreamingUi(boolean streaming) {
         View panel = panels.get(R.id.ai_dest_session);
+        boolean busy = AIActivityMonitor.getState() != SessionState.IDLE;
         if (panel != null) {
             FloatingActionButton fab = panel.findViewById(R.id.ai_fab_send);
-            boolean busy = AIActivityMonitor.getState() != SessionState.IDLE;
             if (fab != null) {
                 fab.setImageResource(busy ? R.drawable.ic_mtrl_stop : R.drawable.ic_mtrl_send);
                 fab.setContentDescription(busy ? "Stop response" : "Send message");
+                // The button remains actionable throughout reasoning, provider waits,
+                // streaming, and tool execution; busy means STOP, never a disabled dead-end.
                 fab.setEnabled(true);
+                fab.setAlpha(1f);
+            }
+        }
+        if (!busy) {
+            activeToolCount = 0;
+            if (chatAdapter != null && currentSession != null) {
+                boolean changed = false;
+                long now = System.currentTimeMillis();
+                for (ChatStore.Message message : currentSession.messages) {
+                    if (message == null || message.toolEvents == null) continue;
+                    for (ChatStore.ToolEvent event : message.toolEvents) {
+                        if ("RUNNING".equals(event.status)) {
+                            event.status = "ERROR";
+                            event.finishedAt = now;
+                            event.resultSummary = "Request ended before the tool reported completion";
+                            changed = true;
+                        }
+                    }
+                }
+                if (changed) {
+                    chatAdapter.setMessages(currentSession.messages);
+                    scheduleSessionSave();
+                }
             }
         }
     }
