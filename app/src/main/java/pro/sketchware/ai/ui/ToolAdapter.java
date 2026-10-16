@@ -8,7 +8,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,13 +86,15 @@ public class ToolAdapter extends RecyclerView.Adapter<ToolAdapter.ViewHolder> {
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView name, desc;
         Chip chip;
-        MaterialSwitch toggle;
         ViewHolder(View v) {
             super(v);
             name = v.findViewById(R.id.tv_tool_name);
             desc = v.findViewById(R.id.tv_tool_desc);
             chip = v.findViewById(R.id.chip_domain);
-            toggle = v.findViewById(R.id.switch_tool);
+            // The runtime exposes the registered tool catalog as a whole; per-tool
+            // enable/disable is not implemented, so the legacy toggle stays hidden.
+            View legacyToggle = v.findViewById(R.id.switch_tool);
+            if (legacyToggle != null) legacyToggle.setVisibility(View.GONE);
         }
     }
 }
