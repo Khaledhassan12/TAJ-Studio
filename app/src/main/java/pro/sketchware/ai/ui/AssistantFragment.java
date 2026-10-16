@@ -181,7 +181,7 @@ public class AssistantFragment extends Fragment {
             if (now - lastEventTime > 300000) { // Match the agent's five-minute hard deadline
                 forceIdle();
                 setTypingIndicator(false);
-                addErrorMessage(getString(R.string.ai_timed_out), "Watchdog triggered: No event for 120s", "Retry");
+                addErrorMessage(getString(R.string.ai_timed_out), "Watchdog triggered: No event for 300s", "Retry");
             } else {
                 mainHandler.postDelayed(watchdog, 10000);
             }
