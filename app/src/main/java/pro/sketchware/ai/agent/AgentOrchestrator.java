@@ -31,7 +31,7 @@ public final class AgentOrchestrator {
     public static final long MAX_TASK_DURATION_MS = TimeUnit.MINUTES.toMillis(8);
     private static final int MAX_MODEL_ITERATIONS = 20;
 
-    /** Stable identity and operating policy shared by every agent request/provider.
+    /** Stable identity and operating policy shared by every agent request/provider. */
     public static final String DEFAULT_SYSTEM_PROMPT = AgentSystemPrompt.DEFAULT;
 
     private final AIProvider provider;
