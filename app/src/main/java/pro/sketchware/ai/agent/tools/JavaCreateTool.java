@@ -97,10 +97,10 @@ public final class JavaCreateTool implements Tool {
                 // when the model supplies a complete custom source body.
                 if (type.startsWith("java_")) {
                     content = content.replaceFirst("(?m)^\\s*package\\s+[A-Za-z_$][A-Za-z0-9_$.]*\\s*;\\s*\\r?\\n?", "");
-                    content = "package " + pkg + ";\\n\\n" + content;
+                    content = "package " + pkg + ";\n\n" + content;
                 } else if (type.startsWith("kotlin_")) {
                     content = content.replaceFirst("(?m)^\\s*package\\s+[A-Za-z_$][A-Za-z0-9_$.]*\\s*\\r?\\n?", "");
-                    content = "package " + pkg + "\\n\\n" + content;
+                    content = "package " + pkg + "\n\n" + content;
                 }
             }
             if (content.isEmpty()) {
