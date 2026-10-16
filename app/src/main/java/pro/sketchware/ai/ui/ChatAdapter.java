@@ -542,7 +542,20 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             String status = m.toolState;
             if (status == null) status = "WAITING";
 
+            // RecyclerView reuses this holder across WAITING, RESUMED, CANCELLED and EXHAUSTED.
+            // Reset reusable visuals before rendering the current lifecycle state.
+            card.setAlpha(1f);
+            ivIcon.setVisibility(View.VISIBLE);
+            ivIcon.clearColorFilter();
+            tvTitle.setVisibility(View.VISIBLE);
+            tvFinal.setVisibility(View.GONE);
+            progress.setVisibility(View.GONE);
+            tvSub.setVisibility(View.GONE);
+            actions.setVisibility(View.GONE);
+
             if ("WAITING".equals(status)) {
+                ((com.google.android.material.button.MaterialButton) btnRetry).setText("Retry now");
+                ((com.google.android.material.button.MaterialButton) btnCancel).setText("Cancel");
                 boundMessage = m;
                 if (!tickerRegistered) {
                     LiveTicker.add(this);
@@ -569,6 +582,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
                 if ("RESUMED".equals(status)) {
                     ivIcon.setImageResource(R.drawable.ic_check_circle);
+                    tvTitle.setVisibility(View.VISIBLE);
                     tvTitle.setText(R.string.ai_rate_resumed);
                     tvFinal.setVisibility(View.GONE);
                 } else if ("COLLAPSED".equals(status)) {
@@ -580,13 +594,16 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), android.R.attr.colorBackground));
                     card.setAlpha(0.5f);
                 } else if ("CANCELLED".equals(status)) {
+                    card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), android.R.attr.colorBackground));
                     ivIcon.setImageResource(R.drawable.ic_hourglass);
                     tvTitle.setVisibility(View.GONE);
                     tvFinal.setText(R.string.ai_rate_cancelled);
                 } else if ("EXHAUSTED".equals(status)) {
                     card.setCardBackgroundColor(pro.sketchware.utility.ThemeUtils.getColor(itemView.getContext(), R.attr.colorErrorContainer));
+                    ivIcon.setVisibility(View.VISIBLE);
                     ivIcon.setImageResource(R.drawable.ic_error_circle);
                     ivIcon.setColorFilter(0xFFF44336);
+                    tvTitle.setVisibility(View.VISIBLE);
                     tvTitle.setText(String.format(itemView.getContext().getString(R.string.ai_rate_exhausted), 3));
                     tvFinal.setVisibility(View.GONE);
                     actions.setVisibility(View.VISIBLE);
