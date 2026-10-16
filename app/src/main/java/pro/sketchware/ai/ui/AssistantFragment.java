@@ -739,7 +739,6 @@ public class AssistantFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(panel.getContext()));
         FavoritesAdapter adapter = new FavoritesAdapter();
         rv.setAdapter(adapter);
-        adapter.reload();
     }
 
     private final class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.FavoriteHolder> {
@@ -828,7 +827,6 @@ public class AssistantFragment extends Fragment {
             sessionAdapter = new SessionAdapter();
             rv.setAdapter(sessionAdapter);
 
-            refreshHistory();
             sessionAdapter.setOnSessionClickListener(session -> {
                 if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
                     Snackbar.make(panel, "Finish or cancel the active request before switching sessions.", Snackbar.LENGTH_LONG).show();
