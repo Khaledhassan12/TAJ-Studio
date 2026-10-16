@@ -27,7 +27,11 @@ import pro.sketchware.ai.core.ToolSpec;
 
 public final class AgentOrchestrator {
 
-    /** Stable identity and operating policy shared by every agent request/provider. */
+    /** Shared hard deadline; UI watchdogs use the same value as the executor. */
+    public static final long MAX_TASK_DURATION_MS = TimeUnit.MINUTES.toMillis(8);
+    private static final int MAX_MODEL_ITERATIONS = 20;
+
+    /** Stable identity and operating policy shared by every agent request/provider.
     public static final String DEFAULT_SYSTEM_PROMPT = AgentSystemPrompt.DEFAULT;
 
     private final AIProvider provider;
@@ -94,8 +98,8 @@ public final class AgentOrchestrator {
             try {
                 List<AIMessage> conversation = new ArrayList<>(messages);
                 int iterations = 0;
-                final int MAX_ITERATIONS = 10;
-                final long taskDeadline = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5);
+                final int MAX_ITERATIONS = MAX_MODEL_ITERATIONS;
+                final long taskDeadline = System.currentTimeMillis() + MAX_TASK_DURATION_MS;
 
                 while (iterations < MAX_ITERATIONS && !isCancelled
                         && System.currentTimeMillis() < taskDeadline) {

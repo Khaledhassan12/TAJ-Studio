@@ -20,7 +20,7 @@ public final class InsertWidgetTool implements Tool {
             params.put("type", "object");
             JSONObject props = new JSONObject();
             props.put("layout", new JSONObject().put("type", "string").put("description", "Layout filename or alias (e.g. main.xml or res/layout/main.xml)"));
-            props.put("parentId", new JSONObject().put("type", "string").put("description", "ID of the parent widget (e.g. linear1)"));
+            props.put("parentId", new JSONObject().put("type", "string").put("description", "Parent widget ID (e.g. linear1), or the literal root to insert directly into the root layout children"));
             props.put("widgetXml", new JSONObject().put("type", "string").put("description", "Full XML of the widget to insert"));
             props.put("position", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"start", "end"})).put("default", "end"));
             props.put("sc_id", new JSONObject().put("type", "string"));
@@ -56,38 +56,59 @@ public final class InsertWidgetTool implements Tool {
                     "The layout changed while it was being read. No widget was inserted.", null, true);
         }
         
-        // Find parent tag and its close tag. 
-        // For simplicity and since we can't easily get offsets from XmlPullParser, 
-        // we'll look for the android:id attribute.
-        
-        String parentMarker = "android:id=\"@+id/" + parentId + "\"";
-        int markerIdx = original.indexOf(parentMarker);
-        if (markerIdx == -1) return new ToolResult("Parent ID '" + parentId + "' not found in layout.", true);
-        
-        // Find the end of the start tag
-        int startTagEnd = original.indexOf(">", markerIdx);
-        if (startTagEnd == -1) return new ToolResult("Malformed XML: parent tag not closed.", true);
-        
+        // The root layout is represented as parent "root" by ViewBeanParser and
+        // intentionally does not need an android:id attribute. Handle it explicitly.
         String next;
-        if (original.charAt(startTagEnd - 1) == '/') {
-            // Self-closing tag. Convert to open/close.
-            String base = original.substring(0, startTagEnd - 1);
-            int tagStart = original.lastIndexOf("<", markerIdx);
-            String tagName = original.substring(tagStart + 1, original.indexOf(" ", tagStart + 1));
-            next = base + ">\n" + widgetXml + "\n</" + tagName + ">" + original.substring(startTagEnd + 1);
-        } else {
-            if (position.equals("start")) {
-                next = original.substring(0, startTagEnd + 1) + "\n" + widgetXml + original.substring(startTagEnd + 1);
+        if ("root".equalsIgnoreCase(parentId)) {
+            int rootStart = findFirstStartTag(original);
+            if (rootStart < 0) return new ToolResult("Layout has no root start tag.", true);
+            int rootEnd = findTagEnd(original, rootStart);
+            String rootName = readTagName(original, rootStart);
+            if (rootEnd < 0 || rootName.isEmpty()) {
+                return new ToolResult("Malformed XML: could not identify the root layout tag.", true);
+            }
+            if (isSelfClosingTag(original, rootEnd)) {
+                return new ToolResult("Cannot insert a widget into a self-closing root layout.", true);
+            }
+            if ("start".equals(position)) {
+                next = original.substring(0, rootEnd + 1) + "\n"
+                        + widgetXml + "\n" + original.substring(rootEnd + 1);
             } else {
-                // Find matching close tag. This is hard without real parsing.
-                // Simple search for next close tag of same name at same level would be better.
-                // For now, we'll try to find the LAST close tag before the next sibling or end.
-                int tagStart = original.lastIndexOf("<", markerIdx);
-                String tagName = original.substring(tagStart + 1).split("[ >]")[0];
-                String closeTag = "</" + tagName + ">";
+                int closeIdx = findMatchingCloseTag(original, rootStart, rootName);
+                if (closeIdx < 0) return new ToolResult("Could not locate the root layout's closing tag.", true);
+                next = original.substring(0, closeIdx) + "\n"
+                        + widgetXml + "\n" + original.substring(closeIdx);
+            }
+        } else {
+            String parentMarker = "android:id=\"@+id/" + parentId + "\"";
+            int markerIdx = original.indexOf(parentMarker);
+            if (markerIdx == -1) {
+                java.util.regex.Pattern idPattern = java.util.regex.Pattern.compile(
+                        "android:id\\s*=\\s*([\"'])@\\+id/"
+                                + java.util.regex.Pattern.quote(parentId) + "\\1");
+                java.util.regex.Matcher matcher = idPattern.matcher(original);
+                if (matcher.find()) markerIdx = matcher.start();
+            }
+            if (markerIdx == -1) return new ToolResult("Parent ID '" + parentId + "' not found in layout.", true);
+
+            int tagStart = original.lastIndexOf("<", markerIdx);
+            int startTagEnd = findTagEnd(original, tagStart);
+            String tagName = readTagName(original, tagStart);
+            if (tagStart < 0 || startTagEnd < 0 || tagName.isEmpty()) {
+                return new ToolResult("Malformed XML: parent start tag could not be parsed.", true);
+            }
+            if (isSelfClosingTag(original, startTagEnd)) {
+                String base = original.substring(0, startTagEnd);
+                next = base + ">\n" + widgetXml + "\n</" + tagName + ">"
+                        + original.substring(startTagEnd + 1);
+            } else if ("start".equals(position)) {
+                next = original.substring(0, startTagEnd + 1) + "\n"
+                        + widgetXml + original.substring(startTagEnd + 1);
+            } else {
                 int closeIdx = findMatchingCloseTag(original, tagStart, tagName);
-                if (closeIdx == -1) return new ToolResult("Could not locate close tag for " + tagName, true);
-                next = original.substring(0, closeIdx) + "\n" + widgetXml + "\n" + original.substring(closeIdx);
+                if (closeIdx < 0) return new ToolResult("Could not locate close tag for " + tagName, true);
+                next = original.substring(0, closeIdx) + "\n"
+                        + widgetXml + "\n" + original.substring(closeIdx);
             }
         }
 
@@ -130,6 +151,54 @@ public final class InsertWidgetTool implements Tool {
         }
     }
 
+    private int findFirstStartTag(String xml) {
+        int cursor = 0;
+        while ((cursor = xml.indexOf('<', cursor)) >= 0) {
+            if (cursor + 1 >= xml.length()) return -1;
+            char next = xml.charAt(cursor + 1);
+            if (next != '/' && next != '!' && next != '?') return cursor;
+            cursor++;
+        }
+        return -1;
+    }
+
+    /** Finds '>' while respecting quoted attribute values. */
+    private int findTagEnd(String xml, int startIdx) {
+        if (startIdx < 0 || startIdx >= xml.length() || xml.charAt(startIdx) != '<') return -1;
+        char quote = 0;
+        for (int i = startIdx + 1; i < xml.length(); i++) {
+            char c = xml.charAt(i);
+            if (quote != 0) {
+                if (c == quote) quote = 0;
+            } else if (c == '\'' || c == '"') {
+                quote = c;
+            } else if (c == '>') {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private String readTagName(String xml, int tagStart) {
+        if (tagStart < 0 || tagStart >= xml.length() || xml.charAt(tagStart) != '<') return "";
+        int start = tagStart + 1;
+        while (start < xml.length() && Character.isWhitespace(xml.charAt(start))) start++;
+        int end = start;
+        while (end < xml.length()) {
+            char c = xml.charAt(end);
+            if (Character.isWhitespace(c) || c == '/' || c == '>') break;
+            end++;
+        }
+        return end > start ? xml.substring(start, end) : "";
+    }
+
+    private boolean isSelfClosingTag(String xml, int tagEnd) {
+        if (tagEnd < 0 || tagEnd >= xml.length()) return false;
+        int i = tagEnd - 1;
+        while (i >= 0 && Character.isWhitespace(xml.charAt(i))) i--;
+        return i >= 0 && xml.charAt(i) == '/';
+    }
+
     private int findMatchingCloseTag(String xml, int startIdx, String tagName) {
         String open = "<" + tagName;
         String close = "</" + tagName + ">";
@@ -150,8 +219,13 @@ public final class InsertWidgetTool implements Tool {
             if (nextClose == -1) return -1;
             
             if (nextOpen != -1 && nextOpen < nextClose) {
-                depth++;
-                cur = nextOpen;
+                int openEnd = findTagEnd(xml, nextOpen);
+                if (openEnd >= 0 && isSelfClosingTag(xml, openEnd)) {
+                    cur = openEnd;
+                } else {
+                    depth++;
+                    cur = nextOpen;
+                }
             } else {
                 if (depth == 0) return nextClose;
                 depth--;

@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import java.util.ArrayList;
+import pro.sketchware.ai.agent.AgentOrchestrator;
 import java.util.List;
 import pro.sketchware.ai.agent.SessionState;
 
@@ -64,8 +65,8 @@ public final class AIActivityMonitor {
                 setState(SessionState.IDLE);
             }
         };
-        // Keep the monitor deadline aligned with AgentOrchestrator's five-minute task budget.
-        watchdogHandler.postDelayed(watchdogRunnable, 300000);
+        // Keep the monitor deadline aligned with the agent's hard task deadline.
+        watchdogHandler.postDelayed(watchdogRunnable, AgentOrchestrator.MAX_TASK_DURATION_MS);
     }
 
     public static synchronized void poke() {

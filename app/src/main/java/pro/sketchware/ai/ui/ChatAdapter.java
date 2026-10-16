@@ -476,8 +476,18 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     progress.setVisibility(View.GONE);
                     status.setVisibility(View.VISIBLE);
                     boolean ok = "OK".equals(te.status);
-                    status.setImageResource(ok ? R.drawable.ic_check_circle : R.drawable.ic_error_circle);
-                    status.setColorFilter(ok ? 0xFF4CAF50 : 0xFFF44336);
+                    boolean cancelled = "CANCELLED".equals(te.status);
+                    boolean denied = "DENIED".equals(te.status);
+                    int icon = ok ? R.drawable.ic_check_circle
+                            : cancelled ? R.drawable.ic_mtrl_cancel
+                            : denied ? R.drawable.ic_mtrl_gpp_bad
+                            : R.drawable.ic_error_circle;
+                    int tint = ok ? 0xFF4CAF50
+                            : cancelled ? 0xFF757575
+                            : denied ? 0xFFFF9800
+                            : 0xFFF44336;
+                    status.setImageResource(icon);
+                    status.setColorFilter(tint);
                 }
             }
         }

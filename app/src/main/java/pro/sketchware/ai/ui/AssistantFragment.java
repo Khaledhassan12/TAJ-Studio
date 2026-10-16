@@ -175,7 +175,7 @@ public class AssistantFragment extends Fragment {
     private void handleWatchdogTimeout() {
         if (AIActivityMonitor.getState() != SessionState.IDLE) {
             long now = System.currentTimeMillis();
-            if (now - lastEventTime > 300000) { // Match the agent's five-minute hard deadline
+            if (now - lastEventTime > AgentOrchestrator.MAX_TASK_DURATION_MS) { // Match the agent's hard deadline
                 forceIdle();
                 setTypingIndicator(false);
                 addErrorMessage(getString(R.string.ai_timed_out), "Watchdog triggered: No event for 300s", "Retry");
@@ -212,9 +212,9 @@ public class AssistantFragment extends Fragment {
                 if (message.toolEvents == null) continue;
                 for (ChatStore.ToolEvent event : message.toolEvents) {
                     if ("RUNNING".equals(event.status)) {
-                        event.status = "ERROR";
+                        event.status = "CANCELLED";
                         event.finishedAt = finishedAt;
-                        event.resultSummary = "Stopped or cancelled";
+                        event.resultSummary = "Cancelled before the tool reported completion";
                     }
                 }
             }
@@ -1614,7 +1614,16 @@ public class AssistantFragment extends Fragment {
                             for (int i = toolsCard.toolEvents.size() - 1; i >= 0; i--) {
                                 ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
                                 if (java.util.Objects.equals(event.name, name) && "RUNNING".equals(event.status)) {
-                                    event.status = success ? "OK" : "ERROR";
+                                    String summary = event.resultSummary == null ? "" : event.resultSummary;
+                                    if (success) {
+                                        event.status = "OK";
+                                    } else if (summary.contains("CANCELLED")) {
+                                        event.status = "CANCELLED";
+                                    } else if (summary.contains("DENIED")) {
+                                        event.status = "DENIED";
+                                    } else {
+                                        event.status = "ERROR";
+                                    }
                                     event.finishedAt = System.currentTimeMillis();
                                     break;
                                 }
@@ -1634,7 +1643,7 @@ public class AssistantFragment extends Fragment {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
-                        reconcileTools(toolsCard);
+                        reconcileTools(toolsCard, "ERROR");
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -1682,7 +1691,7 @@ public class AssistantFragment extends Fragment {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
-                        reconcileTools(toolsCard);
+                        reconcileTools(toolsCard, "ERROR");
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             chatAdapter.completeThinking(currentSession.messages.indexOf(thinkingMsg), elapsed);
@@ -1706,7 +1715,7 @@ public class AssistantFragment extends Fragment {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
-                        reconcileTools(toolsCard);
+                        reconcileTools(toolsCard, "CANCELLED");
                         activeToolCount.set(0);
                         if (rateLimitMsg != null && ("WAITING".equals(rateLimitMsg.toolState)
                 || "RETRYING".equals(rateLimitMsg.toolState))) rateLimitMsg.toolState = "CANCELLED";
@@ -1835,18 +1844,22 @@ public class AssistantFragment extends Fragment {
         }
     }
 
-    private void reconcileTools(ChatStore.Message toolsCard) {
+    private void reconcileTools(ChatStore.Message toolsCard, String terminalStatus) {
         if (toolsCard != null && toolsCard.toolEvents != null) {
             boolean changed = false;
             for (ChatStore.ToolEvent te : toolsCard.toolEvents) {
                 if ("RUNNING".equals(te.status)) {
-                    te.status = "ERROR";
+                    te.status = "CANCELLED".equals(terminalStatus) ? "CANCELLED" : "ERROR";
                     te.finishedAt = System.currentTimeMillis();
+                    if (te.resultSummary == null || te.resultSummary.isEmpty()) {
+                        te.resultSummary = "Request ended before the tool reported completion";
+                    }
                     changed = true;
                 }
             }
-            if (changed) {
-                chatAdapter.notifyItemChanged(currentSession.messages.indexOf(toolsCard), "tool_events");
+            if (changed && chatAdapter != null && currentSession != null) {
+                int index = currentSession.messages.indexOf(toolsCard);
+                if (index >= 0) chatAdapter.notifyItemChanged(index, "tool_events");
             }
         }
     }
