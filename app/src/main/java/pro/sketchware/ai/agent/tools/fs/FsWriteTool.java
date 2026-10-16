@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import pro.sketchware.ai.agent.PathResolver;
+import pro.sketchware.ai.agent.ProjectPaths;
 import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.tools.DomainToolHelper;
 import pro.sketchware.ai.live.LiveRegistry;
@@ -55,6 +56,8 @@ public final class FsWriteTool implements Tool {
         String path = null;
         String requestedContent = null;
         boolean existed = false;
+        boolean layoutXml = false;
+        String originalContent = null;
         try {
             String userPath = args.getString("path");
             requestedContent = args.getString("content");
@@ -66,16 +69,25 @@ public final class FsWriteTool implements Tool {
 
             target = PathResolver.resolve(ctx.sc_id, userPath);
             path = target.getAbsolutePath();
+            String layoutRoot = new File(ProjectPaths.layoutDir(ctx.sc_id)).getCanonicalPath();
+            String canonicalTarget = target.getCanonicalPath();
+            layoutXml = target.getName().endsWith(".xml")
+                    && canonicalTarget.startsWith(layoutRoot + File.separator);
             if (target.exists() && !target.isFile()) {
                 return ToolResult.structured("fs_write", "ERROR", path,
                         "The target exists but is not a regular file.", null, true);
             }
             existed = target.isFile();
+            if (layoutXml && !DomainToolHelper.verifyXml(requestedContent)) {
+                return ToolResult.structured("fs_write", "INVALID_XML", path,
+                        "Layout XML is malformed; no file or designer state was changed.", null, true);
+            }
             if (!ctx.checkPermission(path, existed)) {
                 return ToolResult.structured("fs_write", "DENIED", path, "Write permission was denied.", null, true);
             }
 
             String beforeHash = existed ? DomainToolHelper.sha256(target) : null;
+            originalContent = existed ? DomainToolHelper.readUtf8(target) : null;
             if (existed) DomainToolHelper.backup(path);
             DomainToolHelper.atomicWrite(target, requestedContent, beforeHash);
 
@@ -89,17 +101,34 @@ public final class FsWriteTool implements Tool {
                         null, true);
             }
 
+            if (layoutXml) {
+                DomainToolHelper.syncLayoutToDesigner(ctx.sc_id, target.getName(), actual);
+                if (!DomainToolHelper.verifyLiveLayout(ctx.sc_id, target.getName(), actual)) {
+                    throw new java.io.IOException("Layout XML was written, but the live Sketchware designer model did not match it.");
+                }
+            }
+
             String hash = DomainToolHelper.sha256(target);
             notifyLive(path);
             return ToolResult.structured("fs_write", "SUCCESS", path,
-                    "Exact UTF-8 read-back verified; SHA-256=" + hash, null, false);
+                    "Exact UTF-8 read-back verified; SHA-256=" + hash
+                            + (layoutXml ? "; live designer model read-back verified." : ""), null, false);
         } catch (Exception e) {
             boolean restored = false;
             try {
-                if (existed && path != null && requestedContent != null && target != null && target.isFile()
+                if (path != null && requestedContent != null && target != null && target.isFile()
                         && DomainToolHelper.contentSha256(requestedContent).equals(DomainToolHelper.sha256(target))) {
-                    restored = DomainToolHelper.restoreIfUnchanged(
-                            path, DomainToolHelper.contentSha256(requestedContent));
+                    if (existed) {
+                        restored = DomainToolHelper.restoreIfUnchanged(
+                                path, DomainToolHelper.contentSha256(requestedContent));
+                        if (restored && layoutXml && originalContent != null) {
+                            DomainToolHelper.syncLayoutToDesigner(ctx.sc_id, target.getName(), originalContent);
+                            restored = DomainToolHelper.verifyLiveLayout(ctx.sc_id, target.getName(), originalContent);
+                        }
+                    } else {
+                        Files.deleteIfExists(target.toPath());
+                        restored = !target.exists();
+                    }
                 }
             } catch (Exception ignored) {}
             String message = safeMessage(e);
