@@ -289,7 +289,7 @@ public class AssistantFragment extends Fragment {
         container = view.findViewById(R.id.panel_container);
 
         rail.setOnItemSelectedListener(item -> {
-            if (AIActivityMonitor.isBusy() && item.getItemId() != R.id.ai_dest_session) {
+            if ((AIActivityMonitor.isBusy() || activeRequestId != 0L) && item.getItemId() != R.id.ai_dest_session) {
                 Snackbar.make(view, "Finish or cancel the active assistant request before switching panels.", Snackbar.LENGTH_SHORT).show();
                 return false;
             }
@@ -788,7 +788,7 @@ public class AssistantFragment extends Fragment {
         View btnNew = panel.findViewById(R.id.ai_fab_new_session);
         if (btnNew != null) {
             btnNew.setOnClickListener(v -> {
-                if (AIActivityMonitor.isBusy()) {
+                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
                     Snackbar.make(panel, "Cancel the active request before creating a new session.", Snackbar.LENGTH_SHORT).show();
                     return;
                 }
@@ -831,7 +831,7 @@ public class AssistantFragment extends Fragment {
                 }
                 String status = card.toolState;
                 if ("EXHAUSTED".equals(status) || "FAILED".equals(status)) {
-                    if (AIActivityMonitor.isBusy()) {
+                    if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
                         Snackbar.make(panel, "Stop the active request before retrying this message.", Snackbar.LENGTH_LONG).show();
                         return;
                     }
@@ -905,7 +905,7 @@ public class AssistantFragment extends Fragment {
 
             @Override
             public void onBranch(ChatStore.Message message, int position) {
-                if (AIActivityMonitor.isBusy()) {
+                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
                     Snackbar.make(panel, "Cancel the active request before branching this conversation.", Snackbar.LENGTH_SHORT).show();
                     return;
                 }
@@ -927,7 +927,7 @@ public class AssistantFragment extends Fragment {
 
             @Override
             public void onRegenerate(ChatStore.Message message, int position) {
-                if (AIActivityMonitor.isBusy()) {
+                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
                     Snackbar.make(panel, R.string.ai_busy, Snackbar.LENGTH_SHORT).show();
                     return;
                 }
@@ -1065,7 +1065,7 @@ public class AssistantFragment extends Fragment {
         FloatingActionButton send = panel.findViewById(R.id.ai_fab_send);
         if (send != null) {
             send.setOnClickListener(v -> {
-                if (AIActivityMonitor.isBusy()) {
+                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
                     forceIdle();
                     ChatStore.Message note = new ChatStore.Message("system", getString(R.string.ai_stopped));
                     if (currentSession == null) currentSession = new ChatStore.Session();
@@ -1314,7 +1314,7 @@ public class AssistantFragment extends Fragment {
 
     private void sendMessage(String text, boolean isRegen) {
         if (!isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
-        if (AIActivityMonitor.isBusy()) {
+        if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
             Snackbar.make(requireView(), R.string.ai_busy, Snackbar.LENGTH_SHORT).show();
             return;
         }
