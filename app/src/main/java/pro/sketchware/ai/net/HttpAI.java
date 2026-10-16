@@ -139,17 +139,24 @@ public abstract class HttpAI implements AIProvider {
                             .build();
                 } else {
                     long waitMs = RetryPolicy.waitMs(attempt, e.lastResponse);
-                    tracked.onRateLimitWait(waitMs, attempt, maxAttempts);
+                    handle.beginRetryWait();
                     try {
+                        tracked.onRateLimitWait(waitMs, attempt, maxAttempts);
                         long start = System.currentTimeMillis();
                         while (System.currentTimeMillis() - start < waitMs) {
                             if (handle.isCancelled()) throw new InterruptedException();
                             if (handle.shouldSkipWait()) break;
-                            Thread.sleep(Math.min(500, waitMs));
+                            long remaining = waitMs - (System.currentTimeMillis() - start);
+                            if (remaining <= 0L) break;
+                            Thread.sleep(Math.min(500L, remaining));
                         }
                     } catch (InterruptedException ie) {
                         tracked.fail(AIException.cancelled());
                         return;
+                    } finally {
+                        // The skip request belongs to this specific wait only. A late tap must
+                        // never skip a later retry or leak into another request.
+                        handle.endRetryWait();
                     }
                 }
             } catch (Exception e) {
@@ -378,7 +385,8 @@ public abstract class HttpAI implements AIProvider {
     /** Cooperative cancellation handle bound to the in-flight OkHttp call. */
     protected static final class CallHandle implements Handle {
         private final AtomicBoolean cancelled = new AtomicBoolean(false);
-        private final AtomicBoolean skipWait = new AtomicBoolean(false);
+        private boolean retryWaitActive;
+        private boolean skipWaitRequested;
         private volatile Call call;
 
         void attach(Call newCall) {
@@ -403,13 +411,27 @@ public abstract class HttpAI implements AIProvider {
             return cancelled.get();
         }
 
-        @Override
-        public void skipWait() {
-            skipWait.set(true);
+        synchronized void beginRetryWait() {
+            retryWaitActive = true;
+            skipWaitRequested = false;
         }
 
-        public boolean shouldSkipWait() {
-            return skipWait.compareAndSet(true, false);
+        synchronized void endRetryWait() {
+            retryWaitActive = false;
+            skipWaitRequested = false;
+        }
+
+        @Override
+        public synchronized void skipWait() {
+            if (retryWaitActive) {
+                skipWaitRequested = true;
+            }
+        }
+
+        public synchronized boolean shouldSkipWait() {
+            if (!retryWaitActive || !skipWaitRequested) return false;
+            skipWaitRequested = false;
+            return true;
         }
     }
 }
