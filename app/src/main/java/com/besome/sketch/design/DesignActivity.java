@@ -248,7 +248,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
     public void onProjectUpdated() {
         runOnUiThread(() -> {
+            // Reload persisted model data without silently switching the user back to main.xml.
+            String selectedXml = projectFile == null ? null : projectFile.getXmlName();
             loadProject(true);
+            if (selectedXml != null && !selectedXml.trim().isEmpty()) {
+                ProjectFileBean refreshedFile = jC.b(sc_id).b(selectedXml);
+                if (refreshedFile != null) projectFile = refreshedFile;
+            }
             refresh();
         });
     }
@@ -957,16 +963,17 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             SketchwareUtil.toastError("No visual-design screen is selected.");
             return;
         }
+        final ProjectFileBean selectedProjectFile = projectFile;
         k();
         new Thread(() -> {
             try {
-                // Use the selected ProjectFileBean as the source of truth. fileName is a
-                // presentation label and may show a Java filename when another tab is active.
-                String filename = projectFile.getXmlName();
+                // Use a snapshot of the selected ProjectFileBean as the source of truth.
+                // fileName is a presentation label and may show a Java filename on other tabs.
+                String filename = selectedProjectFile.getXmlName();
                 if (filename == null || filename.trim().isEmpty()) {
                     throw new IllegalStateException("The selected screen has no XML layout name.");
                 }
-                var xmlGenerator = new Ox(q.N, projectFile);
+                var xmlGenerator = new Ox(q.N, selectedProjectFile);
                 var projectDataManager = jC.a(sc_id);
                 var viewBeans = projectDataManager.d(filename);
                 var viewFab = projectDataManager.h(filename);
