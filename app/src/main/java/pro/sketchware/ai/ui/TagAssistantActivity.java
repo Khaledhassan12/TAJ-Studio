@@ -420,6 +420,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.btnSyncModels.setEnabled(!inProgress);
         binding.btnChooseModel.setEnabled(!inProgress);
         binding.btnSave.setEnabled(!inProgress);
+        binding.btnTest.setEnabled(!inProgress);
         // Freeze the provider form while an operation is in flight so its result cannot
         // be applied to a different provider selected midway through the request.
         binding.dropdownProvider.setEnabled(!inProgress);
@@ -428,7 +429,6 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.editModel.setEnabled(!inProgress);
         if (testMode) {
             binding.progressTest.setVisibility(inProgress ? View.VISIBLE : View.GONE);
-            binding.btnTest.setEnabled(!inProgress);
             if (inProgress) {
                 binding.tvStatusMessage.setText(R.string.ai_connection_testing);
                 binding.tvStatusMessage.setVisibility(View.VISIBLE);
