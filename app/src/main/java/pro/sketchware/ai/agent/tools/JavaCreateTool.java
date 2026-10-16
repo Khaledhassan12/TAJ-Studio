@@ -53,8 +53,12 @@ public final class JavaCreateTool implements Tool {
 
             String root;
             String declaredPackage = packagePath;
-            if ("project".equals(target) && packagePath.isEmpty()) {
+            if (packagePath.isEmpty()) {
+                // Match ManageJavaActivity's default package for both user-managed files
+                // and generated project source files.
                 declaredPackage = JavaToolHelper.getPackageName(ctx.sc_id);
+            }
+            if ("project".equals(target) && packagePath.isEmpty()) {
                 root = ProjectPaths.packagePath(ctx.sc_id);
             } else {
                 root = "manager".equals(target) ? ProjectPaths.javaManagerRoot(ctx.sc_id) : ProjectPaths.projectJavaRoot(ctx.sc_id);
