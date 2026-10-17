@@ -61,6 +61,7 @@ public final class AIConfigStore {
     public static final String K_AUTO_RETRY = "assistant_auto_retry";
     private static final String K_STREAMING_ENABLED = "assistant_streaming_enabled";
     private static final String K_AUTO_SUGGEST = "assistant_auto_suggest";
+    private static final String K_AUTO_TEST_PROVIDER = "assistant_auto_test_provider";
     private static final String K_HAPTICS_ENABLED = "assistant_haptics_enabled";
     private static final String K_TEMPERATURE = "assistant_temperature";
 
@@ -354,6 +355,14 @@ public final class AIConfigStore {
 
     public void setAutoSuggestEnabled(boolean enabled) {
         if (prefs != null) prefs.edit().putBoolean(K_AUTO_SUGGEST, enabled).apply();
+    }
+
+    public boolean isAutoTestProviderOnSelection() {
+        return prefs != null && prefs.getBoolean(K_AUTO_TEST_PROVIDER, false);
+    }
+
+    public void setAutoTestProviderOnSelection(boolean enabled) {
+        if (prefs != null) prefs.edit().putBoolean(K_AUTO_TEST_PROVIDER, enabled).apply();
     }
 
     public boolean isHapticsEnabled() {
