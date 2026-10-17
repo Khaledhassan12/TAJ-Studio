@@ -794,8 +794,11 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             currentMessage = m;
             boolean completed = m.reasoningSeconds > 0 || (m.reasoning != null && !m.reasoning.isEmpty() && !"thinking".equals(m.role));
             
-            tvFull.setText(m.reasoning);
-            updatePreview(m.reasoning);
+            // Never render provider-supplied internal reasoning, including legacy sessions
+            // persisted by older builds. The card is an execution-status indicator only.
+            String safeSummary = "TAJ analyzed the request and selected its next action. Detailed internal reasoning is not displayed.";
+            tvFull.setText(safeSummary);
+            updatePreview(safeSummary);
             
             if (completed) {
                 stopTimer();
