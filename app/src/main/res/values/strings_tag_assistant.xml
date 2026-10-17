@@ -18,6 +18,10 @@
     <!-- Status card -->
     <string name="ai_status_title">Status</string>
     <string name="ai_master_enable">Enable TAG Assistant</string>
+    <string name="ai_not_verified">Not verified</string>
+    <string name="ai_verified">Verified</string>
+    <string name="ai_not_verified_tap_hint">Not verified. Tap to test the provider connection.</string>
+    <string name="ai_verified_tap_hint">Verified. Tap to test the provider connection again.</string>
     <string name="ai_master_enable_desc">Adds the AI chat &amp; agent to your project editor. Everything stays optional and isolated.</string>
     <string name="ai_default_mode">Default mode</string>
     <string name="ai_mode_chat">Chat</string>
@@ -81,6 +85,15 @@ Your API key stays on this device, encrypted. The assistant only talks to the pr
     <string name="ai_model_free">FREE</string>
     <string name="ai_model_paid">PAID</string>
 
+    <string name="ai_advanced_title">Advanced controls</string>
+    <string name="ai_advanced_desc">Tune response behavior and interface feedback. Changes save automatically on this device.</string>
+    <string name="ai_streaming_title">Stream responses</string>
+    <string name="ai_streaming_desc">Show generated text as it arrives instead of waiting for the complete answer.</string>
+    <string name="ai_thinking_title">Show reasoning status</string>
+    <string name="ai_auto_suggest_title">Smart prompt suggestions</string>
+    <string name="ai_haptics_title">Touch feedback</string>
+    <string name="ai_temperature_title">Response creativity</string>
+    <string name="ai_temperature_desc">Lower values are more focused; higher values allow more variation.</string>
     <string name="ai_tools_title">Agent tools</string>
     <string name="ai_tools_summary">Used %1$d tools &#8226; %2$ds</string>
     <string name="ai_stopped">Stopped.</string>
