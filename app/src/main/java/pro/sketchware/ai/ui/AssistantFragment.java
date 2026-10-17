@@ -875,7 +875,7 @@ public class AssistantFragment extends Fragment {
     private void showSessionExportOptions(View panel,ChatStore.Session s){
         String[] formats={"JSON","Markdown","Plain text"};new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext()).setTitle("Export conversation").setItems(formats,(d,which)->{
             String title=s.title==null||s.title.trim().isEmpty()?"TAJ Assistant session":s.title.trim();String body,mime;
-            if(which==0){body=s.toJson().toString(2);mime="application/json";}
+            if(which==0){body=s.toJson().toString();mime="application/json";}
             else if(which==1){StringBuilder out=new StringBuilder("# ").append(title).append("\n\n");for(ChatStore.Message m:s.messages){if(m==null)continue;out.append("## ").append(exportRoleName(m.role)).append("\n\n").append(m.text==null?"":m.text).append("\n\n");}body=out.toString();mime="text/markdown";}
             else{StringBuilder out=new StringBuilder(title).append("\n\n");for(ChatStore.Message m:s.messages){if(m==null)continue;out.append(exportRoleName(m.role)).append(":\n").append(m.text==null?"":m.text).append("\n\n");}body=out.toString();mime="text/plain";}
             Intent share=new Intent(Intent.ACTION_SEND);share.setType(mime);share.putExtra(Intent.EXTRA_SUBJECT,title+" — TAJ Assistant export");share.putExtra(Intent.EXTRA_TEXT,body);startActivity(Intent.createChooser(share,"Export as "+formats[which]));
