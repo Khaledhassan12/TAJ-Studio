@@ -157,9 +157,11 @@ public interface Tool {
         }
 
         public boolean checkPermission(String path, boolean isOverwrite) {
+            // Cancellation must win over both persistent permission modes and queued dialogs.
+            if (isCancellationRequested()) return false;
             // A scoped per-call approval is granted by AgentOrchestrator only after a real
             // confirmation dialog. It expires when that tool invocation returns.
-            if (Boolean.TRUE.equals(approvedMutation.get())) return true;
+            if (Boolean.TRUE.equals(approvedMutation.get())) return !isCancellationRequested();
             DesignActivity a = activity.get();
             if (a == null) return false;
 
@@ -191,52 +193,68 @@ public interface Tool {
 
         private boolean showPermissionDialog(DesignActivity a, pro.sketchware.ai.config.AIConfigStore store, String path) {
             final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-            final boolean[] result = new boolean[1];
+            final java.util.concurrent.atomic.AtomicBoolean result = new java.util.concurrent.atomic.AtomicBoolean(false);
+            final java.util.concurrent.atomic.AtomicReference<androidx.appcompat.app.AlertDialog> dialogRef =
+                    new java.util.concurrent.atomic.AtomicReference<>();
 
+            if (isCancellationRequested()) return false;
             a.runOnUiThread(() -> {
                 try {
-                    if (a.isFinishing() || a.isDestroyed()) {
+                    if (isCancellationRequested() || a.isFinishing() || a.isDestroyed()) {
                         latch.countDown();
                         return;
                     }
                     android.view.View view = a.getLayoutInflater().inflate(pro.sketchware.R.layout.dialog_agent_permission, null);
                     android.widget.TextView tvBody = view.findViewById(pro.sketchware.R.id.tv_body);
                     tvBody.setText("The assistant wants to write to " + path);
-
                     android.widget.RadioGroup rg = view.findViewById(pro.sketchware.R.id.rg_modes);
 
-                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
-                            .setTitle("TAG Assistant")
-                            .setView(view)
-                            .setPositiveButton(pro.sketchware.R.string.ai_allow_and_remember, (d, w) -> {
-                                int checked = rg.getCheckedRadioButtonId();
-                                String chosenMode = "consent";
-                                if (checked == pro.sketchware.R.id.rb_full) chosenMode = "full";
-                                else if (checked == pro.sketchware.R.id.rb_strict) chosenMode = "strict";
-
-                                store.setAgentPermMode(chosenMode);
-                                result[0] = true;
-                                latch.countDown();
-                            })
-                            .setNegativeButton(pro.sketchware.R.string.ai_deny, (d, w) -> {
-                                result[0] = false;
-                                latch.countDown();
-                            })
-                            .setOnDismissListener(d -> latch.countDown())
-                            .setCancelable(false)
-                            .show();
+                    androidx.appcompat.app.AlertDialog dialog =
+                            new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
+                                    .setTitle("TAG Assistant")
+                                    .setView(view)
+                                    .setPositiveButton(pro.sketchware.R.string.ai_allow_and_remember, (d, w) -> {
+                                        int checked = rg.getCheckedRadioButtonId();
+                                        String chosenMode = "consent";
+                                        if (checked == pro.sketchware.R.id.rb_full) chosenMode = "full";
+                                        else if (checked == pro.sketchware.R.id.rb_strict) chosenMode = "strict";
+                                        if (!isCancellationRequested()) {
+                                            store.setAgentPermMode(chosenMode);
+                                            result.set(true);
+                                        }
+                                        latch.countDown();
+                                    })
+                                    .setNegativeButton(pro.sketchware.R.string.ai_deny, (d, w) -> latch.countDown())
+                                    .setOnDismissListener(d -> latch.countDown())
+                                    .setCancelable(false)
+                                    .create();
+                    dialogRef.set(dialog);
+                    if (isCancellationRequested() || a.isFinishing() || a.isDestroyed()) {
+                        dialog.dismiss();
+                        latch.countDown();
+                    } else {
+                        dialog.show();
+                    }
                 } catch (RuntimeException e) {
                     latch.countDown();
                 }
             });
 
+            long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.MINUTES.toNanos(2);
             try {
-                if (!latch.await(2, java.util.concurrent.TimeUnit.MINUTES)) return false;
+                while (latch.getCount() > 0) {
+                    if (isCancellationRequested() || System.nanoTime() >= deadline) {
+                        dismissConfirmation(a, dialogRef);
+                        return false;
+                    }
+                    latch.await(200, java.util.concurrent.TimeUnit.MILLISECONDS);
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                dismissConfirmation(a, dialogRef);
                 return false;
             }
-            return result[0];
+            return result.get() && !isCancellationRequested();
         }
     }
 
