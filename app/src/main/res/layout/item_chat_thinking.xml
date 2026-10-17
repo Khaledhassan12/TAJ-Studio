@@ -111,7 +111,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:maxHeight="240dp"
-                    android:verticalFadingEdgeEnabled="true"
+                    android:requiresFadingEdge="vertical"
                     android:fadingEdgeLength="18dp"
                     android:scrollbarStyle="insideInset"
                     android:fillViewport="false"
