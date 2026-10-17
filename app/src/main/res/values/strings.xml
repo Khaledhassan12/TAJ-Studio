@@ -2630,4 +2630,25 @@ Please try again later"</string>
     <string name="taj_maintainer_principles_title">Core principles</string>
     <string name="taj_maintainer_principles_body">Human control • Transparent changes • Preserve existing work • Validate before release • Useful documentation • Accessible design • Reliable failure handling • Continuous learning.</string>
     <string name="taj_maintainer_credit_note">This independent maintainer profile is separate from the upstream Sketchware Pro team and its official contributor data.</string>
+
+    <string name="tag_assistant_hero_eyebrow">TAJ STUDIO • AI CONTROL CENTER</string>
+    <string name="tag_assistant_hero_title">Your AI. Your workflow.</string>
+    <string name="tag_assistant_hero_body">Configure providers, control agent behavior, and tune the assistant to match the way you build.</string>
+    <string name="tag_assistant_master_hint">The master switch controls whether AI features can run. Provider settings remain available while it is off.</string>
+    <string name="tag_assistant_verify_action">Verify connection</string>
+    <string name="tag_assistant_verified">Verified</string>
+    <string name="tag_assistant_already_verified">This provider is already verified. Editing credentials or endpoint settings requires a new check.</string>
+    <string name="tag_assistant_setup_incomplete">Assistant is enabled, but setup is incomplete. Add the required credentials and model, then tap Save.</string>
+    <string name="tag_assistant_enabled_ready">Assistant is enabled. Verify the provider connection before relying on it.</string>
+    <string name="tag_assistant_enable_first">Turn on TAG Assistant before enabling agent mode.</string>
+    <string name="tag_assistant_advanced_title">Advanced behavior</string>
+    <string name="tag_assistant_advanced_body">These preferences apply independently and are saved immediately.</string>
+    <string name="tag_assistant_streaming_title">Stream responses</string>
+    <string name="tag_assistant_thinking_title">Show thinking cards</string>
+    <string name="tag_assistant_retry_title">Retry recoverable errors</string>
+    <string name="tag_assistant_suggest_title">Automatic suggestions</string>
+    <string name="tag_assistant_haptics_title">Haptic feedback</string>
+    <string name="tag_assistant_temperature_title">Response creativity</string>
+    <string name="tag_assistant_temperature_hint">Lower values are more focused; higher values allow more varied responses.</string>
+
 </resources>
