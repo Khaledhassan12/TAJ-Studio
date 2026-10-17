@@ -41,7 +41,21 @@ public final class ResEditTool implements Tool {
         String name = args.getString("name");
         String mode = args.getString("mode");
         String sc_id = ctx.sc_id;
-        
+
+        if (!"replace_all".equals(mode) && !"search_replace".equals(mode) && !"append".equals(mode)) {
+            return ToolResult.structured("res_edit", "INVALID_ARGUMENTS", null,
+                    "Unsupported edit mode; no resource file was changed.", null, true);
+        }
+        if (!args.has("content") || args.isNull("content")) {
+            return ToolResult.structured("res_edit", "INVALID_ARGUMENTS", null,
+                    "The selected edit mode requires a content string; no resource file was changed.", null, true);
+        }
+        if ("search_replace".equals(mode)
+                && (!args.has("search") || args.isNull("search") || args.optString("search", "").isEmpty())) {
+            return ToolResult.structured("res_edit", "INVALID_ARGUMENTS", null,
+                    "search_replace requires a non-empty search string; no resource file was changed.", null, true);
+        }
+
         File f = PathResolver.resolve(sc_id, "res/" + folder + "/" + name);
         String path = f.getAbsolutePath();
 
