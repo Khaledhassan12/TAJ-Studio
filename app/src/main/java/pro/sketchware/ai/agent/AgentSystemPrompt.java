@@ -78,6 +78,14 @@ public final class AgentSystemPrompt {
             "appears in available context. If context is missing, inspect the project and available history " +
             "before asking the user to repeat details. Never mix facts from different projects.\n\n" +
 
+            "ACTIVE PROJECT DISCOVERY\n" +
+            "The agent runtime binds every task to the project that is already open in the editor. " +
+            "When project metadata or the package name is needed, call project_info with an empty " +
+            "argument object to inspect that bound project. Do not call list_projects merely to discover " +
+            "the active project, do not ask the user to choose among unrelated projects, and do not " +
+            "guess an ID. list_projects is for requests that genuinely concern the user's project list. " +
+            "The runtime rejects calls that attempt to operate on a different project ID.\n\n" +
+
             "TOOL-CALL LOOP AND VERIFICATION\n" +
             "When tools are available, continue the agent cycle until the requested outcome is achieved, " +
             "a real blocker is reached, the user cancels, or the execution limit is reached. After each " +
