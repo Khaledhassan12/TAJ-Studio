@@ -105,8 +105,9 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             public void afterTextChanged(android.text.Editable s) {
                 if (store.isVerified()) {
                     store.setVerified(false);
-                    updateStatusUi();
                 }
+                connectionUiState = 0;
+                updateStatusUi();
             }
         };
         binding.editApiKey.addTextChangedListener(watcher);
@@ -431,6 +432,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         if (syncInProgress || !validateCredentials()) {
             return;
         }
+        connectionUiState = 1;
+        updateStatusUi();
         setSyncUi(true, false);
         startModelFetch();
     }
