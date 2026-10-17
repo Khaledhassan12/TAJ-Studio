@@ -12,7 +12,8 @@ public final class AssetEditTool implements Tool {
     @Override public ToolSpec spec() {
         try {
             JSONObject props = new JSONObject();
-            props.put("path", new JSONObject().put("type", "string").put("maxLength", 4096));
+            props.put("path", new JSONObject().put("type", "string").put("maxLength", 4096)
+                    .put("description", "Path relative to the assets root, such as config/settings.json; do not prefix it with assets/."));
             props.put("mode", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"replace_all", "search_replace", "append"})));
             props.put("content", new JSONObject().put("type", "string").put("maxLength", 262144));
             props.put("search", new JSONObject().put("type", "string").put("maxLength", 65536));
