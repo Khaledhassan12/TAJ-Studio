@@ -11,7 +11,8 @@ public final class AssetDeleteTool implements Tool {
     @Override public ToolSpec spec() {
         try {
             JSONObject props = new JSONObject();
-            props.put("path", new JSONObject().put("type", "string").put("maxLength", 4096));
+            props.put("path", new JSONObject().put("type", "string").put("maxLength", 4096)
+                    .put("description", "Path relative to the assets root, such as images/old-logo.png; do not prefix it with assets/."));
             JSONObject schema = new JSONObject();
             schema.put("type", "object"); schema.put("properties", props);
             schema.put("required", new JSONArray().put("path"));
