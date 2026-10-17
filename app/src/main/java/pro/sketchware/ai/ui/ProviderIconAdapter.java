@@ -76,7 +76,7 @@ final class ProviderIconAdapter extends ArrayAdapter<ProviderProfile> {
 
             title = new TextView(context);
             title.setTextSize(16);
-            title.setTypeface(Typeface.DEFAULT, Typeface.MEDIUM);
+            title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             title.setGravity(Gravity.CENTER_VERTICAL);
             title.setSingleLine(true);
             title.setEllipsize(android.text.TextUtils.TruncateAt.END);
