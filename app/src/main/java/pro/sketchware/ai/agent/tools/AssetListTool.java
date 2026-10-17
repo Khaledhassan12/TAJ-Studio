@@ -16,7 +16,8 @@ public final class AssetListTool implements Tool {
             JSONObject params = new JSONObject();
             params.put("type", "object");
             JSONObject props = new JSONObject();
-            props.put("dir", new JSONObject().put("type", "string"));
+            props.put("dir", new JSONObject().put("type", "string").put("maxLength", 4096)
+                    .put("description", "Directory relative to the assets root. Use an empty string for the root; do not prefix with assets/."));
             props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
             return new ToolSpec("asset_list", "Lists assets.", params);
