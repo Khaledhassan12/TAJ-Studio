@@ -24,6 +24,9 @@ public final class AssetEditTool implements Tool {
     }
     @Override public Domain domain() { return Domain.ASSET; }
 
+    /** Existing-file edits are destructive and require per-operation approval. */
+    @Override public RiskLevel riskLevel(JSONObject args) { return RiskLevel.DESTRUCTIVE; }
+
     @Override public ToolResult run(JSONObject args, ToolContext ctx) {
         File file = null;
         String path = null;
