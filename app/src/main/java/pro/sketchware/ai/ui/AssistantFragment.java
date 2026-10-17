@@ -1,6 +1,11 @@
 package pro.sketchware.ai.ui;
 
 import android.content.Intent;
+import android.net.Uri;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import org.json.JSONObject;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -170,6 +175,8 @@ public class AssistantFragment extends Fragment {
             sessions.sort((left, right) -> Long.compare(right.updatedAt, left.updatedAt));
         }
         sessionAdapter.setSessions(sessions);
+        View hp = panels.get(R.id.ai_dest_history);
+        if (hp != null) { TextView count = hp.findViewById(R.id.ai_history_count); if (count != null) count.setText(sessions.size() + (sessions.size() == 1 ? " chat" : " chats")); }
     }
 
     private void handleWatchdogTimeout() {
@@ -821,51 +828,68 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupHistoryPanel(View panel) {
-        RecyclerView rv = panel.findViewById(R.id.ai_rv_history);
-        if (rv != null) {
-            rv.setLayoutManager(new LinearLayoutManager(getContext()));
-            sessionAdapter = new SessionAdapter();
-            rv.setAdapter(sessionAdapter);
-
-            sessionAdapter.setOnSessionClickListener(session -> {
-                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
-                    Snackbar.make(panel, "Finish or cancel the active request before switching sessions.", Snackbar.LENGTH_LONG).show();
-                    return;
-                }
-                if (session == null || session.messages == null) {
-                    Snackbar.make(panel, "This saved session is unavailable or corrupted.", Snackbar.LENGTH_LONG).show();
-                    return;
-                }
-                currentSession = session;
-                restoredSessionId = session.id;
-                View sessionPanel = panels.get(R.id.ai_dest_session);
-                if (sessionPanel != null) render(sessionPanel, PanelState.READY);
-                rail.setSelectedItemId(R.id.ai_dest_session);
-                if (chatAdapter != null) {
-                    chatAdapter.setMessages(session.messages);
-                    scrollToBottom(false);
+        RecyclerView rv=panel.findViewById(R.id.ai_rv_history);
+        if(rv!=null){
+            rv.setLayoutManager(new LinearLayoutManager(getContext()));sessionAdapter=new SessionAdapter();rv.setAdapter(sessionAdapter);
+            android.widget.EditText search=panel.findViewById(R.id.ai_et_history_search);
+            if(search!=null)search.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int c,int a){} public void onTextChanged(CharSequence s,int st,int before,int count){if(sessionAdapter!=null)sessionAdapter.setQuery(s==null?"":s.toString());}public void afterTextChanged(android.text.Editable e){}});
+            sessionAdapter.setOnSessionClickListener(s->openHistorySession(panel,s));
+            sessionAdapter.setOnSessionActionListener((s,action)->{
+                if(s==null)return;
+                if(action==SessionAdapter.ACTION_RENAME){
+                    android.widget.EditText input=new android.widget.EditText(requireContext());input.setSingleLine(true);input.setText(s.title==null?"":s.title);input.setSelection(input.length());input.setHint("Conversation name");
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext()).setTitle("Rename conversation").setView(input).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{
+                        String title=input.getText()==null?"":input.getText().toString().trim();if(title.isEmpty()){Snackbar.make(panel,"Enter a name before saving.",Snackbar.LENGTH_SHORT).show();return;}
+                        s.title=title.length()>120?title.substring(0,120):title;if(currentSession!=null&&s.id.equals(currentSession.id))currentSession.title=s.title;chatStore.saveSessionAsync(s);refreshHistory();Snackbar.make(panel,"Conversation renamed.",Snackbar.LENGTH_SHORT).show();
+                    }).show();
+                }else if(action==SessionAdapter.ACTION_BRANCH){
+                    if(AIActivityMonitor.isBusy()||activeRequestId!=0L){Snackbar.make(panel,"Cancel the active request before opening a branch.",Snackbar.LENGTH_SHORT).show();return;}
+                    if(s.messages==null||s.messages.isEmpty()){Snackbar.make(panel,"An empty conversation cannot be branched yet.",Snackbar.LENGTH_SHORT).show();return;}
+                    ChatStore.Session b=ChatStore.branchSession(s,s.messages.size()-1);chatStore.saveSessionAsync(b);refreshHistory();openHistorySession(panel,b);Snackbar.make(panel,"New branch created. The original conversation is unchanged.",Snackbar.LENGTH_LONG).show();
+                }else if(action==SessionAdapter.ACTION_EXPORT){showSessionExportOptions(panel,s);}
+                else if(action==SessionAdapter.ACTION_DELETE){
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext()).setTitle("Delete conversation?").setMessage("This conversation will be removed from this device. This cannot be undone.").setNegativeButton("Keep conversation",null).setPositiveButton("Delete",(d,w)->{
+                        boolean wasCurrent=currentSession!=null&&s.id.equals(currentSession.id);chatStore.deleteSession(s.id);
+                        if(wasCurrent){currentSession=new ChatStore.Session();restoredSessionId=currentSession.id;if(chatAdapter!=null)chatAdapter.setMessages(new ArrayList<>());View sp=panels.get(R.id.ai_dest_session);if(sp!=null)render(sp,PanelState.EMPTY);}
+                        refreshHistory();Snackbar.make(panel,"Conversation deleted.",Snackbar.LENGTH_SHORT).show();
+                    }).show();
                 }
             });
         }
+        View btnNew=panel.findViewById(R.id.ai_btn_new_history_session);if(btnNew==null)btnNew=panel.findViewById(R.id.ai_fab_new_session);
+        if(btnNew!=null)btnNew.setOnClickListener(v->createNewHistorySession(panel));
+        View importButton=panel.findViewById(R.id.ai_btn_import_session);
+        if(importButton!=null)importButton.setOnClickListener(v->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("*/*");i.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"application/json","text/json"});i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivityForResult(i,9021);});
+        refreshHistory();
+    }
 
-        View btnNew = panel.findViewById(R.id.ai_fab_new_session);
-        if (btnNew != null) {
-            btnNew.setOnClickListener(v -> {
-                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
-                    Snackbar.make(panel, "Cancel the active request before creating a new session.", Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-                currentSession = new ChatStore.Session();
-                restoredSessionId = currentSession.id;
-                View sessionPanel = panels.get(R.id.ai_dest_session);
-                if (sessionPanel != null) render(sessionPanel, PanelState.EMPTY);
-                if (chatAdapter != null) {
-                    chatAdapter.setMessages(new ArrayList<>());
-                    scrollToBottom(false);
-                }
-                rail.setSelectedItemId(R.id.ai_dest_session);
-            });
-        }
+    private void createNewHistorySession(View panel){
+        if(AIActivityMonitor.isBusy()||activeRequestId!=0L){Snackbar.make(panel,"Cancel the active request before creating a new session.",Snackbar.LENGTH_SHORT).show();return;}
+        currentSession=new ChatStore.Session();restoredSessionId=currentSession.id;View sp=panels.get(R.id.ai_dest_session);if(sp!=null)render(sp,PanelState.EMPTY);if(chatAdapter!=null)chatAdapter.setMessages(new ArrayList<>());rail.setSelectedItemId(R.id.ai_dest_session);
+    }
+    private void openHistorySession(View panel,ChatStore.Session s){
+        if(AIActivityMonitor.isBusy()||activeRequestId!=0L){Snackbar.make(panel,"Finish or cancel the active request before switching sessions.",Snackbar.LENGTH_LONG).show();return;}
+        if(s==null||s.messages==null){Snackbar.make(panel,"This saved session is unavailable or corrupted.",Snackbar.LENGTH_LONG).show();return;}
+        currentSession=s;restoredSessionId=s.id;View sp=panels.get(R.id.ai_dest_session);if(sp!=null)render(sp,s.messages.isEmpty()?PanelState.EMPTY:PanelState.READY);rail.setSelectedItemId(R.id.ai_dest_session);if(chatAdapter!=null){chatAdapter.setMessages(s.messages);scrollToBottom(false);}
+    }
+    private void showSessionExportOptions(View panel,ChatStore.Session s){
+        String[] formats={"JSON","Markdown","Plain text"};new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext()).setTitle("Export conversation").setItems(formats,(d,which)->{
+            String title=s.title==null||s.title.trim().isEmpty()?"TAJ Assistant session":s.title.trim();String body,mime;
+            if(which==0){body=s.toJson().toString(2);mime="application/json";}
+            else if(which==1){StringBuilder out=new StringBuilder("# ").append(title).append("\n\n");for(ChatStore.Message m:s.messages){if(m==null)continue;out.append("## ").append(exportRoleName(m.role)).append("\n\n").append(m.text==null?"":m.text).append("\n\n");}body=out.toString();mime="text/markdown";}
+            else{StringBuilder out=new StringBuilder(title).append("\n\n");for(ChatStore.Message m:s.messages){if(m==null)continue;out.append(exportRoleName(m.role)).append(":\n").append(m.text==null?"":m.text).append("\n\n");}body=out.toString();mime="text/plain";}
+            Intent share=new Intent(Intent.ACTION_SEND);share.setType(mime);share.putExtra(Intent.EXTRA_SUBJECT,title+" — TAJ Assistant export");share.putExtra(Intent.EXTRA_TEXT,body);startActivity(Intent.createChooser(share,"Export as "+formats[which]));
+        }).show();
+    }
+    private String exportRoleName(String role){if("user".equals(role))return "You";if("assistant".equals(role))return "TAJ Assistant";return role==null?"Message":role.replace('_',' ').toUpperCase(java.util.Locale.ROOT);}
+    @Override public void onActivityResult(int requestCode,int resultCode,@Nullable Intent data){
+        super.onActivityResult(requestCode,resultCode,data);if(requestCode!=9021||resultCode!=android.app.Activity.RESULT_OK||data==null||data.getData()==null)return;
+        if(AIActivityMonitor.isBusy()||activeRequestId!=0L){if(getView()!=null)Snackbar.make(getView(),"Cancel the active request before importing a conversation.",Snackbar.LENGTH_LONG).show();return;}
+        try(InputStream in=requireContext().getContentResolver().openInputStream(data.getData());ByteArrayOutputStream out=new ByteArrayOutputStream()){
+            if(in==null)throw new java.io.IOException("Unable to open selected file");byte[] buffer=new byte[8192];int n,total=0;while((n=in.read(buffer))!=-1){total+=n;if(total>10*1024*1024)throw new java.io.IOException("Session JSON exceeds the 10 MB import limit");out.write(buffer,0,n);}
+            JSONObject json=new JSONObject(new String(out.toByteArray(),StandardCharsets.UTF_8));ChatStore.Session imported=ChatStore.Session.fromJson(json);if(imported.messages==null||imported.messages.isEmpty())throw new org.json.JSONException("No conversation messages were found");
+            imported.id=System.currentTimeMillis()+"_import_"+Math.abs(System.nanoTime());if(imported.title==null||imported.title.trim().isEmpty())imported.title="Imported conversation";imported.createdAt=System.currentTimeMillis();imported.updatedAt=imported.createdAt;chatStore.saveSessionAsync(imported);refreshHistory();View hp=panels.get(R.id.ai_dest_history);if(hp!=null)openHistorySession(hp,imported);if(getView()!=null)Snackbar.make(getView(),"Conversation imported. You can continue chatting.",Snackbar.LENGTH_LONG).show();
+        }catch(Exception e){if(getView()!=null)Snackbar.make(getView(),"Import failed: "+(e.getMessage()==null?"Invalid session JSON":e.getMessage()),Snackbar.LENGTH_LONG).show();}
     }
 
     private void setupSessionPanel(View panel) {
