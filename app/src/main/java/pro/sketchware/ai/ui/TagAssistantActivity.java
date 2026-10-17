@@ -250,6 +250,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.dropdownProvider.setOnItemClickListener((parent, view, position, id) -> {
             if (position >= 0 && position < profiles.size()) {
                 ProviderProfile profile = profiles.get(position);
+                // AutoCompleteTextView otherwise uses the profile object's default toString().
+                binding.dropdownProvider.setText(profile.displayName, false);
                 store.setProviderId(profile.id);
                 applyProfile(profile);
                 if (store.isAutoTestProviderOnSelection()) {
