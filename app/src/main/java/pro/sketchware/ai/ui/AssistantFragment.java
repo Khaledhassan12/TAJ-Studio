@@ -481,14 +481,17 @@ public class AssistantFragment extends Fragment {
         }
         java.util.ArrayDeque<java.io.File> queue = new java.util.ArrayDeque<>();
         queue.add(root);
+        // The limit is per root/domain, not global across resources, assets and Java.
+        // Capture the starting size so a full earlier domain does not hide every later domain.
+        final int initialOutputSize = output.size();
         int visited = 0;
-        while (!queue.isEmpty() && output.size() < limit && visited < 3000) {
+        while (!queue.isEmpty() && output.size() - initialOutputSize < limit && visited < 3000) {
             java.io.File current = queue.removeFirst();
             visited++;
             java.io.File[] children = current.listFiles();
             if (children == null) continue;
             for (java.io.File child : children) {
-                if (output.size() >= limit) break;
+                if (output.size() - initialOutputSize >= limit) break;
                 try {
                     String canonical = child.getCanonicalPath();
                     if (!canonical.startsWith(canonicalRoot + java.io.File.separator)) continue;
