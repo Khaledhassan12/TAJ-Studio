@@ -313,8 +313,9 @@ public final class ChatStore {
     }
 
     public void deleteSession(String id) {
+        if (id == null || !id.matches("[A-Za-z0-9_-]+")) return;
         File file = new File(baseDir, id + ".json");
-        if (file.exists()) file.delete();
+        if (file.exists() && !file.delete()) Log.w(TAG, "Could not delete session " + id);
     }
 
     public static Session branchSession(Session source, int upToIndexInclusive) {
@@ -325,14 +326,23 @@ public final class ChatStore {
             if (firstText.length() > 30) firstText = firstText.substring(0, 30) + "...";
             // title logic would go in metadata, but for now we just label the session.
         }
+        branch.title = (source.title == null || source.title.trim().isEmpty() ? "Conversation" : source.title.trim()) + " — branch";
+        branch.createdAt = System.currentTimeMillis();
         for (int i = 0; i <= upToIndexInclusive && i < source.messages.size(); i++) {
             Message m = source.messages.get(i);
+            if (m == null) continue;
             Message copy = new Message(m.role, m.text);
-            copy.time = m.time;
-            copy.toolState = m.toolState;
-            copy.action = m.action;
-            copy.reasoning = m.reasoning;
-            copy.reasoningSeconds = m.reasoningSeconds;
+            copy.time = m.time; copy.toolState = m.toolState; copy.action = m.action;
+            copy.reasoning = m.reasoning; copy.reasoningSeconds = m.reasoningSeconds; copy.favorite = m.favorite;
+            if (m.toolEvents != null) {
+                copy.toolEvents = new ArrayList<>();
+                for (ToolEvent event : m.toolEvents) {
+                    if (event == null) continue;
+                    ToolEvent ec = new ToolEvent(event.name, event.domain);
+                    ec.status = event.status; ec.startedAt = event.startedAt; ec.finishedAt = event.finishedAt; ec.resultSummary = event.resultSummary;
+                    copy.toolEvents.add(ec);
+                }
+            }
             branch.messages.add(copy);
         }
         return branch;
