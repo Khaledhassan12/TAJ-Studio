@@ -151,7 +151,9 @@ public final class AgentOrchestrator {
                                 Tool tool = registry.get(call.name);
                                 Tool.ToolResult result;
                                 if (tool != null) {
-                                    String validationError = ToolArgumentValidator.validate(registry.spec(call.name), call.arguments);
+                                    String validationError = call.malformedArguments
+                                            ? "The model/provider returned malformed tool arguments; the operation was not executed."
+                                            : ToolArgumentValidator.validate(registry.spec(call.name), call.arguments);
                                     if (validationError == null) {
                                         validationError = validateActiveProjectArgs(call.arguments);
                                     }
