@@ -109,4 +109,15 @@ Your API key stays on this device, encrypted. The assistant only talks to the pr
     <string name="ai_perm_strict_desc">Auto-allow NEW file creation only; prompt on overwrite/delete; .bak always kept.</string>
     <string name="ai_allow_and_remember">Allow &amp; remember</string>
     <string name="ai_deny">Deny</string>
+
+    <!-- Premium-style connection badge states (the badge is not a paid subscription). -->
+    <string name="ai_premium_ready">✦ Provider ready</string>
+    <string name="ai_premium_setup">✦ Provider setup</string>
+    <string name="ai_connection_checking">Checking…</string>
+    <string name="ai_connection_failed">Connection failed</string>
+    <string name="ai_premium_ready_desc">Provider ready: the most recent connection check succeeded. This is a connection status, not a paid subscription. Tap to test again.</string>
+    <string name="ai_premium_setup_desc">Provider setup: no successful connection check is recorded for this provider. Tap to test the connection.</string>
+    <string name="ai_connection_checking_desc">Checking the provider connection now.</string>
+    <string name="ai_connection_failed_desc">The most recent provider check failed. Review the key, endpoint, model, or network and tap to retry.</string>
+
 </resources>
