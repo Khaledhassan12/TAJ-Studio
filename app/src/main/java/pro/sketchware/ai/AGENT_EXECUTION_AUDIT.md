@@ -101,3 +101,17 @@ Do not declare production readiness until:
 - Registry ordering/duplicate/schema guard: code updated; Android compilation and runtime registry-construction tests still required.
 - Build tool schema, project-bound dispatch, and terminal compile/sign reporting: code updated; Android compilation and on-device lifecycle/install tests still required.
 - Full tool-by-tool acceptance matrix: not yet executed. No claim is made that all tools, visual updates, undo, or build-result reporting are complete.
+
+### Follow-up audit: manager file placement, argument failures, and reasoning display
+
+- **Confirmed root cause in managed source placement:** `java_create` previously appended the entire active package (for example, `com.example.app`) below the Java/Kotlin Manager root. `ManageJavaActivity` already starts at that root and computes package names from its `pkgName` extra plus folders the user navigates into. This caused base-package files to be placed under artificial nested package folders instead of at the visible manager root. The create tool now writes base-package files directly at the manager root and only creates the suffix folders for an explicitly requested subpackage. The generated project-source target still uses the full package path.
+- **Mode-specific edit arguments:** `java_edit` and `res_edit` advertised `mode` while their schema did not express the conditional `content`/`search` requirements. Missing arguments could fail later as generic exceptions. Both executors now reject unsupported modes, missing content, and an empty/missing search pattern before resolving or mutating the target file.
+- **Private reasoning disclosure:** the UI streamed provider reasoning tokens into the expandable thinking card and persisted them in chat history. New responses now display a fixed execution-status summary instead of raw reasoning, and the thinking-card renderer masks legacy saved reasoning too. This does not affect normal assistant text or structured tool execution events.
+- **Tool-call path reviewed:** `ToolRegistry` is the shared source for both provider declarations and executor lookup; `AgentOrchestrator` validates arguments against the registered schema, checks the task-bound project ID, executes the registered tool, records the returned result against the original tool-call ID, and surfaces executor failures. OpenAI-compatible, Anthropic, and Gemini adapters were inspected for tool-call/result mapping. Malformed argument JSON becomes an empty object and is rejected by the executor-boundary schema validation rather than being treated as success.
+- **Static executor sweep:** the registry's project, filesystem, Java/Kotlin, resource, asset, block, manifest, and library tool families were checked for the common failure modes relevant to this report: wrong project binding, unsafe path resolution, unverified writes, overwrite behavior, UI/domain refresh, and result/error signaling. Follow-up runtime tests remain necessary; code inspection is not proof of device behavior.
+
+### Follow-up verification status
+
+- Verified by repository read-back: the source-placement fix, edit-argument guards, and reasoning-display masking are present on `TAJ-STUDIO-AI`.
+- Not run, as requested: no build was started.
+- Not verified in this environment: Android compilation, live-device file visibility, provider-specific tool execution against each supported model, cancellation/approval races, and the complete destructive-operation acceptance matrix. Do not treat this static audit as a passing runtime test suite.
