@@ -35,6 +35,15 @@ public final class FsDeleteTool implements Tool {
                     "Only a single regular file can be moved to recoverable trash; directories are preserved.", null, true);
             if (!ctx.checkPermission(path, true)) return ToolResult.structured("fs_delete", "DENIED", path, "Delete permission was denied.", null, true);
 
+            // Recheck after permission UI and immediately before the irreversible filesystem step.
+            if (ctx.isCancellationRequested()) {
+                return ToolResult.structured("fs_delete", "CANCELLED", path,
+                        "Cancellation was received before moving the file to recoverable trash; no delete was started.", null, true);
+            }
+            if (!target.isFile()) {
+                return ToolResult.structured("fs_delete", "CONFLICT", path,
+                        "The target changed after approval; no delete was started.", null, true);
+            }
             String trashPath = DomainToolHelper.moveFileToTrash(path, ctx.sc_id);
             if (target.exists() || !new File(trashPath).isFile()) {
                 return ToolResult.structured("fs_delete", "VERIFICATION_FAILED", path,
