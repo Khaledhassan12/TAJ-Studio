@@ -259,7 +259,7 @@ public final class AIConfigStore {
     // ------------------------------------------------------------------
 
     public boolean isAssistantEnabled() {
-        return prefs == null || prefs.getBoolean(KEY_ENABLED, true);
+        return prefs != null && prefs.getBoolean(KEY_ENABLED, false);
     }
 
     public void setAssistantEnabled(boolean enabled) {
@@ -287,7 +287,7 @@ public final class AIConfigStore {
     }
 
     public boolean isShowThinking() {
-        return prefs == null || prefs.getBoolean(K_SHOW_THINKING, true);
+        return prefs != null && prefs.getBoolean(K_SHOW_THINKING, true);
     }
 
     public void setShowThinking(boolean show) {
@@ -307,7 +307,7 @@ public final class AIConfigStore {
     }
 
     public boolean isAgentEnabled() {
-        return prefs == null || prefs.getBoolean(K_AGENT_ENABLED, true);
+        return prefs != null && prefs.getBoolean(K_AGENT_ENABLED, false);
     }
 
     public void setAgentEnabled(boolean enabled) {
@@ -331,7 +331,7 @@ public final class AIConfigStore {
     }
 
     public boolean isAutoRetry() {
-        return prefs == null || prefs.getBoolean(K_AUTO_RETRY, true);
+        return prefs != null && prefs.getBoolean(K_AUTO_RETRY, true);
     }
 
     public void setAutoRetry(boolean retry) {
@@ -341,7 +341,7 @@ public final class AIConfigStore {
     }
 
     public boolean isStreamingEnabled() {
-        return prefs == null || prefs.getBoolean(K_STREAMING_ENABLED, true);
+        return prefs != null && prefs.getBoolean(K_STREAMING_ENABLED, true);
     }
 
     public void setStreamingEnabled(boolean enabled) {
@@ -349,7 +349,7 @@ public final class AIConfigStore {
     }
 
     public boolean isAutoSuggestEnabled() {
-        return prefs == null || prefs.getBoolean(K_AUTO_SUGGEST, true);
+        return prefs != null && prefs.getBoolean(K_AUTO_SUGGEST, true);
     }
 
     public void setAutoSuggestEnabled(boolean enabled) {
@@ -357,7 +357,7 @@ public final class AIConfigStore {
     }
 
     public boolean isHapticsEnabled() {
-        return prefs == null || prefs.getBoolean(K_HAPTICS_ENABLED, true);
+        return prefs != null && prefs.getBoolean(K_HAPTICS_ENABLED, true);
     }
 
     public void setHapticsEnabled(boolean enabled) {
