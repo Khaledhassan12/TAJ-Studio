@@ -208,9 +208,6 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.switchThinking.setChecked(store.isShowThinking());
         binding.switchThinking.setOnCheckedChangeListener((v, checked) -> store.setShowThinking(checked));
 
-        binding.switchAutoRetry.setChecked(store.isAutoRetry());
-        binding.switchAutoRetry.setOnCheckedChangeListener((v, checked) -> store.setAutoRetry(checked));
-
         binding.switchAutoSuggest.setChecked(store.isAutoSuggestEnabled());
         binding.switchAutoSuggest.setOnCheckedChangeListener((v, checked) -> store.setAutoSuggestEnabled(checked));
 
@@ -218,6 +215,9 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.switchHaptics.setOnCheckedChangeListener((v, checked) -> store.setHapticsEnabled(checked));
 
         float temperature = store.getTemperature();
+        if (Float.isNaN(temperature) || Float.isInfinite(temperature)) temperature = 0.7f;
+        // Normalize older saved values to the slider's 0.1 increments before setValue().
+        temperature = Math.max(0f, Math.min(1f, Math.round(temperature * 10f) / 10f));
         binding.sliderTemperature.setValue(temperature);
         updateTemperatureLabel(temperature);
         binding.sliderTemperature.addOnChangeListener((slider, value, fromUser) -> {
@@ -291,6 +291,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
 
         populateModelChips(profile);
         refreshModelSyncUi(profile);
+        updateStatusUi();
     }
 
     private void populateModelChips(ProviderProfile profile) {
