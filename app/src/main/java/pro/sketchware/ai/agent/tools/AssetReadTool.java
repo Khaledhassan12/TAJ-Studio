@@ -16,7 +16,8 @@ public final class AssetReadTool implements Tool {
             JSONObject params = new JSONObject();
             params.put("type", "object");
             JSONObject props = new JSONObject();
-            props.put("path", new JSONObject().put("type", "string"));
+            props.put("path", new JSONObject().put("type", "string").put("maxLength", 4096)
+                    .put("description", "Path relative to the assets root, such as images/logo.png; do not prefix it with assets/."));
             props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
             params.put("required", new JSONArray().put("path"));
