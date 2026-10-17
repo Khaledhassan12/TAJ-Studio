@@ -53,8 +53,23 @@ public final class ManifestEditTool implements Tool {
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
-        String op = args.getString("op");
+        String op = args.optString("op", "");
         String sc_id = ctx.sc_id;
+        if (!"add_permission".equals(op) && !"set_application_attribute".equals(op)
+                && !"add_activity_entry".equals(op)) {
+            return ToolResult.structured("manifest_edit", "INVALID_ARGUMENTS", null,
+                    "Unsupported manifest operation; no metadata was changed.", null, true);
+        }
+        String requiredName = args.optString("name", "").trim();
+        if (requiredName.isEmpty()) {
+            return ToolResult.structured("manifest_edit", "INVALID_ARGUMENTS", null,
+                    "The selected manifest operation requires a non-empty name/permission value; no metadata was changed.", null, true);
+        }
+        if (!"add_permission".equals(op)
+                && (!args.has("value") || args.isNull("value") || args.optString("value", "").trim().isEmpty())) {
+            return ToolResult.structured("manifest_edit", "INVALID_ARGUMENTS", null,
+                    "The selected manifest operation requires a non-empty value; no metadata was changed.", null, true);
+        }
         String injPath = ProjectPaths.manifestInjectionPath(sc_id);
 
         if ("add_permission".equals(op)) {
