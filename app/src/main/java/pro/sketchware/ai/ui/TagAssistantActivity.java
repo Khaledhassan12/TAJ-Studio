@@ -181,6 +181,9 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.switchAutoSuggest.setChecked(store.isAutoSuggestEnabled());
         binding.switchAutoSuggest.setOnCheckedChangeListener((v, checked) -> store.setAutoSuggestEnabled(checked));
 
+        binding.switchAutoTestProvider.setChecked(store.isAutoTestProviderOnSelection());
+        binding.switchAutoTestProvider.setOnCheckedChangeListener((v, checked) -> store.setAutoTestProviderOnSelection(checked));
+
         binding.switchHaptics.setChecked(store.isHapticsEnabled());
         binding.switchHaptics.setOnCheckedChangeListener((v, checked) -> store.setHapticsEnabled(checked));
 
@@ -245,6 +248,9 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                 ProviderProfile profile = profiles.get(position);
                 store.setProviderId(profile.id);
                 applyProfile(profile);
+                if (store.isAutoTestProviderOnSelection()) {
+                    testConnection();
+                }
             }
         });
 
