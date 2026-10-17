@@ -77,8 +77,14 @@ public final class FsMkdirTool implements Tool {
             LiveRegistry.notifyChanged("java_manager", path);
         } else if (normalized.startsWith(new File(ProjectPaths.assetsRoot(scId)).getAbsolutePath().replace('\\', '/') + "/")) {
             LiveRegistry.notifyChanged("assets", path);
-        } else if (normalized.startsWith(new File(ProjectPaths.resourceRoot(scId)).getAbsolutePath().replace('\\', '/') + "/")) {
-            LiveRegistry.notifyChanged("resource", path);
+        } else {
+            String resourceRoot = new File(ProjectPaths.resourceRoot(scId)).getAbsolutePath().replace('\\', '/');
+            if (normalized.startsWith(resourceRoot + "/")) {
+                String relative = normalized.substring(resourceRoot.length() + 1);
+                int slash = relative.indexOf('/');
+                String domain = slash < 0 ? relative : relative.substring(0, slash);
+                if (!domain.isEmpty()) LiveRegistry.notifyChanged(domain, path);
+            }
         }
     }
 }
