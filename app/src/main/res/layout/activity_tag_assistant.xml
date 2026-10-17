@@ -452,13 +452,6 @@
                         android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                     <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/switch_auto_retry"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/tag_assistant_retry_title"
-                        android:textAppearance="?attr/textAppearanceBodyLarge" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/switch_auto_suggest"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
