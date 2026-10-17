@@ -1371,6 +1371,7 @@ public class AssistantFragment extends Fragment {
             if (thinkingMsg == null) {
                 thinkingStart = System.currentTimeMillis();
                 thinkingMsg = new ChatStore.Message("thinking", "");
+                thinkingMsg.reasoning = "TAJ is analyzing the request and selecting the next action. Detailed internal reasoning is not displayed.";
                 int pos = currentSession.messages.size();
                 if (assistantMsg != null) {
                     int assistantIndex = currentSession.messages.indexOf(assistantMsg);
@@ -1380,8 +1381,8 @@ public class AssistantFragment extends Fragment {
                 chatAdapter.insertMessage(pos, thinkingMsg);
                 scrollToBottom(true);
             }
-            int idx = currentSession.messages.indexOf(thinkingMsg);
-            if (idx >= 0) chatAdapter.appendReasoning(idx, token);
+            // Provider reasoning streams can contain private internal deliberation.
+            // Keep the UI status card useful without displaying or persisting raw reasoning tokens.
             scheduleSessionSave();
         });
     }
