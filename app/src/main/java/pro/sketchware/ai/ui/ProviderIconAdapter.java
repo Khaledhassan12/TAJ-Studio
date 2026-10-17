@@ -33,12 +33,6 @@ final class ProviderIconAdapter extends ArrayAdapter<ProviderProfile> {
         this.context = context;
     }
 
-    /** AutoCompleteTextView calls this when converting a selected object to text. */
-    @Override
-    public CharSequence convertResultToString(ProviderProfile profile) {
-        return profile == null ? "" : profile.displayName;
-    }
-
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         return makeRow(position, convertView, parent, false);
