@@ -259,7 +259,7 @@ public final class AIConfigStore {
     // ------------------------------------------------------------------
 
     public boolean isAssistantEnabled() {
-        return prefs == null || prefs.getBoolean(KEY_ENABLED, true);
+        return prefs != null && prefs.getBoolean(KEY_ENABLED, false);
     }
 
     public void setAssistantEnabled(boolean enabled) {
@@ -307,7 +307,7 @@ public final class AIConfigStore {
     }
 
     public boolean isAgentEnabled() {
-        return prefs == null || prefs.getBoolean(K_AGENT_ENABLED, true);
+        return prefs != null && prefs.getBoolean(K_AGENT_ENABLED, false);
     }
 
     public void setAgentEnabled(boolean enabled) {
