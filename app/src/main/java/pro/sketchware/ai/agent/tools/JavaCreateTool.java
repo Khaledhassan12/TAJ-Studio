@@ -70,11 +70,24 @@ public final class JavaCreateTool implements Tool {
                 }
             }
             if ("project".equals(target)) {
+                // Generated project source is laid out by the full Java/Kotlin package.
                 root = ProjectPaths.projectJavaRoot(ctx.sc_id) + File.separator
                         + declaredPackage.replace(".", File.separator);
             } else {
-                root = ProjectPaths.javaManagerRoot(ctx.sc_id) + File.separator
-                        + declaredPackage.replace(".", File.separator);
+                // ManageJavaActivity already starts at the user-managed Java/Kotlin root
+                // and derives the package from its pkgName extra plus folders the user opens.
+                // Putting the *full* package below this root hides a base-package file inside
+                // artificial com/... folders and makes subpackages resolve to duplicated names.
+                // Keep base-package files at the visible manager root; create only the suffix
+                // folders for an explicitly requested subpackage.
+                String packageSuffix = declaredPackage.equals(projectPackage)
+                        ? ""
+                        : declaredPackage.substring(projectPackage.length() + 1)
+                                .replace(".", File.separator);
+                root = ProjectPaths.javaManagerRoot(ctx.sc_id);
+                if (!packageSuffix.isEmpty()) {
+                    root = root + File.separator + packageSuffix;
+                }
             }
             String suffix = folder ? "" : (type.startsWith("java_") ? ".java" : ".kt");
             targetFile = PathResolver.validateProjectPath(ctx.sc_id, new File(root, name + suffix));
