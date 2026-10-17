@@ -106,7 +106,9 @@ public final class AgentOrchestrator {
                     iterations++;
 
                     List<pro.sketchware.ai.core.ToolSpec> toolSpecs = new ArrayList<>();
-                    for (Tool t : registry.all()) {
+                    // Re-route on every model turn using the accumulated user task context.
+                    // The registry still validates and executes calls against the full catalog.
+                    for (Tool t : ToolRouter.select(registry, conversation)) {
                         Tool.ToolSpec declared = registry.spec(t);
                         if (declared == null) {
                             throw new IllegalStateException("A registered tool has no validated schema snapshot.");
