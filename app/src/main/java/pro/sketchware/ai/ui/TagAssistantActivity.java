@@ -50,6 +50,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     private boolean syncInProgress = false;
     // 0 = never checked, 1 = checking, 2 = success, 3 = failed.
     private int connectionUiState = 0;
+    // Prevent programmatic profile loads from being treated as user edits.
+    private boolean applyingProfileValues = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -103,6 +105,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override
             public void afterTextChanged(android.text.Editable s) {
+                if (applyingProfileValues) return;
                 if (store.isVerified()) {
                     store.setVerified(false);
                 }
@@ -219,7 +222,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                 : state == 1 ? R.string.ai_connection_checking : R.string.ai_premium_setup;
         binding.chipVerifiedStatus.setText(label);
         binding.chipVerifiedStatus.setChipIconResource(state == 3 ? R.drawable.ic_ai_status_error
-                : state == 1 ? R.drawable.ic_ai_status_pending : R.drawable.ic_ai_premium);
+                : state == 1 ? R.drawable.ic_ai_status_pending
+                : state == 2 ? R.drawable.ic_ai_premium : R.drawable.ic_ai_provider);
         binding.chipVerifiedStatus.setChipIconTint(android.content.res.ColorStateList.valueOf(
                 ThemeUtils.getColor(this, foregroundAttr)));
         binding.chipVerifiedStatus.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(
@@ -271,6 +275,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         connectionUiState = store.isVerifiedFor(profile.id) ? 2 : 0;
         updateStatusUi();
 
+        applyingProfileValues = true;
         binding.editApiKey.setText(store.getKeyFor(profile.id));
         binding.tilApiKey.setEnabled(profile.requiresKey);
         if (!profile.requiresKey) {
@@ -294,6 +299,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
 
         populateModelChips(profile);
         refreshModelSyncUi(profile);
+        applyingProfileValues = false;
     }
 
     private void populateModelChips(ProviderProfile profile) {
