@@ -120,4 +120,6 @@ Your API key stays on this device, encrypted. The assistant only talks to the pr
     <string name="ai_connection_checking_desc">Checking the provider connection now.</string>
     <string name="ai_connection_failed_desc">The most recent provider check failed. Review the key, endpoint, model, or network and tap to retry.</string>
 
+    <string name="ai_auto_test_provider_title">Test provider when selected</string>
+    <string name="ai_auto_test_provider_desc">When enabled, changing providers automatically checks the saved endpoint and credentials. This may use network data and provider quota.</string>
 </resources>
