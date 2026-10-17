@@ -25,8 +25,8 @@ public final class ResEditTool implements Tool {
             props.put("search", new JSONObject().put("type", "string"));
             props.put("sc_id", new JSONObject().put("type", "string"));
             params.put("properties", props);
-            params.put("required", new JSONArray().put("folder").put("name").put("mode"));
-            return new ToolSpec("res_edit", "Edits a resource file via PathResolver.", params);
+            params.put("required", new JSONArray().put("folder").put("name").put("mode").put("content"));
+            return new ToolSpec("res_edit", "Edits an existing resource file via PathResolver with per-operation approval, conflict detection, and read-back verification.", params);
         } catch (Exception e) { return null; }
     }
 
@@ -34,6 +34,9 @@ public final class ResEditTool implements Tool {
     public Domain domain() {
         return Domain.RES;
     }
+
+    /** Existing resource edits are destructive and require per-operation approval. */
+    @Override public RiskLevel riskLevel(JSONObject args) { return RiskLevel.DESTRUCTIVE; }
 
     @Override
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
