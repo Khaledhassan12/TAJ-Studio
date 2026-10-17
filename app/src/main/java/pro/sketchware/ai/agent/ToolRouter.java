@@ -16,7 +16,8 @@ import pro.sketchware.ai.core.AIMessage;
  * domains; the registry remains the source of truth for actual execution.
  */
 public final class ToolRouter {
-    private static final int MAX_RECENT_MESSAGES = 8;
+    // Preserve earlier task intent across long assistant/tool exchanges without unbounded prompts.
+    private static final int MAX_TASK_CONTEXT_CHARS = 16_000;
 
     private ToolRouter() {}
 
@@ -83,15 +84,23 @@ public final class ToolRouter {
     }
 
     private static String recentTaskText(List<AIMessage> conversation) {
-        StringBuilder text = new StringBuilder();
-        int start = Math.max(0, conversation.size() - MAX_RECENT_MESSAGES);
-        for (int i = start; i < conversation.size(); i++) {
-            AIMessage message = conversation.get(i);
-            if (message != null && AIMessage.ROLE_USER.equals(message.role) && !message.text.isEmpty()) {
-                text.append(' ').append(message.text);
+        StringBuilder task = new StringBuilder();
+        if (conversation == null) return "";
+        // Scan the complete conversation for user intent. A fixed count of the last
+        // messages is unsafe because assistant/tool messages can push the original
+        // request out of the window during multi-step tasks.
+        for (AIMessage message : conversation) {
+            if (message == null || !AIMessage.ROLE_USER.equals(message.role)
+                    || message.text == null || message.text.isEmpty()) {
+                continue;
+            }
+            if (task.length() > 0) task.append(' ');
+            task.append(message.text);
+            if (task.length() > MAX_TASK_CONTEXT_CHARS) {
+                task.delete(0, task.length() - MAX_TASK_CONTEXT_CHARS);
             }
         }
-        return text.toString();
+        return task.toString();
     }
 
     private static void add(Set<String> names, String... values) {
