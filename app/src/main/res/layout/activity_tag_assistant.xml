@@ -151,8 +151,11 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:drawablePadding="10dp"
+                        android:gravity="center_vertical"
                         android:text="@string/ai_provider_title"
-                        android:textAppearance="?attr/textAppearanceTitleMedium" />
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        app:drawableStartCompat="@drawable/ic_ai_provider" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/til_provider"
@@ -369,8 +372,11 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:drawablePadding="10dp"
+                        android:gravity="center_vertical"
                         android:text="@string/ai_advanced_title"
-                        android:textAppearance="?attr/textAppearanceTitleLarge" />
+                        android:textAppearance="?attr/textAppearanceTitleLarge"
+                        app:drawableStartCompat="@drawable/ic_ai_tune" />
 
                     <TextView
                         android:layout_width="match_parent"
