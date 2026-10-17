@@ -48,6 +48,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     private ProviderProfile currentProfile;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private boolean syncInProgress = false;
+    // 0 = never checked, 1 = checking, 2 = success, 3 = failed.
+    private int connectionUiState = 0;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -200,12 +202,28 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         }
 
         boolean verified = currentProfile != null && store.isVerifiedFor(currentProfile.id);
-        binding.chipVerifiedStatus.setText(verified ? R.string.ai_verified : R.string.ai_not_verified);
-        binding.chipVerifiedStatus.setContentDescription(getString(verified
-                ? R.string.ai_verified_tap_hint : R.string.ai_not_verified_tap_hint));
+        int state = connectionUiState;
+        if (state == 0 && verified) state = 2;
+        int backgroundAttr = state == 2 ? R.attr.colorSecondaryContainer
+                : state == 3 ? R.attr.colorErrorContainer
+                : state == 1 ? R.attr.colorPrimaryContainer : R.attr.colorSurfaceContainerHigh;
+        int foregroundAttr = state == 2 ? R.attr.colorOnSecondaryContainer
+                : state == 3 ? R.attr.colorOnErrorContainer
+                : state == 1 ? R.attr.colorOnPrimaryContainer : R.attr.colorOnSurfaceVariant;
+        int label = state == 2 ? R.string.ai_premium_ready
+                : state == 3 ? R.string.ai_connection_failed
+                : state == 1 ? R.string.ai_connection_checking : R.string.ai_premium_setup;
+        binding.chipVerifiedStatus.setText(label);
+        binding.chipVerifiedStatus.setChipIconResource(state == 3 ? R.drawable.ic_ai_status_error
+                : state == 1 ? R.drawable.ic_ai_status_pending : R.drawable.ic_ai_premium);
+        binding.chipVerifiedStatus.setChipIconTint(android.content.res.ColorStateList.valueOf(
+                ThemeUtils.getColor(this, foregroundAttr)));
         binding.chipVerifiedStatus.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(
-                ThemeUtils.getColor(this, verified ? R.attr.colorSecondaryContainer : R.attr.colorSurfaceContainerHigh)));
-        binding.chipVerifiedStatus.setTextColor(ThemeUtils.getColor(this, verified ? R.attr.colorOnSecondaryContainer : R.attr.colorOnSurfaceVariant));
+                ThemeUtils.getColor(this, backgroundAttr)));
+        binding.chipVerifiedStatus.setTextColor(ThemeUtils.getColor(this, foregroundAttr));
+        binding.chipVerifiedStatus.setContentDescription(getString(state == 2
+                ? R.string.ai_premium_ready_desc : state == 3 ? R.string.ai_connection_failed_desc
+                : state == 1 ? R.string.ai_connection_checking_desc : R.string.ai_premium_setup_desc));
     }
 
     // ------------------------------------------------------------------
@@ -219,8 +237,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         for (ProviderProfile profile : profiles) {
             names.add(profile.displayName);
         }
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_dropdown_item_1line, names);
+        ProviderIconAdapter adapter = new ProviderIconAdapter(this, profiles);
         binding.dropdownProvider.setAdapter(adapter);
         binding.dropdownProvider.setOnItemClickListener((parent, view, position, id) -> {
             if (position >= 0 && position < profiles.size()) {
@@ -244,6 +261,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     }
     private void applyProfile(ProviderProfile profile) {
         currentProfile = profile;
+        connectionUiState = store.isVerifiedFor(profile.id) ? 2 : 0;
         updateStatusUi();
 
         binding.editApiKey.setText(store.getKeyFor(profile.id));
@@ -386,6 +404,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         if (syncInProgress || !validateCredentials()) {
             return;
         }
+        connectionUiState = 1;
+        updateStatusUi();
         setSyncUi(true, true);
         ProviderProfile effective = resolveEffectiveProfile();
         String testedProviderId = effective.id;
@@ -395,6 +415,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed()) return;
                 boolean verified = verdict != null && verdict.startsWith("Key accepted by provider.");
+                connectionUiState = verified ? 2 : 3;
                 store.setVerifiedFor(testedProviderId, verified);
                 setSyncUi(false, true);
                 new MaterialAlertDialogBuilder(TagAssistantActivity.this)
@@ -433,6 +454,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                     if (isFinishing() || isDestroyed()) {
                         return;
                     }
+                    connectionUiState = result.modelListUnavailable ? 3 : 2;
                     setSyncUi(false, testMode);
                     updateStatusUi();
                     if (result.modelListUnavailable) {
@@ -454,6 +476,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                     if (isFinishing() || isDestroyed()) {
                         return;
                     }
+                    connectionUiState = 3;
                     setSyncUi(false, testMode);
                     updateStatusUi();
                     
