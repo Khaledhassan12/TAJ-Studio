@@ -48,6 +48,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     private ProviderProfile currentProfile;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private boolean syncInProgress = false;
+    private boolean syncingMasterSwitch = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -91,6 +92,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
 
         setupStatusCard();
         setupProviderCard();
+        setupAdvancedOptions();
         setupInputListeners();
     }
 
@@ -131,31 +133,102 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     private void setupStatusCard() {
         binding.switchEnable.setChecked(store.isAssistantEnabled());
         binding.switchEnable.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (syncingMasterSwitch) return;
             store.setAssistantEnabled(isChecked);
-            updateStatusUi();
+            if (isChecked && hasCompleteConfiguration()) {
+                // Completing setup through the master switch persists the form intentionally.
+                saveConfiguration();
+            } else {
+                updateStatusUi();
+            }
         });
 
         binding.switchAgent.setChecked(store.isAgentEnabled());
-        binding.switchAgent.setOnCheckedChangeListener((v, checked) -> store.setAgentEnabled(checked));
+        binding.switchAgent.setOnCheckedChangeListener((v, checked) -> {
+            if (!store.isAssistantEnabled() && checked) {
+                binding.switchAgent.setChecked(false);
+                Snackbar.make(binding.getRoot(), R.string.tag_assistant_enable_first, Snackbar.LENGTH_SHORT).show();
+                return;
+            }
+            store.setAgentEnabled(checked);
+        });
+
+        binding.chipVerifiedStatus.setOnClickListener(v -> {
+            if (currentProfile != null && store.isVerifiedFor(currentProfile.id)) {
+                Snackbar.make(binding.getRoot(), R.string.tag_assistant_already_verified, Snackbar.LENGTH_SHORT).show();
+            } else {
+                testConnection();
+            }
+        });
 
         updateStatusUi();
     }
 
     private void updateStatusUi() {
-        boolean enabled = binding.switchEnable.isChecked();
-        binding.cardProvider.setAlpha(enabled ? 1f : 0.55f);
-        if (enabled) {
-            binding.tvStatusMessage.setVisibility(View.GONE);
-        } else {
+        boolean enabled = store.isAssistantEnabled();
+        if (binding.switchEnable.isChecked() != enabled) {
+            syncingMasterSwitch = true;
+            binding.switchEnable.setChecked(enabled);
+            syncingMasterSwitch = false;
+        }
+        // Provider settings stay fully interactive while the master switch is off.
+        binding.cardProvider.setAlpha(1f);
+        binding.switchEnable.setEnabled(!syncInProgress);
+        binding.switchAgent.setEnabled(enabled && !syncInProgress);
+        if (!enabled) {
             binding.tvStatusMessage.setText(R.string.ai_connection_disabled);
+            binding.tvStatusMessage.setVisibility(View.VISIBLE);
+        } else if (!hasCompleteConfiguration()) {
+            binding.tvStatusMessage.setText(R.string.tag_assistant_setup_incomplete);
+            binding.tvStatusMessage.setVisibility(View.VISIBLE);
+        } else {
+            binding.tvStatusMessage.setText(R.string.tag_assistant_enabled_ready);
             binding.tvStatusMessage.setVisibility(View.VISIBLE);
         }
 
         boolean verified = currentProfile != null && store.isVerifiedFor(currentProfile.id);
-        binding.chipVerifiedStatus.setText(verified ? "Verified" : "Not verified");
+        binding.chipVerifiedStatus.setText(verified ? R.string.tag_assistant_verified : R.string.tag_assistant_verify_action);
         binding.chipVerifiedStatus.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(
                 ThemeUtils.getColor(this, verified ? R.attr.colorSecondaryContainer : R.attr.colorSurfaceContainerHigh)));
         binding.chipVerifiedStatus.setTextColor(ThemeUtils.getColor(this, verified ? R.attr.colorOnSecondaryContainer : R.attr.colorOnSurfaceVariant));
+        binding.chipVerifiedStatus.setClickable(!syncInProgress);
+        binding.chipVerifiedStatus.setAlpha(syncInProgress ? 0.55f : 1f);
+    }
+
+    private boolean hasCompleteConfiguration() {
+        if (currentProfile == null || textOf(binding.editModel).trim().isEmpty()) return false;
+        if (currentProfile.requiresKey && AIConfigStore.sanitizeKey(textOf(binding.editApiKey)).isEmpty()) return false;
+        String url = AIConfigStore.sanitizeBaseUrl(textOf(binding.editBaseUrl));
+        return !currentProfile.baseUrlEditable || !currentProfile.defaultBaseUrl.isEmpty() || !url.isEmpty();
+    }
+
+    private void setupAdvancedOptions() {
+        binding.switchStreaming.setChecked(store.isStreamingEnabled());
+        binding.switchStreaming.setOnCheckedChangeListener((v, checked) -> store.setStreamingEnabled(checked));
+
+        binding.switchThinking.setChecked(store.isShowThinking());
+        binding.switchThinking.setOnCheckedChangeListener((v, checked) -> store.setShowThinking(checked));
+
+        binding.switchAutoSuggest.setChecked(store.isAutoSuggestEnabled());
+        binding.switchAutoSuggest.setOnCheckedChangeListener((v, checked) -> store.setAutoSuggestEnabled(checked));
+
+        binding.switchHaptics.setChecked(store.isHapticsEnabled());
+        binding.switchHaptics.setOnCheckedChangeListener((v, checked) -> store.setHapticsEnabled(checked));
+
+        float temperature = store.getTemperature();
+        if (Float.isNaN(temperature) || Float.isInfinite(temperature)) temperature = 0.7f;
+        // Normalize older saved values to the slider's 0.1 increments before setValue().
+        temperature = Math.max(0f, Math.min(1f, Math.round(temperature * 10f) / 10f));
+        binding.sliderTemperature.setValue(temperature);
+        updateTemperatureLabel(temperature);
+        binding.sliderTemperature.addOnChangeListener((slider, value, fromUser) -> {
+            updateTemperatureLabel(value);
+            store.setTemperature(value);
+        });
+    }
+
+    private void updateTemperatureLabel(float value) {
+        binding.tvTemperatureValue.setText(String.format(Locale.getDefault(), "%.1f", value));
     }
 
     // ------------------------------------------------------------------
@@ -219,6 +292,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
 
         populateModelChips(profile);
         refreshModelSyncUi(profile);
+        updateStatusUi();
     }
 
     private void populateModelChips(ProviderProfile profile) {
@@ -301,6 +375,13 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         store.setKeyFor(currentProfile.id, key);
         store.setBaseUrlFor(currentProfile.id, url);
         store.setModelFor(currentProfile.id, model);
+        // Saving a complete configuration explicitly enables the assistant.
+        store.setAssistantEnabled(true);
+        if (!binding.switchEnable.isChecked()) {
+            syncingMasterSwitch = true;
+            binding.switchEnable.setChecked(true);
+            syncingMasterSwitch = false;
+        }
         // Saving credentials/model invalidates the previous verification state.
         updateStatusUi();
 
@@ -421,6 +502,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.btnChooseModel.setEnabled(!inProgress);
         binding.btnSave.setEnabled(!inProgress);
         binding.btnTest.setEnabled(!inProgress);
+        binding.switchEnable.setEnabled(!inProgress);
+        binding.switchAgent.setEnabled(!inProgress && store.isAssistantEnabled());
         // Freeze the provider form while an operation is in flight so its result cannot
         // be applied to a different provider selected midway through the request.
         binding.dropdownProvider.setEnabled(!inProgress);
