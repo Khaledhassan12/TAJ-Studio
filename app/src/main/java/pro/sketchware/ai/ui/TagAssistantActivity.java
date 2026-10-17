@@ -173,7 +173,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         }
         // Provider settings stay fully interactive while the master switch is off.
         binding.cardProvider.setAlpha(1f);
-        binding.switchAgent.setEnabled(enabled);
+        binding.switchEnable.setEnabled(!syncInProgress);
+        binding.switchAgent.setEnabled(enabled && !syncInProgress);
         if (!enabled) {
             binding.tvStatusMessage.setText(R.string.ai_connection_disabled);
             binding.tvStatusMessage.setVisibility(View.VISIBLE);
@@ -501,6 +502,8 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.btnChooseModel.setEnabled(!inProgress);
         binding.btnSave.setEnabled(!inProgress);
         binding.btnTest.setEnabled(!inProgress);
+        binding.switchEnable.setEnabled(!inProgress);
+        binding.switchAgent.setEnabled(!inProgress && store.isAssistantEnabled());
         // Freeze the provider form while an operation is in flight so its result cannot
         // be applied to a different provider selected midway through the request.
         binding.dropdownProvider.setEnabled(!inProgress);
