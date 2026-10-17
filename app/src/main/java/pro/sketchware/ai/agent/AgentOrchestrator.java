@@ -447,7 +447,7 @@ public final class AgentOrchestrator {
                 }
                 long remaining = taskDeadline - System.currentTimeMillis();
                 if (remaining <= 0) {
-                    throw new java.util.concurrent.TimeoutException("Agent task exceeded its five-minute execution budget.");
+                    throw new java.util.concurrent.TimeoutException("Agent task exceeded its eight-minute execution budget.");
                 }
                 latch.await(Math.min(250L, remaining), TimeUnit.MILLISECONDS);
             }
