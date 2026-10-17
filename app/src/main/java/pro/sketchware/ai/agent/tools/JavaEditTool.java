@@ -42,6 +42,20 @@ public final class JavaEditTool implements Tool {
         String mode = args.getString("mode");
         String sc_id = ctx.sc_id;
 
+        if (!"replace_all".equals(mode) && !"search_replace".equals(mode) && !"append".equals(mode)) {
+            return ToolResult.structured("java_edit", "INVALID_ARGUMENTS", null,
+                    "Unsupported edit mode; no source file was changed.", null, true);
+        }
+        if (!args.has("content") || args.isNull("content")) {
+            return ToolResult.structured("java_edit", "INVALID_ARGUMENTS", null,
+                    "The selected edit mode requires a content string; no source file was changed.", null, true);
+        }
+        if ("search_replace".equals(mode)
+                && (!args.has("search") || args.isNull("search") || args.optString("search", "").isEmpty())) {
+            return ToolResult.structured("java_edit", "INVALID_ARGUMENTS", null,
+                    "search_replace requires a non-empty search string; no source file was changed.", null, true);
+        }
+
         File f = PathResolver.resolve(sc_id, ("manager".equals(target) ? userPath : "java/" + userPath));
         String path = f.getAbsolutePath();
 
