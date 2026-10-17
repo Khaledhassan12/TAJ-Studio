@@ -14,10 +14,13 @@ public final class JavaCreateTool implements Tool {
         try {
             JSONObject props = new JSONObject();
             props.put("target", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"manager", "project"})).put("description", "Use manager for new user-editable Java/Kotlin source files that must appear in ManageJavaActivity; use project only when explicitly modifying the generated project Java source root."));
-            props.put("name", new JSONObject().put("type", "string").put("maxLength", 256));
-            props.put("type", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"folder", "java_class", "java_activity", "kotlin_class", "kotlin_activity"})));
+            props.put("name", new JSONObject().put("type", "string").put("maxLength", 256)
+                    .put("description", "Class/activity identifier WITHOUT .java or .kt extension. For example, use LoginScreen, not LoginScreen.kt."));
+            props.put("type", new JSONObject().put("type", "string").put("enum", new JSONArray(new String[]{"folder", "java_class", "java_activity", "kotlin_class", "kotlin_activity"}))
+                    .put("description", "Choose kotlin_class for a Kotlin source file or kotlin_activity for a Kotlin Activity; the extension is added automatically."));
             props.put("packagePath", new JSONObject().put("type", "string").put("maxLength", 512).put("description", "Optional full package name. Must be the active project package or a subpackage beginning with it; omit to use the active project package automatically."));
-            props.put("content", new JSONObject().put("type", "string").put("maxLength", 262144));
+            props.put("content", new JSONObject().put("type", "string").put("maxLength", 262144)
+                    .put("description", "Optional complete source body. Omit to generate a minimal class/activity template. The package declaration is normalized to the verified packagePath."));
             JSONObject schema = new JSONObject(); schema.put("type", "object"); schema.put("properties", props);
             schema.put("required", new JSONArray().put("target").put("name").put("type"));
             return new ToolSpec("java_create", "Creates a Java/Kotlin class, Activity or folder without overwriting existing files. Use target=manager for user-editable files shown in ManageJavaActivity; target=project only for the generated project Java source root.", schema);
