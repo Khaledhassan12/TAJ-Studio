@@ -92,6 +92,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         setupStatusCard();
         setupProviderCard();
         setupInputListeners();
+        setupAdvancedOptions();
     }
 
     private void setupInputListeners() {
@@ -129,16 +130,63 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     // ------------------------------------------------------------------
 
     private void setupStatusCard() {
+        // The assistant is opt-in on a fresh install. Persisted choices survive app updates.
         binding.switchEnable.setChecked(store.isAssistantEnabled());
         binding.switchEnable.setOnCheckedChangeListener((buttonView, isChecked) -> {
             store.setAssistantEnabled(isChecked);
+            if (!isChecked) {
+                // Agent tools cannot remain active while the assistant master switch is off.
+                store.setAgentEnabled(false);
+                binding.switchAgent.setOnCheckedChangeListener(null);
+                binding.switchAgent.setChecked(false);
+            }
+            binding.switchAgent.setEnabled(isChecked);
+            binding.cardProvider.setAlpha(isChecked ? 1f : 0.72f);
+            binding.switchAgent.setOnCheckedChangeListener((v, checked) -> {
+                if (!binding.switchEnable.isChecked() && checked) {
+                    binding.switchAgent.setChecked(false);
+                    return;
+                }
+                store.setAgentEnabled(checked);
+            });
             updateStatusUi();
         });
 
-        binding.switchAgent.setChecked(store.isAgentEnabled());
-        binding.switchAgent.setOnCheckedChangeListener((v, checked) -> store.setAgentEnabled(checked));
-
+        binding.switchAgent.setChecked(store.isAgentEnabled() && store.isAssistantEnabled());
+        binding.switchAgent.setEnabled(store.isAssistantEnabled());
+        binding.switchAgent.setOnCheckedChangeListener((v, checked) -> {
+            if (!binding.switchEnable.isChecked() && checked) {
+                binding.switchAgent.setChecked(false);
+                return;
+            }
+            store.setAgentEnabled(checked);
+        });
+        binding.chipVerifiedStatus.setOnClickListener(v -> testConnection());
         updateStatusUi();
+    }
+
+    private void setupAdvancedOptions() {
+        binding.switchStreaming.setChecked(store.isStreamingEnabled());
+        binding.switchStreaming.setOnCheckedChangeListener((v, checked) -> store.setStreamingEnabled(checked));
+
+        binding.switchThinking.setChecked(store.isShowThinking());
+        binding.switchThinking.setOnCheckedChangeListener((v, checked) -> store.setShowThinking(checked));
+
+        binding.switchAutoRetry.setChecked(store.isAutoRetry());
+        binding.switchAutoRetry.setOnCheckedChangeListener((v, checked) -> store.setAutoRetry(checked));
+
+        binding.switchAutoSuggest.setChecked(store.isAutoSuggestEnabled());
+        binding.switchAutoSuggest.setOnCheckedChangeListener((v, checked) -> store.setAutoSuggestEnabled(checked));
+
+        binding.switchHaptics.setChecked(store.isHapticsEnabled());
+        binding.switchHaptics.setOnCheckedChangeListener((v, checked) -> store.setHapticsEnabled(checked));
+
+        binding.sliderTemperature.setValue(store.getTemperature());
+        binding.tvTemperatureValue.setText(String.format(Locale.getDefault(), "%.1f", store.getTemperature()));
+        binding.sliderTemperature.addOnChangeListener((slider, value, fromUser) -> {
+            store.setTemperature(value);
+            binding.tvTemperatureValue.setText(String.format(Locale.getDefault(), "%.1f", value));
+        });
     }
 
     private void updateStatusUi() {
@@ -152,7 +200,9 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         }
 
         boolean verified = currentProfile != null && store.isVerifiedFor(currentProfile.id);
-        binding.chipVerifiedStatus.setText(verified ? "Verified" : "Not verified");
+        binding.chipVerifiedStatus.setText(verified ? R.string.ai_verified : R.string.ai_not_verified);
+        binding.chipVerifiedStatus.setContentDescription(getString(verified
+                ? R.string.ai_verified_tap_hint : R.string.ai_not_verified_tap_hint));
         binding.chipVerifiedStatus.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(
                 ThemeUtils.getColor(this, verified ? R.attr.colorSecondaryContainer : R.attr.colorSurfaceContainerHigh)));
         binding.chipVerifiedStatus.setTextColor(ThemeUtils.getColor(this, verified ? R.attr.colorOnSecondaryContainer : R.attr.colorOnSurfaceVariant));
@@ -301,7 +351,31 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         store.setKeyFor(currentProfile.id, key);
         store.setBaseUrlFor(currentProfile.id, url);
         store.setModelFor(currentProfile.id, model);
-        // Saving credentials/model invalidates the previous verification state.
+        // A complete, explicitly saved configuration is a valid opt-in signal.
+        // It does not claim the provider is verified; only Test connection can do that.
+        store.setAssistantEnabled(true);
+        binding.switchEnable.setOnCheckedChangeListener(null);
+        binding.switchEnable.setChecked(true);
+        binding.switchAgent.setEnabled(true);
+        binding.cardProvider.setAlpha(1f);
+        binding.switchEnable.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            store.setAssistantEnabled(isChecked);
+            if (!isChecked) {
+                store.setAgentEnabled(false);
+                binding.switchAgent.setOnCheckedChangeListener(null);
+                binding.switchAgent.setChecked(false);
+            }
+            binding.switchAgent.setEnabled(isChecked);
+            binding.cardProvider.setAlpha(isChecked ? 1f : 0.72f);
+            binding.switchAgent.setOnCheckedChangeListener((v, checked) -> {
+                if (!binding.switchEnable.isChecked() && checked) {
+                    binding.switchAgent.setChecked(false);
+                    return;
+                }
+                store.setAgentEnabled(checked);
+            });
+            updateStatusUi();
+        });
         updateStatusUi();
 
         Snackbar.make(binding.getRoot(), R.string.ai_saved, Snackbar.LENGTH_SHORT).show();
