@@ -79,7 +79,7 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
         root.setBackgroundColor(ThemeUtils.getColor(this, R.attr.colorSurface));
         MaterialToolbar bar = new MaterialToolbar(this);
         bar.setTitle("TAJ Backups"); bar.setSubtitle("Project " + projectId);
-        bar.setNavigationIcon(R.drawable.ic_mtrl_back); bar.setNavigationOnClickListener(v -> finish());
+        bar.setNavigationIcon(R.drawable.ic_back_ios_24); bar.setNavigationOnClickListener(v -> finish());
         root.addView(bar, new LinearLayout.LayoutParams(-1, dp(64)));
 
         MaterialCardView hero = new MaterialCardView(this);
@@ -94,7 +94,7 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
         LinearLayout actions = new LinearLayout(this); actions.setGravity(Gravity.CENTER_VERTICAL);
         MaterialButton imp = button("Import JSON", R.drawable.ic_mtrl_file_present);
         imp.setOnClickListener(v -> importLauncher.launch(new String[]{"application/json", "text/json", "application/octet-stream"}));
-        MaterialButton all = button("Select all", R.drawable.ic_mtrl_check_circle);
+        MaterialButton all = button("Select all", R.drawable.ic_check_circle);
         all.setOnClickListener(v -> { selected.clear(); for (File f : archives) selected.add(f.getAbsolutePath()); render(); });
         actions.addView(imp, new LinearLayout.LayoutParams(0, dp(48), 1));
         LinearLayout.LayoutParams allLp = new LinearLayout.LayoutParams(0, dp(48), 1); allLp.setMarginStart(dp(8));
@@ -109,7 +109,7 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
 
         LinearLayout bottom = new LinearLayout(this); bottom.setPadding(dp(12), dp(8), dp(12), dp(12));
         bottom.setBackgroundColor(ThemeUtils.getColor(this, R.attr.colorSurfaceContainerLow));
-        MaterialButton share = button("Share", R.drawable.ic_mtrl_share); share.setOnClickListener(v -> shareSelected());
+        MaterialButton share = button("Share", R.drawable.ic_msg_share); share.setOnClickListener(v -> shareSelected());
         MaterialButton delete = button("Delete", R.drawable.ic_mtrl_delete); delete.setOnClickListener(v -> deleteSelected());
         MaterialButton legacy = button("Check .bak", R.drawable.ic_mtrl_history); legacy.setOnClickListener(v -> inspectLegacy());
         bottom.addView(share, new LinearLayout.LayoutParams(0, dp(48), 1));
