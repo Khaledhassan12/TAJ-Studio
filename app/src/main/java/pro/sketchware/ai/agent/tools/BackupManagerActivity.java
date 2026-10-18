@@ -322,7 +322,7 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
             try {
                 String path = legacy.getCanonicalPath();
                 String root = projectRoot.getCanonicalPath() + File.separator;
-                if (!path.startsWith(root) || !legacy.getName().matches(".*\\\\.agent-backup-[A-Za-z0-9-]+\\\\.bak"))
+                if (!path.startsWith(root) || !legacy.getName().matches(".*[.]agent-backup-[A-Za-z0-9-]+[.]bak"))
                     throw new java.io.IOException("Not a recognized in-project backup name.");
                 int marker = path.lastIndexOf(".agent-backup-");
                 if (marker <= root.length()) throw new java.io.IOException("Original file path could not be derived.");
@@ -378,7 +378,7 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
         for (File f : children) {
             if (f.isDirectory()) {
                 if (!"TAJ Agent".equals(f.getName())) scanLegacy(f, depth + 1, out);
-            } else if (f.isFile() && f.getName().matches(".*\\\\.agent-backup-[A-Za-z0-9-]+\\\\.bak")) {
+            } else if (f.isFile() && f.getName().matches(".*[.]agent-backup-[A-Za-z0-9-]+[.]bak")) {
                 try {
                     if (f.getCanonicalPath().startsWith(projectRoot.getCanonicalPath() + File.separator))
                         out.add(f);
