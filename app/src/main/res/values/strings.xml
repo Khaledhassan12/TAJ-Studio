@@ -2630,4 +2630,6 @@ Please try again later"</string>
     <string name="taj_maintainer_principles_title">Core principles</string>
     <string name="taj_maintainer_principles_body">Human control • Transparent changes • Preserve existing work • Validate before release • Useful documentation • Accessible design • Reliable failure handling • Continuous learning.</string>
     <string name="taj_maintainer_credit_note">This independent maintainer profile is separate from the upstream Sketchware Pro team and its official contributor data.</string>
+    <string name="taj_backups_title">TAJ Backups</string>
+    <string name="taj_backups_subtitle">Review, restore, share and manage verified TAJ Agent snapshots for this project.</string>
 </resources>
