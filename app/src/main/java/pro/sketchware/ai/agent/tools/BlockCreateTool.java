@@ -68,7 +68,7 @@ public final class BlockCreateTool implements Tool {
             if (map == null) return ToolResult.structured("block_create", "INVALID_ARGUMENTS", path, "Block specification could not be parsed.", null, true);
             blocks.add(map);
             serialized = GsonUtils.getGson().toJson(blocks);
-            if (registry.isFile()) DomainToolHelper.backup(path);
+            if (registry.isFile()) DomainToolHelper.backup(path, ctx.sc_id);
             DomainToolHelper.atomicWrite(registry, serialized, beforeHash);
             if (!serialized.equals(DomainToolHelper.readUtf8(registry))) {
                 boolean restored = registry.isFile() && DomainToolHelper.restoreIfUnchanged(path, DomainToolHelper.contentSha256(serialized));
