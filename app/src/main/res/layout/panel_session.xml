@@ -204,7 +204,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:contentDescription="@string/ai_send"
+            android:contentDescription="Send message"
             android:src="@drawable/ic_mtrl_send"
             app:fabSize="normal"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
