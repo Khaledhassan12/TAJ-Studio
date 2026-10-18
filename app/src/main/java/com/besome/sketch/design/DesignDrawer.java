@@ -37,7 +37,11 @@ public class DesignDrawer extends LinearLayout {
         if (!(activity instanceof DesignActivity designActivity)) return;
         int id = v.getId();
 
-        if (id == R.id.item_taj_backups) {\n            designActivity.toBackupManager();\n        } else if (id == R.id.item_library_manager) {
+        if (id == R.id.item_taj_backups) {
+            android.content.Intent backups = new android.content.Intent(activity, pro.sketchware.ai.agent.tools.BackupManagerActivity.class);
+            backups.putExtra(pro.sketchware.ai.agent.tools.BackupManagerActivity.EXTRA_PROJECT_ID, DesignActivity.sc_id);
+            activity.startActivity(backups);
+        } else if (id == R.id.item_library_manager) {
             designActivity.toLibraryManager();
         } else if (id == R.id.item_view_manager) {
             designActivity.toViewManager();
@@ -116,7 +120,8 @@ public class DesignDrawer extends LinearLayout {
         UI.addSystemWindowInsetToPadding(this, false, false, true, true);
 
         addDrawerSubheaderItem(R.string.design_drawer_menu_title, content);
-        addDrawerItem(R.id.item_taj_backups, R.drawable.ic_mtrl_history, R.string.taj_backups_title, R.string.taj_backups_subtitle, content);\n        addDrawerItem(R.id.item_library_manager, R.drawable.ic_mtrl_category, R.string.design_drawer_menu_title_library, R.string.design_drawer_menu_description_library, content);
+        addDrawerItem(R.id.item_taj_backups, R.drawable.ic_mtrl_history, R.string.taj_backups_title, R.string.taj_backups_subtitle, content);
+        addDrawerItem(R.id.item_library_manager, R.drawable.ic_mtrl_category, R.string.design_drawer_menu_title_library, R.string.design_drawer_menu_description_library, content);
         addDrawerItem(R.id.item_view_manager, R.drawable.ic_mtrl_devices, R.string.design_drawer_menu_title_view, R.string.design_drawer_menu_description_view, content);
         addDrawerItem(R.id.item_image_manager, R.drawable.ic_mtrl_image, R.string.design_drawer_menu_title_image, R.string.design_drawer_menu_description_image, content);
         addDrawerItem(R.id.item_sound_manager, R.drawable.ic_mtrl_music, R.string.design_drawer_menu_title_sound, R.string.design_drawer_menu_description_sound, content);
