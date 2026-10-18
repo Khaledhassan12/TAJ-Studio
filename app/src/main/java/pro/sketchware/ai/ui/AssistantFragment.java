@@ -272,6 +272,21 @@ public class AssistantFragment extends Fragment {
     private void scrollToBottom(boolean smooth) {
         View panel = panels.get(R.id.ai_dest_session);
         if (panel == null) return;
+        View headerCard = panel.findViewById(R.id.ai_header_card);
+        if (headerCard instanceof android.view.ViewGroup) {
+            android.view.ViewGroup headerContent = (android.view.ViewGroup) ((android.view.ViewGroup) headerCard).getChildAt(0);
+            if (headerContent != null) {
+                com.google.android.material.button.MaterialButton favoritesShortcut =
+                        new com.google.android.material.button.MaterialButton(requireContext(), null,
+                                com.google.android.material.R.attr.materialButtonTextButton);
+                favoritesShortcut.setText("Open Favorites");
+                favoritesShortcut.setAllCaps(false);
+                favoritesShortcut.setIconResource(R.drawable.ic_mtrl_star);
+                favoritesShortcut.setOnClickListener(v -> showPanel(R.id.ai_dest_favorites));
+                headerContent.addView(favoritesShortcut);
+            }
+        }
+
         RecyclerView rv = panel.findViewById(R.id.ai_rv_chat);
         if (rv == null || chatAdapter == null) return;
         rv.post(() -> {
@@ -357,8 +372,16 @@ public class AssistantFragment extends Fragment {
         rail = view.findViewById(R.id.navigation_rail);
         container = view.findViewById(R.id.panel_container);
 
-        rail.getMenu().add(android.view.Menu.NONE, R.id.item_taj_backups, android.view.Menu.NONE, getString(R.string.taj_backups_title))
-                .setIcon(R.drawable.ic_mtrl_history);
+        try {
+            rail.getMenu().add(android.view.Menu.NONE, R.id.item_taj_backups, android.view.Menu.NONE, getString(R.string.taj_backups_title))
+                    .setIcon(R.drawable.ic_mtrl_history);
+        } catch (IllegalArgumentException fullRail) {
+            // NavigationRailView limits visible destinations. Reuse one slot and keep
+            // Favorites available through its in-panel shortcut below.
+            rail.getMenu().removeItem(R.id.ai_dest_favorites);
+            rail.getMenu().add(android.view.Menu.NONE, R.id.item_taj_backups, android.view.Menu.NONE, getString(R.string.taj_backups_title))
+                    .setIcon(R.drawable.ic_mtrl_history);
+        }
         rail.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.item_taj_backups) {
                 Intent backups = new Intent(requireContext(), pro.sketchware.ai.agent.tools.BackupManagerActivity.class);
