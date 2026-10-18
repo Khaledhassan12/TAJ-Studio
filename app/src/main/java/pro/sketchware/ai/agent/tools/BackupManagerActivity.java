@@ -162,3 +162,162 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
             } catch (Exception ignored) {}
         }
     }
+
+    private void importArchive(Uri uri) {
+        if (uri == null) return;
+        File temp = null;
+        try (InputStream in = getContentResolver().openInputStream(uri)) {
+            if (in == null) throw new java.io.IOException("Could not open selected file.");
+            File tempDir = new File(getCacheDir(), "taj-backup-import");
+            if (!tempDir.isDirectory() && !tempDir.mkdirs()) throw new java.io.IOException("Could not prepare import.");
+            temp = File.createTempFile("import-", ".json", tempDir);
+            try (FileOutputStream out = new FileOutputStream(temp)) {
+                byte[] buffer = new byte[8192]; long total = 0; int n;
+                while ((n = in.read(buffer)) != -1) {
+                    total += n;
+                    if (total > 32L * 1024L * 1024L) throw new java.io.IOException("Backup exceeds 32 MiB.");
+                    out.write(buffer, 0, n);
+                }
+                out.getFD().sync();
+            }
+            AgentBackupStore.readAndValidate(temp);
+            JSONObject record = new JSONObject(new String(Files.readAllBytes(temp.toPath()), StandardCharsets.UTF_8));
+            String category = record.optString("category", "other");
+            if (!category.matches("[A-Za-z0-9_-]{1,40}")) category = "other";
+            File folder = new File(new File(ProjectPaths.dataRoot(projectId), "TAJ Agent/Backups"), category);
+            if (!folder.isDirectory() && !folder.mkdirs()) throw new java.io.IOException("Could not create backup category.");
+            File dest = new File(folder, "Imported-" + System.currentTimeMillis() + ".json");
+            Files.copy(temp.toPath(), dest.toPath());
+            AgentBackupStore.readAndValidate(dest);
+            selected.clear(); selected.add(dest.getAbsolutePath());
+            Toast.makeText(this, "JSON verified and imported. Check its restore destination before continuing.", Toast.LENGTH_LONG).show();
+            refresh();
+        } catch (Exception e) {
+            new MaterialAlertDialogBuilder(this).setTitle("Import rejected")
+                    .setMessage("The file failed validation and was not imported. " + safeMessage(e))
+                    .setPositiveButton("OK", null).show();
+        } finally {
+            if (temp != null) try { Files.deleteIfExists(temp.toPath()); } catch (Exception ignored) {}
+        }
+    }
+
+    private File resolveTarget(JSONObject record) throws Exception {
+        String rootPath = projectRoot.getCanonicalPath();
+        String relative = record.optString("relativePath", "");
+        File target;
+        if (!relative.isEmpty()) {
+            if (relative.startsWith("/") || relative.contains("..") || relative.indexOf('\\\\') >= 0)
+                throw new java.io.IOException("Unsafe relative path in backup.");
+            target = new File(projectRoot, relative).getCanonicalFile();
+        } else {
+            String oldPath = record.optString("originalPath", "");
+            if (oldPath.isEmpty()) throw new java.io.IOException("This older archive has no restorable path.");
+            target = new File(oldPath).getCanonicalFile();
+        }
+        if (!target.getPath().startsWith(rootPath + File.separator))
+            throw new java.io.IOException("Restore is restricted to the active Sketchware project.");
+        File parent = target.getParentFile();
+        if (parent == null || (!parent.isDirectory() && !parent.mkdirs()))
+            throw new java.io.IOException("Restore folder is unavailable.");
+        return target;
+    }
+
+    private void confirmRestore(File archive) {
+        try {
+            byte[] bytes = AgentBackupStore.readAndValidate(archive);
+            JSONObject record = new JSONObject(new String(Files.readAllBytes(archive.toPath()), StandardCharsets.UTF_8));
+            File target = resolveTarget(record);
+            new MaterialAlertDialogBuilder(this).setTitle("Restore verified backup")
+                    .setMessage("Restore " + record.optString("originalName", target.getName()) + " to:\\n" + target.getPath()
+                            + "\\n\\nThe existing file will be replaced only after integrity checks.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Restore", (dialog, which) -> {
+                        try {
+                            writeAtomically(target, bytes);
+                            Toast.makeText(this, "Backup restored and verified.", Toast.LENGTH_LONG).show();
+                            refresh();
+                        } catch (Exception e) {
+                            new MaterialAlertDialogBuilder(this).setTitle("Restore failed").setMessage(safeMessage(e)).setPositiveButton("OK", null).show();
+                        }
+                    }).show();
+        } catch (Exception e) {
+            new MaterialAlertDialogBuilder(this).setTitle("Cannot restore this backup").setMessage(safeMessage(e)).setPositiveButton("OK", null).show();
+        }
+    }
+
+    private void writeAtomically(File target, byte[] bytes) throws Exception {
+        if (bytes.length > 16L * 1024L * 1024L) throw new java.io.IOException("Restore payload exceeds 16 MiB.");
+        File temp = File.createTempFile(".taj-restore-", ".tmp", target.getParentFile());
+        boolean moved = false;
+        try {
+            try (FileOutputStream out = new FileOutputStream(temp)) { out.write(bytes); out.flush(); out.getFD().sync(); }
+            if (!java.util.Arrays.equals(bytes, Files.readAllBytes(temp.toPath()))) throw new java.io.IOException("Temporary restore verification failed.");
+            try { Files.move(temp.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING); }
+            catch (java.nio.file.AtomicMoveNotSupportedException e) { Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING); }
+            moved = true;
+            if (!java.util.Arrays.equals(bytes, Files.readAllBytes(target.toPath()))) throw new java.io.IOException("Restored file verification failed.");
+        } finally { if (!moved) Files.deleteIfExists(temp.toPath()); }
+    }
+
+    private List<File> selectedFiles() {
+        List<File> out = new ArrayList<>();
+        for (File f : archives) if (selected.contains(f.getAbsolutePath())) out.add(f);
+        return out;
+    }
+
+    private void shareSelected() {
+        List<File> chosen = selectedFiles();
+        if (chosen.isEmpty()) { Toast.makeText(this, "Select at least one backup.", Toast.LENGTH_SHORT).show(); return; }
+        try {
+            ArrayList<Uri> uris = new ArrayList<>();
+            for (File f : chosen) uris.add(FileProvider.getUriForFile(this, getPackageName() + ".provider", f));
+            Intent send = new Intent(chosen.size() == 1 ? Intent.ACTION_SEND : Intent.ACTION_SEND_MULTIPLE);
+            send.setType("application/json");
+            if (chosen.size() == 1) send.putExtra(Intent.EXTRA_STREAM, uris.get(0));
+            else send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(send, "Share TAJ backup"));
+        } catch (Exception e) { Toast.makeText(this, "Share failed: " + safeMessage(e), Toast.LENGTH_LONG).show(); }
+    }
+
+    private void deleteSelected() {
+        List<File> chosen = selectedFiles();
+        if (chosen.isEmpty()) { Toast.makeText(this, "Select backups to delete.", Toast.LENGTH_SHORT).show(); return; }
+        new MaterialAlertDialogBuilder(this).setTitle("Delete selected backups?")
+                .setMessage("Delete " + chosen.size() + " verified archive(s)? Original project files will not be changed.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete", (d, w) -> {
+                    int deleted = 0;
+                    for (File f : chosen) {
+                        try {
+                            AgentBackupStore.readAndValidate(f);
+                            String root = new File(ProjectPaths.dataRoot(projectId), "TAJ Agent/Backups").getCanonicalPath() + File.separator;
+                            if (f.getCanonicalPath().startsWith(root) && Files.deleteIfExists(f.toPath())) deleted++;
+                        } catch (Exception ignored) {}
+                    }
+                    selected.clear(); Toast.makeText(this, deleted + " backup(s) deleted.", Toast.LENGTH_LONG).show(); refresh();
+                }).show();
+    }
+
+    private void inspectLegacy() {
+        List<File> found = new ArrayList<>();
+        scanLegacy(projectRoot, 0, found);
+        StringBuilder message = new StringBuilder("Found ").append(found.size()).append(" legacy backup file(s). No files were changed.\\n\\n");
+        for (File f : found) message.append("• ").append(f.getName()).append("\\n");
+        message.append("\\nOnly recognized .agent-backup-UUID.bak files are listed. They are retained until a verified migration path is available; unrelated .bak files are never deleted.");
+        new MaterialAlertDialogBuilder(this).setTitle("Legacy backup safety scan").setMessage(message.toString()).setPositiveButton("OK", null).show();
+    }
+
+    private void scanLegacy(File dir, int depth, List<File> out) {
+        if (dir == null || depth > 12 || !dir.isDirectory()) return;
+        File[] children = dir.listFiles(); if (children == null) return;
+        for (File f : children) {
+            if (f.isDirectory()) { if (!"TAJ Agent".equals(f.getName())) scanLegacy(f, depth + 1, out); }
+            else if (f.isFile() && f.getName().matches(".*\\\\.agent-backup-[A-Za-z0-9-]+\\\\.bak")) {
+                try { if (f.getCanonicalPath().startsWith(projectRoot.getCanonicalPath() + File.separator)) out.add(f); } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    private String safeMessage(Exception e) { return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage(); }
+}
