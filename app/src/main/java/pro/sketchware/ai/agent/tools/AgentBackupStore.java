@@ -73,7 +73,10 @@ public final class AgentBackupStore {
             throw new IOException("Could not build backup manifest.", e);
         }
 
-        writeVerifiedJson(destination, record.toString(2), record.getString("sha256"));
+        final String serialized;
+        try { serialized = record.toString(2); }
+        catch (org.json.JSONException e) { throw new IOException("Could not serialize backup manifest.", e); }
+        writeVerifiedJson(destination, serialized, digest);
         pruneSnapshots(categoryDir, source.getCanonicalPath());
         return destination;
     }
@@ -100,7 +103,7 @@ public final class AgentBackupStore {
 
     /** Retain the newest managed snapshots per original file; never touches non-TAJ files. */
     private static void pruneSnapshots(File categoryDir, String originalPath) {
-        File[] candidates = categoryDir.listFiles((dir, name) -> name.endsWith(" | TAJ STUDIO - ") || name.endsWith(".json"));
+        File[] candidates = categoryDir.listFiles((dir, name) -> name.endsWith(".json"));
         if (candidates == null) return;
         java.util.ArrayList<File> matching = new java.util.ArrayList<>();
         for (File candidate : candidates) {
