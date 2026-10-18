@@ -55,7 +55,7 @@ public final class LibRemoveTool implements Tool {
             }
             libraries.remove(id);
             String next = GsonUtils.getGson().toJson(libraries);
-            DomainToolHelper.backup(path);
+            DomainToolHelper.backup(path, scId);
             DomainToolHelper.atomicWrite(file, next, beforeHash);
             String actual = DomainToolHelper.readUtf8(file);
             if (!next.equals(actual)) {
