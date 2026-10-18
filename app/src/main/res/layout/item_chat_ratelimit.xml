@@ -4,13 +4,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:padding="4dp">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_rate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="24dp"
+        app:cardCornerRadius="18dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp"
         app:cardBackgroundColor="?attr/colorTertiaryContainer">
@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="11dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -39,7 +39,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="8dp"
                     android:text="@string/ai_rate_title"
                     android:textAppearance="?attr/textAppearanceTitleSmall"
                     android:textColor="?attr/colorOnTertiaryContainer" />
@@ -58,7 +58,7 @@
                 android:id="@+id/prog_rate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="7dp"
                 app:indicatorColor="?attr/colorTertiary"
                 app:trackColor="?attr/colorSurfaceContainerHigh"
                 app:trackThickness="2dp" />
@@ -67,7 +67,7 @@
                 android:id="@+id/tv_rate_sub"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="5dp"
                 android:alpha="0.8"
                 android:text="Retry 1 of 3 — waiting 30s"
                 android:textAppearance="?attr/textAppearanceBodySmall"
@@ -77,7 +77,7 @@
                 android:id="@+id/rate_actions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="7dp"
                 android:gravity="end"
                 android:orientation="horizontal">
 
