@@ -22,7 +22,6 @@
             android:layout_width="76dp"
             android:layout_height="match_parent"
             android:background="@android:color/transparent"
-            app:headerLayout="@layout/ai_rail_header"
             app:labelVisibilityMode="labeled"
             app:menu="@menu/ai_rail_menu" />
     </com.google.android.material.card.MaterialCardView>
