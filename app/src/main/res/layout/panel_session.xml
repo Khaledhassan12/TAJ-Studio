@@ -147,6 +147,22 @@
         android:paddingEnd="2dp"
         android:paddingBottom="20dp" />
 
+    <!-- Appears only when the reader is away from the latest message. -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/ai_fab_scroll_bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/ai_input_container"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="12dp"
+        android:contentDescription="Jump to latest message"
+        android:src="@drawable/ic_mtrl_arrow_down"
+        android:visibility="gone"
+        app:backgroundTint="?attr/colorSecondaryContainer"
+        app:elevation="6dp"
+        app:fabSize="mini"
+        app:tint="?attr/colorOnSecondaryContainer" />
+
     <com.google.android.material.chip.Chip
         android:id="@+id/ai_chip_edit_banner"
         android:layout_width="wrap_content"
