@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="10dp"
+    android:background="?attr/colorSurface">
 
     <TextView
         android:layout_width="wrap_content"
@@ -22,6 +23,38 @@
         android:text="Allow destructive ops (confirm each)"
         app:chipIcon="@drawable/ic_mtrl_warning" />
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="Search registered tools"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+        app:startIconDrawable="@drawable/ic_mtrl_search">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/ai_et_tool_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <TextView
+        android:id="@+id/ai_tv_tool_count"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="4dp"
+        android:paddingTop="8dp"
+        android:text="Registered tools"
+        android:textAppearance="?attr/textAppearanceLabelMedium"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+    <TextView
+        android:id="@+id/ai_tv_tools_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="20dp"
+        android:text="No registered tools match this search."
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:visibility="gone" />
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/ai_rv_tools"
         android:layout_width="match_parent"
