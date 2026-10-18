@@ -158,7 +158,13 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
                 details.addView(text(r.optString("category", "other") + " • " + android.text.format.Formatter.formatShortFileSize(this, r.optLong("sizeBytes", 0)) + " • " + android.text.format.DateFormat.format("dd MMM yyyy, HH:mm", r.optLong("createdAt", archive.lastModified())), 11, false));
                 row.addView(details, new LinearLayout.LayoutParams(0, -2, 1));
                 MaterialButton restore = button("Restore", R.drawable.ic_mtrl_history); restore.setTextSize(11); restore.setOnClickListener(v -> confirmRestore(archive)); row.addView(restore);
-                card.addView(row); LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2); lp.bottomMargin = dp(10); list.addView(card, lp);
+                card.addView(row);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+                lp.bottomMargin = dp(10);
+                card.setAlpha(0f);
+                card.setTranslationY(dp(8));
+                list.addView(card, lp);
+                card.animate().alpha(1f).translationY(0f).setDuration(180).start();
             } catch (Exception ignored) {}
         }
     }
