@@ -549,7 +549,7 @@ public class AssistantFragment extends Fragment {
     }
 
     private void addProjectFiles(java.io.File root, String prefix, List<String> output, int limit) {
-        if (root == null || !root.isDirectory() || output.size() >= limit) return;
+        if (root == null || !root.isDirectory()) return;
         final String canonicalRoot;
         try {
             canonicalRoot = root.getCanonicalPath();
