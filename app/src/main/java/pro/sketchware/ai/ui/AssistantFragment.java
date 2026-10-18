@@ -621,13 +621,24 @@ public class AssistantFragment extends Fragment {
         @NonNull
         @Override
         public FileHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            TextView text = new TextView(parent.getContext());
-            int padding = (int) (12 * parent.getResources().getDisplayMetrics().density);
+            android.content.Context context = parent.getContext();
+            float density = parent.getResources().getDisplayMetrics().density;
+            int padding = (int) (12 * density);
+            com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(context);
+            card.setRadius(18 * density);
+            card.setCardElevation(0f);
+            card.setCardBackgroundColor(com.google.android.material.color.MaterialColors.getColor(card, com.google.android.material.R.attr.colorSurfaceContainer));
+            card.setStrokeColor(com.google.android.material.color.MaterialColors.getColor(card, com.google.android.material.R.attr.colorOutlineVariant));
+            card.setStrokeWidth(Math.max(1, (int) density));
+            TextView text = new TextView(context);
             text.setPadding(padding, padding, padding, padding);
             text.setTextSize(14);
-            text.setLayoutParams(new RecyclerView.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            return new FileHolder(text);
+            text.setTextColor(com.google.android.material.color.MaterialColors.getColor(card, com.google.android.material.R.attr.colorOnSurface));
+            card.addView(text, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            params.setMargins((int)(3*density), (int)(3*density), (int)(3*density), (int)(3*density));
+            card.setLayoutParams(params);
+            return new FileHolder(card, text);
         }
 
         @Override
@@ -655,9 +666,9 @@ public class AssistantFragment extends Fragment {
 
         static final class FileHolder extends RecyclerView.ViewHolder {
             final TextView text;
-            FileHolder(TextView itemView) {
-                super(itemView);
-                text = itemView;
+            FileHolder(View card, TextView text) {
+                super(card);
+                this.text = text;
             }
         }
     }
