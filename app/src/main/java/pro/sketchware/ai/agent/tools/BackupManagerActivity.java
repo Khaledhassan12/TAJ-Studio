@@ -35,6 +35,7 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
     public static final String EXTRA_PROJECT_ID = "sc_id";
     private String projectId;
     private File projectRoot;
+    private File lastRestoredTarget;
     private LinearLayout list;
     private TextView summary;
     private final List<File> archives = new ArrayList<>();
@@ -240,6 +241,7 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
                     .setPositiveButton("Restore", (dialog, which) -> {
                         try {
                             writeAtomically(target, bytes);
+                            lastRestoredTarget = target;
                             Toast.makeText(this, "Backup restored and verified.", Toast.LENGTH_LONG).show();
                             refresh();
                         } catch (Exception e) {
@@ -391,6 +393,15 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
                 } catch (Exception ignored) {}
             }
         }
+    }
+
+    @Override protected void onDestroy() {
+        // DesignActivity registers its listener again as it resumes. Notify after this
+        // screen closes so persisted XML/resource changes are reloaded into editor state.
+        if (lastRestoredTarget != null) {
+            pro.sketchware.ai.live.LiveRegistry.notifyChanged("layout", lastRestoredTarget.getAbsolutePath());
+        }
+        super.onDestroy();
     }
 
     private String safeMessage(Exception e) { return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage(); }
