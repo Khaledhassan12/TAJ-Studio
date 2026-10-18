@@ -59,7 +59,7 @@ public final class LibAddTool implements Tool {
 
             libs.add(id);
             serialized = GsonUtils.getGson().toJson(libs);
-            if (file.isFile()) DomainToolHelper.backup(path);
+            if (file.isFile()) DomainToolHelper.backup(path, scId);
             DomainToolHelper.atomicWrite(file, serialized, beforeHash);
             if (!serialized.equals(DomainToolHelper.readUtf8(file))) {
                 boolean restored = file.isFile() && DomainToolHelper.restoreIfUnchanged(path, DomainToolHelper.contentSha256(serialized));
