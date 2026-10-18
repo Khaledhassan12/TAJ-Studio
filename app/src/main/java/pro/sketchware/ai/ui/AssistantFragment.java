@@ -358,6 +358,12 @@ public class AssistantFragment extends Fragment {
         container = view.findViewById(R.id.panel_container);
 
         rail.setOnItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.ai_dest_backups) {
+                Intent backups = new Intent(requireContext(), pro.sketchware.ai.agent.tools.BackupManagerActivity.class);
+                backups.putExtra(pro.sketchware.ai.agent.tools.BackupManagerActivity.EXTRA_PROJECT_ID, sc_id);
+                startActivity(backups);
+                return false;
+            }
             if ((AIActivityMonitor.isBusy() || activeRequestId != 0L) && item.getItemId() != R.id.ai_dest_session) {
                 Snackbar.make(view, "Finish or cancel the active assistant request before switching panels.", Snackbar.LENGTH_SHORT).show();
                 return false;
