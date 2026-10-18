@@ -86,7 +86,16 @@
             android:valueFrom="0.0"
             android:valueTo="1.0"
             android:stepSize="0.1"
-            android:value="0.7" />\n\n        <TextView\n            android:id="@+id/tv_temperature_value"\n            android:layout_width="match_parent"\n            android:layout_height="wrap_content"\n            android:gravity="end"\n            android:text="0.7"\n            android:textAppearance="?attr/textAppearanceLabelMedium"\n            android:textColor="?attr/colorPrimary" />
+            android:value="0.7" />
+
+        <TextView
+            android:id="@+id/tv_temperature_value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:text="0.7"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:textColor="?attr/colorPrimary" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_diagnostics"
@@ -163,7 +172,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardCornerRadius="24dp"\n            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"\n            app:strokeColor="?attr/colorOutlineVariant"\n            app:strokeWidth="1dp"
+            app:cardCornerRadius="24dp"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="1dp"
             app:cardElevation="1dp">
             <LinearLayout
                 android:layout_width="match_parent"
