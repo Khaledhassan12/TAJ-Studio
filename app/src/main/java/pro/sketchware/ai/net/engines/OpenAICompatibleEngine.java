@@ -131,6 +131,12 @@ public final class OpenAICompatibleEngine extends HttpAI {
         return new OpenAIState();
     }
 
+    private static String readNonNullString(JSONObject object, String key) {
+        if (object == null || key == null || !object.has(key) || object.isNull(key)) return "";
+        String value = object.optString(key, "");
+        return value == null || "null".equals(value) ? "" : value;
+    }
+
     @Override
     protected void handleEvent(StreamState state, String eventName, String data, Tracked tracked)
             throws AIException {
@@ -168,16 +174,18 @@ public final class OpenAICompatibleEngine extends HttpAI {
             return;
         }
 
-        String reasoning = delta.optString("reasoning", null);
-        if (reasoning == null) {
-            reasoning = delta.optString("reasoning_content", null);
+        // Streaming deltas often omit content or explicitly send JSON null for
+        // role/tool-only events. Never stringify JSON null into the visible chat.
+        String reasoning = readNonNullString(delta, "reasoning");
+        if (reasoning.isEmpty()) {
+            reasoning = readNonNullString(delta, "reasoning_content");
         }
-        if (reasoning != null && !reasoning.isEmpty()) {
+        if (!reasoning.isEmpty()) {
             tracked.onReasoningToken(reasoning);
         }
 
-        String token = delta.optString("content", null);
-        if (token != null && !token.isEmpty()) {
+        String token = readNonNullString(delta, "content");
+        if (!token.isEmpty()) {
             openAi.text.append(token);
             tracked.onToken(token);
         }
