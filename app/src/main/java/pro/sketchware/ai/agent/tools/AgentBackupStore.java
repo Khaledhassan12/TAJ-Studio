@@ -64,6 +64,11 @@ public final class AgentBackupStore {
             record.put("category", category);
             record.put("originalName", source.getName());
             record.put("originalPath", source.getCanonicalPath());
+            String projectRootPath = new File(ProjectPaths.dataRoot(projectId)).getCanonicalPath();
+            String sourcePath = source.getCanonicalPath();
+            if (sourcePath.startsWith(projectRootPath + File.separator)) {
+                record.put("relativePath", sourcePath.substring(projectRootPath.length() + 1).replace(File.separatorChar, '/'));
+            }
             record.put("contentType", "application/octet-stream");
             record.put("encoding", "base64");
             record.put("sizeBytes", original.length);
