@@ -21,6 +21,7 @@ public final class AgentBackupStore {
     private static final String ROOT_NAME = "TAJ Agent";
     private static final String BACKUPS_NAME = "Backups";
     private static final String SCHEMA = "taj-studio-backup/v1";
+    private static final int MAX_SNAPSHOTS_PER_FILE = 20;
 
     private AgentBackupStore() {}
 
@@ -73,6 +74,7 @@ public final class AgentBackupStore {
         }
 
         writeVerifiedJson(destination, record.toString(2), record.getString("sha256"));
+        pruneSnapshots(categoryDir, source.getCanonicalPath());
         return destination;
     }
 
@@ -94,6 +96,36 @@ public final class AgentBackupStore {
         } catch (org.json.JSONException | IllegalArgumentException e) {
             throw new IOException("Backup JSON is invalid or incomplete.", e);
         }
+    }
+
+    /** Retain the newest managed snapshots per original file; never touches non-TAJ files. */
+    private static void pruneSnapshots(File categoryDir, String originalPath) {
+        File[] candidates = categoryDir.listFiles((dir, name) -> name.endsWith(" | TAJ STUDIO - ") || name.endsWith(".json"));
+        if (candidates == null) return;
+        java.util.ArrayList<File> matching = new java.util.ArrayList<>();
+        for (File candidate : candidates) {
+            if (!candidate.isFile() || !candidate.getName().endsWith(".json")) continue;
+            try {
+                JSONObject record = new JSONObject(new String(Files.readAllBytes(candidate.toPath()), StandardCharsets.UTF_8));
+                if (SCHEMA.equals(record.optString("format"))
+                        && originalPath.equals(record.optString("originalPath"))) matching.add(candidate);
+            } catch (Exception ignored) {}
+        }
+        matching.sort((left, right) -> Long.compare(lastModified(right), lastModified(left)));
+        for (int i = MAX_SNAPSHOTS_PER_FILE; i < matching.size(); i++) {
+            File old = matching.get(i);
+            try {
+                // Delete only a well-formed archive created by this manager, and only after
+                // the new snapshot has been written and verified successfully.
+                JSONObject record = new JSONObject(new String(Files.readAllBytes(old.toPath()), StandardCharsets.UTF_8));
+                if (SCHEMA.equals(record.optString("format"))
+                        && originalPath.equals(record.optString("originalPath"))) Files.deleteIfExists(old.toPath());
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private static long lastModified(File file) {
+        return file.lastModified();
     }
 
     private static void writeVerifiedJson(File destination, String json, String expectedHash) throws IOException {
