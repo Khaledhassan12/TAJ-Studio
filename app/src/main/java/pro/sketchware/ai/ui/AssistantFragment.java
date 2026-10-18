@@ -278,7 +278,7 @@ public class AssistantFragment extends Fragment {
             if (headerContent != null) {
                 com.google.android.material.button.MaterialButton favoritesShortcut =
                         new com.google.android.material.button.MaterialButton(requireContext(), null,
-                                com.google.android.material.R.attr.materialButtonTextButton);
+                                0);
                 favoritesShortcut.setText("Open Favorites");
                 favoritesShortcut.setAllCaps(false);
                 favoritesShortcut.setIconResource(R.drawable.ic_mtrl_star);
