@@ -93,7 +93,7 @@ public final class ManifestEditTool implements Tool {
                 return ToolResult.structured("manifest_edit", "DENIED", permissionPath, "Permission was denied.", null, true);
             }
             String beforeHash = permissionFile.isFile() ? DomainToolHelper.sha256(permissionFile) : null;
-            if (permissionFile.isFile()) DomainToolHelper.backup(permissionPath);
+            if (permissionFile.isFile()) DomainToolHelper.backup(permissionPath, sc_id);
             String serialized = GsonUtils.getGson().toJson(perms);
             DomainToolHelper.atomicWrite(permissionFile, serialized, beforeHash);
             if (!serialized.equals(DomainToolHelper.readUtf8(permissionFile))) {
@@ -130,7 +130,7 @@ public final class ManifestEditTool implements Tool {
             return ToolResult.structured("manifest_edit", "DENIED", injPath, "Permission was denied.", null, true);
         }
         String beforeHash = injectionFile.isFile() ? DomainToolHelper.sha256(injectionFile) : null;
-        if (injectionFile.isFile()) DomainToolHelper.backup(injPath);
+        if (injectionFile.isFile()) DomainToolHelper.backup(injPath, sc_id);
         String serialized = GsonUtils.getGson().toJson(data);
         DomainToolHelper.atomicWrite(injectionFile, serialized, beforeHash);
         if (!serialized.equals(DomainToolHelper.readUtf8(injectionFile))) {
