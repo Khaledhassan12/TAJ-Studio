@@ -213,7 +213,7 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
         String relative = record.optString("relativePath", "");
         File target;
         if (!relative.isEmpty()) {
-            if (relative.startsWith("/") || relative.contains("..") || relative.indexOf('\\\\') >= 0)
+            if (relative.startsWith("/") || relative.contains("..") || relative.indexOf('\\') >= 0)
                 throw new java.io.IOException("Unsafe relative path in backup.");
             target = new File(projectRoot, relative).getCanonicalFile();
         } else {
