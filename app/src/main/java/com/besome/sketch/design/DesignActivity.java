@@ -1081,6 +1081,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         launchActivity(ManageResourceActivity.class, openResourcesManager);
     }
 
+    /** Opens the active project's verified TAJ Agent backup manager. */
+    public void toBackupManager() {
+        Intent intent = new Intent(this, pro.sketchware.ai.agent.tools.BackupManagerActivity.class);
+        intent.putExtra(pro.sketchware.ai.agent.tools.BackupManagerActivity.EXTRA_PROJECT_ID, sc_id);
+        startActivity(intent);
+    }
+
     /**
      * Opens {@link ResourcesEditorActivity}.
      */
