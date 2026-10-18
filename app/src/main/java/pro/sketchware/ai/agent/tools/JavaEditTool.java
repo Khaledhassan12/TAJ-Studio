@@ -124,7 +124,7 @@ public final class JavaEditTool implements Tool {
             default -> throw new IllegalStateException("Validated edit mode became unsupported.");
         }
 
-        DomainToolHelper.backup(path);
+        DomainToolHelper.backup(path, sc_id);
         try {
             DomainToolHelper.atomicWrite(f, next, beforeHash);
             String actual = DomainToolHelper.readUtf8(f);
