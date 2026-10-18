@@ -199,6 +199,12 @@ public final class GeminiEngine extends HttpAI {
     protected StreamState newState() {
         return new GeminiState();
     }
+    private static String readNonNullString(JSONObject object, String key) {
+        if (object == null || key == null || !object.has(key) || object.isNull(key)) return "";
+        String value = object.optString(key, "");
+        return value == null || "null".equals(value) ? "" : value;
+    }
+
     @Override
     protected void handleEvent(StreamState state, String eventName, String data, Tracked tracked)
             throws AIException {
@@ -257,8 +263,10 @@ public final class GeminiEngine extends HttpAI {
             if (part == null) {
                 continue;
             }
-            String token = part.optString("text", null);
-            if (token != null && !token.isEmpty()) {
+            // Gemini may emit metadata/function-call parts without text or with
+            // an explicit JSON null. Only real text belongs in the chat stream.
+            String token = readNonNullString(part, "text");
+            if (!token.isEmpty()) {
                 if (part.optBoolean("thought", false)) {
                     tracked.onReasoningToken(token);
                 } else {
