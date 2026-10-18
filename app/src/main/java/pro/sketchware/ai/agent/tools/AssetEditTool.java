@@ -66,7 +66,7 @@ public final class AssetEditTool implements Tool {
                 default: return ToolResult.structured("asset_edit", "INVALID_ARGUMENTS", path, "Unsupported edit mode.", null, true);
             }
 
-            DomainToolHelper.backup(path);
+            DomainToolHelper.backup(path, ctx.sc_id);
             DomainToolHelper.atomicWrite(file, next, beforeHash);
             if (!next.equals(DomainToolHelper.readUtf8(file))) {
                 boolean restored = DomainToolHelper.restoreIfUnchanged(path, DomainToolHelper.contentSha256(next));
