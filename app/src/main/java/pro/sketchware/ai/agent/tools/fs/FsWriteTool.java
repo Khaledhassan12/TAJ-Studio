@@ -88,7 +88,7 @@ public final class FsWriteTool implements Tool {
 
             String beforeHash = existed ? DomainToolHelper.sha256(target) : null;
             originalContent = existed ? DomainToolHelper.readUtf8(target) : null;
-            if (existed) DomainToolHelper.backup(path);
+            if (existed) DomainToolHelper.backup(path, ctx.sc_id);
             DomainToolHelper.atomicWrite(target, requestedContent, beforeHash);
 
             String actual = DomainToolHelper.readUtf8(target);
