@@ -420,6 +420,13 @@ public class AssistantFragment extends Fragment {
 
         if (panel != null) {
             if (id == R.id.ai_dest_models) refreshModelsPanel(panel);
+            if (id == R.id.ai_dest_agents) {
+                Chip permissionChip = panel.findViewById(R.id.chip_destructive_ops);
+                if (permissionChip != null) {
+                    permissionChip.setText(permissionModeLabel());
+                    permissionChip.setContentDescription(permissionModeLabel() + ". Tap to manage permissions.");
+                }
+            }
             if (id == R.id.ai_dest_history) refreshHistory();
             if (id == R.id.ai_dest_favorites) {
                 RecyclerView favoritesList = panel.findViewById(R.id.rv_favorites);
