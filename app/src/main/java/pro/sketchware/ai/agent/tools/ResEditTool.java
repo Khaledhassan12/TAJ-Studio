@@ -94,7 +94,7 @@ public final class ResEditTool implements Tool {
             return new ToolResult("Edit resulted in malformed XML.", true);
         }
 
-        DomainToolHelper.backup(path);
+        DomainToolHelper.backup(path, sc_id);
         try {
             DomainToolHelper.atomicWrite(f, next, beforeHash);
             String actual = DomainToolHelper.readUtf8(f);
