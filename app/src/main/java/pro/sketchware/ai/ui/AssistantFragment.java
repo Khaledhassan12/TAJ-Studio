@@ -357,8 +357,10 @@ public class AssistantFragment extends Fragment {
         rail = view.findViewById(R.id.navigation_rail);
         container = view.findViewById(R.id.panel_container);
 
+        rail.getMenu().add(android.view.Menu.NONE, R.id.item_taj_backups, android.view.Menu.NONE, getString(R.string.taj_backups_title))
+                .setIcon(R.drawable.ic_mtrl_history);
         rail.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.ai_dest_backups) {
+            if (item.getItemId() == R.id.item_taj_backups) {
                 Intent backups = new Intent(requireContext(), pro.sketchware.ai.agent.tools.BackupManagerActivity.class);
                 backups.putExtra(pro.sketchware.ai.agent.tools.BackupManagerActivity.EXTRA_PROJECT_ID, sc_id);
                 startActivity(backups);
