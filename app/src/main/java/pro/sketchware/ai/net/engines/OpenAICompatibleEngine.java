@@ -237,15 +237,15 @@ public final class OpenAICompatibleEngine extends HttpAI {
                 return;
             }
 
-            String reasoning = message.optString("reasoning_content", null);
-            if (reasoning == null) {
-                reasoning = message.optString("reasoning", null);
+            String reasoning = readNonNullString(message, "reasoning_content");
+            if (reasoning.isEmpty()) {
+                reasoning = readNonNullString(message, "reasoning");
             }
-            if (reasoning != null && !reasoning.isEmpty()) {
+            if (!reasoning.isEmpty()) {
                 tracked.onReasoningToken(reasoning);
             }
 
-            String text = message.optString("content", "");
+            String text = readNonNullString(message, "content");
             if (!text.isEmpty()) {
                 openAi.text.append(text);
                 tracked.onToken(text);
