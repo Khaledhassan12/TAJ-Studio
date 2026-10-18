@@ -82,6 +82,10 @@
             android:name="com.besome.sketch.export.ExportProjectActivity"
             android:configChanges="orientation|screenSize" />
         <activity
+            android:name="pro.sketchware.ai.agent.tools.BackupManagerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SketchwarePro.SmallToolbar" />
+        <activity
             android:name="com.besome.sketch.design.DesignActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
             android:windowSoftInputMode="adjustResize"
