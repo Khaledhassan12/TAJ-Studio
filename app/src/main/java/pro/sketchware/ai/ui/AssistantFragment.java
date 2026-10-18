@@ -68,6 +68,8 @@ public class AssistantFragment extends Fragment {
     private int baseSessionPaddingTop;
     private int baseSessionPaddingRight;
     private int baseSessionPaddingBottom;
+    // Follow streamed output only while the reader is at (or returns to) the latest message.
+    private boolean autoFollowChat = true;
 
     private AIConfigStore configStore;
     private ChatStore chatStore;
@@ -252,6 +254,18 @@ public class AssistantFragment extends Fragment {
         return lm.findLastVisibleItemPosition() >= chatAdapter.getItemCount() - 2;
     }
 
+    private void updateScrollToBottomButton(@Nullable RecyclerView rv) {
+        View panel = panels.get(R.id.ai_dest_session);
+        if (panel == null) return;
+        View button = panel.findViewById(R.id.ai_fab_scroll_bottom);
+        if (button == null) return;
+        boolean show = rv != null && chatAdapter != null
+                && chatAdapter.getItemCount() > 0 && !isNearBottom();
+        button.setVisibility(show ? View.VISIBLE : View.GONE);
+        button.setAlpha(show ? 1f : 0f);
+        button.setContentDescription(show ? "Jump to latest message" : "Already at latest message");
+    }
+
     private void scrollToBottom(boolean smooth) {
         View panel = panels.get(R.id.ai_dest_session);
         if (panel == null) return;
@@ -259,10 +273,33 @@ public class AssistantFragment extends Fragment {
         if (rv == null || chatAdapter == null) return;
         rv.post(() -> {
             if (chatAdapter == null || rv.getAdapter() != chatAdapter) return;
+            // Do not steal scroll control while the user is reading older messages.
+            if (!autoFollowChat) {
+                updateScrollToBottomButton(rv);
+                return;
+            }
             int n = chatAdapter.getItemCount();
-            if (n == 0) return;
+            if (n == 0) {
+                updateScrollToBottomButton(rv);
+                return;
+            }
             if (smooth) rv.smoothScrollToPosition(n - 1);
             else rv.scrollToPosition(n - 1);
+            rv.post(() -> updateScrollToBottomButton(rv));
+        });
+    }
+
+    private void jumpToLatestMessage() {
+        autoFollowChat = true;
+        View panel = panels.get(R.id.ai_dest_session);
+        if (panel == null) return;
+        RecyclerView rv = panel.findViewById(R.id.ai_rv_chat);
+        if (rv == null || chatAdapter == null) return;
+        rv.post(() -> {
+            if (chatAdapter == null || rv.getAdapter() != chatAdapter) return;
+            int last = chatAdapter.getItemCount() - 1;
+            if (last >= 0) rv.smoothScrollToPosition(last);
+            updateScrollToBottomButton(rv);
         });
     }
 
@@ -911,6 +948,29 @@ public class AssistantFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         chatAdapter = new ChatAdapter();
         rv.setAdapter(chatAdapter);
+        rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (isNearBottom()) {
+                    autoFollowChat = true;
+                } else if (dy != 0) {
+                    autoFollowChat = false;
+                }
+                updateScrollToBottomButton(recyclerView);
+            }
+
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                if (newState == RecyclerView.SCROLL_STATE_IDLE && isNearBottom()) {
+                    autoFollowChat = true;
+                }
+                updateScrollToBottomButton(recyclerView);
+            }
+        });
+        View scrollToLatest = panel.findViewById(R.id.ai_fab_scroll_bottom);
+        if (scrollToLatest != null) {
+            scrollToLatest.setOnClickListener(v -> jumpToLatestMessage());
+        }
 
         chatAdapter.setOnRateLimitActionListener(new ChatAdapter.OnRateLimitActionListener() {
             @Override
@@ -1498,6 +1558,8 @@ public class AssistantFragment extends Fragment {
 
         View sessionPanel = panels.get(R.id.ai_dest_session);
         if (sessionPanel != null) render(sessionPanel, PanelState.READY);
+        // A deliberate new send/retry follows the new task; passive stream updates do not.
+        autoFollowChat = true;
         if (!isRegen) {
             ChatStore.Message userMsg = new ChatStore.Message("user", text);
             currentSession.messages.add(userMsg);
