@@ -530,6 +530,11 @@ public class AssistantFragment extends Fragment {
                 addProjectFiles(new java.io.File(pro.sketchware.ai.agent.ProjectPaths.resourceRoot(projectId)), "res/", files, 250);
                 addProjectFiles(new java.io.File(pro.sketchware.ai.agent.ProjectPaths.assetsRoot(projectId)), "assets/", files, 250);
                 addProjectFiles(new java.io.File(pro.sketchware.ai.agent.ProjectPaths.projectJavaRoot(projectId)), "java/", files, 250);
+                String manifestPath = pro.sketchware.ai.agent.ProjectPaths.manifestFile(projectId);
+                if (manifestPath != null) {
+                    java.io.File manifest = new java.io.File(manifestPath);
+                    if (manifest.isFile()) files.add("manifest/AndroidManifest.xml");
+                }
                 java.util.Collections.sort(files, String.CASE_INSENSITIVE_ORDER);
             } catch (Exception e) {
                 android.util.Log.w("AssistantFragment", "Could not refresh project context files", e);
@@ -1001,6 +1006,7 @@ public class AssistantFragment extends Fragment {
                     return true;
                 }
                 currentSession = entry.session;
+                restoredSessionId = entry.session.id;
                 rail.setSelectedItemId(R.id.ai_dest_session);
                 if (chatAdapter != null) chatAdapter.setMessages(entry.session.messages);
                 View sessionPanel = panels.get(R.id.ai_dest_session);
