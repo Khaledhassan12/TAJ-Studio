@@ -42,7 +42,7 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
     private final java.util.Set<String> selected = new java.util.LinkedHashSet<>();
     private ActivityResultLauncher<String[]> importLauncher;
 
-    @Override protected void onCreate(Bundle state) {
+    @Override public void onCreate(Bundle state) {
         enableEdgeToEdgeNoContrast();
         super.onCreate(state);
         projectId = getIntent().getStringExtra(EXTRA_PROJECT_ID);
@@ -395,7 +395,7 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
         }
     }
 
-    @Override protected void onDestroy() {
+    @Override public void onDestroy() {
         // DesignActivity registers its listener again as it resumes. Notify after this
         // screen closes so persisted XML/resource changes are reloaded into editor state.
         if (lastRestoredTarget != null) {
