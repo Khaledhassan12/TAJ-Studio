@@ -139,7 +139,7 @@ public final class AgentBackupStore {
     }
 
     private static String sanitize(String name) {
-        String safe = name == null ? "file" : name.replaceAll("[\\\\/:*?\\"<>|\\p{Cntrl}]", "_").trim();
+        String safe = name == null ? "file" : name.replaceAll("[\\\\/:*?\\\"<>|\\\\p{Cntrl}]", "_").trim();
         if (safe.isEmpty() || ".".equals(safe) || "..".equals(safe)) return "file";
         return safe.length() > 100 ? safe.substring(safe.length() - 100) : safe;
     }
