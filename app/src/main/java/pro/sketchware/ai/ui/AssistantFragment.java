@@ -963,9 +963,8 @@ public class AssistantFragment extends Fragment {
 
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                if (newState == RecyclerView.SCROLL_STATE_IDLE && isNearBottom()) {
-                    autoFollowChat = true;
-                }
+                // Do not re-enable auto-follow just because an upward gesture stopped
+                // near the bottom; the user must scroll down to the latest items or tap the FAB.
                 updateScrollToBottomButton(recyclerView);
             }
         });
@@ -1231,6 +1230,7 @@ public class AssistantFragment extends Fragment {
             }
         });
 
+        autoFollowChat = true;
         List<ChatStore.Session> sessions = chatStore.loadAllSessions();
         if (sessions.isEmpty()) {
             currentSession = new ChatStore.Session();
