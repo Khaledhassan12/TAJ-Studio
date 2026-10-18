@@ -70,7 +70,7 @@ public final class BlockEditTool implements Tool {
             if (!found) return ToolResult.structured("block_edit", "NOT_FOUND", path, "Block ID was not found in the shared registry.", null, true);
 
             serialized = GsonUtils.getGson().toJson(blocks);
-            DomainToolHelper.backup(path);
+            DomainToolHelper.backup(path, ctx.sc_id);
             DomainToolHelper.atomicWrite(registry, serialized, beforeHash);
             if (!serialized.equals(DomainToolHelper.readUtf8(registry))) {
                 boolean restored = DomainToolHelper.restoreIfUnchanged(path, DomainToolHelper.contentSha256(serialized));
