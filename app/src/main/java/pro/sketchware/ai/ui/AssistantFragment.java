@@ -388,6 +388,8 @@ public class AssistantFragment extends Fragment {
             Chip permissionChip = agents.findViewById(R.id.chip_destructive_ops);
             if (permissionChip != null) permissionChip.setText(permissionModeLabel());
         }
+        View models = panels.get(R.id.ai_dest_models);
+        if (models != null) refreshModelsPanel(models);
         View session = panels.get(R.id.ai_dest_session);
         if (session != null) updateSessionHeader(session);
     }
@@ -417,6 +419,7 @@ public class AssistantFragment extends Fragment {
         }
 
         if (panel != null) {
+            if (id == R.id.ai_dest_models) refreshModelsPanel(panel);
             if (id == R.id.ai_dest_history) refreshHistory();
             if (id == R.id.ai_dest_favorites) {
                 RecyclerView favoritesList = panel.findViewById(R.id.rv_favorites);
@@ -807,7 +810,8 @@ public class AssistantFragment extends Fragment {
             adapter.setModels(configStore.loadModelsCache(providerId));
             adapter.setOnModelClickListener(model -> {
                 if (model == null || model.id == null || model.id.trim().isEmpty()) return;
-                configStore.setModel(providerId, model.id);
+                String activeProviderId = configStore.getSelectedProviderId();
+                configStore.setModel(activeProviderId, model.id);
                 if (tvModel != null) tvModel.setText(model.id);
                 View sessionPanel = panels.get(R.id.ai_dest_session);
                 if (sessionPanel != null) updateSessionHeader(sessionPanel);
@@ -838,6 +842,22 @@ public class AssistantFragment extends Fragment {
         if (mode == null || mode.trim().isEmpty()) return "Permission mode: ask on next write · destructive operations always ask";
         return "Permission mode: " + mode.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + mode.substring(1)
                 + " · destructive operations always ask";
+    }
+
+    private void refreshModelsPanel(View panel) {
+        String providerId = configStore.getSelectedProviderId();
+        ProviderProfile profile = AIProviderRegistry.getInstance(requireContext()).get(providerId);
+        TextView providerName = panel.findViewById(R.id.ai_tv_provider_name);
+        TextView currentModel = panel.findViewById(R.id.ai_tv_current_model);
+        if (providerName != null) providerName.setText(profile == null ? providerId : profile.displayName);
+        if (currentModel != null) {
+            String model = configStore.getModel(providerId);
+            currentModel.setText(model == null || model.trim().isEmpty() ? "No model selected" : model);
+        }
+        RecyclerView list = panel.findViewById(R.id.ai_rv_models);
+        if (list != null && list.getAdapter() instanceof ModelAdapter) {
+            ((ModelAdapter) list.getAdapter()).setModels(configStore.loadModelsCache(providerId));
+        }
     }
 
     private void setupAgentsPanel(View panel) {
@@ -942,7 +962,7 @@ public class AssistantFragment extends Fragment {
         public void onBindViewHolder(@NonNull FavoriteHolder holder, int position) {
             FavoriteEntry entry = entries.get(position);
             String body = entry.message.text == null ? "" : entry.message.text;
-            holder.text.setText("★  " + (body.length() > 240 ? body.substring(0, 240) + "…" : body) + "\nTap to remove from favorites");
+            holder.text.setText("★  " + (body.length() > 240 ? body.substring(0, 240) + "…" : body) + "\nTap to remove · hold to open conversation");
             holder.text.setOnClickListener(v -> {
                 entry.message.favorite = false;
                 chatStore.saveSession(entry.session);
