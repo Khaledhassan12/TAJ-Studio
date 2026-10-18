@@ -383,6 +383,11 @@ public class AssistantFragment extends Fragment {
         if (settings != null) {
             refreshReadback(settings);
         }
+        View agents = panels.get(R.id.ai_dest_agents);
+        if (agents != null) {
+            Chip permissionChip = agents.findViewById(R.id.chip_destructive_ops);
+            if (permissionChip != null) permissionChip.setText(permissionModeLabel());
+        }
         View session = panels.get(R.id.ai_dest_session);
         if (session != null) updateSessionHeader(session);
     }
@@ -476,12 +481,41 @@ public class AssistantFragment extends Fragment {
         RecyclerView rv = panel.findViewById(R.id.rv_context_files);
         if (rv == null) return;
         rv.setLayoutManager(new LinearLayoutManager(panel.getContext()));
-        ContextFilesAdapter adapter = new ContextFilesAdapter();
+        ContextFilesAdapter adapter = new ContextFilesAdapter(path -> askAssistantAboutFile(panel, path));
         rv.setAdapter(adapter);
 
+        TextView empty = panel.findViewById(R.id.ai_tv_context_empty);
+        TextView count = panel.findViewById(R.id.ai_tv_context_count);
+        adapter.setEmptyView(empty);
+        adapter.setCountView(count);
+        android.widget.EditText search = panel.findViewById(R.id.ai_et_context_search);
+        if (search != null) search.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { adapter.setQuery(s == null ? "" : s.toString()); }
+            @Override public void afterTextChanged(android.text.Editable editable) {}
+        });
         View refresh = panel.findViewById(R.id.btn_refresh_context);
         if (refresh != null) refresh.setOnClickListener(v -> refreshContextFiles(panel, adapter, refresh));
         refreshContextFiles(panel, adapter, refresh);
+    }
+
+    private void askAssistantAboutFile(View sourcePanel, String path) {
+        if (path == null || path.trim().isEmpty()) return;
+        if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
+            Snackbar.make(sourcePanel, "Finish or cancel the current request before preparing a file inspection.", Snackbar.LENGTH_LONG).show();
+            return;
+        }
+        View sessionPanel = panels.get(R.id.ai_dest_session);
+        EditText input = sessionPanel == null ? null : sessionPanel.findViewById(R.id.ai_et_input);
+        if (input == null) {
+            Snackbar.make(sourcePanel, "Open the Assistant chat first, then try again.", Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+        input.setText("Inspect the active-project file path: " + path + ". Read it with the project tools before explaining its purpose, dependencies, or issues. Do not modify it unless I explicitly ask.");
+        input.setSelection(input.getText().length());
+        rail.setSelectedItemId(R.id.ai_dest_session);
+        input.requestFocus();
+        Snackbar.make(sessionPanel, "Inspection prompt prepared. Review it and press Send.", Snackbar.LENGTH_LONG).show();
     }
 
     private void refreshContextFiles(View panel, ContextFilesAdapter adapter, View refreshButton) {
@@ -554,13 +588,31 @@ public class AssistantFragment extends Fragment {
     }
 
     private static final class ContextFilesAdapter extends RecyclerView.Adapter<ContextFilesAdapter.FileHolder> {
+        interface AskListener { void onAsk(String path); }
+        private final List<String> allFiles = new ArrayList<>();
         private final List<String> files = new ArrayList<>();
-
-        void setFiles(List<String> values) {
+        private final AskListener askListener;
+        private String query = "";
+        private TextView emptyView, countView;
+        ContextFilesAdapter(AskListener listener) { askListener = listener; }
+        void setEmptyView(TextView view) { emptyView = view; updateStateViews(); }
+        void setCountView(TextView view) { countView = view; updateStateViews(); }
+        void setQuery(String value) { query = value == null ? "" : value.trim().toLowerCase(java.util.Locale.ROOT); applyFilter(); }
+        void setFiles(List<String> values) { allFiles.clear(); if (values != null) allFiles.addAll(values); applyFilter(); }
+        private void applyFilter() {
             files.clear();
-            if (values == null || values.isEmpty()) files.add("No project files found");
-            else files.addAll(values);
+            for (String path : allFiles) if (path != null && (query.isEmpty() || path.toLowerCase(java.util.Locale.ROOT).contains(query))) files.add(path);
             notifyDataSetChanged();
+            updateStateViews();
+        }
+        private void updateStateViews() {
+            if (emptyView != null) {
+                emptyView.setVisibility(files.isEmpty() ? View.VISIBLE : View.GONE);
+                emptyView.setText(allFiles.isEmpty() ? "No project files found. Refresh to scan the active project." : "No paths match this filter.");
+            }
+            if (countView != null) countView.setText(query.isEmpty()
+                    ? allFiles.size() + (allFiles.size() == 1 ? " project file" : " project files")
+                    : files.size() + " of " + allFiles.size() + " files shown");
         }
 
         @NonNull
@@ -577,7 +629,20 @@ public class AssistantFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull FileHolder holder, int position) {
-            holder.text.setText(files.get(position));
+            String path = files.get(position);
+            holder.text.setText(path + "\nTap to copy · hold to ask assistant");
+            holder.text.setOnClickListener(v -> {
+                android.content.ClipboardManager clipboard = (android.content.ClipboardManager)
+                        v.getContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+                if (clipboard != null) {
+                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Project file path", path));
+                    Snackbar.make(v, "Copied " + path, Snackbar.LENGTH_SHORT).show();
+                }
+            });
+            holder.text.setOnLongClickListener(v -> {
+                if (askListener != null) askListener.onAsk(path);
+                return true;
+            });
         }
 
         @Override
@@ -639,7 +704,10 @@ public class AssistantFragment extends Fragment {
             // before calling setValue so opening Settings cannot throw.
             savedTemperature = Math.max(0f, Math.min(1f, Math.round(savedTemperature * 10f) / 10f));
             temperatureSlider.setValue(savedTemperature);
+            TextView temperatureValue = panel.findViewById(R.id.tv_temperature_value);
+            if (temperatureValue != null) temperatureValue.setText(String.format(java.util.Locale.ROOT, "%.1f", savedTemperature));
             temperatureSlider.addOnChangeListener((slider, value, fromUser) -> {
+                if (temperatureValue != null) temperatureValue.setText(String.format(java.util.Locale.ROOT, "%.1f", value));
                 if (fromUser) configStore.setTemperature(value);
             });
         }
@@ -733,6 +801,8 @@ public class AssistantFragment extends Fragment {
         if (rv != null) {
             rv.setLayoutManager(new LinearLayoutManager(panel.getContext()));
             ModelAdapter adapter = new ModelAdapter();
+            adapter.setEmptyView(panel.findViewById(R.id.ai_tv_models_empty));
+            adapter.setCountView(panel.findViewById(R.id.ai_tv_models_count));
             rv.setAdapter(adapter);
             adapter.setModels(configStore.loadModelsCache(providerId));
             adapter.setOnModelClickListener(model -> {
@@ -763,23 +833,42 @@ public class AssistantFragment extends Fragment {
         }
     }
 
+    private String permissionModeLabel() {
+        String mode = configStore.getAgentPermMode();
+        if (mode == null || mode.trim().isEmpty()) return "Permission mode: ask on next write · destructive operations always ask";
+        return "Permission mode: " + mode.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + mode.substring(1)
+                + " · destructive operations always ask";
+    }
+
     private void setupAgentsPanel(View panel) {
         Chip destructiveOps = panel.findViewById(R.id.chip_destructive_ops);
         if (destructiveOps != null) {
-            // This is a status label, not a switch. AgentOrchestrator requests explicit
-            // per-operation approval for tools classified as destructive.
             destructiveOps.setCheckable(false);
-            destructiveOps.setClickable(false);
-            destructiveOps.setEnabled(true);
-            destructiveOps.setText("Destructive tools require per-operation approval");
-            destructiveOps.setContentDescription("Destructive agent operations require explicit approval for each operation");
+            destructiveOps.setText(permissionModeLabel());
+            destructiveOps.setContentDescription(permissionModeLabel() + ". Tap to manage permissions.");
+            destructiveOps.setClickable(true);
+            destructiveOps.setOnClickListener(v -> {
+                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
+                    Snackbar.make(panel, "Finish or cancel the active request before changing panels.", Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
+                rail.setSelectedItemId(R.id.ai_dest_settings);
+            });
         }
         RecyclerView rv = panel.findViewById(R.id.ai_rv_tools);
         if (rv != null) {
-            rv.setLayoutManager(new LinearLayoutManager(getContext()));
+            rv.setLayoutManager(new LinearLayoutManager(panel.getContext()));
             ToolAdapter adapter = new ToolAdapter();
+            adapter.setEmptyView(panel.findViewById(R.id.ai_tv_tools_empty));
+            adapter.setCountView(panel.findViewById(R.id.ai_tv_tool_count));
             rv.setAdapter(adapter);
             adapter.setTools(toolRegistry.all());
+            android.widget.EditText search = panel.findViewById(R.id.ai_et_tool_search);
+            if (search != null) search.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) { adapter.setQuery(s == null ? "" : s.toString()); }
+                @Override public void afterTextChanged(android.text.Editable editable) {}
+            });
         }
     }
 
@@ -788,21 +877,53 @@ public class AssistantFragment extends Fragment {
         if (rv == null) return;
         rv.setLayoutManager(new LinearLayoutManager(panel.getContext()));
         FavoritesAdapter adapter = new FavoritesAdapter();
+        adapter.setEmptyView(panel.findViewById(R.id.ai_tv_favorites_empty));
+        adapter.setCountView(panel.findViewById(R.id.ai_tv_favorites_count));
         rv.setAdapter(adapter);
+        android.widget.EditText search = panel.findViewById(R.id.ai_et_favorites_search);
+        if (search != null) search.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { adapter.setQuery(s == null ? "" : s.toString()); }
+            @Override public void afterTextChanged(android.text.Editable editable) {}
+        });
     }
 
     private final class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.FavoriteHolder> {
         private final List<FavoriteEntry> entries = new ArrayList<>();
-
+        private final List<FavoriteEntry> allEntries = new ArrayList<>();
+        private String query = "";
+        private TextView emptyView, countView;
+        void setEmptyView(TextView view) { emptyView = view; updateStateViews(); }
+        void setCountView(TextView view) { countView = view; updateStateViews(); }
+        void setQuery(String value) { query = value == null ? "" : value.trim().toLowerCase(java.util.Locale.ROOT); applyFilter(); }
         void reload() {
-            entries.clear();
+            allEntries.clear();
             for (ChatStore.Session session : chatStore.loadAllSessions()) {
-                if (session.messages == null) continue;
+                if (session == null || session.messages == null) continue;
                 for (ChatStore.Message message : session.messages) {
-                    if (message.favorite && "assistant".equals(message.role)) entries.add(new FavoriteEntry(session, message));
+                    if (message != null && message.favorite && "assistant".equals(message.role)) allEntries.add(new FavoriteEntry(session, message));
                 }
             }
+            applyFilter();
+        }
+        private void applyFilter() {
+            entries.clear();
+            for (FavoriteEntry entry : allEntries) {
+                String body = entry.message.text == null ? "" : entry.message.text;
+                String title = entry.session.title == null ? "" : entry.session.title;
+                if (query.isEmpty() || body.toLowerCase(java.util.Locale.ROOT).contains(query)
+                        || title.toLowerCase(java.util.Locale.ROOT).contains(query)) entries.add(entry);
+            }
             notifyDataSetChanged();
+            updateStateViews();
+        }
+        private void updateStateViews() {
+            if (emptyView != null) {
+                emptyView.setVisibility(entries.isEmpty() ? View.VISIBLE : View.GONE);
+                emptyView.setText(allEntries.isEmpty() ? "No favorites yet. Star an assistant response to save it." : "No favorites match this search.");
+            }
+            if (countView != null) countView.setText(query.isEmpty()
+                    ? allEntries.size() + " saved answers" : entries.size() + " of " + allEntries.size() + " favorites shown");
         }
 
         @NonNull
@@ -819,12 +940,6 @@ public class AssistantFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull FavoriteHolder holder, int position) {
-            if (entries.isEmpty()) {
-                holder.text.setText("No favorite responses yet. Tap the ☆ button on an assistant reply to save it here.");
-                holder.text.setOnClickListener(null);
-                holder.text.setOnLongClickListener(null);
-                return;
-            }
             FavoriteEntry entry = entries.get(position);
             String body = entry.message.text == null ? "" : entry.message.text;
             holder.text.setText("★  " + (body.length() > 240 ? body.substring(0, 240) + "…" : body) + "\nTap to remove from favorites");
@@ -853,7 +968,7 @@ public class AssistantFragment extends Fragment {
             });
         }
 
-        @Override public int getItemCount() { return entries.isEmpty() ? 1 : entries.size(); }
+        @Override public int getItemCount() { return entries.size(); }
 
         final class FavoriteHolder extends RecyclerView.ViewHolder {
             final TextView text;
@@ -873,7 +988,10 @@ public class AssistantFragment extends Fragment {
     private void setupHistoryPanel(View panel) {
         RecyclerView rv=panel.findViewById(R.id.ai_rv_history);
         if(rv!=null){
-            rv.setLayoutManager(new LinearLayoutManager(getContext()));sessionAdapter=new SessionAdapter();rv.setAdapter(sessionAdapter);
+            rv.setLayoutManager(new LinearLayoutManager(getContext()));
+            sessionAdapter = new SessionAdapter();
+            sessionAdapter.setEmptyView(panel.findViewById(R.id.ai_tv_history_empty));
+            rv.setAdapter(sessionAdapter);
             android.widget.EditText search=panel.findViewById(R.id.ai_et_history_search);
             if(search!=null)search.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int c,int a){} public void onTextChanged(CharSequence s,int st,int before,int count){if(sessionAdapter!=null)sessionAdapter.setQuery(s==null?"":s.toString());}public void afterTextChanged(android.text.Editable e){}});
             sessionAdapter.setOnSessionClickListener(s->openHistorySession(panel,s));
