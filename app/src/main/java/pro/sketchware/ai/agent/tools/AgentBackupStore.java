@@ -86,6 +86,62 @@ public final class AgentBackupStore {
         return destination;
     }
 
+
+    /** Converts a recognized legacy .bak payload into a verified managed archive. */
+    public static File migrateLegacy(String projectId, File originalTarget, File legacyFile) throws IOException {
+        if (projectId == null || !projectId.matches("[A-Za-z0-9_-]+"))
+            throw new IOException("Invalid active project.");
+        if (originalTarget == null || legacyFile == null || !originalTarget.isFile()
+                || !legacyFile.isFile() || Files.isSymbolicLink(originalTarget.toPath())
+                || Files.isSymbolicLink(legacyFile.toPath()))
+            throw new IOException("Legacy backup or its original target is not a regular file.");
+        File projectRoot = new File(ProjectPaths.dataRoot(projectId)).getCanonicalFile();
+        File target = originalTarget.getCanonicalFile();
+        File legacy = legacyFile.getCanonicalFile();
+        String rootPath = projectRoot.getPath() + File.separator;
+        if (!target.getPath().startsWith(rootPath) || !legacy.getPath().startsWith(rootPath))
+            throw new IOException("Legacy migration is restricted to the active project.");
+        if (legacy.length() <= 0 || legacy.length() > 16L * 1024L * 1024L)
+            throw new IOException("Legacy backup is empty or exceeds 16 MiB.");
+        byte[] payload = Files.readAllBytes(legacy.toPath());
+        String category = categoryFor(target);
+        File root = backupRoot(projectId).getCanonicalFile();
+        File folder = new File(root, category).getCanonicalFile();
+        if (!folder.getPath().startsWith(root.getPath() + File.separator))
+            throw new IOException("Invalid archive category.");
+        ensureDirectory(folder);
+        String stamp = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US).format(new Date());
+        File archive = new File(folder, sanitize(target.getName()) + " - " + stamp
+                + " | TAJ STUDIO - " + UUID.randomUUID().toString().substring(0, 8) + ".json");
+        JSONObject record = new JSONObject();
+        try {
+            record.put("format", SCHEMA);
+            record.put("createdAt", System.currentTimeMillis());
+            record.put("projectId", projectId);
+            record.put("category", category);
+            record.put("originalName", target.getName());
+            record.put("originalPath", target.getCanonicalPath());
+            record.put("relativePath", target.getCanonicalPath().substring(projectRoot.getPath().length() + 1).replace(File.separatorChar, '/'));
+            record.put("contentType", "application/octet-stream");
+            record.put("encoding", "base64");
+            record.put("sizeBytes", payload.length);
+            record.put("sha256", sha256(payload));
+            record.put("content", Base64.encodeToString(payload, Base64.NO_WRAP));
+        } catch (org.json.JSONException e) {
+            throw new IOException("Could not encode legacy backup.", e);
+        }
+        final String serialized;
+        try { serialized = record.toString(2); }
+        catch (org.json.JSONException e) { throw new IOException("Could not serialize legacy backup.", e); }
+        writeVerifiedJson(archive, serialized, sha256(payload));
+        byte[] verified = readAndValidate(archive);
+        if (!java.util.Arrays.equals(payload, verified)) {
+            Files.deleteIfExists(archive.toPath());
+            throw new IOException("Migrated archive does not match the legacy bytes.");
+        }
+        return archive;
+    }
+
     /** Validates a portable backup before restoring its bytes to a caller-approved destination. */
     public static byte[] readAndValidate(File archive) throws IOException {
         if (archive == null || !archive.isFile() || Files.isSymbolicLink(archive.toPath())) {
