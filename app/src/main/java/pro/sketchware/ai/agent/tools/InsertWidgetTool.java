@@ -116,7 +116,7 @@ public final class InsertWidgetTool implements Tool {
 
         if (!DomainToolHelper.verifyXml(next)) return new ToolResult("Insertion resulted in malformed XML.", true);
 
-        DomainToolHelper.backup(path);
+        DomainToolHelper.backup(path, sc_id);
         try {
             DomainToolHelper.atomicWrite(f, next, beforeHash);
             String actual = DomainToolHelper.readUtf8(f);
