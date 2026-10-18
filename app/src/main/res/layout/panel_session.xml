@@ -10,8 +10,8 @@
         android:id="@+id/ai_header_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="1dp"
+        app:cardCornerRadius="26dp"
+        app:cardElevation="0dp"
         app:strokeWidth="1dp"
         app:strokeColor="?attr/colorOutlineVariant"
         app:cardBackgroundColor="?attr/colorSurfaceContainerHigh">
@@ -19,46 +19,103 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="10dp"
-            android:gravity="center_vertical">
+            android:orientation="vertical"
+            android:padding="14dp">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/ai_chip_agent_state"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="@string/ai_agent_off"
-                app:chipMinHeight="32dp"
-                app:chipStrokeWidth="0dp"
-                android:textAppearance="?attr/textAppearanceLabelSmall" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:padding="7dp"
+                    android:src="@drawable/ic_tag_assistant"
+                    android:contentDescription="@string/ai_meet_assistant"
+                    android:background="?attr/colorSecondaryContainer"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
+                    app:tint="?attr/colorOnSecondaryContainer" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="TAJ AI ASSISTANT"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.04" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Your project-aware development partner"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/ai_connection_dot"
+                    android:layout_width="9dp"
+                    android:layout_height="9dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/circle_dot" />
+            </LinearLayout>
 
             <View
-                android:id="@+id/ai_connection_dot"
-                android:layout_width="8dp"
-                android:layout_height="8dp"
-                android:layout_margin="8dp"
-                android:background="@drawable/circle_dot" />
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="8dp"
+                android:background="?attr/colorOutlineVariant" />
 
-            <TextView
-                android:id="@+id/ai_tv_model_info"
-                android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="GPT-4o"
-                android:textAppearance="?attr/textAppearanceLabelMedium"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/ai_chip_location"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/ai_badge_cloud"
-                app:chipMinHeight="24dp"
-                app:chipBackgroundColor="?attr/colorTertiaryContainer"
-                app:chipStrokeWidth="0dp"
-                android:textAppearance="?attr/textAppearanceLabelSmall" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/ai_chip_agent_state"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:text="@string/ai_agent_off"
+                    app:chipMinHeight="32dp"
+                    app:chipStrokeWidth="0dp"
+                    android:textAppearance="?attr/textAppearanceLabelSmall" />
 
+                <TextView
+                    android:id="@+id/ai_tv_model_info"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:text="GPT-4o"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/ai_chip_location"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ai_badge_cloud"
+                    app:chipMinHeight="28dp"
+                    app:chipBackgroundColor="?attr/colorTertiaryContainer"
+                    app:chipStrokeWidth="0dp"
+                    android:textAppearance="?attr/textAppearanceLabelSmall" />
+            </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -67,7 +124,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/ai_header_card"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="7dp"
         android:layout_marginBottom="2dp"
         android:text="Active project"
         android:clickable="false"
@@ -84,9 +141,11 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/ai_input_container"
         android:layout_below="@id/ai_chip_project_scope"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="4dp"
         android:clipToPadding="false"
-        android:paddingBottom="16dp" />
+        android:paddingStart="2dp"
+        android:paddingEnd="2dp"
+        android:paddingBottom="20dp" />
 
     <com.google.android.material.chip.Chip
         android:id="@+id/ai_chip_edit_banner"
@@ -110,13 +169,15 @@
         android:layout_alignParentBottom="true"
         android:orientation="horizontal"
         android:gravity="bottom"
-        android:paddingTop="8dp">
+        android:paddingTop="10dp"
+        android:paddingBottom="2dp">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            app:cardCornerRadius="24dp"
+            android:layout_marginBottom="2dp"
+            app:cardCornerRadius="26dp"
             app:cardElevation="0dp"
             app:strokeWidth="1dp"
             app:strokeColor="?attr/colorOutlineVariant"
@@ -128,9 +189,13 @@
                 android:layout_height="wrap_content"
                 android:background="@null"
                 android:hint="@string/ai_ask_hint"
-                android:inputType="textMultiLine"
+                android:inputType="textCapSentences|textMultiLine"
                 android:maxLines="4"
-                android:padding="12dp"
+                android:minHeight="52dp"
+                android:paddingStart="16dp"
+                android:paddingTop="13dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="13dp"
                 android:textAppearance="?attr/textAppearanceBodyLarge" />
         </com.google.android.material.card.MaterialCardView>
 
@@ -139,10 +204,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:contentDescription="@string/ai_send"
             android:src="@drawable/ic_mtrl_send"
             app:fabSize="normal"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
-
     </LinearLayout>
 
     <LinearLayout
@@ -153,20 +218,41 @@
         android:layout_below="@id/ai_chip_project_scope"
         android:gravity="center"
         android:orientation="vertical"
+        android:padding="18dp"
         android:visibility="gone">
 
-        <ImageView
-            android:layout_width="96dp"
-            android:layout_height="96dp"
-            android:alpha="0.4"
-            android:src="@drawable/ic_tag_assistant" />
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            app:cardBackgroundColor="?attr/colorSecondaryContainer"
+            app:cardCornerRadius="30dp"
+            app:cardElevation="0dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="20dp"
+                android:alpha="0.9"
+                android:src="@drawable/ic_tag_assistant"
+                android:contentDescription="@string/ai_meet_assistant" />
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="18dp"
             android:text="@string/ai_meet_assistant"
-            android:textAppearance="?attr/textAppearanceHeadlineSmall" />
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="Ask, build, inspect, and improve your active Sketchware project."
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/ai_empty_suggestions"
