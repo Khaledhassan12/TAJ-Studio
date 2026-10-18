@@ -302,19 +302,87 @@ public final class BackupManagerActivity extends BaseAppCompatActivity {
     private void inspectLegacy() {
         List<File> found = new ArrayList<>();
         scanLegacy(projectRoot, 0, found);
-        StringBuilder message = new StringBuilder("Found ").append(found.size()).append(" legacy backup file(s). No files were changed.\\n\\n");
-        for (File f : found) message.append("• ").append(f.getName()).append("\\n");
-        message.append("\\nOnly recognized .agent-backup-UUID.bak files are listed. They are retained until a verified migration path is available; unrelated .bak files are never deleted.");
-        new MaterialAlertDialogBuilder(this).setTitle("Legacy backup safety scan").setMessage(message.toString()).setPositiveButton("OK", null).show();
+        if (found.isEmpty()) {
+            new MaterialAlertDialogBuilder(this).setTitle("Legacy backup scan")
+                    .setMessage("No recognized legacy .bak files were found. No files were changed.")
+                    .setPositiveButton("OK", null).show();
+            return;
+        }
+        new MaterialAlertDialogBuilder(this).setTitle("Safely migrate old backups?")
+                .setMessage("Found " + found.size() + " legacy TAJ Agent .bak file(s). Each candidate must map to an existing file inside this project and pass content checks. A verified JSON archive is written and re-read before the old .bak is removed. Anything uncertain is retained.")
+                .setNegativeButton("Keep all", null)
+                .setPositiveButton("Verify & migrate", (dialog, which) -> migrateLegacyCandidates(found))
+                .show();
+    }
+
+    private void migrateLegacyCandidates(List<File> candidates) {
+        int migrated = 0;
+        List<String> retained = new ArrayList<>();
+        for (File legacy : candidates) {
+            try {
+                String path = legacy.getCanonicalPath();
+                String root = projectRoot.getCanonicalPath() + File.separator;
+                if (!path.startsWith(root) || !legacy.getName().matches(".*\\\\.agent-backup-[A-Za-z0-9-]+\\\\.bak"))
+                    throw new java.io.IOException("Not a recognized in-project backup name.");
+                int marker = path.lastIndexOf(".agent-backup-");
+                if (marker <= root.length()) throw new java.io.IOException("Original file path could not be derived.");
+                File original = new File(path.substring(0, marker)).getCanonicalFile();
+                if (!original.isFile() || java.nio.file.Files.isSymbolicLink(original.toPath()))
+                    throw new java.io.IOException("Original target is missing or not a regular file.");
+                byte[] bytes = java.nio.file.Files.readAllBytes(legacy.toPath());
+                validateLegacyPayload(original, bytes);
+                File archive = AgentBackupStore.migrateLegacy(projectId, original, legacy);
+                byte[] verified = AgentBackupStore.readAndValidate(archive);
+                if (!java.util.Arrays.equals(bytes, verified)) throw new java.io.IOException("Archive payload mismatch.");
+                if (!java.nio.file.Files.deleteIfExists(legacy.toPath()))
+                    throw new java.io.IOException("Verified archive created, but old file could not be removed.");
+                migrated++;
+            } catch (Exception e) {
+                retained.add(legacy.getName() + ": " + safeMessage(e));
+            }
+        }
+        refresh();
+        StringBuilder report = new StringBuilder("Migrated and verified: ").append(migrated)
+                .append("\\nRetained safely: ").append(retained.size());
+        for (String reason : retained) report.append("\\n\\n• ").append(reason);
+        new MaterialAlertDialogBuilder(this).setTitle("Legacy cleanup result")
+                .setMessage(report.toString()).setPositiveButton("OK", null).show();
+    }
+
+    private void validateLegacyPayload(File target, byte[] bytes) throws Exception {
+        if (bytes.length == 0 || bytes.length > 16L * 1024L * 1024L)
+            throw new java.io.IOException("Payload is empty or exceeds 16 MiB.");
+        String name = target.getName().toLowerCase(java.util.Locale.ROOT);
+        if (name.endsWith(".xml")) {
+            org.xmlpull.v1.XmlPullParser parser = android.util.Xml.newPullParser();
+            parser.setInput(new java.io.ByteArrayInputStream(bytes), "UTF-8");
+            boolean rootSeen = false;
+            int event;
+            while ((event = parser.next()) != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+                if (event == org.xmlpull.v1.XmlPullParser.START_TAG) rootSeen = true;
+            }
+            if (!rootSeen) throw new java.io.IOException("XML has no root element.");
+        } else if (name.endsWith(".java") || name.endsWith(".kt")) {
+            String source = java.nio.charset.StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
+                    .decode(java.nio.ByteBuffer.wrap(bytes)).toString();
+            if (source.trim().isEmpty()) throw new java.io.IOException("Source file is empty.");
+        }
     }
 
     private void scanLegacy(File dir, int depth, List<File> out) {
         if (dir == null || depth > 12 || !dir.isDirectory()) return;
-        File[] children = dir.listFiles(); if (children == null) return;
+        File[] children = dir.listFiles();
+        if (children == null) return;
         for (File f : children) {
-            if (f.isDirectory()) { if (!"TAJ Agent".equals(f.getName())) scanLegacy(f, depth + 1, out); }
-            else if (f.isFile() && f.getName().matches(".*\\\\.agent-backup-[A-Za-z0-9-]+\\\\.bak")) {
-                try { if (f.getCanonicalPath().startsWith(projectRoot.getCanonicalPath() + File.separator)) out.add(f); } catch (Exception ignored) {}
+            if (f.isDirectory()) {
+                if (!"TAJ Agent".equals(f.getName())) scanLegacy(f, depth + 1, out);
+            } else if (f.isFile() && f.getName().matches(".*\\\\.agent-backup-[A-Za-z0-9-]+\\\\.bak")) {
+                try {
+                    if (f.getCanonicalPath().startsWith(projectRoot.getCanonicalPath() + File.separator))
+                        out.add(f);
+                } catch (Exception ignored) {}
             }
         }
     }
