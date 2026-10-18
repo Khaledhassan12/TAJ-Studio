@@ -134,7 +134,7 @@ public final class OpenAICompatibleEngine extends HttpAI {
     private static String readNonNullString(JSONObject object, String key) {
         if (object == null || key == null || !object.has(key) || object.isNull(key)) return "";
         String value = object.optString(key, "");
-        return value == null || "null".equals(value) ? "" : value;
+        return value == null ? "" : value;
     }
 
     @Override
