@@ -951,10 +951,12 @@ public class AssistantFragment extends Fragment {
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                if (isNearBottom()) {
-                    autoFollowChat = true;
-                } else if (dy != 0) {
+                // Any upward gesture means the user is reading history. Resume
+                // following only when they deliberately return to the latest items.
+                if (dy < 0) {
                     autoFollowChat = false;
+                } else if (dy > 0) {
+                    autoFollowChat = isNearBottom();
                 }
                 updateScrollToBottomButton(recyclerView);
             }
