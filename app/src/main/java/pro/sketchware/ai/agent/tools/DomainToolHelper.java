@@ -31,19 +31,14 @@ public final class DomainToolHelper {
     // Backups are unique and hash-verified; a user's existing ".bak" is never replaced.
     private static final ConcurrentHashMap<String, String> BACKUPS = new ConcurrentHashMap<>();
 
-    public static void backup(String path) {
+    public static void backup(String path, String projectId) {
         File source = new File(path);
         if (!source.isFile()) return;
-        String backupPath = path + ".agent-backup-" + UUID.randomUUID() + ".bak";
         try {
-            Files.copy(source.toPath(), new File(backupPath).toPath());
-            if (!sha256(source).equals(sha256(new File(backupPath)))) {
-                Files.deleteIfExists(new File(backupPath).toPath());
-                throw new IOException("Backup content verification failed.");
-            }
-            BACKUPS.put(path, backupPath);
+            File archive = AgentBackupStore.createSnapshot(projectId, source);
+            BACKUPS.put(path, archive.getAbsolutePath());
         } catch (IOException e) {
-            throw new IllegalStateException("Could not preserve the original file before modifying it.", e);
+            throw new IllegalStateException("Could not preserve the original file in TAJ Agent Backups before modifying it.", e);
         }
     }
 
@@ -61,22 +56,45 @@ public final class DomainToolHelper {
         if (backupPath == null) return false;
         File backup = new File(backupPath);
         File target = new File(path);
+        File temp = null;
         try {
             if (!backup.isFile()) return false;
             if (guardCurrent && (!target.isFile()
                     || !expectedCurrentHash.equals(sha256(target)))) return false;
-            String expectedBackupHash = sha256(backup);
+            byte[] original = AgentBackupStore.readAndValidate(backup);
+            String expectedBackupHash = sha256Bytes(original);
+            File parent = target.getAbsoluteFile().getParentFile();
+            if (parent == null || !parent.isDirectory()) return false;
+            temp = File.createTempFile(".taj-restore-", ".tmp", parent);
+            try (FileOutputStream out = new FileOutputStream(temp)) {
+                out.write(original);
+                out.flush();
+                out.getFD().sync();
+            }
+            if (!expectedBackupHash.equals(sha256(temp))) return false;
             try {
-                Files.move(backup.toPath(), target.toPath(),
+                Files.move(temp.toPath(), target.toPath(),
                         StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } catch (java.nio.file.AtomicMoveNotSupportedException e) {
-                Files.move(backup.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
+            temp = null;
             boolean restored = target.isFile() && expectedBackupHash.equals(sha256(target));
             if (restored) BACKUPS.remove(path, backupPath);
             return restored;
         } catch (IOException e) {
             return false;
+        } finally {
+            if (temp != null) try { Files.deleteIfExists(temp.toPath()); } catch (IOException ignored) {}
+        }
+    }
+
+    private static String sha256Bytes(byte[] bytes) throws IOException {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(bytes);
+            return toHex(digest);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IOException("SHA-256 is unavailable.", e);
         }
     }
 
