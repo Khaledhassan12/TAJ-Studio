@@ -161,6 +161,12 @@ public final class AnthropicEngine extends HttpAI {
     protected StreamState newState() {
         return new AnthropicState();
     }
+    private static String readNonNullString(JSONObject object, String key) {
+        if (object == null || key == null || !object.has(key) || object.isNull(key)) return "";
+        String value = object.optString(key, "");
+        return value == null ? "" : value;
+    }
+
     @Override
     protected void handleEvent(StreamState state, String eventName, String data, Tracked tracked)
             throws AIException {
@@ -210,7 +216,7 @@ public final class AnthropicEngine extends HttpAI {
                 }
                 String deltaType = delta.optString("type", "");
                 if ("text_delta".equals(deltaType)) {
-                    String token = delta.optString("text", "");
+                    String token = readNonNullString(delta, "text");
                     if (!token.isEmpty()) {
                         anthropic.text.append(token);
                         tracked.onToken(token);
@@ -286,7 +292,7 @@ public final class AnthropicEngine extends HttpAI {
                     continue;
                 }
                 if ("text".equals(block.optString("type"))) {
-                    String text = block.optString("text", "");
+                    String text = readNonNullString(block, "text");
                     if (!text.isEmpty()) {
                         anthropic.text.append(text);
                         tracked.onToken(text);
