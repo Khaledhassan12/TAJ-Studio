@@ -382,12 +382,6 @@ public class AssistantFragment extends Fragment {
                 getString(R.string.taj_backups_title))
                 .setIcon(R.drawable.ic_mtrl_history);
         rail.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.item_taj_backups) {
-                Intent backups = new Intent(requireContext(), pro.sketchware.ai.agent.tools.BackupManagerActivity.class);
-                backups.putExtra(pro.sketchware.ai.agent.tools.BackupManagerActivity.EXTRA_PROJECT_ID, sc_id);
-                startActivity(backups);
-                return false;
-            }
             if ((AIActivityMonitor.isBusy() || activeRequestId != 0L) && item.getItemId() != R.id.ai_dest_session) {
                 Snackbar.make(view, "Finish or cancel the active assistant request before switching panels.", Snackbar.LENGTH_SHORT).show();
                 return false;
@@ -458,6 +452,9 @@ public class AssistantFragment extends Fragment {
                 }
             }
             if (id == R.id.ai_dest_history) refreshHistory();
+            if (id == R.id.item_taj_backups && panel instanceof pro.sketchware.ai.agent.tools.BackupManagerPanel) {
+                ((pro.sketchware.ai.agent.tools.BackupManagerPanel) panel).refresh();
+            }
             if (id == R.id.ai_dest_favorites) {
                 RecyclerView favoritesList = panel.findViewById(R.id.rv_favorites);
                 if (favoritesList != null && favoritesList.getAdapter() instanceof FavoritesAdapter) {
@@ -480,6 +477,7 @@ public class AssistantFragment extends Fragment {
         if (id == R.id.ai_dest_files) return inflater.inflate(R.layout.panel_files, container, false);
         if (id == R.id.ai_dest_settings) return inflater.inflate(R.layout.panel_settings, container, false);
         if (id == R.id.ai_dest_history) return inflater.inflate(R.layout.panel_history, container, false);
+        if (id == R.id.item_taj_backups) return new pro.sketchware.ai.agent.tools.BackupManagerPanel(requireContext(), sc_id);
         return null;
     }
 
