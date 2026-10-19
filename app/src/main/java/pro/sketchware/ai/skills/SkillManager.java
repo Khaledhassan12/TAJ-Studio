@@ -127,7 +127,7 @@ public final class SkillManager {
         JSONObject meta=new JSONObject();
         try { meta.put("source","Created in TAJ Studio"); meta.put("description",safeDescription); meta.put("format","SKILL.md"); }
         catch(Exception ignored) {}
-        writeText(new File(dir,"skill.json"),meta.toString(2));
+        writeText(new File(dir,"skill.json"),meta.toString());
         return readSkill(dir);
     }
     public synchronized Skill updateSkill(String id,String name,String description,String instructions) throws IOException {
@@ -145,7 +145,7 @@ public final class SkillManager {
         JSONObject meta=new JSONObject();
         try { if(metaFile.isFile()) meta=new JSONObject(readBounded(metaFile,32*1024)); meta.put("description",safeDescription); }
         catch(Exception ignored) {}
-        writeText(metaFile,meta.toString(2));
+        writeText(metaFile,meta.toString());
         return readSkill(dir);
     }
     public synchronized Skill importZip(InputStream sourceStream,String sourceLabel) throws IOException {
@@ -194,7 +194,7 @@ public final class SkillManager {
         JSONObject meta=new JSONObject();
         try { meta.put("source",sourceLabel==null||sourceLabel.trim().isEmpty()?"Imported ZIP":sourceLabel); meta.put("format","SKILL.md"); }
         catch(Exception ignored) {}
-        writeText(new File(destination,"skill.json"),meta.toString(2));
+        writeText(new File(destination,"skill.json"),meta.toString());
         Skill skill=readSkill(destination);
         if(skill==null) { deleteTree(destination); throw new IOException("Imported skill metadata could not be validated."); }
         return skill;

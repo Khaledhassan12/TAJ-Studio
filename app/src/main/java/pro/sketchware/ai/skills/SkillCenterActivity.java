@@ -45,7 +45,7 @@ public final class SkillCenterActivity extends BaseAppCompatActivity {
     private View progress;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
 
-    @Override protected void onCreate(@Nullable Bundle state) {
+    @Override public void onCreate(@Nullable Bundle state) {
         enableEdgeToEdgeNoContrast();
         super.onCreate(state);
         setContentView(R.layout.activity_skill_center);
@@ -87,8 +87,8 @@ public final class SkillCenterActivity extends BaseAppCompatActivity {
         showTab(0);
     }
 
-    @Override protected void onResume() { super.onResume(); if(manager!=null) refreshAll(); }
-    @Override protected void onDestroy() { io.shutdownNow(); super.onDestroy(); }
+    @Override public void onResume() { super.onResume(); if(manager!=null) refreshAll(); }
+    @Override public void onDestroy() { io.shutdownNow(); super.onDestroy(); }
 
     private void showTab(int index) {
         myPanel.setVisibility(index==0?View.VISIBLE:View.GONE);
