@@ -38,7 +38,7 @@ public final class AgentOrchestrator {
     private final ToolRegistry registry;
     private final Tool.ToolContext context;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private volatile boolean isCancelled = false;
+    private volatile AtomicBoolean activeCancellation = new AtomicBoolean(false);
     private final AtomicBoolean runActive = new AtomicBoolean(false);
     private static final ConcurrentHashMap<String, AtomicBoolean> PROJECT_RUNS = new ConcurrentHashMap<>();
     private volatile Thread workerThread;
@@ -55,7 +55,7 @@ public final class AgentOrchestrator {
     }
 
     public void cancel() {
-        isCancelled = true;
+        activeCancellation.set(true);
         AIProvider.Handle handle = activeHandle;
         if (handle != null) handle.cancel();
         // Interrupts blocking approval waits as well as interruptible provider waits.
@@ -86,8 +86,9 @@ public final class AgentOrchestrator {
                     new IllegalStateException("This agent instance already has a running task.")));
             return;
         }
-        isCancelled = false;
-        context.setCancellationCheck(() -> isCancelled);
+        final AtomicBoolean taskCancellation = new AtomicBoolean(false);
+        activeCancellation = taskCancellation;
+        context.setCancellationCheck(taskCancellation::get);
         state = SessionState.MODEL_STREAMING;
         try {
         executor.execute(() -> {
@@ -101,7 +102,7 @@ public final class AgentOrchestrator {
                 final int MAX_ITERATIONS = MAX_MODEL_ITERATIONS;
                 final long taskDeadline = System.currentTimeMillis() + MAX_TASK_DURATION_MS;
 
-                while (iterations < MAX_ITERATIONS && !isCancelled
+                while (iterations < MAX_ITERATIONS && !taskCancellation.get()
                         && System.currentTimeMillis() < taskDeadline) {
                     iterations++;
 
@@ -127,10 +128,10 @@ public final class AgentOrchestrator {
 
                     try {
                         state = SessionState.MODEL_STREAMING;
-                        AIResponse response = fetchBlocking(request, callbacks, taskDeadline);
+                        AIResponse response = fetchBlocking(request, callbacks, taskDeadline, taskCancellation);
                         lastResponse = response;
 
-                        if (isCancelled) break;
+                        if (taskCancellation.get()) break;
 
                         if (response.toolCalls.isEmpty()) {
                             break;
@@ -140,7 +141,7 @@ public final class AgentOrchestrator {
 
                         state = SessionState.TOOL_RUNNING;
                         for (ToolCall call : response.toolCalls) {
-                            if (isCancelled) break;
+                            if (taskCancellation.get()) break;
 
                             // StreamCallbacks is a background-thread contract; UI consumers post once themselves.
                             callbacks.onToolStart(call.name);
@@ -165,11 +166,11 @@ public final class AgentOrchestrator {
                                         waitingForApproval = true;
                                         try {
                                             approved = context.requestConfirmation(buildApprovalPrompt(call, tool, context),
-                                    () -> isCancelled);
+                                    () -> taskCancellation.get());
                                         } finally {
                                             waitingForApproval = false;
                                         }
-                                        if (!approved || isCancelled) {
+                                        if (!approved || taskCancellation.get()) {
                                             result = Tool.ToolResult.structured(call.name, "DENIED", null,
                                                     "The user denied or did not complete the required approval. No tool operation was started.",
                                                     null, true);
@@ -178,13 +179,13 @@ public final class AgentOrchestrator {
                                             if (projectChanged != null) {
                                                 result = Tool.ToolResult.structured(call.name, "PROJECT_CHANGED", null,
                                                         projectChanged + " The approved operation was not started.", null, true);
-                                            } else if (isCancelled) {
+                                            } else if (taskCancellation.get()) {
                                                 result = Tool.ToolResult.structured(call.name, "CANCELLED", null,
                                                         "The task was cancelled before the approved operation started. No tool operation was executed.", null, true);
                                             } else {
                                                 context.beginApprovedMutation();
                                                 try {
-                                                    result = isCancelled
+                                                    result = taskCancellation.get()
                                                             ? Tool.ToolResult.structured(call.name, "CANCELLED", null,
                                                                     "The task was cancelled before the operation started.", null, true)
                                                             : tool.run(call.arguments, context);
@@ -193,13 +194,13 @@ public final class AgentOrchestrator {
                                                 }
                                             }
                                         }
-                                    } else if (isCancelled) {
+                                    } else if (taskCancellation.get()) {
                                         result = Tool.ToolResult.structured(call.name, "CANCELLED", null,
                                                 "The task was cancelled before the operation started. No tool operation was executed.", null, true);
                                     } else {
                                         // Recheck cancellation at the execution boundary so a
                                         // cancellation received after validation does not start a new tool.
-                                        result = isCancelled
+                                        result = taskCancellation.get()
                                                 ? Tool.ToolResult.structured(call.name, "CANCELLED", null,
                                                         "The task was cancelled before the operation started.", null, true)
                                                 : tool.run(call.arguments, context);
@@ -230,7 +231,7 @@ public final class AgentOrchestrator {
                     } catch (Exception e) {
                         state = SessionState.IDLE;
                         terminalCallbackSent = true;
-                        if (isCancelled) {
+                        if (taskCancellation.get()) {
                             UiPoster.post(callbacks::onCancel);
                         } else {
                             Throwable reportError = e;
@@ -249,7 +250,7 @@ public final class AgentOrchestrator {
                 }
 
                 state = SessionState.IDLE;
-                if (isCancelled) {
+                if (taskCancellation.get()) {
                     terminalCallbackSent = true;
                     UiPoster.post(callbacks::onCancel);
                     return;
@@ -288,7 +289,7 @@ public final class AgentOrchestrator {
                 context.setCancellationCheck(null);
                 runActive.set(false);
                 projectRun.set(false);
-                if (!terminalCallbackSent && !isCancelled && lastResponse == null) {
+                if (!terminalCallbackSent && !taskCancellation.get() && lastResponse == null) {
                     UiPoster.post(() -> callbacks.onError(
                             new IllegalStateException("Agent stopped without a verified terminal result.")));
                 }
@@ -405,7 +406,8 @@ public final class AgentOrchestrator {
         return sanitized;
     }
 
-    private AIResponse fetchBlocking(AIRequest request, StreamCallbacks outerCallbacks, long taskDeadline) throws Exception {
+    private AIResponse fetchBlocking(AIRequest request, StreamCallbacks outerCallbacks, long taskDeadline,
+            AtomicBoolean taskCancellation) throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<AIResponse> responseRef = new AtomicReference<>();
         AtomicReference<Exception> errorRef = new AtomicReference<>();
@@ -413,22 +415,22 @@ public final class AgentOrchestrator {
         activeHandle = provider.stream(request, new StreamCallbacks() {
             @Override
             public void onReasoningToken(String token) {
-                if (!isCancelled) outerCallbacks.onReasoningToken(token);
+                if (!taskCancellation.get()) outerCallbacks.onReasoningToken(token);
             }
 
             @Override
             public void onToken(String token) {
-                if (!isCancelled) outerCallbacks.onToken(token);
+                if (!taskCancellation.get()) outerCallbacks.onToken(token);
             }
 
             @Override
             public void onToolCall(ToolCall call) {
-                if (!isCancelled) outerCallbacks.onToolCall(call);
+                if (!taskCancellation.get()) outerCallbacks.onToolCall(call);
             }
 
             @Override
             public void onRateLimitWait(long waitMs, int attempt, int maxAttempts) {
-                if (!isCancelled) outerCallbacks.onRateLimitWait(waitMs, attempt, maxAttempts);
+                if (!taskCancellation.get()) outerCallbacks.onRateLimitWait(waitMs, attempt, maxAttempts);
             }
 
             @Override
@@ -446,7 +448,7 @@ public final class AgentOrchestrator {
 
         try {
             while (latch.getCount() > 0) {
-                if (isCancelled) {
+                if (taskCancellation.get()) {
                     throw new java.util.concurrent.CancellationException("Agent task cancelled.");
                 }
                 long remaining = taskDeadline - System.currentTimeMillis();
