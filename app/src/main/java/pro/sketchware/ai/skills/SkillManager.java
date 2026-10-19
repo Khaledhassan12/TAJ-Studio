@@ -30,6 +30,7 @@ public final class SkillManager {
     private static final String PREFS = "taj_skill_controls_v1";
     private static final String KEY_AUTO = "auto_select";
     private static final String KEY_LAST = "last_selection";
+    private static final String KEY_HISTORY = "selection_history";
     private static final int MAX_SKILLS = 100;
     private static final int MAX_ZIP_BYTES = 15 * 1024 * 1024;
     private static final int MAX_FILE_BYTES = 1024 * 1024;
@@ -290,17 +291,43 @@ public final class SkillManager {
             catch(Exception ignored) {}
             array.put(item);
         }
-        prefs.edit().putString(KEY_LAST,array.toString()).apply();
+        JSONArray history;
+        try { history=new JSONArray(prefs.getString(KEY_HISTORY,"[]")); }
+        catch(Exception ignored) { history=new JSONArray(); }
+        JSONObject request=new JSONObject();
+        try { request.put("time",System.currentTimeMillis()); request.put("skills",array); }
+        catch(Exception ignored) {}
+        history.put(request);
+        while(history.length()>20) history.remove(0);
+        prefs.edit().putString(KEY_LAST,array.toString()).putString(KEY_HISTORY,history.toString()).apply();
     }
     public String getLastSelectionSummary() {
         try {
+            JSONArray history=new JSONArray(prefs.getString(KEY_HISTORY,"[]"));
+            if(history.length()>0) {
+                StringBuilder out=new StringBuilder("Recent request history (newest first):\\n");
+                int shown=0;
+                for(int i=history.length()-1;i>=0&&shown<8;i--,shown++) {
+                    JSONObject request=history.getJSONObject(i);
+                    String time=new java.text.SimpleDateFormat("MMM d, HH:mm",Locale.getDefault()).format(new java.util.Date(request.optLong("time",0)));
+                    out.append("• ").append(time).append(" — ");
+                    JSONArray skills=request.optJSONArray("skills");
+                    if(skills==null||skills.length()==0) out.append("No skill matched; no skill pack was injected.");
+                    else for(int j=0;j<skills.length();j++) {
+                        JSONObject item=skills.getJSONObject(j);
+                        if(j>0) out.append(" · ");
+                        out.append(item.optString("name","Skill")).append(" (").append(item.optString("reason","Selected")).append(")");
+                    }
+                    out.append("\\n");
+                }
+                return out.toString();
+            }
             JSONArray array=new JSONArray(prefs.getString(KEY_LAST,"[]"));
-            if(array.length()==0) return "No skills have been selected for a request yet.";
-            StringBuilder out=new StringBuilder("Last request skill selection:\n");
+            if(array.length()==0) return "No skills have been selected for a request yet."; 
+            StringBuilder out=new StringBuilder("Last request skill selection:\\n");
             for(int i=0;i<array.length();i++) {
                 JSONObject item=array.getJSONObject(i);
-                out.append("• ").append(item.optString("name","Skill")).append(" — ")
-                   .append(item.optString("reason","Selected")).append("\n");
+                out.append("• ").append(item.optString("name","Skill")).append(" — ").append(item.optString("reason","Selected")).append("\\n");
             }
             return out.toString();
         } catch(Exception e) { return "Skill selection history is unavailable."; }

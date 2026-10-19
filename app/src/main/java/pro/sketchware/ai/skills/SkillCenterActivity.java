@@ -119,7 +119,7 @@ public final class SkillCenterActivity extends BaseAppCompatActivity {
         float d=getResources().getDisplayMetrics().density;
         MaterialCardView card=new MaterialCardView(this);
         card.setRadius(22*d);
-        card.setCardElevation(0f);
+        card.setCardElevation(2f*d);
         card.setStrokeWidth(Math.max(1,(int)d));
         card.setStrokeColor(com.google.android.material.color.MaterialColors.getColor(card,com.google.android.material.R.attr.colorOutlineVariant));
         card.setCardBackgroundColor(com.google.android.material.color.MaterialColors.getColor(card,com.google.android.material.R.attr.colorSurfaceContainerLow));

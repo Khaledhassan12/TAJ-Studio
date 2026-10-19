@@ -1932,17 +1932,20 @@ public class AssistantFragment extends Fragment {
             List<SkillManager.ResolvedSkill> selectedSkills = skillManager.resolveForTask(text);
             String systemPrompt = buildAssistantSystemPrompt(liveProjectContext)
                     + skillManager.buildPromptContext(selectedSkills);
-            if (!selectedSkills.isEmpty()) {
-                StringBuilder skillNotice = new StringBuilder("Skills selected for this request: ");
+            StringBuilder skillNotice = new StringBuilder();
+            if (selectedSkills.isEmpty()) {
+                skillNotice.append("No enabled skill matched this request; continuing without skill packs.");
+            } else {
+                skillNotice.append("Skills selected for this request: ");
                 for (int i = 0; i < selectedSkills.size(); i++) {
                     SkillManager.ResolvedSkill selected = selectedSkills.get(i);
                     if (i > 0) skillNotice.append(" · ");
                     skillNotice.append(selected.skill.name).append(" — ").append(selected.reason);
                 }
-                Snackbar.make(getView(), skillNotice.toString(), Snackbar.LENGTH_LONG)
-                        .setAction("Manage", v -> startActivity(new Intent(requireActivity(), SkillCenterActivity.class)))
-                        .show();
             }
+            Snackbar.make(getView(), skillNotice.toString(), Snackbar.LENGTH_LONG)
+                    .setAction("Manage", v -> startActivity(new Intent(requireActivity(), SkillCenterActivity.class)))
+                    .show();
             String persistentMemory = buildPersistentProjectMemory();
             if (!persistentMemory.isEmpty()) {
                 // Saved conversation excerpts are untrusted data, never system instructions.
