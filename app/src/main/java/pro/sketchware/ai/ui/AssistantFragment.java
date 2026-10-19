@@ -372,16 +372,15 @@ public class AssistantFragment extends Fragment {
         rail = view.findViewById(R.id.navigation_rail);
         container = view.findViewById(R.id.panel_container);
 
-        try {
-            rail.getMenu().add(android.view.Menu.NONE, R.id.item_taj_backups, android.view.Menu.NONE, getString(R.string.taj_backups_title))
-                    .setIcon(R.drawable.ic_mtrl_history);
-        } catch (IllegalArgumentException fullRail) {
-            // NavigationRailView limits visible destinations. Reuse one slot and keep
-            // Favorites available through its in-panel shortcut below.
-            rail.getMenu().removeItem(R.id.ai_dest_favorites);
-            rail.getMenu().add(android.view.Menu.NONE, R.id.item_taj_backups, android.view.Menu.NONE, getString(R.string.taj_backups_title))
-                    .setIcon(R.drawable.ic_mtrl_history);
-        }
+        // NavigationRailView supports a fixed maximum number of destinations.
+        // Reserve a slot before adding TAJ Backups instead of relying on add() to throw:
+        // some Material versions accept the item but omit it from the visible rail.
+        // Favorites remains reachable from the Session panel's shortcut.
+        rail.getMenu().removeItem(R.id.ai_dest_favorites);
+        rail.getMenu().removeItem(R.id.item_taj_backups);
+        rail.getMenu().add(android.view.Menu.NONE, R.id.item_taj_backups, android.view.Menu.NONE,
+                getString(R.string.taj_backups_title))
+                .setIcon(R.drawable.ic_mtrl_history);
         rail.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.item_taj_backups) {
                 Intent backups = new Intent(requireContext(), pro.sketchware.ai.agent.tools.BackupManagerActivity.class);
