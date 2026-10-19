@@ -1537,9 +1537,9 @@ public class AssistantFragment extends Fragment {
             int bgColor = pro.sketchware.utility.ThemeUtils.getColor(getContext(),
                     enabled ? R.attr.colorTertiaryContainer : R.attr.colorSurfaceContainerHigh);
             chipAgent.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(bgColor));
-            chipAgent.setStrokeColor(android.content.res.ColorStateList.valueOf(
+            chipAgent.setChipStrokeColor(android.content.res.ColorStateList.valueOf(
                     pro.sketchware.utility.ThemeUtils.getColor(getContext(), R.attr.colorOutlineVariant)));
-            chipAgent.setStrokeWidth(Math.max(1, (int) (getResources().getDisplayMetrics().density)));
+            chipAgent.setChipStrokeWidth(Math.max(1f, getResources().getDisplayMetrics().density));
             chipAgent.setContentDescription(enabled
                     ? "Agent mode enabled. Tap to switch to Chat mode."
                     : "Chat mode enabled. Tap to switch to Agent mode.");
