@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="6dp"
+    android:padding="0dp"
     android:background="?attr/colorSurface">
 
     <com.google.android.material.card.MaterialCardView
@@ -88,8 +88,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="6dp"
-                    android:text="@string/ai_agent_off"
-                    app:chipMinHeight="26dp"
+                    android:text=""
+                    android:contentDescription="Switch between Agent and Chat mode"
+                    app:chipIcon="@drawable/ic_taj_agent_mode"
+                    app:chipIconVisible="true"
+                    app:iconStartPadding="4dp"
+                    app:iconEndPadding="4dp"
+                    app:chipMinHeight="40dp"
+                    app:ensureMinTouchTargetSize="true"
                     app:chipStrokeWidth="0dp"
                     android:textAppearance="?attr/textAppearanceLabelSmall" />
 
