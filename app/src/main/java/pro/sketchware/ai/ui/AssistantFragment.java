@@ -1505,7 +1505,7 @@ public class AssistantFragment extends Fragment {
                 boolean next = !configStore.isAgentEnabled();
                 configStore.setAgentEnabled(next);
                 updateSessionHeader(panel);
-                Snackbar.make(panel, next ? "Agent mode enabled" : "Agent mode off", Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(panel, next ? "Agent mode enabled" : "Chat mode enabled", Snackbar.LENGTH_SHORT).show();
             });
         }
 
@@ -1527,10 +1527,23 @@ public class AssistantFragment extends Fragment {
 
         if (chipAgent != null) {
             boolean enabled = configStore.isAgentEnabled();
-            chipAgent.setText(enabled ? R.string.ai_agent_on : R.string.ai_agent_off);
+            chipAgent.setText("");
+            chipAgent.setChipIconResource(enabled
+                    ? R.drawable.ic_taj_agent_mode : R.drawable.ic_taj_chat_mode);
+            chipAgent.setChipIconVisible(true);
+            chipAgent.setChipIconTint(android.content.res.ColorStateList.valueOf(
+                    pro.sketchware.utility.ThemeUtils.getColor(getContext(),
+                            enabled ? R.attr.colorOnTertiaryContainer : R.attr.colorOnSurface)));
             int bgColor = pro.sketchware.utility.ThemeUtils.getColor(getContext(),
                     enabled ? R.attr.colorTertiaryContainer : R.attr.colorSurfaceContainerHigh);
             chipAgent.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(bgColor));
+            chipAgent.setStrokeColor(android.content.res.ColorStateList.valueOf(
+                    pro.sketchware.utility.ThemeUtils.getColor(getContext(), R.attr.colorOutlineVariant)));
+            chipAgent.setStrokeWidth(Math.max(1, (int) (getResources().getDisplayMetrics().density)));
+            chipAgent.setContentDescription(enabled
+                    ? "Agent mode enabled. Tap to switch to Chat mode."
+                    : "Chat mode enabled. Tap to switch to Agent mode.");
+            chipAgent.setTooltipText(enabled ? "Agent mode · tap for Chat" : "Chat mode · tap for Agent");
         }
 
         String providerId = configStore.getSelectedProviderId();
