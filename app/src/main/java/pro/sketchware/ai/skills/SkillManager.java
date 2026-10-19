@@ -131,16 +131,16 @@ public final class SkillManager {
         return readSkill(dir);
     }
     public synchronized Skill updateSkill(String id,String name,String description,String instructions) throws IOException {
-        if(id==null||id.contains("/")||id.contains("\\\\")||id.startsWith(".")) throw new IOException("Invalid skill identifier.");
+        if(id==null||id.contains("/")||id.contains("\\")||id.startsWith(".")) throw new IOException("Invalid skill identifier.");
         File dir=new File(root,id).getCanonicalFile();
         if(!dir.getParentFile().equals(root.getCanonicalFile())||!new File(dir,"SKILL.md").isFile())
             throw new IOException("Skill does not exist or its path is invalid.");
         if(instructions==null||instructions.trim().isEmpty()) throw new IOException("Skill instructions cannot be empty.");
         if(instructions.length()>MAX_FILE_BYTES) throw new IOException("Skill instructions exceed 1 MB.");
-        String safeName=(name==null?"":name.trim()).replace("\\n"," ");
+        String safeName=(name==null?"":name.trim()).replace("\n"," ");
         if(safeName.isEmpty()) throw new IOException("Enter a skill name.");
-        String safeDescription=(description==null?"":description.trim()).replace("\\n"," ");
-        writeText(new File(dir,"SKILL.md"),"---\\nname: "+safeName+"\\ndescription: "+safeDescription+"\\n---\\n\\n"+instructions.trim()+"\\n");
+        String safeDescription=(description==null?"":description.trim()).replace("\n"," ");
+        writeText(new File(dir,"SKILL.md"),"---\nname: "+safeName+"\ndescription: "+safeDescription+"\n---\n\n"+instructions.trim()+"\n");
         File metaFile=new File(dir,"skill.json");
         JSONObject meta=new JSONObject();
         try { if(metaFile.isFile()) meta=new JSONObject(readBounded(metaFile,32*1024)); meta.put("description",safeDescription); }
@@ -305,7 +305,7 @@ public final class SkillManager {
         try {
             JSONArray history=new JSONArray(prefs.getString(KEY_HISTORY,"[]"));
             if(history.length()>0) {
-                StringBuilder out=new StringBuilder("Recent request history (newest first):\\n");
+                StringBuilder out=new StringBuilder("Recent request history (newest first):\n");
                 int shown=0;
                 for(int i=history.length()-1;i>=0&&shown<8;i--,shown++) {
                     JSONObject request=history.getJSONObject(i);
@@ -318,16 +318,16 @@ public final class SkillManager {
                         if(j>0) out.append(" · ");
                         out.append(item.optString("name","Skill")).append(" (").append(item.optString("reason","Selected")).append(")");
                     }
-                    out.append("\\n");
+                    out.append("\n");
                 }
                 return out.toString();
             }
             JSONArray array=new JSONArray(prefs.getString(KEY_LAST,"[]"));
             if(array.length()==0) return "No skills have been selected for a request yet."; 
-            StringBuilder out=new StringBuilder("Last request skill selection:\\n");
+            StringBuilder out=new StringBuilder("Last request skill selection:\n");
             for(int i=0;i<array.length();i++) {
                 JSONObject item=array.getJSONObject(i);
-                out.append("• ").append(item.optString("name","Skill")).append(" — ").append(item.optString("reason","Selected")).append("\\n");
+                out.append("• ").append(item.optString("name","Skill")).append(" — ").append(item.optString("reason","Selected")).append("\n");
             }
             return out.toString();
         } catch(Exception e) { return "Skill selection history is unavailable."; }
