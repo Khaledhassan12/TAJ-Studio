@@ -272,21 +272,6 @@ public class AssistantFragment extends Fragment {
     private void scrollToBottom(boolean smooth) {
         View panel = panels.get(R.id.ai_dest_session);
         if (panel == null) return;
-        View headerCard = panel.findViewById(R.id.ai_header_card);
-        if (headerCard instanceof android.view.ViewGroup) {
-            android.view.ViewGroup headerContent = (android.view.ViewGroup) ((android.view.ViewGroup) headerCard).getChildAt(0);
-            if (headerContent != null) {
-                com.google.android.material.button.MaterialButton favoritesShortcut =
-                        new com.google.android.material.button.MaterialButton(requireContext(), null,
-                                0);
-                favoritesShortcut.setText("Open Favorites");
-                favoritesShortcut.setAllCaps(false);
-                favoritesShortcut.setIconResource(R.drawable.ic_mtrl_star);
-                favoritesShortcut.setOnClickListener(v -> showPanel(R.id.ai_dest_favorites));
-                headerContent.addView(favoritesShortcut);
-            }
-        }
-
         RecyclerView rv = panel.findViewById(R.id.ai_rv_chat);
         if (rv == null || chatAdapter == null) return;
         rv.post(() -> {
@@ -1137,6 +1122,24 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupSessionPanel(View panel) {
+        // Install the Favorites shortcut once when the Session panel is created.
+        // It must never be added from scrollToBottom(), which runs repeatedly during
+        // streaming and scrolling and previously duplicated the button on every call.
+        View headerCard = panel.findViewById(R.id.ai_header_card);
+        if (headerCard instanceof android.view.ViewGroup) {
+            android.view.ViewGroup headerContent = (android.view.ViewGroup)
+                    ((android.view.ViewGroup) headerCard).getChildAt(0);
+            if (headerContent != null && headerContent.findViewWithTag("taj_favorites_shortcut") == null) {
+                com.google.android.material.button.MaterialButton favoritesShortcut =
+                        new com.google.android.material.button.MaterialButton(requireContext(), null, 0);
+                favoritesShortcut.setTag("taj_favorites_shortcut");
+                favoritesShortcut.setText("Open Favorites");
+                favoritesShortcut.setAllCaps(false);
+                favoritesShortcut.setIconResource(R.drawable.ic_mtrl_star);
+                favoritesShortcut.setOnClickListener(v -> showPanel(R.id.ai_dest_favorites));
+                headerContent.addView(favoritesShortcut);
+            }
+        }
         baseSessionPaddingLeft = panel.getPaddingLeft();
         baseSessionPaddingTop = panel.getPaddingTop();
         baseSessionPaddingRight = panel.getPaddingRight();
