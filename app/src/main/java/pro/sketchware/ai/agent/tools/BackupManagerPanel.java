@@ -194,7 +194,7 @@ public final class BackupManagerPanel extends LinearLayout {
         String relative = record.optString("relativePath", "");
         File target;
         if (!relative.isEmpty()) {
-            if (relative.startsWith("/") || relative.contains("..") || relative.indexOf('\\\\') >= 0)
+            if (relative.startsWith("/") || relative.contains("..") || relative.indexOf('\\') >= 0)
                 throw new java.io.IOException("Unsafe backup path.");
             target = new File(root, relative).getCanonicalFile();
         } else {
@@ -218,8 +218,8 @@ public final class BackupManagerPanel extends LinearLayout {
             new MaterialAlertDialogBuilder(getContext())
                     .setTitle("Restore verified backup")
                     .setMessage("Restore " + record.optString("originalName", target.getName())
-                            + " to:\\n" + target.getPath()
-                            + "\\n\\nThe existing file may be replaced after verification.")
+                            + " to:\n" + target.getPath()
+                            + "\n\nThe existing file may be replaced after verification.")
                     .setNegativeButton("Cancel", null)
                     .setPositiveButton("Restore", (dialog, which) -> {
                         try {
