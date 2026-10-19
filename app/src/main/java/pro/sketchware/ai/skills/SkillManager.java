@@ -226,7 +226,9 @@ public final class SkillManager {
             else if(isAutoSelectEnabled()) {
                 int score=0;
                 String haystack=(skill.name+" "+skill.description+" "+skill.id).toLowerCase(Locale.ROOT);
-                for(String token:lower.split("[^a-z0-9_+#.-]+")) {
+                java.util.LinkedHashSet<String> tokens=new java.util.LinkedHashSet<>();
+                Collections.addAll(tokens,lower.split("[^a-z0-9_+#.-]+"));
+                for(String token:tokens) {
                     if(token.length()<4) continue;
                     if(haystack.contains(token)) score+=token.length()>=7?2:1;
                 }
@@ -247,6 +249,7 @@ public final class SkillManager {
             StringBuilder out=new StringBuilder(main);
             File refs=new File(skill.path,"references");
             appendReferenceFiles(refs,out,0);
+            appendReferenceFiles(new File(skill.path,"templates"),out,0);
             if(out.length()>16000) return out.substring(0,16000);
             return out.toString();
         } catch(Exception e) { return ""; }
@@ -257,7 +260,9 @@ public final class SkillManager {
         for(File file:files) {
             if(out.length()>=16000) return;
             if(file.isDirectory()) appendReferenceFiles(file,out,depth+1);
-            else if(file.isFile()&&(file.getName().endsWith(".md")||file.getName().endsWith(".txt"))) {
+            else if(file.isFile()&&(file.getName().endsWith(".md")||file.getName().endsWith(".txt")
+                    ||file.getName().endsWith(".xml")||file.getName().endsWith(".json")
+                    ||file.getName().endsWith(".java")||file.getName().endsWith(".kt"))) {
                 out.append("\n\nREFERENCE FILE: ").append(file.getName()).append("\n");
                 out.append(readBounded(file,64*1024));
             }
