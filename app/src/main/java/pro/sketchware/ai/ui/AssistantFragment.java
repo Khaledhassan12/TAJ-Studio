@@ -52,6 +52,8 @@ import pro.sketchware.ai.core.StreamCallbacks;
 import pro.sketchware.ai.core.ThinkingDetector;
 import pro.sketchware.ai.core.ToolCall;
 import pro.sketchware.ai.live.UiPoster;
+import pro.sketchware.ai.skills.SkillManager;
+import pro.sketchware.ai.skills.SkillCenterActivity;
 
 public class AssistantFragment extends Fragment {
 
@@ -897,6 +899,9 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupAgentsPanel(View panel) {
+        View skillsButton = panel.findViewById(R.id.btn_open_skills_center);
+        if (skillsButton != null) skillsButton.setOnClickListener(v ->
+                startActivity(new Intent(requireActivity(), SkillCenterActivity.class)));
         Chip destructiveOps = panel.findViewById(R.id.chip_destructive_ops);
         if (destructiveOps != null) {
             destructiveOps.setCheckable(false);
@@ -1923,7 +1928,21 @@ public class AssistantFragment extends Fragment {
         if (agentEnabled) {
             orchestrator = new AgentOrchestrator(provider, toolRegistry, new Tool.ToolContext(activity, sc_id));
             String liveProjectContext = buildLiveProjectContext();
-            String systemPrompt = buildAssistantSystemPrompt(liveProjectContext);
+            SkillManager skillManager = SkillManager.get(activity);
+            List<SkillManager.ResolvedSkill> selectedSkills = skillManager.resolveForTask(text);
+            String systemPrompt = buildAssistantSystemPrompt(liveProjectContext)
+                    + skillManager.buildPromptContext(selectedSkills);
+            if (!selectedSkills.isEmpty()) {
+                StringBuilder skillNotice = new StringBuilder("Skills selected for this request: ");
+                for (int i = 0; i < selectedSkills.size(); i++) {
+                    SkillManager.ResolvedSkill selected = selectedSkills.get(i);
+                    if (i > 0) skillNotice.append(" · ");
+                    skillNotice.append(selected.skill.name).append(" — ").append(selected.reason);
+                }
+                Snackbar.make(getView(), skillNotice.toString(), Snackbar.LENGTH_LONG)
+                        .setAction("Manage", v -> startActivity(new Intent(requireActivity(), SkillCenterActivity.class)))
+                        .show();
+            }
             String persistentMemory = buildPersistentProjectMemory();
             if (!persistentMemory.isEmpty()) {
                 // Saved conversation excerpts are untrusted data, never system instructions.

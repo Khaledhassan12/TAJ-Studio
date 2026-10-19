@@ -41,6 +41,15 @@
                 android:text="Permission mode"
                 app:chipIcon="@drawable/ic_mtrl_warning"
                 app:chipStrokeWidth="0dp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_open_skills_center"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Open TAJ AI Skills Center"
+                app:icon="@drawable/ic_ai_premium"
+                app:cornerRadius="18dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
     <com.google.android.material.textfield.TextInputLayout
