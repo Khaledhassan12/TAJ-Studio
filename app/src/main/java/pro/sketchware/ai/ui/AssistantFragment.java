@@ -2289,6 +2289,7 @@ public class AssistantFragment extends Fragment {
                         toolsCard.toolEvents.add(new ChatStore.ToolEvent(name, getToolDomain(name)));
                         int idx = currentSession.messages.indexOf(toolsCard);
                         if (idx >= 0) chatAdapter.notifyItemChanged(idx, "tool_events");
+                         if (autoFollowChat) scrollToBottom(false);
                         scheduleSessionSave();
                     });
                 }
@@ -2309,6 +2310,7 @@ public class AssistantFragment extends Fragment {
                         }
                         int idx = currentSession.messages.indexOf(toolsCard);
                         if (idx >= 0) chatAdapter.notifyItemChanged(idx, "tool_events");
+                         if (autoFollowChat) scrollToBottom(false);
                         scheduleSessionSave();
                     });
                 }
@@ -2340,6 +2342,7 @@ public class AssistantFragment extends Fragment {
                             }
                             int idx = currentSession.messages.indexOf(toolsCard);
                             if (idx >= 0) chatAdapter.notifyItemChanged(idx, "tool_events");
+                         if (autoFollowChat) scrollToBottom(false);
                             scheduleSessionSave();
                         }
                         int runningTools = activeToolCount.updateAndGet(value -> Math.max(0, value - 1));
