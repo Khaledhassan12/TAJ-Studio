@@ -38,11 +38,14 @@ import pro.sketchware.ai.core.StreamCallbacks;
 public abstract class HttpAI implements AIProvider {
 
     private static final String TAG = "AIEngine";
-    /** Bounds serialized prompt growth before any provider/network work begins. */
-    private static final int MAX_REQUEST_CHARS = 512 * 1024;
-    private static final int MAX_REQUEST_MESSAGES = 512;
-    /** Hard cap for one provider response, including cumulative SSE frames. */
-    private static final long MAX_RESPONSE_BYTES = 4L * 1024L * 1024L;
+    /**
+     * High protective ceilings, deliberately far above ordinary chat limits so that
+     * million-token hosted models are not blocked by TAJ's former 512 KiB/4 MiB caps.
+     * These are transport/heap safeguards, not claims about a provider's token window.
+     */
+    private static final int MAX_REQUEST_CHARS = 16 * 1024 * 1024;
+    private static final int MAX_REQUEST_MESSAGES = 2048;
+    private static final long MAX_RESPONSE_BYTES = 32L * 1024L * 1024L;
 
     protected static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
@@ -141,7 +144,7 @@ public abstract class HttpAI implements AIProvider {
                 }
             }
             if (chars > MAX_REQUEST_CHARS) {
-                return "This request exceeds TAJ AI's 512 KiB prompt safety limit. Shorten the conversation or split the task into smaller steps.";
+                return "This request exceeds TAJ AI's 16 Mi-character transport safety ceiling. The selected provider may support a larger context, but this request exceeds the app's protective payload limit.";
             }
         }
         for (pro.sketchware.ai.core.ToolSpec tool : request.tools) {
@@ -150,7 +153,7 @@ public abstract class HttpAI implements AIProvider {
             chars += tool.description == null ? 0 : tool.description.length();
             chars += tool.jsonSchema == null ? 0 : tool.jsonSchema.toString().length();
             if (chars > MAX_REQUEST_CHARS) {
-                return "The prompt and tool definitions exceed TAJ AI's 512 KiB safety limit. Reduce tool/context payload size.";
+                return "The prompt and tool definitions exceed TAJ AI's 16 Mi-character transport safety ceiling. Reduce unnecessary payloads or split oversized tool definitions.";
             }
         }
         return null;
@@ -279,7 +282,7 @@ public abstract class HttpAI implements AIProvider {
                     receivedChars += event.data.length();
                     if (receivedChars > MAX_RESPONSE_BYTES) {
                         throw new AIException(AIException.Type.UNKNOWN,
-                                "The provider response exceeded TAJ AI's 4 MiB safety limit.");
+                                "The provider response exceeded TAJ AI's 32 MiB transport safety ceiling.");
                     }
                     if (handle.isCancelled()) {
                         throw AIException.cancelled();
