@@ -973,7 +973,7 @@ public class AssistantFragment extends Fragment {
             try {
                 String markdown = new String(java.nio.file.Files.readAllBytes(
                         new java.io.File(existing.path, "SKILL.md").toPath()), java.nio.charset.StandardCharsets.UTF_8);
-                int end = markdown.indexOf("\\n---", 3);
+                int end = markdown.indexOf("\n---", 3);
                 body.setText(end > 0 ? markdown.substring(end + 4).trim() : markdown);
             } catch (Exception ignored) { body.setText(""); }
         }
