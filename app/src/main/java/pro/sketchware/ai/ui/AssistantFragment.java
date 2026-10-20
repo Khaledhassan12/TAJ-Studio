@@ -284,7 +284,9 @@ public class AssistantFragment extends Fragment {
         rv.post(() -> {
             if (chatAdapter == null || rv.getAdapter() != chatAdapter) return;
             // Do not steal scroll control while the user is reading older messages.
-            if (!autoFollowChat) {
+            // While a request is active, keep the live response/tool timeline in view.
+            // Outside a request, preserve the user's ability to inspect older messages.
+            if (!autoFollowChat && activeRequestId == 0L) {
                 updateScrollToBottomButton(rv);
                 return;
             }
@@ -914,6 +916,18 @@ public class AssistantFragment extends Fragment {
         list.setNestedScrollingEnabled(false);
         list.setItemAnimator(new androidx.recyclerview.widget.DefaultItemAnimator());
         list.setAdapter(new BuiltInSkillsAdapter(panel));
+        MaterialSwitch master = panel.findViewById(R.id.ai_skills_master_switch);
+        master.setChecked(SkillManager.get(requireContext()).areAllSkillsEnabled());
+        master.setOnCheckedChangeListener((button, checked) -> {
+            SkillManager manager = SkillManager.get(requireContext());
+            manager.setAllSkillsEnabled(checked);
+            RecyclerView skillsList = panel.findViewById(R.id.ai_skills_list);
+            if (skillsList != null && skillsList.getAdapter() instanceof BuiltInSkillsAdapter) {
+                ((BuiltInSkillsAdapter) skillsList.getAdapter()).reload();
+                skillsList.getAdapter().notifyDataSetChanged();
+            }
+            Snackbar.make(panel, checked ? "All installed skills enabled" : "All installed skills disabled", Snackbar.LENGTH_SHORT).show();
+        });
         MaterialSwitch auto = panel.findViewById(R.id.ai_skills_auto_select);
         auto.setChecked(SkillManager.get(requireContext()).isAutoSelectEnabled());
         auto.setOnCheckedChangeListener((button, checked) -> {
@@ -957,7 +971,22 @@ public class AssistantFragment extends Fragment {
         TextView count = panel.findViewById(R.id.ai_skills_count);
         TextView empty = panel.findViewById(R.id.ai_skills_empty);
         TextView recent = panel.findViewById(R.id.ai_skills_recent);
-        count.setText(skills.size() + " available skills · built-in + personal");
+        count.setText(skills.size() + " installed skills · " + skills.stream().filter(s -> s.enabled).count() + " enabled");
+        MaterialSwitch master = panel.findViewById(R.id.ai_skills_master_switch);
+        if (master != null) {
+            master.setOnCheckedChangeListener(null);
+            master.setChecked(SkillManager.get(requireContext()).areAllSkillsEnabled());
+            master.setOnCheckedChangeListener((button, checked) -> {
+                SkillManager manager = SkillManager.get(requireContext());
+                manager.setAllSkillsEnabled(checked);
+                RecyclerView skillsList = panel.findViewById(R.id.ai_skills_list);
+                if (skillsList != null && skillsList.getAdapter() instanceof BuiltInSkillsAdapter) {
+                    ((BuiltInSkillsAdapter) skillsList.getAdapter()).reload();
+                    skillsList.getAdapter().notifyDataSetChanged();
+                }
+                Snackbar.make(panel, checked ? "All installed skills enabled" : "All installed skills disabled", Snackbar.LENGTH_SHORT).show();
+            });
+        }
         empty.setVisibility(skills.isEmpty() ? View.VISIBLE : View.GONE);
         recent.setText(SkillManager.get(requireContext()).getLastSelectionSummary());
         RecyclerView list=panel.findViewById(R.id.ai_skills_list);
@@ -1004,8 +1033,21 @@ public class AssistantFragment extends Fragment {
             h.pinned.setVisibility(skill.enabled?View.VISIBLE:View.GONE);
             h.remove.setVisibility(skill.builtIn?View.GONE:View.VISIBLE);
             h.enabled.setOnCheckedChangeListener((button,checked)-> {
-                SkillManager.get(requireContext()).setEnabled(skill.id,checked);
-                h.pinned.setVisibility(checked?View.VISIBLE:View.GONE);
+                SkillManager manager = SkillManager.get(requireContext());
+                manager.setEnabled(skill.id, checked);
+                h.pinned.setVisibility(checked ? View.VISIBLE : View.GONE);
+                // Refresh the master state without rebuilding/reordering cards from inside
+                // a RecyclerView switch callback (that caused apparent phantom skills).
+                MaterialSwitch master = panel.findViewById(R.id.ai_skills_master_switch);
+                if (master != null) {
+                    master.setOnCheckedChangeListener(null);
+                    master.setChecked(manager.areAllSkillsEnabled());
+                    master.setOnCheckedChangeListener((b, allChecked) -> {
+                        manager.setAllSkillsEnabled(allChecked);
+                        reload();
+                        notifyDataSetChanged();
+                    });
+                }
                 Snackbar.make(panel,skill.name+(checked?" enabled for matching":" disabled"),Snackbar.LENGTH_SHORT).show();
             });
             h.pinned.setOnCheckedChangeListener((button,checked)-> {
@@ -1766,7 +1808,7 @@ public class AssistantFragment extends Fragment {
             } else {
                 int idx = currentSession.messages.indexOf(assistantMsg);
                 if (idx >= 0) chatAdapter.appendToken(idx, token);
-                if (autoFollowChat) scrollToBottom(false);
+                if (autoFollowChat || activeRequestId != 0L) scrollToBottom(false);
                 else {
                     View sessionPanel = panels.get(R.id.ai_dest_session);
                     RecyclerView chatList = sessionPanel == null ? null : sessionPanel.findViewById(R.id.ai_rv_chat);
@@ -2431,6 +2473,7 @@ public class AssistantFragment extends Fragment {
             if (changed && chatAdapter != null && currentSession != null) {
                 int index = currentSession.messages.indexOf(toolsCard);
                 if (index >= 0) chatAdapter.notifyItemChanged(index, "tool_events");
+                if (activeRequestId != 0L) scrollToBottom(false);
             }
         }
     }
