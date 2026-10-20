@@ -945,24 +945,48 @@ public class AssistantFragment extends Fragment {
         refreshSkillsPanel(panel);
     }
 
-    private void showNewSkillDialog(View panel) {
+    private void showNewSkillDialog(View panel) { showSkillEditor(panel, null); }
+
+    private void showSkillEditor(View panel, @Nullable SkillManager.Skill existing) {
         EditText name = new EditText(requireContext()); name.setHint("Skill name");
         EditText desc = new EditText(requireContext()); desc.setHint("Description for automatic selection");
         EditText body = new EditText(requireContext()); body.setHint("Instructions (Markdown)"); body.setMinLines(6);
+        if (existing != null) {
+            name.setText(existing.name);
+            desc.setText(existing.description == null ? "" : existing.description);
+            try {
+                String markdown = new String(java.nio.file.Files.readAllBytes(
+                        new java.io.File(existing.path, "SKILL.md").toPath()), java.nio.charset.StandardCharsets.UTF_8);
+                int end = markdown.indexOf("\\n---", 3);
+                body.setText(end > 0 ? markdown.substring(end + 4).trim() : markdown);
+            } catch (Exception ignored) { body.setText(""); }
+        }
         LinearLayout fields = new LinearLayout(requireContext()); fields.setOrientation(LinearLayout.VERTICAL);
         int pad=(int)(8*getResources().getDisplayMetrics().density); fields.setPadding(pad,pad,pad,pad);
         fields.addView(name); fields.addView(desc); fields.addView(body);
+        ScrollView scroll = new ScrollView(requireContext()); scroll.addView(fields);
         final android.content.Context appContext=requireContext().getApplicationContext();
-        new MaterialAlertDialogBuilder(requireContext()).setTitle("Create Skill").setView(fields)
-            .setNegativeButton("Cancel", null).setPositiveButton("Save", (dialog, which) -> {
+        new MaterialAlertDialogBuilder(requireContext()).setTitle(existing == null ? "Create Skill" : "Edit Skill")
+            .setView(scroll).setNegativeButton("Cancel", null).setPositiveButton("Save", (dialog, which) -> {
                 final String skillName=name.getText().toString(), skillDescription=desc.getText().toString(), skillBody=body.getText().toString();
                 new Thread(() -> {
                     try {
-                        SkillManager.get(appContext).createSkill(skillName, skillDescription, skillBody);
+                        SkillManager manager = SkillManager.get(appContext);
+                        if (existing == null) manager.createSkill(skillName, skillDescription, skillBody);
+                        else manager.updateSkill(existing.id, skillName, skillDescription, skillBody);
                         mainHandler.post(() -> { if(isAdded() && panel.getWindowToken()!=null) { refreshSkillsPanel(panel); Snackbar.make(panel,"Skill saved",Snackbar.LENGTH_SHORT).show(); }});
                     } catch (Exception e) { mainHandler.post(() -> { if(isAdded() && panel.getWindowToken()!=null) Snackbar.make(panel, "Save failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show(); }); }
                 }).start();
             }).show();
+    }
+
+    private void exportSkill(View panel, SkillManager.Skill skill) {
+        pendingSkillExportId = skill.id;
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/zip");
+        intent.putExtra(Intent.EXTRA_TITLE, skill.id + ".zip");
+        startActivityForResult(intent, 7143);
     }
 
     private void refreshSkillsPanel(View panel) {
@@ -1013,11 +1037,17 @@ public class AssistantFragment extends Fragment {
             TextView tag=new TextView(parent.getContext()); tag.setTextSize(10); tag.setTypeface(null,android.graphics.Typeface.BOLD);
             MaterialSwitch enabled=new MaterialSwitch(parent.getContext()); enabled.setText("Available to TAJ AI");
             MaterialSwitch pinned=new MaterialSwitch(parent.getContext()); pinned.setText("Prefer this skill in every task");
+            MaterialButton edit=new MaterialButton(parent.getContext()); edit.setText("Edit");
+            MaterialButton export=new MaterialButton(parent.getContext()); export.setText("Export ZIP");
             MaterialButton remove=new MaterialButton(parent.getContext()); remove.setText("Remove skill");
-            content.addView(title); content.addView(tag); content.addView(desc); content.addView(enabled); content.addView(pinned); content.addView(remove);
+            LinearLayout actions = new LinearLayout(parent.getContext()); actions.setOrientation(LinearLayout.HORIZONTAL);
+            actions.addView(edit, new LinearLayout.LayoutParams(0, -2, 1));
+            actions.addView(export, new LinearLayout.LayoutParams(0, -2, 1));
+            actions.addView(remove, new LinearLayout.LayoutParams(0, -2, 1));
+            content.addView(title); content.addView(tag); content.addView(desc); content.addView(enabled); content.addView(pinned); content.addView(actions);
             card.addView(content);
             RecyclerView.LayoutParams lp=new RecyclerView.LayoutParams(-1,-2); lp.bottomMargin=(int)(8*d); card.setLayoutParams(lp);
-            return new SkillHolder(card,title,tag,desc,enabled,pinned,remove);
+            return new SkillHolder(card,title,tag,desc,enabled,pinned,edit,export,remove);
         }
         @Override public void onBindViewHolder(@NonNull SkillHolder h,int position) {
             SkillManager.Skill skill=data.get(position);
@@ -1032,6 +1062,8 @@ public class AssistantFragment extends Fragment {
             h.pinned.setOnCheckedChangeListener(null); h.pinned.setChecked(skill.pinned);
             h.pinned.setVisibility(skill.enabled?View.VISIBLE:View.GONE);
             h.remove.setVisibility(skill.builtIn?View.GONE:View.VISIBLE);
+            h.edit.setOnClickListener(v -> showSkillEditor(panel, skill));
+            h.export.setOnClickListener(v -> exportSkill(panel, skill));
             h.enabled.setOnCheckedChangeListener((button,checked)-> {
                 SkillManager manager = SkillManager.get(requireContext());
                 manager.setEnabled(skill.id, checked);
@@ -1063,9 +1095,9 @@ public class AssistantFragment extends Fragment {
         }
         @Override public int getItemCount() { return data.size(); }
         final class SkillHolder extends RecyclerView.ViewHolder {
-            final TextView title,tag,desc; final MaterialSwitch enabled,pinned; final MaterialButton remove;
-            SkillHolder(View item,TextView title,TextView tag,TextView desc,MaterialSwitch enabled,MaterialSwitch pinned,MaterialButton remove) {
-                super(item);this.title=title;this.tag=tag;this.desc=desc;this.enabled=enabled;this.pinned=pinned;this.remove=remove;
+            final TextView title,tag,desc; final MaterialSwitch enabled,pinned; final MaterialButton edit,export,remove;
+            SkillHolder(View item,TextView title,TextView tag,TextView desc,MaterialSwitch enabled,MaterialSwitch pinned,MaterialButton edit,MaterialButton export,MaterialButton remove) {
+                super(item);this.title=title;this.tag=tag;this.desc=desc;this.enabled=enabled;this.pinned=pinned;this.edit=edit;this.export=export;this.remove=remove;
             }
         }
     }
@@ -1289,6 +1321,22 @@ public class AssistantFragment extends Fragment {
     private String exportRoleName(String role){if("user".equals(role))return "You";if("assistant".equals(role))return "TAJ Assistant";return role==null?"Message":role.replace('_',' ').toUpperCase(java.util.Locale.ROOT);}
     @Override public void onActivityResult(int requestCode,int resultCode,@Nullable Intent data){
         super.onActivityResult(requestCode,resultCode,data);
+        if (requestCode == 7143 && resultCode == android.app.Activity.RESULT_OK && data != null && data.getData() != null) {
+            final String skillId = pendingSkillExportId;
+            pendingSkillExportId = null;
+            final android.net.Uri uri = data.getData();
+            final android.content.Context appContext = requireContext().getApplicationContext();
+            new Thread(() -> {
+                try (java.io.OutputStream out = appContext.getContentResolver().openOutputStream(uri)) {
+                    if (out == null) throw new java.io.IOException("Could not open the selected destination.");
+                    SkillManager.get(appContext).exportZip(skillId, out);
+                    mainHandler.post(() -> { if (isAdded()) Snackbar.make(requireView(), "Skill exported as ZIP", Snackbar.LENGTH_LONG).show(); });
+                } catch (Exception e) {
+                    mainHandler.post(() -> { if (isAdded()) Snackbar.make(requireView(), "Export failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show(); });
+                }
+            }).start();
+            return;
+        }
         if(requestCode==7142 && resultCode==android.app.Activity.RESULT_OK && data!=null && data.getData()!=null) {
             Uri uri=data.getData();
             new Thread(() -> { try (InputStream in=requireContext().getContentResolver().openInputStream(uri)) {
@@ -1770,7 +1818,7 @@ public class AssistantFragment extends Fragment {
         }
     }
 
-    private ChatStore.Message assistantMsg;
+    private String pendingSkillExportId;\n    private ChatStore.Message assistantMsg;
     private ChatStore.Message thinkingMsg;
     private ChatStore.Message toolsCard;
     private ChatStore.Message rateLimitMsg;
