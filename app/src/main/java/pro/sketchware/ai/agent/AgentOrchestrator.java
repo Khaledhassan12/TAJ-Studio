@@ -350,12 +350,12 @@ public final class AgentOrchestrator {
     }
 
     /**
-     * Prevent large filesystem/tool payloads from being copied into every subsequent
-     * model request. Truncated results remain valid JSON and explicitly signal that
-     * the model must narrow the read/search instead of treating the preview as complete.
+     * Protects mobile memory without imposing the former 16 KiB cap on every tool.
+     * This ceiling is intentionally multi-megabyte for long-context providers; it is
+     * independent from the provider's token window and the overall HTTP payload ceiling.
      */
-    private static final int MAX_TOOL_RESULT_CHARS = 16 * 1024;
-    private static final int TOOL_RESULT_PREVIEW_CHARS = 12 * 1024;
+    private static final int MAX_TOOL_RESULT_CHARS = 8 * 1024 * 1024;
+    private static final int TOOL_RESULT_PREVIEW_CHARS = 6 * 1024 * 1024;
 
     private static String boundToolResult(String content) {
         if (content == null) return "";
@@ -363,7 +363,7 @@ public final class AgentOrchestrator {
         org.json.JSONObject bounded = new org.json.JSONObject();
         try {
             bounded.put("status", "TRUNCATED");
-            bounded.put("message", "Tool output exceeded TAJ AI's per-result context budget. This preview is incomplete; request a narrower path, range, or search.");
+            bounded.put("message", "Tool output exceeded TAJ AI's 8 Mi-character per-result memory safety ceiling. This preview is incomplete; request a narrower path, range, or search.");
             bounded.put("originalChars", content.length());
             bounded.put("preview", content.substring(0, TOOL_RESULT_PREVIEW_CHARS));
             bounded.put("truncated", true);
