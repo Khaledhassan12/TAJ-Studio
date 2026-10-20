@@ -49,6 +49,7 @@ jobs:
   build:
     name: Build Debug and Release APKs
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
