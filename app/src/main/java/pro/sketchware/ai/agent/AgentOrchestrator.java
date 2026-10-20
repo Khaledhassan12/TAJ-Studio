@@ -205,19 +205,19 @@ public final class AgentOrchestrator {
                                                         "The task was cancelled before the operation started.", null, true)
                                                 : tool.run(call.arguments, context);
                                     }
-                                    conversation.add(AIMessage.toolResult(call.id, result.content));
+                                    conversation.add(AIMessage.toolResult(call.id, boundToolResult(result.content)));
                                     success = !result.error;
                                     toolSummary = summarizeToolResult(call.name, result.content, success);
                                 } else {
                                     result = new Tool.ToolResult("Tool not found: " + call.name, true);
-                                    conversation.add(AIMessage.toolResult(call.id, result.content));
+                                    conversation.add(AIMessage.toolResult(call.id, boundToolResult(result.content)));
                                     toolSummary = "ERROR: No executor is registered for this tool.";
                                 }
                             } catch (Exception e) {
                                 String reason = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
                                 if (reason.length() > 240) reason = reason.substring(0, 240) + "…";
                                 toolSummary = "ERROR: " + reason;
-                                conversation.add(AIMessage.toolResult(call.id, "Error executing tool: " + reason));
+                                conversation.add(AIMessage.toolResult(call.id, boundToolResult("Error executing tool: " + reason)));
                             } finally {
                                 if (!success) {
                                     if (!taskToolFailures.contains(call.name)) taskToolFailures.add(call.name);
@@ -346,6 +346,30 @@ public final class AgentOrchestrator {
         } catch (Exception ignored) {
             String singleLine = content.replaceAll("[\\p{Cntrl}]+", " ").trim();
             return truncateSummary(prefix + ": " + singleLine);
+        }
+    }
+
+    /**
+     * Prevent large filesystem/tool payloads from being copied into every subsequent
+     * model request. Truncated results remain valid JSON and explicitly signal that
+     * the model must narrow the read/search instead of treating the preview as complete.
+     */
+    private static final int MAX_TOOL_RESULT_CHARS = 16 * 1024;
+    private static final int TOOL_RESULT_PREVIEW_CHARS = 12 * 1024;
+
+    private static String boundToolResult(String content) {
+        if (content == null) return "";
+        if (content.length() <= MAX_TOOL_RESULT_CHARS) return content;
+        org.json.JSONObject bounded = new org.json.JSONObject();
+        try {
+            bounded.put("status", "TRUNCATED");
+            bounded.put("message", "Tool output exceeded TAJ AI's per-result context budget. This preview is incomplete; request a narrower path, range, or search.");
+            bounded.put("originalChars", content.length());
+            bounded.put("preview", content.substring(0, TOOL_RESULT_PREVIEW_CHARS));
+            bounded.put("truncated", true);
+            return bounded.toString();
+        } catch (org.json.JSONException impossible) {
+            return "{\"status\":\"TRUNCATED\",\"truncated\":true}";
         }
     }
 
