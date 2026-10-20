@@ -938,13 +938,17 @@ public class AssistantFragment extends Fragment {
         LinearLayout fields = new LinearLayout(requireContext()); fields.setOrientation(LinearLayout.VERTICAL);
         int pad=(int)(8*getResources().getDisplayMetrics().density); fields.setPadding(pad,pad,pad,pad);
         fields.addView(name); fields.addView(desc); fields.addView(body);
+        final android.content.Context appContext=requireContext().getApplicationContext();
         new MaterialAlertDialogBuilder(requireContext()).setTitle("Create Skill").setView(fields)
-            .setNegativeButton("Cancel", null).setPositiveButton("Save", (dialog, which) -> new Thread(() -> {
-                try {
-                    SkillManager.get(requireContext()).createSkill(name.getText().toString(), desc.getText().toString(), body.getText().toString());
-                    mainHandler.post(() -> { if(isAdded()) { refreshSkillsPanel(panel); Snackbar.make(panel,"Skill saved",Snackbar.LENGTH_SHORT).show(); }});
-                } catch (Exception e) { mainHandler.post(() -> { if(isAdded()) Snackbar.make(panel, "Save failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show(); }); }
-            }).start()).show();
+            .setNegativeButton("Cancel", null).setPositiveButton("Save", (dialog, which) -> {
+                final String skillName=name.getText().toString(), skillDescription=desc.getText().toString(), skillBody=body.getText().toString();
+                new Thread(() -> {
+                    try {
+                        SkillManager.get(appContext).createSkill(skillName, skillDescription, skillBody);
+                        mainHandler.post(() -> { if(isAdded() && panel.getWindowToken()!=null) { refreshSkillsPanel(panel); Snackbar.make(panel,"Skill saved",Snackbar.LENGTH_SHORT).show(); }});
+                    } catch (Exception e) { mainHandler.post(() -> { if(isAdded() && panel.getWindowToken()!=null) Snackbar.make(panel, "Save failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show(); }); }
+                }).start();
+            }).show();
     }
 
     private void refreshSkillsPanel(View panel) {
