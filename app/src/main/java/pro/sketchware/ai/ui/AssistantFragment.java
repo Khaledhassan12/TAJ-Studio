@@ -319,7 +319,7 @@ public class AssistantFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         DesignActivity activity = (DesignActivity) requireActivity();
-        sc_id = DesignActivity.sc_id;
+        sc_id = resolveActiveProjectId(activity);
         configStore = AIConfigStore.getInstance(activity);
         chatStore = new ChatStore(activity, sc_id);
         toolRegistry = new ToolRegistry();
@@ -355,6 +355,16 @@ public class AssistantFragment extends Fragment {
         });
     }
 
+    /** Resolve the project after DesignActivity has finished restoring its intent/state. */
+    @Nullable
+    private String resolveActiveProjectId(@NonNull DesignActivity activity) {
+        String id = DesignActivity.sc_id;
+        if (id == null || id.trim().isEmpty()) {
+            id = activity.getIntent() == null ? null : activity.getIntent().getStringExtra("sc_id");
+        }
+        return id == null || id.trim().isEmpty() ? null : id.trim();
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -363,6 +373,14 @@ public class AssistantFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        DesignActivity hostActivity = (DesignActivity) requireActivity();
+        String resolvedProjectId = resolveActiveProjectId(hostActivity);
+        if (resolvedProjectId != null && !resolvedProjectId.equals(sc_id)) {
+            sc_id = resolvedProjectId;
+            // Fragment views can be inflated before DesignActivity reads its project extra.
+            // Rebind storage now, before the first panel/session is initialized.
+            chatStore = new ChatStore(hostActivity, sc_id);
+        }
         rail = view.findViewById(R.id.navigation_rail);
         container = view.findViewById(R.id.panel_container);
 
@@ -910,28 +928,27 @@ public class AssistantFragment extends Fragment {
 
 
     private void setupSkillsPanel(View panel) {
-        RecyclerView list = panel.findViewById(R.id.ai_skills_list);
-        list.setLayoutManager(new LinearLayoutManager(requireContext()));
-        list.setNestedScrollingEnabled(false);
-        list.setItemAnimator(new androidx.recyclerview.widget.DefaultItemAnimator());
-        list.setAdapter(new BuiltInSkillsAdapter(panel));
+        LinearLayout list = panel.findViewById(R.id.ai_skills_list);
+        if (list != null) list.setOrientation(LinearLayout.VERTICAL);
+
         MaterialSwitch master = panel.findViewById(R.id.ai_skills_master_switch);
-        master.setChecked(SkillManager.get(requireContext()).areAllSkillsEnabled());
-        master.setOnCheckedChangeListener((button, checked) -> {
-            SkillManager manager = SkillManager.get(requireContext());
-            manager.setAllSkillsEnabled(checked);
-            RecyclerView skillsList = panel.findViewById(R.id.ai_skills_list);
-            if (skillsList != null && skillsList.getAdapter() instanceof BuiltInSkillsAdapter) {
-                ((BuiltInSkillsAdapter) skillsList.getAdapter()).reload();
-                skillsList.getAdapter().notifyDataSetChanged();
-            }
-            Snackbar.make(panel, checked ? "All installed skills enabled" : "All installed skills disabled", Snackbar.LENGTH_SHORT).show();
-        });
+        if (master != null) {
+            master.setOnCheckedChangeListener(null);
+            master.setChecked(SkillManager.get(requireContext()).areAllSkillsEnabled());
+            master.setOnCheckedChangeListener((button, checked) -> {
+                SkillManager.get(requireContext()).setAllSkillsEnabled(checked);
+                refreshSkillsPanel(panel);
+                Snackbar.make(panel, checked ? "All installed skills enabled" : "All installed skills disabled",
+                        Snackbar.LENGTH_SHORT).show();
+            });
+        }
+
         MaterialSwitch auto = panel.findViewById(R.id.ai_skills_auto_select);
         auto.setChecked(SkillManager.get(requireContext()).isAutoSelectEnabled());
         auto.setOnCheckedChangeListener((button, checked) -> {
             SkillManager.get(requireContext()).setAutoSelectEnabled(checked);
-            Snackbar.make(panel, checked ? "Automatic skill matching enabled" : "Automatic matching paused; pinned skills remain available", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(panel, checked ? "Automatic skill matching enabled"
+                    : "Automatic matching paused; pinned skills remain available", Snackbar.LENGTH_SHORT).show();
         });
         panel.findViewById(R.id.ai_skills_create).setOnClickListener(v -> showNewSkillDialog(panel));
         panel.findViewById(R.id.ai_skills_import).setOnClickListener(v -> {
@@ -956,7 +973,7 @@ public class AssistantFragment extends Fragment {
             try {
                 String markdown = new String(java.nio.file.Files.readAllBytes(
                         new java.io.File(existing.path, "SKILL.md").toPath()), java.nio.charset.StandardCharsets.UTF_8);
-                int end = markdown.indexOf("\n---", 3);
+                int end = markdown.indexOf("\\n---", 3);
                 body.setText(end > 0 ? markdown.substring(end + 4).trim() : markdown);
             } catch (Exception ignored) { body.setText(""); }
         }
@@ -990,114 +1007,124 @@ public class AssistantFragment extends Fragment {
 
     private void refreshSkillsPanel(View panel) {
         if (!isAdded() || panel == null) return;
-        List<SkillManager.Skill> skills = SkillManager.get(requireContext()).listSkills();
+        SkillManager manager = SkillManager.get(requireContext());
+        List<SkillManager.Skill> skills = manager.listSkills();
         TextView count = panel.findViewById(R.id.ai_skills_count);
         TextView empty = panel.findViewById(R.id.ai_skills_empty);
         TextView recent = panel.findViewById(R.id.ai_skills_recent);
-        count.setText(skills.size() + " installed skills · " + skills.stream().filter(s -> s.enabled).count() + " enabled");
+        if (count != null) count.setText(skills.size() + " installed skills · "
+                + skills.stream().filter(s -> s.enabled).count() + " enabled");
+
         MaterialSwitch master = panel.findViewById(R.id.ai_skills_master_switch);
-        if (master != null) {            master.setOnCheckedChangeListener(null);
-            master.setChecked(SkillManager.get(requireContext()).areAllSkillsEnabled());
+        if (master != null) {
+            // Reflect the aggregate state without invoking the master action listener.
+            master.setOnCheckedChangeListener(null);
+            master.setChecked(!skills.isEmpty() && manager.areAllSkillsEnabled());
             master.setOnCheckedChangeListener((button, checked) -> {
-                SkillManager manager = SkillManager.get(requireContext());
                 manager.setAllSkillsEnabled(checked);
-                RecyclerView skillsList = panel.findViewById(R.id.ai_skills_list);
-                if (skillsList != null && skillsList.getAdapter() instanceof BuiltInSkillsAdapter) {
-                    ((BuiltInSkillsAdapter) skillsList.getAdapter()).reload();
-                    skillsList.getAdapter().notifyDataSetChanged();
-                }
-                Snackbar.make(panel, checked ? "All installed skills enabled" : "All installed skills disabled", Snackbar.LENGTH_SHORT).show();
+                refreshSkillsPanel(panel);
+                Snackbar.make(panel, checked ? "All installed skills enabled" : "All installed skills disabled",
+                        Snackbar.LENGTH_SHORT).show();
             });
         }
-        empty.setVisibility(skills.isEmpty() ? View.VISIBLE : View.GONE);
-        recent.setText(SkillManager.get(requireContext()).getLastSelectionSummary());
-        RecyclerView list=panel.findViewById(R.id.ai_skills_list);
-        if(list!=null && list.getAdapter() instanceof BuiltInSkillsAdapter) { BuiltInSkillsAdapter adapter=(BuiltInSkillsAdapter)list.getAdapter(); adapter.reload(); adapter.notifyDataSetChanged(); }
+        if (empty != null) empty.setVisibility(skills.isEmpty() ? View.VISIBLE : View.GONE);
+        if (recent != null) recent.setText(manager.getLastSelectionSummary());
+
+        LinearLayout list = panel.findViewById(R.id.ai_skills_list);
+        if (list == null) return;
+        // A vertical LinearLayout inside the panel's ScrollView measures every skill card.
+        // RecyclerView.wrap_content inside a ScrollView was only laying out the first few cards.
+        list.removeAllViews();
+        for (SkillManager.Skill skill : skills) {
+            list.addView(createSkillCard(panel, skill));
+        }
     }
 
-    private final class BuiltInSkillsAdapter extends RecyclerView.Adapter<BuiltInSkillsAdapter.SkillHolder> {
-        private final View panel;
-        private final List<SkillManager.Skill> data = new ArrayList<>();
-        BuiltInSkillsAdapter(View panel) { this.panel=panel; setHasStableIds(true); reload(); }
-        void reload() { data.clear(); data.addAll(SkillManager.get(requireContext()).listSkills()); }
-        @Override public long getItemId(int position) { return data.get(position).id.hashCode(); }
-        @NonNull @Override public SkillHolder onCreateViewHolder(@NonNull ViewGroup parent,int viewType) {
-            float d=getResources().getDisplayMetrics().density;
-            MaterialCardView card=new MaterialCardView(parent.getContext());
-            card.setRadius(22*d); card.setCardElevation(2*d); card.setUseCompatPadding(true);
-            card.setStrokeWidth(Math.max(1,(int)d));
-            card.setStrokeColor(com.google.android.material.color.MaterialColors.getColor(card,com.google.android.material.R.attr.colorOutlineVariant));
-            card.setCardBackgroundColor(com.google.android.material.color.MaterialColors.getColor(card,com.google.android.material.R.attr.colorSurfaceContainerLow));
-            LinearLayout content=new LinearLayout(parent.getContext()); content.setOrientation(LinearLayout.VERTICAL);
-            content.setPadding((int)(15*d),(int)(13*d),(int)(15*d),(int)(13*d));
-            TextView title=new TextView(parent.getContext()); title.setTextSize(16); title.setTypeface(null,android.graphics.Typeface.BOLD);
-            TextView desc=new TextView(parent.getContext()); desc.setTextSize(12);
-            TextView tag=new TextView(parent.getContext()); tag.setTextSize(10); tag.setTypeface(null,android.graphics.Typeface.BOLD);
-            MaterialSwitch enabled=new MaterialSwitch(parent.getContext()); enabled.setText("Available to TAJ AI");
-            MaterialSwitch pinned=new MaterialSwitch(parent.getContext()); pinned.setText("Prefer this skill in every task");
-            MaterialButton edit=new MaterialButton(parent.getContext()); edit.setText("Edit");
-            MaterialButton export=new MaterialButton(parent.getContext()); export.setText("Export ZIP");
-            MaterialButton remove=new MaterialButton(parent.getContext()); remove.setText("Remove skill");
-            LinearLayout actions = new LinearLayout(parent.getContext()); actions.setOrientation(LinearLayout.HORIZONTAL);
-            actions.addView(edit, new LinearLayout.LayoutParams(0, -2, 1));
-            actions.addView(export, new LinearLayout.LayoutParams(0, -2, 1));
-            actions.addView(remove, new LinearLayout.LayoutParams(0, -2, 1));
-            content.addView(title); content.addView(tag); content.addView(desc); content.addView(enabled); content.addView(pinned); content.addView(actions);
-            card.addView(content);
-            RecyclerView.LayoutParams lp=new RecyclerView.LayoutParams(-1,-2); lp.bottomMargin=(int)(8*d); card.setLayoutParams(lp);
-            return new SkillHolder(card,title,tag,desc,enabled,pinned,edit,export,remove);
-        }
-        @Override public void onBindViewHolder(@NonNull SkillHolder h,int position) {
-            SkillManager.Skill skill=data.get(position);
-            h.title.setText(skill.name);
-            h.tag.setText(skill.builtIn ? "✦ BUILT-IN · TAJ STUDIO" : "PERSONAL · "+skill.source.toUpperCase(java.util.Locale.ROOT));
-            h.desc.setText(skill.description==null?"":skill.description);
-            int on=com.google.android.material.color.MaterialColors.getColor(h.itemView,androidx.appcompat.R.attr.colorPrimary);
-            int muted=com.google.android.material.color.MaterialColors.getColor(h.itemView,com.google.android.material.R.attr.colorOnSurfaceVariant);
-            h.title.setTextColor(com.google.android.material.color.MaterialColors.getColor(h.itemView,com.google.android.material.R.attr.colorOnSurface));
-            h.tag.setTextColor(on); h.desc.setTextColor(muted);
-            h.enabled.setOnCheckedChangeListener(null); h.enabled.setChecked(skill.enabled);
-            h.pinned.setOnCheckedChangeListener(null); h.pinned.setChecked(skill.pinned);
-            h.pinned.setVisibility(skill.enabled?View.VISIBLE:View.GONE);
-            h.remove.setVisibility(skill.builtIn?View.GONE:View.VISIBLE);
-            h.edit.setOnClickListener(v -> showSkillEditor(panel, skill));
-            h.export.setOnClickListener(v -> exportSkill(panel, skill));
-            h.enabled.setOnCheckedChangeListener((button,checked)-> {
-                SkillManager manager = SkillManager.get(requireContext());
-                manager.setEnabled(skill.id, checked);
-                h.pinned.setVisibility(checked ? View.VISIBLE : View.GONE);
-                // Refresh the master state without rebuilding/reordering cards from inside
-                // a RecyclerView switch callback (that caused apparent phantom skills).
-                MaterialSwitch master = panel.findViewById(R.id.ai_skills_master_switch);
-                if (master != null) {
-                    master.setOnCheckedChangeListener(null);
-                    master.setChecked(manager.areAllSkillsEnabled());
-                    master.setOnCheckedChangeListener((b, allChecked) -> {
-                        manager.setAllSkillsEnabled(allChecked);
-                        reload();
-                        notifyDataSetChanged();
-                    });
-                }
-                Snackbar.make(panel,skill.name+(checked?" enabled for matching":" disabled"),Snackbar.LENGTH_SHORT).show();
-            });
-            h.pinned.setOnCheckedChangeListener((button,checked)-> {
-                SkillManager.get(requireContext()).setPinned(skill.id,checked);
-                Snackbar.make(panel,checked?"Pinned: "+skill.name:"Automatic matching restored for "+skill.name,Snackbar.LENGTH_SHORT).show();
-            });
-            h.remove.setOnClickListener(v->new MaterialAlertDialogBuilder(requireContext()).setTitle("Remove personal skill?")
-                .setMessage(skill.name).setNegativeButton("Cancel",null).setPositiveButton("Remove",(dialog,which)-> {
-                    SkillManager.get(requireContext()).deleteSkill(skill.id); refreshSkillsPanel(panel);
+    private View createSkillCard(View panel, SkillManager.Skill skill) {
+        float d = getResources().getDisplayMetrics().density;
+        MaterialCardView card = new MaterialCardView(requireContext());
+        card.setRadius(22 * d);
+        card.setCardElevation(2 * d);
+        card.setUseCompatPadding(true);
+        card.setStrokeWidth(Math.max(1, (int) d));
+        card.setStrokeColor(com.google.android.material.color.MaterialColors.getColor(
+                card, com.google.android.material.R.attr.colorOutlineVariant));
+        card.setCardBackgroundColor(com.google.android.material.color.MaterialColors.getColor(
+                card, com.google.android.material.R.attr.colorSurfaceContainerLow));
+
+        LinearLayout content = new LinearLayout(requireContext());
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding((int)(15*d), (int)(13*d), (int)(15*d), (int)(13*d));
+        TextView title = new TextView(requireContext());
+        title.setText(skill.name);
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        TextView tag = new TextView(requireContext());
+        tag.setText(skill.builtIn ? "✦ BUILT-IN · TAJ STUDIO" : "PERSONAL · " + skill.source.toUpperCase(java.util.Locale.ROOT));
+        tag.setTextSize(10);
+        tag.setTypeface(null, android.graphics.Typeface.BOLD);
+        TextView desc = new TextView(requireContext());
+        desc.setText(skill.description == null ? "" : skill.description);
+        desc.setTextSize(12);
+        int on = com.google.android.material.color.MaterialColors.getColor(card, androidx.appcompat.R.attr.colorPrimary);
+        title.setTextColor(com.google.android.material.color.MaterialColors.getColor(card, com.google.android.material.R.attr.colorOnSurface));
+        tag.setTextColor(on);
+        desc.setTextColor(com.google.android.material.color.MaterialColors.getColor(card, com.google.android.material.R.attr.colorOnSurfaceVariant));
+
+        MaterialSwitch enabled = new MaterialSwitch(requireContext());
+        enabled.setText("Available to TAJ AI");
+        enabled.setChecked(skill.enabled);
+        MaterialSwitch pinned = new MaterialSwitch(requireContext());
+        pinned.setText("Prefer this skill in every task");
+        pinned.setChecked(skill.pinned);
+        pinned.setVisibility(skill.enabled ? View.VISIBLE : View.GONE);
+        MaterialButton edit = new MaterialButton(requireContext()); edit.setText("Edit");
+        MaterialButton export = new MaterialButton(requireContext()); export.setText("Export ZIP");
+        MaterialButton remove = new MaterialButton(requireContext()); remove.setText("Remove skill");
+        remove.setVisibility(skill.builtIn ? View.GONE : View.VISIBLE);
+        LinearLayout actions = new LinearLayout(requireContext());
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.addView(edit, new LinearLayout.LayoutParams(0, -2, 1));
+        actions.addView(export, new LinearLayout.LayoutParams(0, -2, 1));
+        actions.addView(remove, new LinearLayout.LayoutParams(0, -2, 1));
+        content.addView(title);
+        content.addView(tag);
+        content.addView(desc);
+        content.addView(enabled);
+        content.addView(pinned);
+        content.addView(actions);
+        card.addView(content);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = (int)(8*d);
+        card.setLayoutParams(lp);
+
+        enabled.setOnCheckedChangeListener((button, checked) -> {
+            SkillManager manager = SkillManager.get(requireContext());
+            manager.setEnabled(skill.id, checked);
+            refreshSkillsPanel(panel);
+            Snackbar.make(panel, skill.name + (checked ? " enabled for matching" : " disabled"),
+                    Snackbar.LENGTH_SHORT).show();
+        });
+        pinned.setOnCheckedChangeListener((button, checked) -> {
+            SkillManager.get(requireContext()).setPinned(skill.id, checked);
+            Snackbar.make(panel, checked ? "Pinned: " + skill.name
+                    : "Automatic matching restored for " + skill.name, Snackbar.LENGTH_SHORT).show();
+        });
+        edit.setOnClickListener(v -> showSkillEditor(panel, skill));
+        export.setOnClickListener(v -> exportSkill(panel, skill));
+        remove.setOnClickListener(v -> new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Remove personal skill?")
+                .setMessage(skill.name)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Remove", (dialog, which) -> {
+                    SkillManager.get(requireContext()).deleteSkill(skill.id);
+                    refreshSkillsPanel(panel);
                 }).show());
-            h.itemView.setAlpha(0f); h.itemView.setTranslationY(8f);
-            h.itemView.animate().alpha(1f).translationY(0f).setDuration(180).start();
-        }
-        @Override public int getItemCount() { return data.size(); }
-        final class SkillHolder extends RecyclerView.ViewHolder {
-            final TextView title,tag,desc; final MaterialSwitch enabled,pinned; final MaterialButton edit,export,remove;
-            SkillHolder(View item,TextView title,TextView tag,TextView desc,MaterialSwitch enabled,MaterialSwitch pinned,MaterialButton edit,MaterialButton export,MaterialButton remove) {
-                super(item);this.title=title;this.tag=tag;this.desc=desc;this.enabled=enabled;this.pinned=pinned;this.edit=edit;this.export=export;this.remove=remove;
-            }
-        }
+        card.setAlpha(0f);
+        card.setTranslationY(8f);
+        card.animate().alpha(1f).translationY(0f).setDuration(180).start();
+        return card;
     }
 
     private void setupAgentsPanel(View panel) {
@@ -2143,6 +2170,8 @@ public class AssistantFragment extends Fragment {
 
         DesignActivity activity = (DesignActivity) getActivity();
         if (activity == null) return;
+        String resolvedProjectId = resolveActiveProjectId(activity);
+        if (resolvedProjectId != null) sc_id = resolvedProjectId;
 
         AIProvider provider = AIProviderRegistry.getInstance(activity).createActiveProvider(activity);
         if (provider == null) {
