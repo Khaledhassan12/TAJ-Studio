@@ -238,7 +238,22 @@ public final class SkillManager {
         for(File child:children) { File found=findSkillRoot(child,depth+1); if(found!=null)return found; }
         return null;
     }
-    public void setEnabled(String id,boolean value) { if(id!=null) prefs.edit().putBoolean("enabled:"+id,value).apply(); }
+    public synchronized void setEnabled(String id, boolean value) {
+        if (id != null && !id.trim().isEmpty()) {
+            prefs.edit().putBoolean("enabled:" + id, value).apply();
+        }
+    }
+    /** Master switch state: every installed skill is enabled, or every skill is disabled. */
+    public synchronized boolean areAllSkillsEnabled() {
+        List<Skill> skills = listSkills();
+        for (Skill skill : skills) if (!skill.enabled) return false;
+        return true;
+    }
+    public synchronized void setAllSkillsEnabled(boolean enabled) {
+        SharedPreferences.Editor editor = prefs.edit();
+        for (Skill skill : listSkills()) editor.putBoolean("enabled:" + skill.id, enabled);
+        editor.apply();
+    }
     public void setPinned(String id,boolean value) { if(id!=null) prefs.edit().putBoolean("pinned:"+id,value).apply(); }
     public boolean isAutoSelectEnabled() { return prefs.getBoolean(KEY_AUTO,true); }
     public void setAutoSelectEnabled(boolean enabled) { prefs.edit().putBoolean(KEY_AUTO,enabled).apply(); }
@@ -253,7 +268,9 @@ public final class SkillManager {
     }
     public synchronized List<ResolvedSkill> resolveForTask(String task) {
         List<ResolvedSkill> result=new ArrayList<>();
+        // Disabled cards must never be injected, including manually pinned skills.
         String lower=task==null?"":task.toLowerCase(Locale.ROOT);
+        if (lower.trim().isEmpty()) { recordSelection(result); return result; }
         for(Skill skill:listSkills()) {
             if(!skill.valid||!skill.enabled) continue;
             String reason=null;
@@ -262,11 +279,18 @@ public final class SkillManager {
                 int score=0;
                 String haystack=(skill.name+" "+skill.description+" "+skill.id).toLowerCase(Locale.ROOT);
                 java.util.LinkedHashSet<String> tokens=new java.util.LinkedHashSet<>();
-                Collections.addAll(tokens,lower.split("[^a-z0-9_+#.-]+"));
+                // Keep Unicode letters/digits so Arabic and other non-Latin task descriptions work.
+                Collections.addAll(tokens, lower.split("[^\\p{L}\\p{N}_+#.-]+"));
                 for(String token:tokens) {
-                    if(token.length()<4) continue;
-                    if(haystack.contains(token)) score+=token.length()>=7?2:1;
+                    if(token.length()<3) continue;
+                    if(haystack.contains(token)) score+=token.length()>=6?2:1;
                 }
+                // Exact name/description phrases should reliably select a skill, even when
+                // the task is short or contains only one distinctive keyword.
+                String skillName = skill.name.toLowerCase(Locale.ROOT).trim();
+                String skillDescription = skill.description == null ? "" : skill.description.toLowerCase(Locale.ROOT).trim();
+                if ((!skillName.isEmpty() && lower.contains(skillName))
+                        || (!skillDescription.isEmpty() && lower.contains(skillDescription))) score += 3;
                 if(score>=2) reason="Automatically matched the task to this skill's name/description";
             }
             if(reason!=null) {
