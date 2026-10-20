@@ -1818,7 +1818,8 @@ public class AssistantFragment extends Fragment {
         }
     }
 
-    private String pendingSkillExportId;\n    private ChatStore.Message assistantMsg;
+    private String pendingSkillExportId;
+    private ChatStore.Message assistantMsg;
     private ChatStore.Message thinkingMsg;
     private ChatStore.Message toolsCard;
     private ChatStore.Message rateLimitMsg;
