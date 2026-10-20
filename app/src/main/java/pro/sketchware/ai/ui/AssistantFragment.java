@@ -957,7 +957,7 @@ public class AssistantFragment extends Fragment {
         empty.setVisibility(skills.isEmpty() ? View.VISIBLE : View.GONE);
         recent.setText(SkillManager.get(requireContext()).getLastSelectionSummary());
         RecyclerView list=panel.findViewById(R.id.ai_skills_list);
-        if(list!=null && list.getAdapter()!=null) list.getAdapter().notifyDataSetChanged();
+        if(list!=null && list.getAdapter() instanceof BuiltInSkillsAdapter) { BuiltInSkillsAdapter adapter=(BuiltInSkillsAdapter)list.getAdapter(); adapter.reload(); adapter.notifyDataSetChanged(); }
     }
 
     private final class BuiltInSkillsAdapter extends RecyclerView.Adapter<BuiltInSkillsAdapter.SkillHolder> {
