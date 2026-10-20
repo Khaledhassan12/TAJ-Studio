@@ -16,23 +16,31 @@ public final class RetryPolicy {
         return e instanceof java.io.IOException;
     }
 
+    /**
+     * Bounded exponential backoff for interactive AI calls.
+     * attempt is 1-based: roughly 0.8–1.2s, 1.6–2.4s, then capped.
+     * Provider Retry-After is honored but clamped so a malformed server header
+     * cannot stall the assistant for minutes or overflow a millisecond conversion.
+     */
     public static long waitMs(int attempt, Response response) {
         if (response != null) {
             String retryAfter = response.header("Retry-After");
-            if (retryAfter != null && !retryAfter.isEmpty()) {
+            if (retryAfter != null && !retryAfter.trim().isEmpty()) {
                 try {
-                    // Try to parse as seconds
-                    return Long.parseLong(retryAfter) * 1000L;
-                } catch (NumberFormatException ignored) {}
+                    long seconds = Long.parseLong(retryAfter.trim());
+                    if (seconds >= 0L) {
+                        return Math.min(30_000L, seconds > 30L ? 30_000L : seconds * 1000L);
+                    }
+                } catch (NumberFormatException ignored) {
+                    // HTTP-date Retry-After and malformed values fall back to backoff.
+                }
             }
         }
 
-        // Exponential backoff: 5s, 10s, 20s... capped at 60s
-        long base = (long) Math.min(60000, 5000 * Math.pow(2, attempt));
-        // +/- 20% jitter
-        double range = base * 0.2;
-        double offset = (JITTER.nextDouble() * 2 - 1) * range;
-        return (long) (base + offset);
+        int safeAttempt = Math.max(1, Math.min(attempt, 6));
+        long base = Math.min(15_000L, 1_000L << (safeAttempt - 1));
+        double offset = (JITTER.nextDouble() * 0.4d) - 0.2d;
+        return Math.max(250L, Math.min(15_000L, (long) (base * (1.0d + offset))));
     }
 
     public interface SyncCall {
@@ -51,11 +59,13 @@ public final class RetryPolicy {
                 return response;
             }
             long wait = waitMs(i, response);
+            // Release the error body/connection before waiting for the next attempt.
+            response.close();
             try {
                 Thread.sleep(wait);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                return response;
+                throw new java.io.IOException("Interrupted while waiting to retry the request.", e);
             }
         }
         return null; // unreachable

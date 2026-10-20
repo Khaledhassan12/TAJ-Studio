@@ -143,7 +143,7 @@ public final class SkillManager {
             return new Skill(dir.getName(),name,description,source,dir.getAbsolutePath(),enabled,pinned,valid,builtIn);
         } catch(Exception e) { return null; }
     }
-    public public synchronized Skill createSkill(String name,String description,String instructions) throws IOException {
+    public synchronized Skill createSkill(String name,String description,String instructions) throws IOException {
         String slug=slug(name);
         if(slug.isEmpty()) throw new IOException("Enter a valid skill name.");
         File dir=new File(root,slug);
