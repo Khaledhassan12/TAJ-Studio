@@ -102,6 +102,10 @@ public final class SkillCenterActivity extends BaseAppCompatActivity {
     }
 
     private void refreshAll() { refreshMySkills(); refreshControls(); }
+    private void refreshSummaryOnly() {
+        lastSelection.setText(manager.getLastSelectionSummary());
+        myCount.setText(manager.listSkills().size()+" installed skill"+(manager.listSkills().size()==1?"":"s")+" · stored locally");
+    }
     private void refreshMySkills() {
         List<SkillManager.Skill> skills=manager.listSkills();
         myList.removeAllViews();
@@ -135,10 +139,18 @@ public final class SkillCenterActivity extends BaseAppCompatActivity {
         detail.setTextColor(com.google.android.material.color.MaterialColors.getColor(card,com.google.android.material.R.attr.colorOnSurfaceVariant));
         LinearLayout.LayoutParams dp=new LinearLayout.LayoutParams(-1,-2); dp.topMargin=(int)(5*d); body.addView(detail,dp);
         MaterialSwitch enabled=new MaterialSwitch(this); enabled.setText("Skill enabled"); enabled.setChecked(skill.enabled);
-        enabled.setOnCheckedChangeListener((b,checked)->{manager.setEnabled(skill.id,checked); refreshControls(); refreshMySkills();});
+        enabled.setOnCheckedChangeListener((b,checked)->{
+            manager.setEnabled(skill.id,checked);
+            // Avoid destroying/recreating all cards while the originating switch is handling
+            // its checked event; that produced rows appearing to swap or resurrect.
+            refreshSummaryOnly();
+        });
         body.addView(enabled);
         MaterialSwitch pinned=new MaterialSwitch(this); pinned.setText("Always include for agent tasks"); pinned.setChecked(skill.pinned);
-        pinned.setOnCheckedChangeListener((b,checked)->{manager.setPinned(skill.id,checked); refreshControls(); refreshMySkills();});
+        pinned.setOnCheckedChangeListener((b,checked)->{
+            manager.setPinned(skill.id,checked);
+            refreshSummaryOnly();
+        });
         body.addView(pinned);
         if(!controlsMode) {
             LinearLayout actions=new LinearLayout(this); actions.setOrientation(LinearLayout.HORIZONTAL);
