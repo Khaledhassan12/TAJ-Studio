@@ -515,7 +515,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             itemView.post(() -> {
                 RecyclerView list = itemView.getParent() instanceof RecyclerView
                         ? (RecyclerView) itemView.getParent() : null;
-                if (list == null || list.getAdapter() != ChatAdapter.this) return;
+                if (list == null || !(list.getAdapter() instanceof ChatAdapter)) return;
                 int last = list.getAdapter().getItemCount() - 1;
                 if (last >= 0) list.smoothScrollToPosition(last);
             });
@@ -886,7 +886,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             itemView.post(() -> {
                 RecyclerView list = itemView.getParent() instanceof RecyclerView
                         ? (RecyclerView) itemView.getParent() : null;
-                if (list == null || list.getAdapter() != ChatAdapter.this) return;
+                if (list == null || !(list.getAdapter() instanceof ChatAdapter)) return;
                 int last = list.getAdapter().getItemCount() - 1;
                 if (last >= 0) list.smoothScrollToPosition(last);
             });
