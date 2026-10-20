@@ -33,7 +33,8 @@ public final class SseReader {
     }
 
     private final BufferedSource source;
-    private static final int MAX_EVENT_CHARS = 1024 * 1024;
+    // Supports large streamed outputs from long-context models while retaining a heap guard.
+    private static final int MAX_EVENT_CHARS = 8 * 1024 * 1024;
     private static final int MAX_EVENT_NAME_CHARS = 256;
 
     private final StringBuilder dataBuffer = new StringBuilder();
@@ -89,7 +90,7 @@ public final class SseReader {
                     // malformed or hostile stream cannot grow the app heap without limit.
                     int addedChars = value.length() + (dataBuffer.length() > 0 ? 1 : 0);
                     if (dataBuffer.length() + addedChars > MAX_EVENT_CHARS) {
-                        throw new IOException("AI stream event exceeded the 1 MiB safety limit.");
+                        throw new IOException("AI stream event exceeded TAJ AI's 8 Mi-character event safety ceiling.");
                     }
                     if (dataBuffer.length() > 0) {
                         dataBuffer.append('\n');
