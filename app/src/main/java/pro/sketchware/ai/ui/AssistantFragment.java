@@ -1906,7 +1906,7 @@ public class AssistantFragment extends Fragment {
             } else {
                 int idx = currentSession.messages.indexOf(assistantMsg);
                 if (idx >= 0) chatAdapter.appendToken(idx, token);
-                if (autoFollowChat || activeRequestId != 0L) scrollToBottom(false);
+                if (autoFollowChat) scrollToBottom(false);
                 else {
                     View sessionPanel = panels.get(R.id.ai_dest_session);
                     RecyclerView chatList = sessionPanel == null ? null : sessionPanel.findViewById(R.id.ai_rv_chat);
