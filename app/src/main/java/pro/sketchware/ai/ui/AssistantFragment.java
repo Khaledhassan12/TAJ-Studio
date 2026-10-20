@@ -2396,9 +2396,23 @@ public class AssistantFragment extends Fragment {
             }
 
             String liveProjectContext = buildLiveProjectContext();
+            // Skills are resolved against the latest installed/enabled library for every
+            // request in both Chat and Agent modes; no stale skills snapshot is retained.
+            SkillManager skillManager = SkillManager.get(activity);
+            List<SkillManager.ResolvedSkill> selectedSkills = skillManager.resolveForTask(text);
+            String skillContext = skillManager.buildPromptContext(selectedSkills);
+            if (!selectedSkills.isEmpty()) {
+                StringBuilder selectedNames = new StringBuilder("Skills applied to this chat request: ");
+                for (int i = 0; i < selectedSkills.size(); i++) {
+                    if (i > 0) selectedNames.append(" · ");
+                    selectedNames.append(selectedSkills.get(i).skill.name);
+                }
+                Snackbar.make(getView(), selectedNames.toString(), Snackbar.LENGTH_SHORT)
+                        .setAction("Manage", v -> rail.setSelectedItemId(R.id.ai_dest_skills)).show();
+            }
             pro.sketchware.ai.core.AIRequest request = new pro.sketchware.ai.core.AIRequest.Builder()
                     .model(model)
-                    .systemPrompt(buildAssistantSystemPrompt(liveProjectContext))
+                    .systemPrompt(buildAssistantSystemPrompt(liveProjectContext) + skillContext)
                     .messages(history)
                     .temperature(configStore.getTemperature())
                     .thinkingEnabled(configStore.isShowThinking() && ThinkingDetector.hint(model))
