@@ -13,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,6 +22,7 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Local, provider-neutral SKILL.md runtime. Skill files are instructions/data only:
@@ -231,6 +233,46 @@ public final class SkillManager {
         if(skill==null) { deleteTree(destination); throw new IOException("Imported skill metadata could not be validated."); }
         return skill;
     }
+    /** Export one installed skill as a portable ZIP containing its SKILL.md and references. */
+    public synchronized void exportZip(String id, OutputStream destination) throws IOException {
+        if (id == null || id.contains("/") || id.contains("\\\\") || id.startsWith("."))
+            throw new IOException("Invalid skill identifier.");
+        if (destination == null) throw new IOException("No destination was provided.");
+        File dir = new File(root, id).getCanonicalFile();
+        if (!dir.getParentFile().equals(root.getCanonicalFile()) || !new File(dir, "SKILL.md").isFile())
+            throw new IOException("Skill does not exist or its path is invalid.");
+        try (ZipOutputStream zip = new ZipOutputStream(destination)) {
+            addDirectoryToZip(dir, dir, zip, 0);
+            zip.finish();
+        }
+    }
+    private void addDirectoryToZip(File rootDir, File current, ZipOutputStream zip, int depth) throws IOException {
+        if (depth > 6) throw new IOException("Skill directory is nested too deeply to export.");
+        File[] children = current.listFiles();
+        if (children == null) return;
+        for (File child : children) {
+            if (child.isDirectory()) {
+                addDirectoryToZip(rootDir, child, zip, depth + 1);
+            } else if (child.isFile()) {
+                String relative = child.getCanonicalPath().substring(rootDir.getCanonicalPath().length())
+                        .replace(File.separatorChar, '/');
+                if (relative.startsWith("/")) relative = relative.substring(1);
+                if (relative.isEmpty() || relative.contains("../")) throw new IOException("Unsafe skill path.");
+                zip.putNextEntry(new ZipEntry(relative));
+                try (InputStream in = new FileInputStream(child)) {
+                    byte[] buffer = new byte[8192];
+                    int n, total = 0;
+                    while ((n = in.read(buffer)) != -1) {
+                        total += n;
+                        if (total > MAX_FILE_BYTES) throw new IOException("A skill file exceeds 1 MB.");
+                        zip.write(buffer, 0, n);
+                    }
+                }
+                zip.closeEntry();
+            }
+        }
+    }
+
     private File findSkillRoot(File dir,int depth) {
         if(depth>5||dir==null||!dir.isDirectory()) return null;
         if(new File(dir,"SKILL.md").isFile()) return dir;
