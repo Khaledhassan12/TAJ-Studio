@@ -212,6 +212,8 @@ public final class SkillManager {
     public void setAutoSelectEnabled(boolean enabled) { prefs.edit().putBoolean(KEY_AUTO,enabled).apply(); }
     public synchronized boolean deleteSkill(String id) {
         if(id==null||id.contains("/")||id.contains("\\")||id.startsWith(".")) return false;
+        Skill existing=readSkill(new File(root,id));
+        if(existing!=null&&existing.builtIn) return false;
         File dir=new File(root,id);
         boolean deleted=deleteTree(dir);
         prefs.edit().remove("enabled:"+id).remove("pinned:"+id).apply();
