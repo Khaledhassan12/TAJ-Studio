@@ -358,10 +358,10 @@ public class AssistantFragment extends Fragment {
     /** Resolve the project after DesignActivity has finished restoring its intent/state. */
     @Nullable
     private String resolveActiveProjectId(@NonNull DesignActivity activity) {
-        String id = DesignActivity.sc_id;
-        if (id == null || id.trim().isEmpty()) {
-            id = activity.getIntent() == null ? null : activity.getIntent().getStringExtra("sc_id");
-        }
+        // Prefer this Activity's own intent: the static field can briefly retain a previous
+        // project's ID while a new DesignActivity is being created.
+        String id = activity.getIntent() == null ? null : activity.getIntent().getStringExtra("sc_id");
+        if (id == null || id.trim().isEmpty()) id = DesignActivity.sc_id;
         return id == null || id.trim().isEmpty() ? null : id.trim();
     }
 
@@ -934,7 +934,8 @@ public class AssistantFragment extends Fragment {
         MaterialSwitch master = panel.findViewById(R.id.ai_skills_master_switch);
         if (master != null) {
             master.setOnCheckedChangeListener(null);
-            master.setChecked(SkillManager.get(requireContext()).areAllSkillsEnabled());
+            SkillManager manager = SkillManager.get(requireContext());
+            master.setChecked(!manager.listSkills().isEmpty() && manager.areAllSkillsEnabled());
             master.setOnCheckedChangeListener((button, checked) -> {
                 SkillManager.get(requireContext()).setAllSkillsEnabled(checked);
                 refreshSkillsPanel(panel);
