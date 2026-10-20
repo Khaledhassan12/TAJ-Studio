@@ -41,6 +41,8 @@ public abstract class HttpAI implements AIProvider {
     /** Bounds serialized prompt growth before any provider/network work begins. */
     private static final int MAX_REQUEST_CHARS = 512 * 1024;
     private static final int MAX_REQUEST_MESSAGES = 512;
+    /** Hard cap for one provider response, including cumulative SSE frames. */
+    private static final long MAX_RESPONSE_BYTES = 4L * 1024L * 1024L;
 
     protected static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
@@ -272,7 +274,13 @@ public abstract class HttpAI implements AIProvider {
                 BufferedSource source = body.source();
                 SseReader reader = new SseReader(source);
                 SseReader.SseEvent event;
+                long receivedChars = 0L;
                 while ((event = reader.nextEvent()) != null) {
+                    receivedChars += event.data.length();
+                    if (receivedChars > MAX_RESPONSE_BYTES) {
+                        throw new AIException(AIException.Type.UNKNOWN,
+                                "The provider response exceeded TAJ AI's 4 MiB safety limit.");
+                    }
                     if (handle.isCancelled()) {
                         throw AIException.cancelled();
                     }
@@ -285,6 +293,13 @@ public abstract class HttpAI implements AIProvider {
                 }
             } else {
                 // Some compatible servers ignore stream=true and answer with plain JSON.
+                // Request at most one byte beyond the cap before materializing the body.
+                BufferedSource source = body.source();
+                source.request(MAX_RESPONSE_BYTES + 1L);
+                if (source.buffer().size() > MAX_RESPONSE_BYTES) {
+                    throw new AIException(AIException.Type.UNKNOWN,
+                            "The provider response exceeded TAJ AI's 4 MiB safety limit.");
+                }
                 parseNonStreaming(state, body.string(), tracked);
             }
             finishStream(state, tracked);

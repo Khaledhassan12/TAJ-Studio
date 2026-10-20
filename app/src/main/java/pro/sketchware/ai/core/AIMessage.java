@@ -49,7 +49,12 @@ public final class AIMessage {
     }
 
     public static AIMessage assistantWithToolCalls(List<ToolCall> toolCalls) {
-        return new AIMessage(ROLE_ASSISTANT, "", new ArrayList<>(toolCalls), null, null, 0);
+        return assistantWithToolCalls("", toolCalls);
+    }
+
+    /** Preserves assistant text that may accompany provider tool calls in the same turn. */
+    public static AIMessage assistantWithToolCalls(String text, List<ToolCall> toolCalls) {
+        return new AIMessage(ROLE_ASSISTANT, text, new ArrayList<>(toolCalls), null, null, 0);
     }
 
     public static AIMessage toolResult(String toolCallId, String content) {

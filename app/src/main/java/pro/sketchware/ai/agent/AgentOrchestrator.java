@@ -136,7 +136,7 @@ public final class AgentOrchestrator {
                         if (response.toolCalls.isEmpty()) {
                             break;
                         } else {
-                            conversation.add(AIMessage.assistantWithToolCalls(response.toolCalls));
+                            conversation.add(AIMessage.assistantWithToolCalls(response.text, response.toolCalls));
                         }
 
                         state = SessionState.TOOL_RUNNING;
