@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fillViewport="true" android:clipToPadding="false"
+    android:padding="8dp" android:background="?attr/colorSurface">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="10dp">
+        <com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerLow" app:cardCornerRadius="26dp"
+            app:cardElevation="2dp" app:strokeColor="?attr/colorOutlineVariant" app:strokeWidth="1dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="18dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Skill Library" android:textColor="?attr/colorOnSurface"
+                    android:textSize="23sp" android:textStyle="bold" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Teach TAJ AI reusable workflows. Skills load into agent context; imported scripts are never executed."
+                    android:textColor="?attr/colorOnSurfaceVariant" android:textSize="13sp" />
+                <TextView android:id="@+id/ai_skills_count" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:layout_marginTop="12dp"
+                    android:text="0 installed skills" android:textColor="?attr/colorPrimary" android:textStyle="bold" />
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/ai_skills_auto_select"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Automatically select relevant skills" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/ai_skills_create"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:text="Create skill" app:cornerRadius="18dp" app:icon="@drawable/ic_mtrl_add" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/ai_skills_import"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp"
+                        android:layout_weight="1" android:text="Import ZIP" app:cornerRadius="18dp"
+                        app:icon="@drawable/ic_mtrl_download" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:paddingStart="4dp" android:paddingTop="4dp" android:paddingBottom="10dp"
+            android:text="MY SKILLS" android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="12sp" android:textStyle="bold" />
+        <TextView android:id="@+id/ai_skills_empty" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:gravity="center" android:padding="28dp"
+            android:text="No skills yet. Create one or import a compatible SKILL.md ZIP."
+            android:textColor="?attr/colorOnSurfaceVariant" android:visibility="gone" />
+        <LinearLayout android:id="@+id/ai_skills_list" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="vertical" />
+        <com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp"
+            app:cardBackgroundColor="?attr/colorSurfaceContainer" app:cardCornerRadius="20dp" app:cardElevation="0dp">
+            <TextView android:id="@+id/ai_skills_recent" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:padding="16dp"
+                android:text="Recent skill selection will appear here after an agent request."
+                android:textColor="?attr/colorOnSurfaceVariant" android:textSize="13sp" />
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</ScrollView>

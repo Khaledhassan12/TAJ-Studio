@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -26,6 +27,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.besome.sketch.design.DesignActivity;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigationrail.NavigationRailView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
@@ -472,6 +477,8 @@ public class AssistantFragment extends Fragment {
         render(panel, PanelState.READY);
         if (id == R.id.ai_dest_session) {
             setupSessionPanel(panel);
+        } else if (id == R.id.ai_dest_skills) {
+            setupSkillsPanel(panel);
         } else if (id == R.id.ai_dest_models) {
             setupModelsPanel(panel);
         } else if (id == R.id.ai_dest_agents) {
@@ -898,6 +905,65 @@ public class AssistantFragment extends Fragment {
         }
     }
 
+
+    private void setupSkillsPanel(View panel) {
+        MaterialSwitch auto = panel.findViewById(R.id.ai_skills_auto_select);
+        auto.setChecked(SkillManager.get(requireContext()).isAutoSelectEnabled());
+        auto.setOnCheckedChangeListener((button, checked) -> SkillManager.get(requireContext()).setAutoSelectEnabled(checked));
+        panel.findViewById(R.id.ai_skills_create).setOnClickListener(v -> {
+            EditText name = new EditText(requireContext()); name.setHint("Skill name");
+            EditText desc = new EditText(requireContext()); desc.setHint("Description for auto-selection");
+            EditText body = new EditText(requireContext()); body.setHint("Instructions (Markdown)"); body.setMinLines(6);
+            LinearLayout fields = new LinearLayout(requireContext()); fields.setOrientation(LinearLayout.VERTICAL);
+            fields.addView(name); fields.addView(desc); fields.addView(body);
+            new MaterialAlertDialogBuilder(requireContext()).setTitle("Create Skill").setView(fields)
+                .setNegativeButton("Cancel", null).setPositiveButton("Save", (dialog, which) -> new Thread(() -> {
+                    try {
+                        SkillManager.get(requireContext()).createSkill(name.getText().toString(), desc.getText().toString(), body.getText().toString());
+                        mainHandler.post(() -> refreshSkillsPanel(panel));
+                    } catch (Exception e) { mainHandler.post(() -> Snackbar.make(panel, "Save failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show()); }
+                }).start()).show();
+        });
+        panel.findViewById(R.id.ai_skills_import).setOnClickListener(v -> {
+            Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT); pick.addCategory(Intent.CATEGORY_OPENABLE); pick.setType("application/zip");
+            pick.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/zip","application/x-zip-compressed","application/octet-stream"});
+            startActivityForResult(pick, 7142);
+        });
+        refreshSkillsPanel(panel);
+    }
+
+    private void refreshSkillsPanel(View panel) {
+        LinearLayout list = panel.findViewById(R.id.ai_skills_list);
+        if (list == null || !isAdded()) return;
+        list.removeAllViews();
+        List<SkillManager.Skill> skills = SkillManager.get(requireContext()).listSkills();
+        TextView count = panel.findViewById(R.id.ai_skills_count);
+        TextView empty = panel.findViewById(R.id.ai_skills_empty);
+        TextView recent = panel.findViewById(R.id.ai_skills_recent);
+        count.setText(skills.size() + " installed skills · stored locally");
+        empty.setVisibility(skills.isEmpty() ? View.VISIBLE : View.GONE);
+        recent.setText(SkillManager.get(requireContext()).getLastSelectionSummary());
+        for (SkillManager.Skill skill : skills) {
+            MaterialCardView card = new MaterialCardView(requireContext());
+            card.setRadius(22 * getResources().getDisplayMetrics().density); card.setCardElevation(2);
+            LinearLayout content = new LinearLayout(requireContext()); content.setOrientation(LinearLayout.VERTICAL);
+            content.setPadding(18,14,18,14);
+            TextView title = new TextView(requireContext()); title.setText(skill.name); title.setTextSize(17); title.setTypeface(null,1); content.addView(title);
+            TextView detail = new TextView(requireContext()); detail.setText(skill.description + "\nSource: " + skill.source); content.addView(detail);
+            MaterialSwitch enabled = new MaterialSwitch(requireContext()); enabled.setText("Enabled"); enabled.setChecked(skill.enabled);
+            enabled.setOnCheckedChangeListener((b,checked) -> { SkillManager.get(requireContext()).setEnabled(skill.id,checked); refreshSkillsPanel(panel); }); content.addView(enabled);
+            MaterialSwitch pinned = new MaterialSwitch(requireContext()); pinned.setText("Always include"); pinned.setChecked(skill.pinned);
+            pinned.setOnCheckedChangeListener((b,checked) -> { SkillManager.get(requireContext()).setPinned(skill.id,checked); refreshSkillsPanel(panel); }); content.addView(pinned);
+            MaterialButton remove = new MaterialButton(requireContext()); remove.setText("Remove");
+            remove.setOnClickListener(v -> new MaterialAlertDialogBuilder(requireContext()).setTitle("Remove skill?")
+                .setMessage(skill.name).setNegativeButton("Cancel",null).setPositiveButton("Remove",(d,w) -> {
+                    SkillManager.get(requireContext()).deleteSkill(skill.id); refreshSkillsPanel(panel);
+                }).show());
+            content.addView(remove); card.addView(content);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1,-2); lp.bottomMargin=12; list.addView(card,lp);
+        }
+    }
+
     private void setupAgentsPanel(View panel) {
         View skillsButton = panel.findViewById(R.id.btn_open_skills_center);
         if (skillsButton != null) skillsButton.setOnClickListener(v ->
@@ -1117,7 +1183,16 @@ public class AssistantFragment extends Fragment {
     }
     private String exportRoleName(String role){if("user".equals(role))return "You";if("assistant".equals(role))return "TAJ Assistant";return role==null?"Message":role.replace('_',' ').toUpperCase(java.util.Locale.ROOT);}
     @Override public void onActivityResult(int requestCode,int resultCode,@Nullable Intent data){
-        super.onActivityResult(requestCode,resultCode,data);if(requestCode!=9021||resultCode!=android.app.Activity.RESULT_OK||data==null||data.getData()==null)return;
+        super.onActivityResult(requestCode,resultCode,data);
+        if(requestCode==7142 && resultCode==android.app.Activity.RESULT_OK && data!=null && data.getData()!=null) {
+            Uri uri=data.getData();
+            new Thread(() -> { try (InputStream in=requireContext().getContentResolver().openInputStream(uri)) {
+                SkillManager.get(requireContext()).importZip(in,"Imported ZIP");
+                mainHandler.post(() -> { View p=panels.get(R.id.ai_dest_skills); if(isAdded()&&p!=null) refreshSkillsPanel(p); });
+            } catch(Exception e) { mainHandler.post(() -> { View p=panels.get(R.id.ai_dest_skills); if(isAdded()&&p!=null) Snackbar.make(p,"Import failed: "+e.getMessage(),Snackbar.LENGTH_LONG).show(); }); } }).start();
+            return;
+        }
+        if(requestCode!=9021||resultCode!=android.app.Activity.RESULT_OK||data==null||data.getData()==null)return;
         if(AIActivityMonitor.isBusy()||activeRequestId!=0L){if(getView()!=null)Snackbar.make(getView(),"Cancel the active request before importing a conversation.",Snackbar.LENGTH_LONG).show();return;}
         try(InputStream in=requireContext().getContentResolver().openInputStream(data.getData());ByteArrayOutputStream out=new ByteArrayOutputStream()){
             if(in==null)throw new java.io.IOException("Unable to open selected file");byte[] buffer=new byte[8192];int n,total=0;while((n=in.read(buffer))!=-1){total+=n;if(total>10*1024*1024)throw new java.io.IOException("Session JSON exceeds the 10 MB import limit");out.write(buffer,0,n);}
