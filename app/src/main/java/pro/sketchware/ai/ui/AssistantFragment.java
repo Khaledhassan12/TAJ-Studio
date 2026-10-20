@@ -283,10 +283,9 @@ public class AssistantFragment extends Fragment {
         if (rv == null || chatAdapter == null) return;
         rv.post(() -> {
             if (chatAdapter == null || rv.getAdapter() != chatAdapter) return;
-            // Do not steal scroll control while the user is reading older messages.
-            // While a request is active, keep the live response/tool timeline in view.
-            // Outside a request, preserve the user's ability to inspect older messages.
-            if (!autoFollowChat && activeRequestId == 0L) {
+            // Respect the reader's choice in every request state. Streaming, thinking,
+            // and tool updates must not override an upward gesture.
+            if (!autoFollowChat) {
                 updateScrollToBottomButton(rv);
                 return;
             }
@@ -497,8 +496,7 @@ public class AssistantFragment extends Fragment {
         }
     }
 
-    private void render(View panel, PanelState state) {
-        if (panel == null) return;
+    private void render(View panel, PanelState state) {        if (panel == null) return;
         View loading = panel.findViewById(R.id.ai_loading_state);
         View empty = panel.findViewById(R.id.ai_empty_state);
         View error = panel.findViewById(R.id.ai_error_state);
@@ -997,8 +995,7 @@ public class AssistantFragment extends Fragment {
         TextView recent = panel.findViewById(R.id.ai_skills_recent);
         count.setText(skills.size() + " installed skills · " + skills.stream().filter(s -> s.enabled).count() + " enabled");
         MaterialSwitch master = panel.findViewById(R.id.ai_skills_master_switch);
-        if (master != null) {
-            master.setOnCheckedChangeListener(null);
+        if (master != null) {            master.setOnCheckedChangeListener(null);
             master.setChecked(SkillManager.get(requireContext()).areAllSkillsEnabled());
             master.setOnCheckedChangeListener((button, checked) -> {
                 SkillManager manager = SkillManager.get(requireContext());
@@ -1370,11 +1367,37 @@ public class AssistantFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         chatAdapter = new ChatAdapter();
         rv.setAdapter(chatAdapter);
+        // Detect even a tiny upward finger movement before RecyclerView reports a
+        // meaningful scroll delta. Only pause during an active assistant/agent request;
+        // touching or scrolling while the user is composing a prompt does not affect it.
+        final float[] touchStartY = {-1f};
+        rv.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView recyclerView, @NonNull android.view.MotionEvent event) {
+                if (activeRequestId == 0L) {
+                    if (event.getActionMasked() == android.view.MotionEvent.ACTION_UP
+                            || event.getActionMasked() == android.view.MotionEvent.ACTION_CANCEL) touchStartY[0] = -1f;
+                    return false;
+                }
+                int action = event.getActionMasked();
+                if (action == android.view.MotionEvent.ACTION_DOWN) {
+                    touchStartY[0] = event.getY();
+                } else if (action == android.view.MotionEvent.ACTION_MOVE && touchStartY[0] >= 0f
+                        && event.getY() < touchStartY[0]) {
+                    autoFollowChat = false;
+                    updateScrollToBottomButton(recyclerView);
+                } else if (action == android.view.MotionEvent.ACTION_UP
+                        || action == android.view.MotionEvent.ACTION_CANCEL) {
+                    touchStartY[0] = -1f;
+                }
+                return false;
+            }
+        });
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                // User intent is tracked independently of focus/IME state. New streamed
-                // content must never drag a reader away from older messages.
+                // Scroll direction is the source of truth for returning to the newest
+                // content. Upward movement pauses; downward movement resumes only at bottom.
                 if (dy < 0) {
                     autoFollowChat = false;
                 } else if (dy > 0 && isNearBottom(recyclerView)) {
@@ -1385,8 +1408,6 @@ public class AssistantFragment extends Fragment {
 
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                // Do not re-enable auto-follow just because an upward gesture stopped
-                // near the bottom; the user must scroll down to the latest items or tap the FAB.
                 updateScrollToBottomButton(recyclerView);
             }
         });
@@ -1497,8 +1518,7 @@ public class AssistantFragment extends Fragment {
 
         chatAdapter.setOnMessageActionListener(new ChatAdapter.OnMessageActionListener() {
             @Override
-            public void onCopy(ChatStore.Message message) {
-                android.content.ClipboardManager cb = (android.content.ClipboardManager) requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+            public void onCopy(ChatStore.Message message) {                android.content.ClipboardManager cb = (android.content.ClipboardManager) requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
                 cb.setPrimaryClip(android.content.ClipData.newPlainText("TAG Assistant", message.text));
                 Snackbar.make(panel, R.string.ai_msg_copied, Snackbar.LENGTH_SHORT).show();
             }
@@ -1997,8 +2017,7 @@ public class AssistantFragment extends Fragment {
         out.append(label).append(": ");
         if (path == null || path.trim().isEmpty()) {
             out.append("unavailable\n");
-            return;
-        }
+            return;        }
         java.io.File root = new java.io.File(path);
         out.append(path).append('\n');
         if (root.isFile()) {
@@ -2497,8 +2516,7 @@ public class AssistantFragment extends Fragment {
                         addAssistantMessage("Error: " + error.getMessage());
                         saveSessionNow();
                         updateStreamingUi(false);
-                        retireRequest(requestId);
-                    });
+                        retireRequest(requestId);                    });
                 }
 
                 @Override
