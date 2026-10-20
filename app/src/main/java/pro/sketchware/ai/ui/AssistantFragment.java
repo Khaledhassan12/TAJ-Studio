@@ -1803,7 +1803,7 @@ public class AssistantFragment extends Fragment {
         // Sketchware project ID, not to an inferred project name or a previous session.
         if (projectScope != null) {
             String boundProjectId = sc_id == null || sc_id.trim().isEmpty() ? "unknown" : sc_id.trim();
-            projectScope.setText("ACTIVE PROJECT · #" + boundProjectId);
+            projectScope.setText("PROJECT #" + boundProjectId);
             projectScope.setContentDescription("Agent tools are scoped to active project " + boundProjectId);
         }
 
@@ -1830,7 +1830,12 @@ public class AssistantFragment extends Fragment {
 
         String providerId = configStore.getSelectedProviderId();
         String model = configStore.safeModel();
-        if (modelInfo != null) modelInfo.setText(model.isEmpty() ? "No model selected" : model);
+        if (modelInfo != null) {
+            String displayModel = model.isEmpty() ? "No model selected" : model;
+            modelInfo.setText(displayModel);
+            modelInfo.setContentDescription("Selected model: " + displayModel);
+            modelInfo.setTooltipText(displayModel);
+        }
 
         ProviderProfile profile = AIProviderRegistry.getInstance(requireContext()).get(providerId);
         String baseUrl = configStore.getBaseUrlFor(providerId);
