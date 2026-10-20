@@ -235,7 +235,7 @@ public final class SkillManager {
     }
     /** Export one installed skill as a portable ZIP containing its SKILL.md and references. */
     public synchronized void exportZip(String id, OutputStream destination) throws IOException {
-        if (id == null || id.contains("/") || id.contains("\\\\") || id.startsWith("."))
+        if (id == null || id.contains("/") || id.contains("\\") || id.startsWith("."))
             throw new IOException("Invalid skill identifier.");
         if (destination == null) throw new IOException("No destination was provided.");
         File dir = new File(root, id).getCanonicalFile();
