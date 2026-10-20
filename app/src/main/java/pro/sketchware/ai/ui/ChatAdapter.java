@@ -508,6 +508,17 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             } else {
                 rowsContainer.animate().alpha(0f).setDuration(200).withEndAction(() -> rowsContainer.setVisibility(View.GONE)).start();
             }
+            scrollChatToLatest();
+        }
+
+        private void scrollChatToLatest() {
+            itemView.post(() -> {
+                RecyclerView list = itemView.getParent() instanceof RecyclerView
+                        ? (RecyclerView) itemView.getParent() : null;
+                if (list == null || list.getAdapter() != ChatAdapter.this) return;
+                int last = list.getAdapter().getItemCount() - 1;
+                if (last >= 0) list.smoothScrollToPosition(last);
+            });
         }
     }
 
@@ -871,6 +882,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             btnExpand.animate().rotation(isExpanded ? 90 : 0).setDuration(150).start();
             scrollThink.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
             tvPreview.setVisibility(isExpanded ? View.GONE : View.VISIBLE);
+            scrollThink.post(() -> scrollThink.fullScroll(View.FOCUS_DOWN));
+            itemView.post(() -> {
+                RecyclerView list = itemView.getParent() instanceof RecyclerView
+                        ? (RecyclerView) itemView.getParent() : null;
+                if (list == null || list.getAdapter() != ChatAdapter.this) return;
+                int last = list.getAdapter().getItemCount() - 1;
+                if (last >= 0) list.smoothScrollToPosition(last);
+            });
         }
     }
 
