@@ -2019,7 +2019,7 @@ public class AssistantFragment extends Fragment {
                 }
             }
             Snackbar.make(getView(), skillNotice.toString(), Snackbar.LENGTH_LONG)
-                    .setAction("Manage", v -> startActivity(new Intent(requireActivity(), SkillCenterActivity.class)))
+                    .setAction("Manage", v -> rail.setSelectedItemId(R.id.ai_dest_skills))
                     .show();
             String persistentMemory = buildPersistentProjectMemory();
             if (!persistentMemory.isEmpty()) {
