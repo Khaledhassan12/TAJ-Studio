@@ -412,7 +412,7 @@ public final class AgentOrchestrator {
         AtomicReference<AIResponse> responseRef = new AtomicReference<>();
         AtomicReference<Exception> errorRef = new AtomicReference<>();
 
-        activeHandle = provider.stream(request, new StreamCallbacks() {
+        AIProvider.Handle requestHandle = provider.stream(request, new StreamCallbacks() {
             @Override
             public void onReasoningToken(String token) {
                 if (!taskCancellation.get()) outerCallbacks.onReasoningToken(token);
@@ -445,6 +445,7 @@ public final class AgentOrchestrator {
                 latch.countDown();
             }
         });
+        activeHandle = requestHandle;
 
         try {
             while (latch.getCount() > 0) {
@@ -458,7 +459,14 @@ public final class AgentOrchestrator {
                 latch.await(Math.min(250L, remaining), TimeUnit.MILLISECONDS);
             }
         } finally {
-            activeHandle = null;
+            // A deadline/cancellation can exit before the provider emits a terminal
+            // callback. Always cancel that underlying HTTP call to avoid orphan streams.
+            if (latch.getCount() > 0 && requestHandle != null) {
+                requestHandle.cancel();
+            }
+            if (activeHandle == requestHandle) {
+                activeHandle = null;
+            }
         }
 
         if (errorRef.get() != null) {

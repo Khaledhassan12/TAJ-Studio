@@ -350,6 +350,7 @@ public abstract class HttpAI implements AIProvider {
         @Override
         public void onReasoningToken(String token) {
             if (!terminated.get()) {
+                if (token != null && !token.isEmpty()) emitted.set(true);
                 delegate.onReasoningToken(token);
             }
         }
@@ -364,6 +365,7 @@ public abstract class HttpAI implements AIProvider {
         @Override
         public void onToolCall(pro.sketchware.ai.core.ToolCall toolCall) {
             if (!terminated.get()) {
+                if (toolCall != null) emitted.set(true);
                 delegate.onToolCall(toolCall);
             }
         }
