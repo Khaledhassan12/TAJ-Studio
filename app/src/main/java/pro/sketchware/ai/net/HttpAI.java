@@ -146,7 +146,7 @@ public abstract class HttpAI implements AIProvider {
             if (tool == null) return "AI request contains an invalid tool specification.";
             chars += tool.name == null ? 0 : tool.name.length();
             chars += tool.description == null ? 0 : tool.description.length();
-            chars += tool.parameters == null ? 0 : tool.parameters.toString().length();
+            chars += tool.jsonSchema == null ? 0 : tool.jsonSchema.toString().length();
             if (chars > MAX_REQUEST_CHARS) {
                 return "The prompt and tool definitions exceed TAJ AI's 512 KiB safety limit. Reduce tool/context payload size.";
             }

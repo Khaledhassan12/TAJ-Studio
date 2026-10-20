@@ -995,7 +995,7 @@ public class AssistantFragment extends Fragment {
             h.title.setText(skill.name);
             h.tag.setText(skill.builtIn ? "✦ BUILT-IN · TAJ STUDIO" : "PERSONAL · "+skill.source.toUpperCase(java.util.Locale.ROOT));
             h.desc.setText(skill.description==null?"":skill.description);
-            int on=com.google.android.material.color.MaterialColors.getColor(h.itemView,com.google.android.material.R.attr.colorPrimary);
+            int on=com.google.android.material.color.MaterialColors.getColor(h.itemView,androidx.appcompat.R.attr.colorPrimary);
             int muted=com.google.android.material.color.MaterialColors.getColor(h.itemView,com.google.android.material.R.attr.colorOnSurfaceVariant);
             h.title.setTextColor(com.google.android.material.color.MaterialColors.getColor(h.itemView,com.google.android.material.R.attr.colorOnSurface));
             h.tag.setTextColor(on); h.desc.setTextColor(muted);
