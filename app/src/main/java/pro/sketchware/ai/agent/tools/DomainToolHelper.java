@@ -38,7 +38,10 @@ public final class DomainToolHelper {
             File archive = AgentBackupStore.createSnapshot(projectId, source);
             BACKUPS.put(path, archive.getAbsolutePath());
         } catch (IOException e) {
-            throw new IllegalStateException("Could not preserve the original file in TAJ Agent Backups before modifying it.", e);
+            String detail = e.getMessage();
+            if (detail == null || detail.trim().isEmpty()) detail = e.getClass().getSimpleName();
+            if (detail.length() > 240) detail = detail.substring(0, 240);
+            throw new IllegalStateException("Could not preserve the original file in TAJ Agent Backups before modifying it: " + detail, e);
         }
     }
 
