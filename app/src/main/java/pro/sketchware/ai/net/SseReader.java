@@ -33,6 +33,9 @@ public final class SseReader {
     }
 
     private final BufferedSource source;
+    private static final int MAX_EVENT_CHARS = 1024 * 1024;
+    private static final int MAX_EVENT_NAME_CHARS = 256;
+
     private final StringBuilder dataBuffer = new StringBuilder();
     private String eventName = null;
 
@@ -82,12 +85,21 @@ public final class SseReader {
 
             switch (field) {
                 case "data":
+                    // Provider/proxy streams are untrusted. Bound accumulated payloads so a
+                    // malformed or hostile stream cannot grow the app heap without limit.
+                    int addedChars = value.length() + (dataBuffer.length() > 0 ? 1 : 0);
+                    if (dataBuffer.length() + addedChars > MAX_EVENT_CHARS) {
+                        throw new IOException("AI stream event exceeded the 1 MiB safety limit.");
+                    }
                     if (dataBuffer.length() > 0) {
                         dataBuffer.append('\n');
                     }
                     dataBuffer.append(value);
                     break;
                 case "event":
+                    if (value.length() > MAX_EVENT_NAME_CHARS) {
+                        throw new IOException("AI stream event name exceeded the safety limit.");
+                    }
                     eventName = value;
                     break;
                 default:

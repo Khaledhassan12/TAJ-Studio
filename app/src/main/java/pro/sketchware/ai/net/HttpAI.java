@@ -38,6 +38,9 @@ import pro.sketchware.ai.core.StreamCallbacks;
 public abstract class HttpAI implements AIProvider {
 
     private static final String TAG = "AIEngine";
+    /** Bounds serialized prompt growth before any provider/network work begins. */
+    private static final int MAX_REQUEST_CHARS = 512 * 1024;
+    private static final int MAX_REQUEST_MESSAGES = 512;
 
     protected static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
@@ -97,6 +100,11 @@ public abstract class HttpAI implements AIProvider {
     public final Handle stream(AIRequest request, StreamCallbacks callbacks) {
         CallHandle handle = new CallHandle();
         Tracked tracked = new Tracked(callbacks);
+        String budgetError = validateRequestBudget(request);
+        if (budgetError != null) {
+            tracked.fail(new AIException(AIException.Type.INVALID_JSON, budgetError));
+            return handle;
+        }
         try {
             EXECUTOR.execute(() -> runWithRetry(request, tracked, handle));
         } catch (RejectedExecutionException rejected) {
@@ -104,6 +112,46 @@ public abstract class HttpAI implements AIProvider {
                     "TAJ AI is busy with other requests. Wait a moment and try again.", rejected));
         }
         return handle;
+    }
+
+    /**
+     * Reject pathological prompt payloads before JSON serialization/network dispatch.
+     * This is a character budget, not a model-token estimator; providers still enforce
+     * their own context windows. The limit prevents accidental transcript/tool-output
+     * amplification from consuming excessive heap and mobile bandwidth.
+     */
+    private static String validateRequestBudget(AIRequest request) {
+        if (request == null) return "AI request is missing.";
+        if (request.messages.size() > MAX_REQUEST_MESSAGES) {
+            return "This conversation is too long for one request. Start a new chat or shorten its history.";
+        }
+        long chars = 0L;
+        if (request.systemPrompt != null) chars += request.systemPrompt.length();
+        for (pro.sketchware.ai.core.AIMessage message : request.messages) {
+            if (message == null) return "AI request contains an invalid message.";
+            chars += message.text.length();
+            chars += message.reasoning.length();
+            if (message.hasToolCalls()) {
+                for (pro.sketchware.ai.core.ToolCall call : message.toolCalls) {
+                    if (call == null) return "AI request contains an invalid tool call.";
+                    chars += call.name == null ? 0 : call.name.length();
+                    chars += call.arguments == null ? 0 : call.arguments.toString().length();
+                }
+            }
+            if (chars > MAX_REQUEST_CHARS) {
+                return "This request exceeds TAJ AI's 512 KiB prompt safety limit. Shorten the conversation or split the task into smaller steps.";
+            }
+        }
+        for (pro.sketchware.ai.core.ToolSpec tool : request.tools) {
+            if (tool == null) return "AI request contains an invalid tool specification.";
+            chars += tool.name == null ? 0 : tool.name.length();
+            chars += tool.description == null ? 0 : tool.description.length();
+            chars += tool.parameters == null ? 0 : tool.parameters.toString().length();
+            if (chars > MAX_REQUEST_CHARS) {
+                return "The prompt and tool definitions exceed TAJ AI's 512 KiB safety limit. Reduce tool/context payload size.";
+            }
+        }
+        return null;
     }
 
     private void runWithRetry(AIRequest request, Tracked tracked, CallHandle handle) {
