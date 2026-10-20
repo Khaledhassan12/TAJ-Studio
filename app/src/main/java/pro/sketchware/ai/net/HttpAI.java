@@ -5,9 +5,10 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.Call;
@@ -40,11 +41,20 @@ public abstract class HttpAI implements AIProvider {
 
     protected static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
-    private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool(runnable -> {
-        Thread thread = new Thread(runnable, "tag-assistant-net");
-        thread.setDaemon(true);
-        return thread;
-    });
+    /**
+     * Bounded process-wide network work pool. A cached pool can create an
+     * unbounded number of threads when multiple screens/providers are triggered
+     * rapidly; a small queue keeps memory and scheduling predictable on phones.
+     */
+    private static final ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(
+            2, 4, 30L, TimeUnit.SECONDS,
+            new ArrayBlockingQueue<>(32),
+            runnable -> {
+                Thread thread = new Thread(runnable, "taj-ai-net");
+                thread.setDaemon(true);
+                return thread;
+            },
+            new ThreadPoolExecutor.AbortPolicy());
 
     /** Connect 10s, read 60s (SSE streams stay open), write 60s. */
     private static final OkHttpClient SHARED_CLIENT = new OkHttpClient.Builder()
@@ -87,7 +97,12 @@ public abstract class HttpAI implements AIProvider {
     public final Handle stream(AIRequest request, StreamCallbacks callbacks) {
         CallHandle handle = new CallHandle();
         Tracked tracked = new Tracked(callbacks);
-        EXECUTOR.execute(() -> runWithRetry(request, tracked, handle));
+        try {
+            EXECUTOR.execute(() -> runWithRetry(request, tracked, handle));
+        } catch (RejectedExecutionException rejected) {
+            tracked.fail(new AIException(AIException.Type.UNKNOWN,
+                    "TAJ AI is busy with other requests. Wait a moment and try again.", rejected));
+        }
         return handle;
     }
 
