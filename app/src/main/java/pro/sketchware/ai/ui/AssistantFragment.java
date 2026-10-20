@@ -58,7 +58,7 @@ import pro.sketchware.ai.core.ThinkingDetector;
 import pro.sketchware.ai.core.ToolCall;
 import pro.sketchware.ai.live.UiPoster;
 import pro.sketchware.ai.skills.SkillManager;
-import pro.sketchware.ai.skills.SkillCenterActivity;
+
 
 public class AssistantFragment extends Fragment {
 
@@ -463,6 +463,7 @@ public class AssistantFragment extends Fragment {
     private View inflatePanel(int id) {
         LayoutInflater inflater = LayoutInflater.from(getContext());
         if (id == R.id.ai_dest_session) return inflater.inflate(R.layout.panel_session, container, false);
+        if (id == R.id.ai_dest_skills) return inflater.inflate(R.layout.panel_skills, container, false);
         if (id == R.id.ai_dest_models) return inflater.inflate(R.layout.panel_models, container, false);
         if (id == R.id.ai_dest_agents) return inflater.inflate(R.layout.panel_agents, container, false);
         if (id == R.id.ai_dest_favorites) return inflater.inflate(R.layout.panel_favorites, container, false);
@@ -966,8 +967,7 @@ public class AssistantFragment extends Fragment {
 
     private void setupAgentsPanel(View panel) {
         View skillsButton = panel.findViewById(R.id.btn_open_skills_center);
-        if (skillsButton != null) skillsButton.setOnClickListener(v ->
-                startActivity(new Intent(requireActivity(), SkillCenterActivity.class)));
+        if (skillsButton != null) skillsButton.setOnClickListener(v -> rail.setSelectedItemId(R.id.ai_dest_skills));
         Chip destructiveOps = panel.findViewById(R.id.chip_destructive_ops);
         if (destructiveOps != null) {
             destructiveOps.setCheckable(false);
