@@ -1852,7 +1852,7 @@ public class AssistantFragment extends Fragment {
                 scroll.setVisibility(View.GONE);
                 return;
             }
-            String query = trimmed.toLowerCase(java.util.Locale.ROOT);
+            String query = trimmed.split("\\s+", 2)[0].toLowerCase(java.util.Locale.ROOT);
             int shown = 0;
             for (String[] command : commands) {
                 if (!command[0].startsWith(query) && !query.equals("/")) continue;
