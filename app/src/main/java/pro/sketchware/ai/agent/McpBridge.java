@@ -112,11 +112,7 @@ public final class McpBridge {
             JSONObject item = new JSONObject().put("name", spec.name)
                     .put("description", spec.description)
                     .put("inputSchema", new JSONObject(spec.parameters.toString()));
-            if (!READ_ONLY_TOOLS.contains(spec.name)) {
-                item.put("annotations", new JSONObject().put("readOnlyHint", false)
-                        .put("destructiveHint", tool.riskLevel(new JSONObject(), context)
-                                == Tool.RiskLevel.DESTRUCTIVE));
-            } else {
+            if (READ_ONLY_TOOLS.contains(spec.name)) {
                 item.put("annotations", new JSONObject().put("readOnlyHint", true)
                         .put("destructiveHint", false));
             }
