@@ -33,9 +33,18 @@ public final class AssetListTool implements Tool {
     public ToolResult run(JSONObject args, ToolContext ctx) throws Exception {
         String dir = args.optString("dir", "");
         String sc_id = ctx.sc_id;
-        String root = PathResolver.resolve(sc_id, "assets/" + dir).getAbsolutePath();
+        File rootDir = PathResolver.resolve(sc_id, "assets/" + dir);
+        String root = rootDir.getAbsolutePath();
 
-        if (!new File(root).isDirectory()) return new ToolResult("Asset dir not found: " + dir, true);
+        // Match ManageAssetsActivity: create the assets root for fresh projects.
+        if (!rootDir.exists() && !rootDir.mkdirs() && !rootDir.isDirectory()) {
+            return ToolResult.structured("asset_list", "ERROR", root,
+                    "Could not create the project's assets directory.", null, true);
+        }
+        if (!rootDir.isDirectory()) {
+            return ToolResult.structured("asset_list", "NOT_FOUND", root,
+                    "The requested assets path is not a directory.", null, true);
+        }
 
         ArrayList<String> files = new ArrayList<>();
         FileUtil.listDir(root, files);
