@@ -1817,6 +1817,13 @@ public class AssistantFragment extends Fragment {
         Chip chipAgent = panel.findViewById(R.id.ai_chip_agent_state);
         if (chipAgent != null) {
             chipAgent.setOnClickListener(v -> {
+                if (AIActivityMonitor.isBusy() || activeRequestId != 0L) {
+                    Snackbar.make(panel, activeRequestIsAgent && !configStore.isAgentEnabled()
+                            ? "Agent mode is temporary for the current slash command."
+                            : "Finish or stop the current request before changing mode.",
+                            Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
                 boolean next = !configStore.isAgentEnabled();
                 configStore.setAgentEnabled(next);
                 updateSessionHeader(panel);
@@ -1835,18 +1842,9 @@ public class AssistantFragment extends Fragment {
         return value * view.getResources().getDisplayMetrics().density;
     }
 
-    private void setupSlashCommandPalette(View panel, @Nullable EditText input) {
-        if (input == null) return;
-        View scroll = panel.findViewById(R.id.ai_slash_suggestions_scroll);
-        com.google.android.material.chip.ChipGroup group = panel.findViewById(R.id.ai_slash_suggestions);
-        if (scroll == null || group == null) return;
-        // The palette is a floating surface aligned to the composer text field, not a
-        // detached toolbar. Keep it above the composer and out of the message timeline.
-        scroll.setElevation(dp(panel, 10));
 
-        // Each entry is an executable workflow prompt. Selecting it dispatches through
-        // sendMessage(), preserving the current Chat/Agent mode and active sc_id binding.
-        final String[][] commands = new String[][] {
+    private static String[][] slashCommands() {
+        return new String[][] {
             {"/inspect", "Inspect the active Sketchware project and report concrete findings before changing files."},
             {"/plan", "Create a concise, ordered implementation plan for the active project. Do not modify files until the plan is clear."},
             {"/fix", "Diagnose the reported issue in the active project, make the smallest safe fix, and verify the result."},
@@ -1871,6 +1869,72 @@ public class AssistantFragment extends Fragment {
             {"/backup", "Inspect available TAJ Agent backups and explain which project files they cover. Do not overwrite or restore files without explicit confirmation."},
             {"/help", "Explain available TAJ AI slash commands, current Chat/Agent mode, active project binding, and safe usage."}
         };
+    }
+
+    private static final class SlashCommandInput {
+        final String prompt;
+        final String command;
+        final boolean requiresAgent;
+        final boolean unknown;
+
+        SlashCommandInput(String prompt, String command, boolean requiresAgent, boolean unknown) {
+            this.prompt = prompt;
+            this.command = command;
+            this.requiresAgent = requiresAgent;
+            this.unknown = unknown;
+        }
+    }
+
+    /**
+     * Resolves slash commands before the request is persisted or sent to a provider.
+     * Project workflows temporarily use the agent runtime without changing the user's
+     * persisted Chat/Agent preference.
+     */
+    private static SlashCommandInput parseSlashCommand(String raw) {
+        String original = raw == null ? "" : raw;
+        String trimmed = original.trim();
+        if (!trimmed.startsWith("/")) {
+            return new SlashCommandInput(original, "", false, false);
+        }
+
+        int tokenEnd = 0;
+        while (tokenEnd < trimmed.length() && !Character.isWhitespace(trimmed.charAt(tokenEnd))) {
+            tokenEnd++;
+        }
+        String token = trimmed.substring(0, tokenEnd);
+        // Absolute paths such as /storage/emulated/0/file.xml are ordinary prompt text,
+        // not commands. Only command-shaped first tokens are parsed here.
+        if (!token.matches("/[A-Za-z][A-Za-z0-9_-]*")) {
+            return new SlashCommandInput(original, "", false, false);
+        }
+
+        for (String[] item : slashCommands()) {
+            if (item[0].equalsIgnoreCase(token)) {
+                String suffix = trimmed.substring(tokenEnd).trim();
+                String prompt = item[1];
+                if (!suffix.isEmpty()) {
+                    prompt += "\n\nUser's command details:\n" + suffix;
+                }
+                boolean requiresAgent = !"/help".equalsIgnoreCase(item[0]);
+                return new SlashCommandInput(prompt, item[0], requiresAgent, false);
+            }
+        }
+        return new SlashCommandInput("", token, false, true);
+    }
+
+    private void setupSlashCommandPalette(View panel, @Nullable EditText input) {
+        if (input == null) return;
+        View scroll = panel.findViewById(R.id.ai_slash_suggestions_scroll);
+        com.google.android.material.chip.ChipGroup group = panel.findViewById(R.id.ai_slash_suggestions);
+        if (scroll == null || group == null) return;
+        // The palette is a floating surface aligned to the composer text field, not a
+        // detached toolbar. Keep it above the composer and out of the message timeline.
+        scroll.setElevation(dp(panel, 10));
+
+        // Each entry is an executable workflow prompt. Selecting it dispatches through
+        // sendMessage(), where project workflows use the agent runtime for this request
+        // without changing the saved mode or active sc_id binding.
+        final String[][] commands = slashCommands();
         final Runnable[] render = new Runnable[1];
         render[0] = () -> {
             String raw = input.getText() == null ? "" : input.getText().toString();
@@ -1899,10 +1963,10 @@ public class AssistantFragment extends Fragment {
                     String remaining = input.getText() == null ? "" : input.getText().toString().trim();
                     String suffix = remaining.startsWith(command[0])
                             ? remaining.substring(command[0].length()).trim() : "";
-                    String actionPrompt = command[1];
-                    if (!suffix.isEmpty()) actionPrompt += "\\n\\nUser's command details:\\n" + suffix;
+                    String actionCommand = command[0];
+                    if (!suffix.isEmpty()) actionCommand += " " + suffix;
                     input.setText("");
-                    sendMessage(actionPrompt);
+                    sendMessage(actionCommand);
                 });
                 group.addView(chip);
                 shown++;
@@ -1934,7 +1998,9 @@ public class AssistantFragment extends Fragment {
         }
 
         if (chipAgent != null) {
-            boolean enabled = configStore.isAgentEnabled();
+            boolean persistentAgent = configStore.isAgentEnabled();
+            boolean transientAgent = !persistentAgent && AIActivityMonitor.isBusy() && activeRequestIsAgent;
+            boolean enabled = persistentAgent || transientAgent;
             chipAgent.setText("");
             chipAgent.setChipIconResource(enabled
                     ? R.drawable.ic_taj_agent_mode : R.drawable.ic_taj_chat_mode);
@@ -1948,10 +2014,12 @@ public class AssistantFragment extends Fragment {
             chipAgent.setChipStrokeColor(android.content.res.ColorStateList.valueOf(
                     pro.sketchware.utility.ThemeUtils.getColor(getContext(), R.attr.colorOutlineVariant)));
             chipAgent.setChipStrokeWidth(Math.max(1f, getResources().getDisplayMetrics().density));
-            chipAgent.setContentDescription(enabled
-                    ? "Agent mode enabled. Tap to switch to Chat mode."
+            chipAgent.setContentDescription(transientAgent
+                    ? "Agent is active for this slash command only. Chat remains the saved default mode."
+                    : enabled ? "Agent mode enabled. Tap to switch to Chat mode."
                     : "Chat mode enabled. Tap to switch to Agent mode.");
-            chipAgent.setTooltipText(enabled ? "Agent mode · tap for Chat" : "Chat mode · tap for Agent");
+            chipAgent.setTooltipText(transientAgent ? "Temporary Agent workflow"
+                    : enabled ? "Agent mode · tap for Chat" : "Chat mode · tap for Agent");
         }
 
         String providerId = configStore.getSelectedProviderId();
@@ -2278,6 +2346,23 @@ public class AssistantFragment extends Fragment {
             return;
         }
 
+        boolean forceAgentForCommand = false;
+        if (!isRegen) {
+            SlashCommandInput slash = parseSlashCommand(text);
+            if (slash.unknown) {
+                ChatStore.Message userMsg = new ChatStore.Message("user", text == null ? "" : text.trim());
+                currentSession.messages.add(userMsg);
+                chatAdapter.addMessage(userMsg);
+                addAssistantMessage("Unknown TAJ AI command: " + slash.command + ". Type /help to see the available commands.");
+                saveSessionNow();
+                refreshHistory();
+                scrollToBottom(true);
+                return;
+            }
+            text = slash.prompt;
+            forceAgentForCommand = slash.requiresAgent;
+        }
+
         View sessionPanel = panels.get(R.id.ai_dest_session);
         if (sessionPanel != null) render(sessionPanel, PanelState.READY);
         // A deliberate new send/retry follows the new task; passive stream updates do not.
@@ -2325,8 +2410,10 @@ public class AssistantFragment extends Fragment {
         setTypingIndicator(true);
         updateStreamingUi(true);
 
-        boolean agentEnabled = configStore.isAgentEnabled();
+        boolean agentEnabled = configStore.isAgentEnabled() || forceAgentForCommand;
         activeRequestIsAgent = agentEnabled;
+        View activeSessionPanel = panels.get(R.id.ai_dest_session);
+        if (activeSessionPanel != null) updateSessionHeader(activeSessionPanel);
         if (agentEnabled) {
             showAgentProgress("Starting agent task", "ACTIVE",
                     "Loading active-project context and preparing the tool runtime.", true);
@@ -2833,6 +2920,7 @@ public class AssistantFragment extends Fragment {
                     scheduleSessionSave();
                 }
             }
+            if (isAdded()) updateSessionHeader(panel);
         }
     }
 
