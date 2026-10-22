@@ -2266,6 +2266,18 @@ public class AssistantFragment extends Fragment {
                     UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         markRateLimitResumed(requestId);
+                        if (toolsCard != null && toolsCard.toolEvents != null) {
+                            for (int i = toolsCard.toolEvents.size() - 1; i >= 0; i--) {
+                                ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
+                                if (java.util.Objects.equals(event.name, call.name) && "RUNNING".equals(event.status) && event.inputJson == null) {
+                                    event.inputJson = call.arguments == null ? "{}" : call.arguments.toString(2);
+                                    break;
+                                }
+                            }
+                            int cardIndex = currentSession.messages.indexOf(toolsCard);
+                            if (cardIndex >= 0) chatAdapter.notifyItemChanged(cardIndex, "tool_events");
+                            scheduleSessionSave();
+                        }
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             int idx = currentSession.messages.indexOf(thinkingMsg);
@@ -2310,6 +2322,7 @@ public class AssistantFragment extends Fragment {
                             ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
                             if (java.util.Objects.equals(event.name, name) && "RUNNING".equals(event.status)) {
                                 event.resultSummary = summary;
+                                event.outputText = summary;
                                 break;
                             }
                         }
