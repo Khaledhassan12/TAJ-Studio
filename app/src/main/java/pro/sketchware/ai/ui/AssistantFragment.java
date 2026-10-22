@@ -18,6 +18,8 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.text.Editable;
+import android.text.TextWatcher;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -1738,6 +1740,8 @@ public class AssistantFragment extends Fragment {
                 }
             }
         }
+        setupSlashCommandPalette(panel, input);
+
         FloatingActionButton send = panel.findViewById(R.id.ai_fab_send);
         if (send != null) {
             send.setOnClickListener(v -> {
@@ -1792,6 +1796,66 @@ public class AssistantFragment extends Fragment {
         }
 
         updateSessionHeader(panel);
+    }
+
+    /**
+     * Context-aware slash command palette. Commands expand into explicit instructions;
+     * they are never sent to the provider as unknown literal slash syntax.
+     */
+    private void setupSlashCommandPalette(View panel, @Nullable EditText input) {
+        if (input == null) return;
+        View scroll = panel.findViewById(R.id.ai_slash_suggestions_scroll);
+        com.google.android.material.chip.ChipGroup group = panel.findViewById(R.id.ai_slash_suggestions);
+        if (scroll == null || group == null) return;
+        final String[][] commands = new String[][] {
+            {"/inspect", "Inspect the active Sketchware project and report concrete findings before changing files."},
+            {"/plan", "Create a concise, ordered implementation plan for the active project. Do not modify files until the plan is clear."},
+            {"/fix", "Diagnose the reported issue in the active project, make the smallest safe fix, and verify the result."},
+            {"/build", "Check the active project's build configuration, run the available verification/build workflow, and report exact errors."},
+            {"/review", "Review the relevant project code for correctness, regressions, security, and maintainability. Do not change files unless asked."},
+            {"/explain", "Explain the selected or referenced code in the context of the active Sketchware project."},
+            {"/tests", "Identify and run relevant tests or verification checks for the active project; report what was actually executed."},
+            {"/undo", "Inspect recent TAJ Agent changes and available backups. Show the proposed restoration before applying any destructive rollback."}
+        };
+        final Runnable[] render = new Runnable[1];
+        render[0] = () -> {
+            String raw = input.getText() == null ? "" : input.getText().toString();
+            String trimmed = raw.trim();
+            boolean commandContext = trimmed.startsWith("/") && !trimmed.contains("\n");
+            group.removeAllViews();
+            if (!commandContext) {
+                scroll.setVisibility(View.GONE);
+                return;
+            }
+            String query = trimmed.toLowerCase(java.util.Locale.ROOT);
+            int shown = 0;
+            for (String[] command : commands) {
+                if (!command[0].startsWith(query) && !query.equals("/")) continue;
+                com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(requireContext());
+                chip.setText(command[0]);
+                chip.setCheckable(false);
+                chip.setClickable(true);
+                chip.setEnsureMinTouchTargetSize(false);
+                chip.setOnClickListener(v -> {
+                    input.setText(command[1]);
+                    input.setSelection(input.getText().length());
+                    scroll.setVisibility(View.GONE);
+                    input.requestFocus();
+                });
+                group.addView(chip);
+                shown++;
+            }
+            scroll.setVisibility(shown > 0 ? View.VISIBLE : View.GONE);
+        };
+        input.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { render[0].run(); }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+        input.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) render[0].run();
+            else scroll.setVisibility(View.GONE);
+        });
     }
 
     private void updateSessionHeader(View panel) {
@@ -2266,6 +2330,18 @@ public class AssistantFragment extends Fragment {
                     UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         markRateLimitResumed(requestId);
+                        if (toolsCard != null && toolsCard.toolEvents != null) {
+                            for (int i = toolsCard.toolEvents.size() - 1; i >= 0; i--) {
+                                ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
+                                if (java.util.Objects.equals(event.name, call.name) && "RUNNING".equals(event.status) && event.inputJson == null) {
+                                    event.inputJson = call.arguments == null ? "{}" : call.arguments.toString(2);
+                                    break;
+                                }
+                            }
+                            int cardIndex = currentSession.messages.indexOf(toolsCard);
+                            if (cardIndex >= 0) chatAdapter.notifyItemChanged(cardIndex, "tool_events");
+                            scheduleSessionSave();
+                        }
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                             int idx = currentSession.messages.indexOf(thinkingMsg);
@@ -2310,6 +2386,7 @@ public class AssistantFragment extends Fragment {
                             ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
                             if (java.util.Objects.equals(event.name, name) && "RUNNING".equals(event.status)) {
                                 event.resultSummary = summary;
+                                event.outputText = summary;
                                 break;
                             }
                         }

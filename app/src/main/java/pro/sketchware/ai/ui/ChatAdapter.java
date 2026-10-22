@@ -343,6 +343,16 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return messages.size() + (isTyping ? 1 : 0);
     }
 
+    private static void copyToolData(View anchor, String value) {
+        if (value == null || value.isEmpty()) return;
+        android.content.ClipboardManager clipboard = (android.content.ClipboardManager)
+                anchor.getContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("TAJ tool data", value));
+            android.widget.Toast.makeText(anchor.getContext(), "Copied to clipboard", android.widget.Toast.LENGTH_SHORT).show();
+        }
+    }
+
     static class ToolsViewHolder extends RecyclerView.ViewHolder {
         TextView tvCount, tvSummary;
         View header;
@@ -417,10 +427,30 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 TextView name = row.findViewById(R.id.ai_tool_name);
                 TextView domain = row.findViewById(R.id.ai_tool_domain);
                 TextView resultSummary = row.findViewById(R.id.ai_tool_result_summary);
+                TextView inputJson = row.findViewById(R.id.ai_tool_input_json);
+                TextView outputJson = row.findViewById(R.id.ai_tool_output_json);
+                View inputHeader = row.findViewById(R.id.ai_tool_input_header);
+                View outputHeader = row.findViewById(R.id.ai_tool_output_header);
+                TextView copyInput = row.findViewById(R.id.ai_tool_copy_input);
+                TextView copyOutput = row.findViewById(R.id.ai_tool_copy_output);
                 View progress = row.findViewById(R.id.ai_tool_progress);
                 ImageView status = row.findViewById(R.id.ai_tool_status);
 
                 name.setText(te.name);
+                if (inputJson != null) {
+                    String value = te.inputJson == null || te.inputJson.isEmpty() ? "Input not captured" : te.inputJson;
+                    inputJson.setText(value);
+                    inputJson.setVisibility(te.inputJson == null ? View.GONE : View.VISIBLE);
+                    if (inputHeader != null) inputHeader.setVisibility(te.inputJson == null ? View.GONE : View.VISIBLE);
+                    if (copyInput != null) copyInput.setOnClickListener(v -> copyToolData(v, te.inputJson));
+                }
+                if (outputJson != null) {
+                    String value = te.outputText == null || te.outputText.isEmpty() ? "Waiting for executor result…" : te.outputText;
+                    outputJson.setText(value);
+                    outputJson.setVisibility(te.outputText == null ? View.GONE : View.VISIBLE);
+                    if (outputHeader != null) outputHeader.setVisibility(te.outputText == null ? View.GONE : View.VISIBLE);
+                    if (copyOutput != null) copyOutput.setOnClickListener(v -> copyToolData(v, te.outputText));
+                }
                 if (resultSummary != null) {
                     if (te.resultSummary == null || te.resultSummary.isEmpty()) {
                         resultSummary.setVisibility(View.GONE);
