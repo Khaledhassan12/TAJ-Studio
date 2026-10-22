@@ -288,6 +288,8 @@ public class AssistantFragment extends Fragment {
     };
 
     private void forceIdle() {
+        activeRequestIsAgent = false;
+        hideAgentProgress();
         activeRequestId = 0L;
         requestSequence++;
         mainHandler.removeCallbacks(watchdog);
@@ -2707,6 +2709,8 @@ public class AssistantFragment extends Fragment {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+                        activeRequestIsAgent = false;
+                        hideAgentProgress();
                         reconcileTools(toolsCard, "ERROR");
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
@@ -2757,6 +2761,8 @@ public class AssistantFragment extends Fragment {
                     mainHandler.removeCallbacks(watchdog);
                     UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
+                        activeRequestIsAgent = false;
+                        hideAgentProgress();
                         reconcileTools(toolsCard, "ERROR");
                         if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                             long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
