@@ -197,5 +197,75 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_mcp_inspector"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:cardCornerRadius="20dp"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="1dp"
+            app:cardElevation="1dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="MCP Bridge Inspector"
+                    android:textAppearance="?attr/textAppearanceTitleMedium" />
+                <TextView
+                    android:id="@+id/tv_mcp_bridge_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="In-app bridge available for inspection. No external network endpoint is running."
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_mcp_initialize"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Initialize MCP session" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_mcp_list_tools"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Discover available MCP tools" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_mcp_list_resources"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Discover MCP resources" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_mcp_project_info"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Test read-only project tool" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_mcp_ping"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ping MCP bridge" />
+                <TextView
+                    android:id="@+id/tv_mcp_bridge_output"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="monospace"
+                    android:text="Run an MCP check to inspect the actual JSON-RPC response."
+                    android:textIsSelectable="true"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </ScrollView>
