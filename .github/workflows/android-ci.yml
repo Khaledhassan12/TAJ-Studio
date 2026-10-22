@@ -5,6 +5,7 @@ on:
     branches:
       - Master
       - TAJ-STUDIO-AI
+      - taj-ai-command-center
     paths:
       - '.github/workflows/**'
       - 'app/**'
