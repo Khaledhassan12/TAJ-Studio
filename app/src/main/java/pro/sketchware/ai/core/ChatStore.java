@@ -133,6 +133,10 @@ public final class ChatStore {
         public long startedAt;
         public long finishedAt;
         public String resultSummary;
+        /** Exact tool-call arguments captured from the provider-neutral ToolCall. */
+        public String inputJson;
+        /** Bounded executor result summary; never model-authored narration. */
+        public String outputText;
 
         public ToolEvent(String name) {
             this(name, null);
@@ -154,6 +158,8 @@ public final class ChatStore {
                 json.put("startedAt", startedAt);
                 json.put("finishedAt", finishedAt);
                 if (resultSummary != null) json.put("resultSummary", resultSummary);
+                if (inputJson != null) json.put("inputJson", inputJson);
+                if (outputText != null) json.put("outputText", outputText);
             } catch (JSONException ignored) {}
             return json;
         }
@@ -164,6 +170,8 @@ public final class ChatStore {
             te.startedAt = json.optLong("startedAt");
             te.finishedAt = json.optLong("finishedAt");
             te.resultSummary = json.optString("resultSummary", null);
+            te.inputJson = json.optString("inputJson", null);
+            te.outputText = json.optString("outputText", null);
             return te;
         }
     }
