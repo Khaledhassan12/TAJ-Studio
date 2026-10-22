@@ -1815,6 +1815,8 @@ public class AssistantFragment extends Fragment {
         // detached toolbar. Keep it above the composer and out of the message timeline.
         scroll.setElevation(dp(panel, 10));
 
+        // Each entry is an executable workflow prompt. Selecting it dispatches through
+        // sendMessage(), preserving the current Chat/Agent mode and active sc_id binding.
         final String[][] commands = new String[][] {
             {"/inspect", "Inspect the active Sketchware project and report concrete findings before changing files."},
             {"/plan", "Create a concise, ordered implementation plan for the active project. Do not modify files until the plan is clear."},
@@ -1823,7 +1825,22 @@ public class AssistantFragment extends Fragment {
             {"/review", "Review the relevant project code for correctness, regressions, security, and maintainability. Do not change files unless asked."},
             {"/explain", "Explain the selected or referenced code in the context of the active Sketchware project."},
             {"/tests", "Identify and run relevant tests or verification checks for the active project; report what was actually executed."},
-            {"/undo", "Inspect recent TAJ Agent changes and available backups. Show the proposed restoration before applying any destructive rollback."}
+            {"/undo", "Inspect recent TAJ Agent changes and available backups. Do not restore or delete anything yet; report the exact candidate backup and request confirmation."},
+            {"/create", "Help implement the feature requested after this command in the active Sketchware project. Inspect current project state first, then edit only necessary files and verify."},
+            {"/screen", "Create or update the Sketchware screen/layout requested after this command. Inspect existing screen IDs and preserve them; verify the resulting designer state."},
+            {"/component", "Add or configure the UI component requested after this command in the active screen, wire its behavior where requested, and verify designer synchronization."},
+            {"/blocks", "Implement the event/block logic requested after this command using the active project's real block catalog and event context; verify the saved logic."},
+            {"/java", "Create or modify the Java code requested after this command in the active project's actual package. Inspect related files first and verify imports/references."},
+            {"/kotlin", "Create or modify the Kotlin code requested after this command in the active project's actual package. Inspect related files first and verify imports/references."},
+            {"/xml", "Inspect and edit the relevant XML resource requested after this command. Preserve existing resource IDs and validate the resulting XML."},
+            {"/manifest", "Inspect the Android manifest and implement only the manifest changes requested after this command. Explain any permission or component implications and verify."},
+            {"/permission", "Inspect the requested Android capability and determine the minimum required permissions. Apply only those relevant to the request and verify manifest consistency."},
+            {"/asset", "Inspect project assets and help import or create the asset requested after this command, using the correct resource directory and references."},
+            {"/search", "Search the active project for the symbol, resource, or behavior requested after this command. Return exact file paths and grounded findings."},
+            {"/debug", "Debug the issue described after this command. Trace the actual code path, identify the root cause, apply a minimal fix if appropriate, and verify it."},
+            {"/verify", "Verify the latest project changes using available read-back, XML/source checks, tests, and build tools. Clearly distinguish checks actually run from checks unavailable."},
+            {"/backup", "Inspect available TAJ Agent backups and explain which project files they cover. Do not overwrite or restore files without explicit confirmation."},
+            {"/help", "Explain available TAJ AI slash commands, current Chat/Agent mode, active project binding, and safe usage."}
         };
         final Runnable[] render = new Runnable[1];
         render[0] = () -> {
@@ -1847,10 +1864,16 @@ public class AssistantFragment extends Fragment {
                 chip.setClickable(true);
                 chip.setEnsureMinTouchTargetSize(false);
                 chip.setOnClickListener(v -> {
-                    input.setText(command[0] + " ");
-                    input.setSelection(input.getText().length());
+                    // A selected slash command is an action, not a text snippet: dispatch
+                    // its workflow through the same guarded message path as user requests.
                     scroll.setVisibility(View.GONE);
-                    input.requestFocus();
+                    String remaining = input.getText() == null ? "" : input.getText().toString().trim();
+                    String suffix = remaining.startsWith(command[0])
+                            ? remaining.substring(command[0].length()).trim() : "";
+                    String actionPrompt = command[1];
+                    if (!suffix.isEmpty()) actionPrompt += "\\n\\nUser's command details:\\n" + suffix;
+                    input.setText("");
+                    sendMessage(actionPrompt);
                 });
                 group.addView(chip);
                 shown++;
