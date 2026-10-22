@@ -64,6 +64,11 @@ public final class ResCreateTool implements Tool {
                             "The resource file was created and read-back verified, but the live Sketchware designer model could not be verified. The file was preserved for inspection; this is not a full success.", null, true);
                 }
             }
+            // Rebind the active visual editor after the layout model has been synchronized
+            // and verified. Resource creation must not leave the View tab displaying stale beans.
+            if ("layout".equals(folder)) {
+                DomainToolHelper.refreshEditor(ctx);
+            }
             LiveRegistry.notifyChanged(folder, path);
             return ToolResult.structured("res_create", "SUCCESS", path,
                     "Exact resource read-back verified" + ("layout".equals(folder) ? "; live designer model also verified." : "."), null, false);
