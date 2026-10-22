@@ -37,8 +37,15 @@ public final class ResListTool implements Tool {
         File rootDir = PathResolver.resolve(sc_id, "res/" + folder);
         String path = rootDir.getAbsolutePath();
 
-        if (!rootDir.exists()) {
-            return new ToolResult("Resource folder not found: " + path, true);
+        // Sketchware creates some resource folders lazily. Treat a missing known
+        // resource folder as empty and materialize it for consistent manager/tool behavior.
+        if (!rootDir.exists() && !rootDir.mkdirs() && !rootDir.isDirectory()) {
+            return ToolResult.structured("res_list", "ERROR", path,
+                    "Could not create the resource directory for this project.", null, true);
+        }
+        if (!rootDir.isDirectory()) {
+            return ToolResult.structured("res_list", "NOT_FOUND", path,
+                    "The requested resource path is not a directory.", null, true);
         }
 
         ArrayList<String> files = new ArrayList<>();
