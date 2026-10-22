@@ -206,9 +206,36 @@ public final class McpBridge {
         return new JSONObject().put("jsonrpc", "2.0").put("id", id).put("result", result);
     }
 
-    private static JSONObject error(Object id, int code, String message) throws JSONException {
-        return new JSONObject().put("jsonrpc", "2.0").put("id", id)
-                .put("error", new JSONObject().put("code", code).put("message", safe(message)));
+    private static JSONObject error(Object id, int code, String message) {
+        // Error construction is used by validation and protocol-failure paths. It must
+        // not leak org.json's checked exception back through every request branch.
+        JSONObject response = new JSONObject();
+        JSONObject details = new JSONObject();
+        try {
+            response.put("jsonrpc", "2.0");
+            response.put("id", id);
+            details.put("code", code);
+            details.put("message", safe(message));
+            response.put("error", details);
+        } catch (JSONException serializationFailure) {
+            // JSONObject.put only throws for unsupported values; id is supplied by the
+            // parsed request. Keep a valid JSON-RPC-shaped fallback if that invariant
+            // is ever violated, rather than crashing the bridge's error handler.
+            JSONObject fallback = new JSONObject();
+            try {
+                fallback.put("jsonrpc", "2.0");
+                fallback.put("id", JSONObject.NULL);
+                fallback.put("error", new JSONObject()
+                        .put("code", -32603)
+                        .put("message", "Failed to serialize JSON-RPC error response."));
+            } catch (JSONException ignored) {
+                // org.json JSONObject construction/put of these fixed values is expected
+                // to be infallible; return the initialized fallback if an implementation
+                // violates that contract.
+            }
+            return fallback;
+        }
+        return response;
     }
 
     private static String safe(String value) {
