@@ -122,3 +122,13 @@ Do not declare production readiness until:
 - Verified by repository read-back: the source-placement fix, edit-argument guards, and reasoning-display masking are present on `TAJ-STUDIO-AI`.
 - Not run, as requested: no build was started.
 - Not verified in this environment: Android compilation, live-device file visibility, provider-specific tool execution against each supported model, cancellation/approval races, and the complete destructive-operation acceptance matrix. Do not treat this static audit as a passing runtime test suite.
+
+
+## MCP bridge foundation — 2026-10-22
+
+- Added `agent/McpBridge.java` as an in-process JSON-RPC adapter over the existing `ToolRegistry`. It supports `initialize`, `ping`, `tools/list`, `resources/list`, `resources/read`, and read-only `tools/call`.
+- The bridge uses the registered tool schemas and `ToolArgumentValidator`, checks that the original editor session and `sc_id` remain active before and after reads, and exposes project info/structure as MCP resources.
+- **Fail-closed mutation policy:** `tools/call` refuses mutation tools. This is intentional: mutations must continue through `AgentOrchestrator` so its project-run lock, per-call approval, cancellation, and failure tracking remain authoritative. Do not remove this guard or add a second executor until those safeguards are factored into one shared execution gate.
+- **Integration boundary:** this commit adds an in-process protocol adapter, not a network/stdin MCP server and not yet a connected external MCP transport. It is not evidence that a client can connect to the app. A transport and lifecycle owner still need to instantiate the bridge from the active editor/runtime.
+- **Event-logic gap remains open:** the inspected `oq.getEventsForClass` / `ViewEvents` path visibly includes `onClick` for Clickable widgets, but this inspection did not establish end-to-end support for `onLongClick`, `onTouched`, `onFocused`, or `onScrolled` through event registration, block editing, code generation, and generated Java. Do not advertise these as supported or add names to the UI list alone. Each event needs an end-to-end capability test against the real event/code-generation pipeline.
+- **Verification status:** source was committed and read back from GitHub. Android compilation, unit tests, MCP protocol conformance tests, external transport integration, and device acceptance have not yet been verified. This foundation must not be described as a complete MCP server or a completed visual-event implementation.
