@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ConcurrentHashMap;
 
 import pro.sketchware.ai.live.UiPoster;
+import pro.sketchware.ai.agent.tools.DomainToolHelper;
 import pro.sketchware.ai.core.AIMessage;
 import pro.sketchware.ai.core.AIProvider;
 import pro.sketchware.ai.core.AIRequest;
@@ -280,6 +281,10 @@ public final class AgentOrchestrator {
                     }
                     final AIResponse deliver = finalResp;
                     terminalCallbackSent = true;
+                    // Final editor rebind is the task-level safety net: successful resource tools
+                    // synchronize their domain models, and the editor refresh runs after all tool
+                    // calls have completed so the user sees the final project state, not an interim one.
+                    DomainToolHelper.refreshEditor(context);
                     UiPoster.post(() -> callbacks.onComplete(deliver));
                 }
             } finally {
