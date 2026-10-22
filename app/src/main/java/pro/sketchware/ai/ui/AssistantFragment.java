@@ -2593,6 +2593,8 @@ public class AssistantFragment extends Fragment {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         reconcileTools(toolsCard, "CANCELLED");
                         activeToolCount.set(0);
+                        activeRequestIsAgent = false;
+                        hideAgentProgress();
                         if (rateLimitMsg != null && ("WAITING".equals(rateLimitMsg.toolState)
                 || "RETRYING".equals(rateLimitMsg.toolState))) rateLimitMsg.toolState = "CANCELLED";
                         AIActivityMonitor.setState(SessionState.IDLE);
