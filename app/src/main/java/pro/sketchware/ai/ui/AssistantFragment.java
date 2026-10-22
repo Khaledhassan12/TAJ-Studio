@@ -153,6 +153,46 @@ public class AssistantFragment extends Fragment {
     private TextView agentProgressStatus;
     private TextView agentProgressDetail;
     private android.widget.ProgressBar agentProgressSpinner;
+    private TextView agentProgressElapsed;
+    private long agentTaskStartedAt;
+    private String agentProgressBaseStatus = "ACTIVE";
+    private String agentProgressBaseDetail = "Preparing agent task.";
+
+    private final Runnable agentProgressTicker = new Runnable() {
+        @Override public void run() {
+            if (!activeRequestIsAgent || agentProgressCard == null
+                    || agentProgressCard.getVisibility() != View.VISIBLE) return;
+            long now = System.currentTimeMillis();
+            long elapsed = Math.max(0L, now - agentTaskStartedAt);
+            long quiet = Math.max(0L, now - lastEventTime);
+            if (agentProgressElapsed != null) {
+                agentProgressElapsed.setText("Elapsed " + formatProgressDuration(elapsed)
+                        + "  ·  Last event " + formatProgressDuration(quiet) + " ago");
+            }
+            if (quiet >= 15000L) {
+                if (agentProgressStatus != null) agentProgressStatus.setText("WAITING");
+                if (agentProgressDetail != null) {
+                    agentProgressDetail.setText("No new agent event for " + formatProgressDuration(quiet)
+                            + ". Waiting for the model/provider or current executor. Last phase: "
+                            + agentProgressBaseDetail);
+                }
+            } else {
+                if (agentProgressStatus != null) agentProgressStatus.setText(agentProgressBaseStatus);
+                if (agentProgressDetail != null) agentProgressDetail.setText(agentProgressBaseDetail);
+            }
+            mainHandler.postDelayed(this, 1000L);
+        }
+    };
+
+    private static String formatProgressDuration(long millis) {
+        long totalSeconds = Math.max(0L, millis / 1000L);
+        long hours = totalSeconds / 3600L;
+        long minutes = (totalSeconds % 3600L) / 60L;
+        long seconds = totalSeconds % 60L;
+        return hours > 0
+                ? String.format(java.util.Locale.ROOT, "%d:%02d:%02d", hours, minutes, seconds)
+                : String.format(java.util.Locale.ROOT, "%02d:%02d", minutes, seconds);
+    }
 
     private void bindAgentProgress(View panel) {
         agentProgressCard = panel.findViewById(R.id.ai_agent_progress_card);
@@ -160,6 +200,7 @@ public class AssistantFragment extends Fragment {
         agentProgressStatus = panel.findViewById(R.id.ai_agent_progress_status);
         agentProgressDetail = panel.findViewById(R.id.ai_agent_progress_detail);
         agentProgressSpinner = panel.findViewById(R.id.ai_agent_progress_spinner);
+        agentProgressElapsed = panel.findViewById(R.id.ai_agent_progress_elapsed);
         if (agentProgressCard != null) agentProgressCard.setVisibility(View.GONE);
     }
 
@@ -167,12 +208,17 @@ public class AssistantFragment extends Fragment {
         if (!activeRequestIsAgent || agentProgressCard == null) return;
         agentProgressCard.setVisibility(View.VISIBLE);
         if (agentProgressTitle != null) agentProgressTitle.setText(title);
-        if (agentProgressStatus != null) agentProgressStatus.setText(status);
-        if (agentProgressDetail != null) agentProgressDetail.setText(detail);
+        agentProgressBaseStatus = status == null ? "ACTIVE" : status;
+        agentProgressBaseDetail = detail == null ? "Working on the active request." : detail;
+        if (agentProgressStatus != null) agentProgressStatus.setText(agentProgressBaseStatus);
+        if (agentProgressDetail != null) agentProgressDetail.setText(agentProgressBaseDetail);
         if (agentProgressSpinner != null) agentProgressSpinner.setVisibility(running ? View.VISIBLE : View.GONE);
+        mainHandler.removeCallbacks(agentProgressTicker);
+        agentProgressTicker.run();
     }
 
     private void hideAgentProgress() {
+        mainHandler.removeCallbacks(agentProgressTicker);
         if (agentProgressCard != null) agentProgressCard.setVisibility(View.GONE);
     }
     private int pendingEditIndex = -1;
@@ -867,7 +913,55 @@ public class AssistantFragment extends Fragment {
             });
         }
 
+        setupMcpInspector(panel);
         refreshReadback(panel);
+    }
+
+    private void setupMcpInspector(View panel) {
+        TextView output = panel.findViewById(R.id.tv_mcp_bridge_output);
+        TextView status = panel.findViewById(R.id.tv_mcp_bridge_status);
+        if (status != null) status.setText("In-app MCP bridge · read-only tools · no external network endpoint is running.");
+        View initialize = panel.findViewById(R.id.btn_mcp_initialize);
+        if (initialize != null) initialize.setOnClickListener(v -> runMcpInspector(panel, "initialize"));
+        View listTools = panel.findViewById(R.id.btn_mcp_list_tools);
+        if (listTools != null) listTools.setOnClickListener(v -> runMcpInspector(panel, "tools/list"));
+        View listResources = panel.findViewById(R.id.btn_mcp_list_resources);
+        if (listResources != null) listResources.setOnClickListener(v -> runMcpInspector(panel, "resources/list"));
+        View ping = panel.findViewById(R.id.btn_mcp_ping);
+        if (ping != null) ping.setOnClickListener(v -> runMcpInspector(panel, "ping"));
+        View projectInfo = panel.findViewById(R.id.btn_mcp_project_info);
+        if (projectInfo != null) projectInfo.setOnClickListener(v -> runMcpInspector(panel, "tools/call"));
+    }
+
+    private void runMcpInspector(View panel, String method) {
+        TextView output = panel.findViewById(R.id.tv_mcp_bridge_output);
+        TextView status = panel.findViewById(R.id.tv_mcp_bridge_status);
+        if (output == null) return;
+        try {
+            org.json.JSONObject request = new org.json.JSONObject();
+            request.put("jsonrpc", "2.0");
+            request.put("id", System.currentTimeMillis());
+            request.put("method", method);
+            if ("tools/call".equals(method)) {
+                org.json.JSONObject params = new org.json.JSONObject();
+                params.put("name", "project_info");
+                params.put("arguments", new org.json.JSONObject());
+                request.put("params", params);
+            }
+            DesignActivity activity = (DesignActivity) requireActivity();
+            pro.sketchware.ai.agent.Tool.ToolContext context =
+                    new pro.sketchware.ai.agent.Tool.ToolContext(activity, sc_id);
+            pro.sketchware.ai.agent.McpBridge bridge =
+                    new pro.sketchware.ai.agent.McpBridge(toolRegistry, context);
+            org.json.JSONObject response = bridge.handle(request);
+            output.setText(response == null ? "No response (notification)." : response.toString(2));
+            if (status != null) status.setText("Last check: " + method + " · "
+                    + (response != null && response.has("error") ? "ERROR" : "response received")
+                    + " · in-app only");
+        } catch (Exception e) {
+            output.setText("MCP check failed: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+            if (status != null) status.setText("MCP bridge check failed · inspect the response below.");
+        }
     }
 
     private void refreshReadback(View panel) {
@@ -2402,7 +2496,8 @@ public class AssistantFragment extends Fragment {
 
         final long requestId = ++requestSequence;
         activeRequestId = requestId;
-        lastEventTime = System.currentTimeMillis();
+        agentTaskStartedAt = System.currentTimeMillis();
+        lastEventTime = agentTaskStartedAt;
         mainHandler.removeCallbacks(watchdog);
         mainHandler.postDelayed(watchdog, 10000);
 
