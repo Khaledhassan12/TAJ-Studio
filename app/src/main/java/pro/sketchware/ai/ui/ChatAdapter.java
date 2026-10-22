@@ -417,10 +417,24 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 TextView name = row.findViewById(R.id.ai_tool_name);
                 TextView domain = row.findViewById(R.id.ai_tool_domain);
                 TextView resultSummary = row.findViewById(R.id.ai_tool_result_summary);
+                TextView inputJson = row.findViewById(R.id.ai_tool_input_json);
+                TextView outputJson = row.findViewById(R.id.ai_tool_output_json);
+                View inputHeader = row.findViewById(R.id.ai_tool_input_header);
+                View outputHeader = row.findViewById(R.id.ai_tool_output_header);
                 View progress = row.findViewById(R.id.ai_tool_progress);
                 ImageView status = row.findViewById(R.id.ai_tool_status);
 
                 name.setText(te.name);
+                if (inputJson != null) {
+                    String value = te.inputJson == null || te.inputJson.isEmpty() ? "Input not captured" : te.inputJson;
+                    inputJson.setText(value);
+                    if (inputHeader != null) inputHeader.setVisibility(te.inputJson == null ? View.GONE : View.VISIBLE);
+                }
+                if (outputJson != null) {
+                    String value = te.outputText == null || te.outputText.isEmpty() ? "Waiting for executor result…" : te.outputText;
+                    outputJson.setText(value);
+                    if (outputHeader != null) outputHeader.setVisibility(te.outputText == null ? View.GONE : View.VISIBLE);
+                }
                 if (resultSummary != null) {
                     if (te.resultSummary == null || te.resultSummary.isEmpty()) {
                         resultSummary.setVisibility(View.GONE);
