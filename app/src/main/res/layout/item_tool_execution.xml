@@ -116,6 +116,66 @@
         android:visibility="gone" />
 </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/ai_tool_input_header"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_marginTop="5dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="?attr/colorSurfaceContainerHigh"
+        android:paddingHorizontal="8dp"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="JSON · INPUT"
+            android:textStyle="bold"
+            android:textSize="10sp"
+            android:textColor="?attr/colorPrimary" />
+    </LinearLayout>
+    <TextView
+        android:id="@+id/ai_tool_input_json"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:textSize="10sp"
+        android:textColor="?attr/colorOnSurface"
+        android:padding="8dp"
+        android:background="?attr/colorSurfaceContainerHigh"
+        android:maxLines="8"
+        android:ellipsize="end"
+        android:visibility="gone" />
+    <LinearLayout
+        android:id="@+id/ai_tool_output_header"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="?attr/colorSurfaceContainerHigh"
+        android:paddingHorizontal="8dp"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="EXECUTOR · OUTPUT"
+            android:textStyle="bold"
+            android:textSize="10sp"
+            android:textColor="?attr/colorTertiary" />
+    </LinearLayout>
+    <TextView
+        android:id="@+id/ai_tool_output_json"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:textSize="10sp"
+        android:textColor="?attr/colorOnSurface"
+        android:padding="8dp"
+        android:background="?attr/colorSurfaceContainerHigh"
+        android:maxLines="8"
+        android:ellipsize="end"
+        android:visibility="gone" />
     <TextView
         android:id="@+id/ai_tool_result_summary"
         android:layout_width="match_parent"
