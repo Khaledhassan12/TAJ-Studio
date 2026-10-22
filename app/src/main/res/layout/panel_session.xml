@@ -187,23 +187,36 @@
         app:closeIconVisible="true"
         app:closeIconTint="?attr/colorOnTertiaryContainer" />
 
-    <HorizontalScrollView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/ai_slash_suggestions_scroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/ai_input_container"
-        android:layout_marginBottom="4dp"
-        android:fillViewport="false"
-        android:scrollbars="none"
-        android:visibility="gone">
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/ai_slash_suggestions"
-            android:layout_width="wrap_content"
+        android:layout_alignStart="@id/ai_input_card"
+        android:layout_alignEnd="@id/ai_input_card"
+        android:layout_marginBottom="8dp"
+        android:elevation="10dp"
+        android:visibility="gone"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="8dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="?attr/colorOutlineVariant"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh">
+        <ScrollView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="6dp"
-            app:singleLine="true"
-            app:chipSpacingHorizontal="6dp" />
-    </HorizontalScrollView>
+            android:fillViewport="false"
+            android:scrollbars="vertical">
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/ai_slash_suggestions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                app:singleLine="false"
+                app:chipSpacingHorizontal="6dp"
+                app:chipSpacingVertical="4dp" />
+        </ScrollView>
+    </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
         android:id="@+id/ai_input_container"
@@ -216,6 +229,7 @@
         android:paddingBottom="3dp">
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/ai_input_card"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
