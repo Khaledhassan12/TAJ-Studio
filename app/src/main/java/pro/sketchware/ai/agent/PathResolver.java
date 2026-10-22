@@ -120,8 +120,16 @@ public final class PathResolver {
     private static void ensureInsideProject(String scId, File candidate) {
         try {
             String target = candidate.getCanonicalPath();
+            // Include the canonical Sketchware project-data directory as an anchor.
+            // Some Sketchware versions expose a narrower/different wq.b(scId) root,
+            // while manager APIs (FilePathUtil) store resources/assets below
+            // <external>/.sketchware/data/<sc_id>/files. Restrict this fallback to
+            // the bound project ID; never widen it to the whole .sketchware/data tree.
+            String projectDataRoot = new File(
+                    android.os.Environment.getExternalStorageDirectory(),
+                    ".sketchware/data/" + scId).getPath();
             String[] roots = {
-                    dataRoot(scId), resourceRoot(scId), assetsRoot(scId),
+                    projectDataRoot, dataRoot(scId), resourceRoot(scId), assetsRoot(scId),
                     javaManagerRoot(scId), projectJavaRoot(scId)
             };
             for (String root : roots) {
