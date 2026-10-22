@@ -1802,11 +1802,19 @@ public class AssistantFragment extends Fragment {
      * Context-aware slash command palette. Commands expand into explicit instructions;
      * they are never sent to the provider as unknown literal slash syntax.
      */
+    private static float dp(View view, int value) {
+        return value * view.getResources().getDisplayMetrics().density;
+    }
+
     private void setupSlashCommandPalette(View panel, @Nullable EditText input) {
         if (input == null) return;
         View scroll = panel.findViewById(R.id.ai_slash_suggestions_scroll);
         com.google.android.material.chip.ChipGroup group = panel.findViewById(R.id.ai_slash_suggestions);
         if (scroll == null || group == null) return;
+        // The palette is a floating surface aligned to the composer text field, not a
+        // detached toolbar. Keep it above the composer and out of the message timeline.
+        scroll.setElevation(dp(panel, 10));
+
         final String[][] commands = new String[][] {
             {"/inspect", "Inspect the active Sketchware project and report concrete findings before changing files."},
             {"/plan", "Create a concise, ordered implementation plan for the active project. Do not modify files until the plan is clear."},
@@ -1832,12 +1840,14 @@ public class AssistantFragment extends Fragment {
             for (String[] command : commands) {
                 if (!command[0].startsWith(query) && !query.equals("/")) continue;
                 com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(requireContext());
-                chip.setText(command[0]);
+                chip.setText(command[0] + "   ·   " + command[1]);
+                chip.setTextSize(12);
+                chip.setMaxWidth((int) (panel.getResources().getDisplayMetrics().widthPixels * 0.78f));
                 chip.setCheckable(false);
                 chip.setClickable(true);
                 chip.setEnsureMinTouchTargetSize(false);
                 chip.setOnClickListener(v -> {
-                    input.setText(command[1]);
+                    input.setText(command[0] + " ");
                     input.setSelection(input.getText().length());
                     scroll.setVisibility(View.GONE);
                     input.requestFocus();
