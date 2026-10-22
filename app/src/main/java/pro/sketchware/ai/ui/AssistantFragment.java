@@ -2186,6 +2186,10 @@ public class AssistantFragment extends Fragment {
             if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
             if (AIActivityMonitor.getState() == SessionState.WAITING_RATE_LIMIT) AIActivityMonitor.setState(SessionState.MODEL_STREAMING);
             markRateLimitResumed(requestId);
+            if (activeRequestIsAgent) {
+                showAgentProgress("Generating response", "STREAMING",
+                        "Receiving output from the selected model.", true);
+            }
             if (thinkingMsg != null && "thinking".equals(thinkingMsg.role)) {
                 long elapsed = (System.currentTimeMillis() - thinkingStart) / 1000;
                 int thoughtIndex = currentSession.messages.indexOf(thinkingMsg);
@@ -2216,6 +2220,10 @@ public class AssistantFragment extends Fragment {
         UiPoster.post(() -> {
             if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
             markRateLimitResumed(requestId);
+            if (activeRequestIsAgent) {
+                showAgentProgress("Model reasoning", "THINKING",
+                        "The selected model is reasoning about the current request.", true);
+            }
             if (thinkingMsg == null) {
                 thinkingStart = System.currentTimeMillis();
                 thinkingMsg = new ChatStore.Message("thinking", "");
