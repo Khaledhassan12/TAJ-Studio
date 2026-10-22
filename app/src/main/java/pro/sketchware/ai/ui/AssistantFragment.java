@@ -147,6 +147,34 @@ public class AssistantFragment extends Fragment {
     }
 
     private String sc_id;
+    private boolean activeRequestIsAgent = false;
+    private View agentProgressCard;
+    private TextView agentProgressTitle;
+    private TextView agentProgressStatus;
+    private TextView agentProgressDetail;
+    private android.widget.ProgressBar agentProgressSpinner;
+
+    private void bindAgentProgress(View panel) {
+        agentProgressCard = panel.findViewById(R.id.ai_agent_progress_card);
+        agentProgressTitle = panel.findViewById(R.id.ai_agent_progress_title);
+        agentProgressStatus = panel.findViewById(R.id.ai_agent_progress_status);
+        agentProgressDetail = panel.findViewById(R.id.ai_agent_progress_detail);
+        agentProgressSpinner = panel.findViewById(R.id.ai_agent_progress_spinner);
+        if (agentProgressCard != null) agentProgressCard.setVisibility(View.GONE);
+    }
+
+    private void showAgentProgress(String title, String status, String detail, boolean running) {
+        if (!activeRequestIsAgent || agentProgressCard == null) return;
+        agentProgressCard.setVisibility(View.VISIBLE);
+        if (agentProgressTitle != null) agentProgressTitle.setText(title);
+        if (agentProgressStatus != null) agentProgressStatus.setText(status);
+        if (agentProgressDetail != null) agentProgressDetail.setText(detail);
+        if (agentProgressSpinner != null) agentProgressSpinner.setVisibility(running ? View.VISIBLE : View.GONE);
+    }
+
+    private void hideAgentProgress() {
+        if (agentProgressCard != null) agentProgressCard.setVisibility(View.GONE);
+    }
     private int pendingEditIndex = -1;
     private String currentSpeakingText = null;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -1383,6 +1411,7 @@ public class AssistantFragment extends Fragment {
     }
 
     private void setupSessionPanel(View panel) {
+        bindAgentProgress(panel);
         baseSessionPaddingLeft = panel.getPaddingLeft();
         baseSessionPaddingTop = panel.getPaddingTop();
         baseSessionPaddingRight = panel.getPaddingRight();
@@ -2297,6 +2326,13 @@ public class AssistantFragment extends Fragment {
         updateStreamingUi(true);
 
         boolean agentEnabled = configStore.isAgentEnabled();
+        activeRequestIsAgent = agentEnabled;
+        if (agentEnabled) {
+            showAgentProgress("Starting agent task", "ACTIVE",
+                    "Loading active-project context and preparing the tool runtime.", true);
+        } else {
+            hideAgentProgress();
+        }
         List<AIMessage> history = new ArrayList<>();
         for (ChatStore.Message m : currentSession.messages) {
             if ("user".equals(m.role)) history.add(AIMessage.user(m.text));
@@ -2391,6 +2427,9 @@ public class AssistantFragment extends Fragment {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         markRateLimitResumed(requestId);
                         activeToolCount.incrementAndGet();
+                        showAgentProgress("Executing project tool", "RUNNING",
+                                name == null ? "Working with the active project." : name.replace('_', ' '),
+                                true);
                         AIActivityMonitor.setState(SessionState.TOOL_RUNNING);
                         if (toolsCard == null || !currentSession.messages.contains(toolsCard)) {
                             toolsCard = new ChatStore.Message("tools_card", "");
@@ -2414,6 +2453,13 @@ public class AssistantFragment extends Fragment {
                     UiPoster.post(() -> {
                         if (!isCurrentRequest(requestId) || !isAdded() || getView() == null || chatAdapter == null || currentSession == null) return;
                         markRateLimitResumed(requestId);
+                        showAgentProgress(success ? "Project tool completed" : "Project tool needs attention",
+                                success ? "VERIFIED" : "CHECK",
+                                (name == null ? "Tool" : name.replace('_', ' ')) + ": "
+                                        + (summary == null || summary.trim().isEmpty()
+                                        ? (success ? "Execution returned successfully." : "Execution did not report success.")
+                                        : summary),
+                                true);
                         if (toolsCard == null || toolsCard.toolEvents == null) return;
                         for (int i = toolsCard.toolEvents.size() - 1; i >= 0; i--) {
                             ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
@@ -2503,6 +2549,8 @@ public class AssistantFragment extends Fragment {
                         }
 
                         activeToolCount.set(0);
+                        activeRequestIsAgent = false;
+                        hideAgentProgress();
                         if (rateLimitMsg != null && ("WAITING".equals(rateLimitMsg.toolState)
                                 || "RETRYING".equals(rateLimitMsg.toolState))) rateLimitMsg.toolState = "COLLAPSED";
                         AIActivityMonitor.setState(SessionState.IDLE);
