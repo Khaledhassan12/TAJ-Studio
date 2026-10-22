@@ -105,6 +105,11 @@ public final class ResEditTool implements Tool {
                     throw new java.io.IOException("Persisted layout differs from the live Sketchware designer model.");
                 }
             }
+            // The in-memory ViewBean model is already synchronized and verified above;
+            // now refresh the active editor so its View tab rebinds to that model immediately.
+            if ("layout".equals(folder)) {
+                DomainToolHelper.refreshEditor(ctx);
+            }
             LiveRegistry.notifyChanged(folder, path);
             return ToolResult.structured("res_edit", "SUCCESS", path,
                     "Exact file read-back verified" + ("layout".equals(folder) ? "; live designer model verified." : "."), null, false);
