@@ -335,7 +335,14 @@ public final class AgentOrchestrator {
                 if (!truncated.isEmpty()) summary.append(" • ").append(truncated);
                 return truncateSummary(summary.toString());
             } catch (Exception ignored) {
-                return prefix + ": bounded read/search output returned to the model; content intentionally omitted.";
+                try {
+                    org.json.JSONArray array = new org.json.JSONArray(content);
+                    return truncateSummary(prefix + ": " + array.length() + " item(s) returned; details remain available to the model.");
+                } catch (Exception notArray) {
+                    String safeText = content.replaceAll("[\\p{Cntrl}]+", " ").trim();
+                    if (!success) return truncateSummary("EXECUTOR ERROR: " + safeText);
+                    return truncateSummary("EXECUTOR OK: text result returned (" + content.length() + " chars); full content intentionally kept out of the compact card.");
+                }
             }
         }
         try {
