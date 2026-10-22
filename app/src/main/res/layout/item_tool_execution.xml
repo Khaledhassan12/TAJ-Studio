@@ -71,12 +71,6 @@
             android:textStyle="bold"
             android:textSize="10sp"
             android:textColor="?attr/colorPrimary" />
-        <TextView
-            android:id="@+id/ai_tool_input_json"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0"
-            android:visibility="gone" />
     </LinearLayout>
     <TextView
         android:id="@+id/ai_tool_input_json"
