@@ -2367,7 +2367,7 @@ public class AssistantFragment extends Fragment {
                             for (int i = toolsCard.toolEvents.size() - 1; i >= 0; i--) {
                                 ChatStore.ToolEvent event = toolsCard.toolEvents.get(i);
                                 if (java.util.Objects.equals(event.name, call.name) && "RUNNING".equals(event.status) && event.inputJson == null) {
-                                    event.inputJson = call.arguments == null ? "{}" : call.arguments.toString(2);
+                                    event.inputJson = call.arguments == null ? "{}" : call.arguments.toString();
                                     break;
                                 }
                             }
