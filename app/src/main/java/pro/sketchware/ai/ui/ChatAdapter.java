@@ -428,11 +428,13 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 if (inputJson != null) {
                     String value = te.inputJson == null || te.inputJson.isEmpty() ? "Input not captured" : te.inputJson;
                     inputJson.setText(value);
+                    inputJson.setVisibility(te.inputJson == null ? View.GONE : View.VISIBLE);
                     if (inputHeader != null) inputHeader.setVisibility(te.inputJson == null ? View.GONE : View.VISIBLE);
                 }
                 if (outputJson != null) {
                     String value = te.outputText == null || te.outputText.isEmpty() ? "Waiting for executor result…" : te.outputText;
                     outputJson.setText(value);
+                    outputJson.setVisibility(te.outputText == null ? View.GONE : View.VISIBLE);
                     if (outputHeader != null) outputHeader.setVisibility(te.outputText == null ? View.GONE : View.VISIBLE);
                 }
                 if (resultSummary != null) {
