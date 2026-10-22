@@ -106,16 +106,18 @@ public final class McpBridge {
 
     private JSONObject listTools() throws JSONException {
         JSONArray tools = new JSONArray();
-        for (Tool tool : registry.all()) {
-            Tool.ToolSpec spec = registry.spec(tool);
-            if (spec == null) continue;
+        // Advertise only tools that this bridge can actually execute. Listing every
+        // registry tool while rejecting writes at call-time misleads MCP clients and
+        // encourages unsafe retries through alternate paths.
+        for (String name : READ_ONLY_TOOLS) {
+            Tool tool = registry.get(name);
+            Tool.ToolSpec spec = registry.spec(name);
+            if (tool == null || spec == null) continue;
             JSONObject item = new JSONObject().put("name", spec.name)
                     .put("description", spec.description)
                     .put("inputSchema", new JSONObject(spec.parameters.toString()));
-            if (READ_ONLY_TOOLS.contains(spec.name)) {
-                item.put("annotations", new JSONObject().put("readOnlyHint", true)
-                        .put("destructiveHint", false));
-            }
+            item.put("annotations", new JSONObject().put("readOnlyHint", true)
+                    .put("destructiveHint", false).put("idempotentHint", true));
             tools.put(item);
         }
         return new JSONObject().put("tools", tools);
