@@ -43,6 +43,7 @@ public class ViewBeans {
     public static final int VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW = 193;
     public static final int VIEW_TYPE_WIDGET_UNITY_BANNER = 194;
     public static final int VIEW_TYPE_WIDGET_VIEW = 195;
+    public static final int VIEW_TYPE_LAYOUT_FRAMELAYOUT = 196;
 
     /**
      * Map that stores both a view's type and type name.
@@ -83,6 +84,7 @@ public class ViewBeans {
             .put(VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW, "NestedScrollView")
             .put(VIEW_TYPE_WIDGET_UNITY_BANNER, "UnityBannerView")
             .put(VIEW_TYPE_WIDGET_VIEW, "View")
+            .put(VIEW_TYPE_LAYOUT_FRAMELAYOUT, "FrameLayout")
             .build();
 
     public static String buildClassInfo(int id) {
@@ -112,6 +114,7 @@ public class ViewBeans {
             case VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW -> R.drawable.ic_mtrl_swap_vertical;
             case VIEW_TYPE_WIDGET_UNITY_BANNER -> R.drawable.ic_mtrl_unity_ads;
             case VIEW_TYPE_WIDGET_VIEW -> R.drawable.ic_mtrl_rectangle;
+            case VIEW_TYPE_LAYOUT_FRAMELAYOUT -> R.drawable.ic_mtrl_rectangle;
             case VIEW_TYPE_WIDGET_ANALOGCLOCK, VIEW_TYPE_WIDGET_TIMEPICKER,
                  VIEW_TYPE_WIDGET_DIGITALCLOCK -> R.drawable.ic_mtrl_time;
             case VIEW_TYPE_WIDGET_DATEPICKER -> R.drawable.ic_mtrl_calendar;
