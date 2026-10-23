@@ -148,3 +148,26 @@ Do not declare production readiness until:
 - Explicitly requires native designer synchronization plus XML/live-model read-back for visual changes, and distinguishes shared custom-block registry operations from event-handler block graphs.
 - Updated `ToolRouter` so visual-design requests described by intent (including screen/UI/design and music/media-player UI) expose resource/layout executors, and event lifecycle phrases expose block tools even when the user does not literally say “block”.
 - This is prompt/routing integration only. It does not add the missing native event-graph mutation executor and does not prove visible designer behavior. Android compilation, router tests, live designer tests, and event graph reload/code-generation acceptance tests remain required.
+
+
+## Live designer synchronization hardening — 2026-10-23
+
+Scope: execution semantics only; no UI redesign and no replacement of the existing agent runtime.
+
+### Changes committed to `TAJ-STUDIO-AI`
+
+- `DomainToolHelper.syncLayoutToDesigner` now parses the layout and applies root metadata, the in-memory `ViewBean` collection, and the Sketchware save operation on Android's main thread. The agent worker waits for completion with a bounded deadline; timeout/failure is surfaced as an error instead of being reported as verified synchronization.
+- Live-model reads used by `verifyLiveLayout` and `verifyLiveModel` are also marshalled to the main thread, so verification reads the same UI-owned state that the designer uses.
+- The editor refresh path now calls `DesignActivity.refreshAgentLayout`. When the changed XML is the currently selected layout, it rebinds that layout and refreshes the file selector without reloading every project domain. Other layout/structural changes retain the established project reload path.
+- `DesignActivity.onDomainChanged` handles the empty-path wildcard emitted by `refresh_ui`, and targets the selected layout when the changed file matches it.
+- `ViewEditorFragment.onResume` rebinds the active layout model when returning from another tab, covering updates that occurred while the View fragment was paused.
+- `ViewEditorFragment.onDomainChanged` now rejects unrelated domains, handles wildcard refresh, and matches the actual basename instead of using broad substring matching.
+- `LiveRegistry` now snapshots listeners under the registry lock and dispatches callbacks after releasing it. Null/blank registration inputs are ignored, empty listener buckets are removed, and one tearing-down listener cannot block other listeners.
+- Successful generic filesystem delete/copy/move operations now emit live invalidations for affected layout/value/drawable/animation/menu paths. Resource deletion continues to emit its folder-domain event without duplicate layout notifications.
+
+### Verification status and release gate
+
+- The changes above were written to GitHub and the updated source was fetched back for inspection.
+- The repository connector reported no CI status checks or pull-request workflow runs for the latest commit at inspection time. This is **not** a successful build result.
+- Android compilation, unit/instrumentation tests, and physical-device checks have not run in this environment. In particular, the following still require a real build/device acceptance run: create/edit/insert layout while View is open; edit a non-selected layout; delete/move/copy layout resources; refresh after switching away from and back to View; cancellation/activity destruction during the bounded main-thread handoff; and ensuring no unrelated unsaved editor state is lost.
+- Do not mark the visual integration complete solely from source inspection. A successful tool result must continue to require persisted-file verification and live-model parity; device acceptance must verify the rendered View tab as well.
