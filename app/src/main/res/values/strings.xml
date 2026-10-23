@@ -2649,4 +2649,6 @@ Please try again later"</string>
     <string name="unity_ads_library_no_browser">No browser to open the documentation</string>
     <string name="unity_ads_library_cleared">Cleared. Leave this screen to turn Unity Ads off.</string>
     <string name="unity_ads_error_game_id">The game ID is the number the dashboard shows</string>
+    <string name="unity_ads_library_item_game_id">Game ID: %1$s</string>
+    <string name="unity_ads_library_item_description">Set up Unity Ads for this project.</string>
 </resources>
