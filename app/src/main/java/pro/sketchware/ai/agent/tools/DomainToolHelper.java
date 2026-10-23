@@ -389,6 +389,19 @@ public final class DomainToolHelper {
         return value.get();
     }
 
+    /**
+     * Best-effort task-level refresh retained for callers that must not fail completion
+     * delivery when the final visual refresh is unavailable. Individual resource tools
+     * still use the checked overload and report refresh failures to the agent.
+     */
+    public static void refreshEditor(Tool.ToolContext ctx) {
+        try {
+            refreshEditor(ctx, null);
+        } catch (Exception error) {
+            android.util.Log.w("DomainToolHelper", "Final editor refresh could not be verified", error);
+        }
+    }
+
     public static void refreshEditor(Tool.ToolContext ctx, String xmlName) throws Exception {
         if (ctx == null) throw new IOException("Agent project context is missing.");
         DesignActivity activity = ctx.activity.get();
