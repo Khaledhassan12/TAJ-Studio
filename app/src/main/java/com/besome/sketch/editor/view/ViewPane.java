@@ -80,6 +80,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import a.a.a.Gx;
+import a.a.a.jC;
 import a.a.a.kC;
 import a.a.a.lC;
 import a.a.a.wB;
@@ -375,7 +376,7 @@ public class ViewPane extends RelativeLayout {
         if (screenXml != null) chain.add(screenXml);
         pane.includeChain = chain;
         pane.updateRootLayout(sc_id, xml);
-        for (ViewBean bean : pro.sketchware.utility.ViewHierarchy.sorted(jC.a(sc_id).d(xml))) {
+        for (ViewBean bean : jC.a(sc_id).d(xml)) {
             pane.addViewAndUpdateIndex(pane.createItemView(bean.clone()));
         }
         View root = pane.rootLayout;
