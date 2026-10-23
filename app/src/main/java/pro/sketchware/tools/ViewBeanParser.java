@@ -31,11 +31,12 @@ import java.util.Set;
 import java.util.Stack;
 
 import a.a.a.wq;
+import mod.agus.jcoderz.beans.ViewBeans;
 import pro.sketchware.utility.InvokeUtil;
 
 public class ViewBeanParser {
 
-    private static final int[] viewsCount = new int[49];
+    private static final int[] viewsCount = new int[256];
     private final XmlPullParser parser;
     private boolean skipRoot;
     private Pair<String, Map<String, String>> rootAttributes;
@@ -125,7 +126,7 @@ public class ViewBeanParser {
             className = "HScrollView";
         }
 
-        int type = ViewBean.getViewTypeByTypeName(className);
+        int type = className.equalsIgnoreCase("include") ? ViewBeans.VIEW_TYPE_LAYOUT_INCLUDE : ViewBean.getViewTypeByTypeName(className);
         return getViewTypeByTag(name, type);
     }
 
@@ -202,15 +203,6 @@ public class ViewBeanParser {
                             attrId != null && !ids.contains(parseReferName(attrId, "/"))
                                     ? parseReferName(attrId, "/")
                                     : generateUniqueId(ids, type, className, parseViewCounts);
-
-                    // Special case for 'include' tag with layout reference, treated as ID in
-                    // ViewBean
-                    if (className.equals("include")) {
-                        String layout = parser.getAttributeValue(null, "layout");
-                        if (layout != null) {
-                            id = parseReferName(layout, "/");
-                        }
-                    }
 
                     ViewBean bean = new ViewBean(id, type);
 
