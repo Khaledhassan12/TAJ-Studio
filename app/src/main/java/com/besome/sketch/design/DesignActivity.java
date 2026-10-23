@@ -708,7 +708,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        if (currentTabNumber == 3) {
+        if (currentTabNumber == 4) {
             MenuItem undo = menu.findItem(R.id.menu_view_undo);
             if (undo != null) undo.setVisible(false);
             MenuItem redo = menu.findItem(R.id.menu_view_redo);
