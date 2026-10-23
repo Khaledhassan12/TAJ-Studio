@@ -1147,9 +1147,10 @@ public class ViewPane extends RelativeLayout {
      * inject string remains untouched and is emitted verbatim by the XML generator. */
     private void applyConstraintLayoutParams(ConstraintLayout.LayoutParams params, String inject) {
         if (inject == null || inject.isEmpty()) return;
-        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(?:app:)?layout_constraint([A-Za-z]+)=\\\"([^\\\"]+)\\\"").matcher(inject);
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(?:app:)?layout_constraint([A-Za-z_]+)=\\\"([^\\\"]+)\\\"").matcher(inject);
         while (matcher.find()) {
             String key = matcher.group(1);
+            key = Character.toUpperCase(key.charAt(0)) + key.substring(1);
             String value = matcher.group(2);
             try {
                 switch (key) {
