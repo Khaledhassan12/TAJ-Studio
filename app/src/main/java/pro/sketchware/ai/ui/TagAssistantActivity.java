@@ -1,6 +1,8 @@
 package pro.sketchware.ai.ui;
 
 import android.os.Bundle;
+import android.net.DhcpInfo;
+import android.net.wifi.WifiManager;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -17,11 +19,19 @@ import com.google.android.material.snackbar.Snackbar;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import mod.hey.studios.util.Helper;
 import pro.sketchware.R;
@@ -47,6 +57,13 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     private final List<ProviderProfile> profiles = new ArrayList<>();
     private ProviderProfile currentProfile;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService ollamaScanCoordinator = Executors.newSingleThreadExecutor();
+    private static final OkHttpClient OLLAMA_SCAN_CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(650, TimeUnit.MILLISECONDS)
+            .readTimeout(650, TimeUnit.MILLISECONDS)
+            .callTimeout(1200, TimeUnit.MILLISECONDS)
+            .build();
+    private volatile boolean ollamaScanInProgress = false;
     private boolean syncInProgress = false;
     // 0 = never checked, 1 = checking, 2 = success, 3 = failed.
     private int connectionUiState = 0;
@@ -127,6 +144,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
     @Override
     public void onDestroy() {
         syncInProgress = false;
+        ollamaScanCoordinator.shutdownNow();
         executor.shutdownNow();
         super.onDestroy();
     }
@@ -271,6 +289,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.btnSave.setOnClickListener(v -> saveConfiguration());
         binding.btnSyncModels.setOnClickListener(v -> syncModels());
         binding.btnChooseModel.setOnClickListener(v -> openModelPicker());
+        binding.btnScanOllama.setOnClickListener(v -> scanOllamaDevices());
     }
     private void applyProfile(ProviderProfile profile) {
         currentProfile = profile;
@@ -293,9 +312,12 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.tilBaseUrl.setError(null);
         // Ollama can run on a different device on the same LAN. Its URL remains
         // editable; use that device's LAN IP instead of localhost when remote.
-        binding.tilBaseUrl.setHelperText("ollama".equals(profile.id)
-                ? "Remote Ollama: http://<device-IP>:11434/v1"
+        boolean isOllama = "ollama".equals(profile.id);
+        binding.tilBaseUrl.setHelperText(isOllama
+                ? "Ollama server URL, for example http://192.168.1.20:11434/v1"
                 : null);
+        binding.btnScanOllama.setVisibility(isOllama ? View.VISIBLE : View.GONE);
+        binding.tvOllamaHelp.setVisibility(isOllama ? View.VISIBLE : View.GONE);
 
         String savedModel = store.getModelFor(profile.id);
         if (!savedModel.isEmpty()) {
@@ -327,6 +349,147 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             chip.setEnsureMinTouchTargetSize(false);
             chip.setOnClickListener(v -> binding.editModel.setText(model));
             binding.chipGroupModels.addView(chip);
+        }
+    }
+
+
+    /**
+     * Searches the current Wi-Fi /24 range for reachable Ollama servers.
+     * Discovery is opt-in, bounded to the local subnet, and performed off the UI thread.
+     */
+    private void scanOllamaDevices() {
+        if (currentProfile == null || !"ollama".equals(currentProfile.id)) {
+            return;
+        }
+        if (ollamaScanInProgress) {
+            return;
+        }
+
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        DhcpInfo dhcp = wifiManager == null ? null : wifiManager.getDhcpInfo();
+        if (dhcp == null || dhcp.ipAddress == 0 || !wifiManager.isWifiEnabled()) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Scan Devices")
+                    .setMessage("Connect this phone to the same Wi-Fi network as the device running Ollama, then scan again. If Ollama runs on this phone, use http://127.0.0.1:11434/v1 instead.")
+                    .setPositiveButton(R.string.common_word_ok, null)
+                    .show();
+            return;
+        }
+
+        final int ownIp = dhcp.ipAddress;
+        final int subnet = ownIp & 0x00FFFFFF;
+        final AtomicBoolean cancelled = new AtomicBoolean(false);
+        final android.app.AlertDialog progressDialog = new MaterialAlertDialogBuilder(this)
+                .setTitle("Scan Devices")
+                .setMessage("Searching this Wi-Fi network for Ollama servers…\nKeep both devices connected to the same Wi-Fi.")
+                .setNegativeButton("Cancel", (dialog, which) -> cancelled.set(true))
+                .create();
+        progressDialog.setOnCancelListener(dialog -> cancelled.set(true));
+        progressDialog.show();
+        ollamaScanInProgress = true;
+
+        ollamaScanCoordinator.execute(() -> {
+            List<OllamaDevice> found = Collections.synchronizedList(new ArrayList<>());
+            ExecutorService workers = Executors.newFixedThreadPool(32);
+            CountDownLatch finished = new CountDownLatch(254);
+            for (int host = 1; host <= 254; host++) {
+                final int candidate = subnet | (host << 24);
+                if (candidate == ownIp) {
+                    finished.countDown();
+                    continue;
+                }
+                workers.execute(() -> {
+                    try {
+                        if (!cancelled.get()) {
+                            String ip = intToIp(candidate);
+                            if (isOllamaAt(ip)) {
+                                found.add(new OllamaDevice(ip, "http://" + ip + ":11434/v1"));
+                            }
+                        }
+                    } catch (Exception ignored) {
+                        // An offline device or a blocked port is an expected scan result.
+                    } finally {
+                        finished.countDown();
+                    }
+                });
+            }
+            try {
+                finished.await(14, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                cancelled.set(true);
+            } finally {
+                workers.shutdownNow();
+            }
+
+            List<OllamaDevice> results = new ArrayList<>(found);
+            results.sort((a, b) -> a.ip.compareTo(b.ip));
+            runOnUiThread(() -> {
+                ollamaScanInProgress = false;
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (progressDialog.isShowing()) {
+                    progressDialog.dismiss();
+                }
+                if (cancelled.get()) {
+                    return;
+                }
+                if (results.isEmpty()) {
+                    new MaterialAlertDialogBuilder(TagAssistantActivity.this)
+                            .setTitle("No Ollama Devices Found")
+                            .setMessage("No reachable Ollama server was found on this Wi-Fi subnet. Check that Ollama is running on the host, LAN access is enabled, the host firewall allows port 11434, and both devices are on the same Wi-Fi. You can still enter the Base URL manually.")
+                            .setPositiveButton(R.string.common_word_ok, null)
+                            .show();
+                    return;
+                }
+                String[] labels = new String[results.size()];
+                for (int i = 0; i < results.size(); i++) {
+                    labels[i] = "Ollama server  •  " + results.get(i).ip;
+                }
+                new MaterialAlertDialogBuilder(TagAssistantActivity.this)
+                        .setTitle("Ollama Devices (" + results.size() + ")")
+                        .setMessage("Select a device to fill in Base URL.")
+                        .setItems(labels, (dialog, which) -> {
+                            if (which >= 0 && which < results.size()) {
+                                OllamaDevice selected = results.get(which);
+                                binding.editBaseUrl.setText(selected.baseUrl);
+                                binding.tilBaseUrl.setError(null);
+                                Snackbar.make(binding.getRoot(),
+                                        "Base URL filled. Tap Sync Models to load models.",
+                                        Snackbar.LENGTH_LONG).show();
+                            }
+                        })
+                        .setNegativeButton(R.string.common_word_cancel, null)
+                        .show();
+            });
+        });
+    }
+
+    private boolean isOllamaAt(String ip) {
+        Request request = new Request.Builder()
+                .url("http://" + ip + ":11434/api/tags")
+                .get()
+                .build();
+        try (Response response = OLLAMA_SCAN_CLIENT.newCall(request).execute()) {
+            return response.isSuccessful();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private static String intToIp(int address) {
+        return (address & 0xff) + "." + ((address >> 8) & 0xff) + "."
+                + ((address >> 16) & 0xff) + "." + ((address >> 24) & 0xff);
+    }
+
+    private static final class OllamaDevice {
+        final String ip;
+        final String baseUrl;
+
+        OllamaDevice(String ip, String baseUrl) {
+            this.ip = ip;
+            this.baseUrl = baseUrl;
         }
     }
 
