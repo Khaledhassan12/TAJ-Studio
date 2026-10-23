@@ -49,11 +49,22 @@ public final class FsDeleteTool implements Tool {
                 return ToolResult.structured("fs_delete", "VERIFICATION_FAILED", path,
                         "Trash move verification failed; inspect the original and trash location.", null, true);
             }
+            notifyLive(path);
             return ToolResult.structured("fs_delete", "SUCCESS", path,
                     "Original path is absent; file was moved to verified recoverable trash: " + trashPath, null, false);
         } catch (Exception e) {
             String message = e.getMessage() == null ? "Delete failed; inspect source and trash before retrying." : e.getMessage();
             return ToolResult.structured("fs_delete", "ERROR", path, message, null, true);
         }
+    }
+
+    private static void notifyLive(String path) {
+        if (path == null) return;
+        String normalized = path.replace('\\', '/').toLowerCase(java.util.Locale.ROOT);
+        if (normalized.contains("/layout/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("layout", path);
+        else if (normalized.contains("/values/") || normalized.contains("/values-night/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("values", path);
+        else if (normalized.contains("/drawable")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("drawable", path);
+        else if (normalized.contains("/anim/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("anim", path);
+        else if (normalized.contains("/menu/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("menu", path);
     }
 }
