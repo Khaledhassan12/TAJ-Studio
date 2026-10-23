@@ -39,6 +39,8 @@ import mod.jbk.editor.manage.library.ExcludeBuiltInLibrariesActivity;
 import mod.jbk.editor.manage.library.ExcludeBuiltInLibrariesLibraryItemView;
 import pro.sketchware.R;
 import pro.sketchware.utility.UI;
+import pro.sketchware.unityads.UnityAdsLibraryActivity;
+import pro.sketchware.unityads.UnityAdsLibraryItemView;
 
 public class ManageLibraryActivity extends BaseAppCompatActivity implements View.OnClickListener {
 
@@ -99,6 +101,9 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
         if (type == ProjectLibraryBean.PROJECT_LIB_TYPE_EXCLUDE_BUILTIN_LIBRARIES) {
             libraryItemView = new ExcludeBuiltInLibrariesLibraryItemView(this, sc_id);
             libraryItemView.setData(null);
+        } else if (type == ProjectLibraryBean.PROJECT_LIB_TYPE_UNITY_ADS) {
+            libraryItemView = new UnityAdsLibraryItemView(this, sc_id);
+            libraryItemView.setData(null);
         } else {
             libraryItemView = new Material3LibraryItemView(this);
             libraryItemView.setData(compatLibraryBean);
@@ -137,6 +142,8 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
                 itemView.setData(null);
             } else if (itemView instanceof Material3LibraryItemView) {
                 itemView.setData(compatLibraryBean);
+            } else if (itemView instanceof UnityAdsLibraryItemView) {
+                itemView.setData(null);
             } else if (tag instanceof Integer && libraryBean != null && ((Integer) tag) == libraryBean.libType) {
                 itemView.setData(libraryBean);
             }
@@ -294,6 +301,11 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
 
                     case ProjectLibraryBean.PROJECT_LIB_TYPE_MATERIAL3:
                         toMaterial3Activity();
+                        break;
+
+                    case ProjectLibraryBean.PROJECT_LIB_TYPE_UNITY_ADS:
+                        launchCustomActivity(UnityAdsLibraryActivity.class);
+                        break;
                 }
             }
         }
@@ -373,6 +385,7 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
         LibraryCategoryView basicCategory = addCategoryItem(null);
         addLibraryItem(compatLibraryBean, basicCategory);
         addCustomLibraryItem(ProjectLibraryBean.PROJECT_LIB_TYPE_MATERIAL3, basicCategory);
+        addCustomLibraryItem(ProjectLibraryBean.PROJECT_LIB_TYPE_UNITY_ADS, basicCategory);
         addLibraryItem(firebaseLibraryBean, basicCategory);
         addLibraryItem(admobLibraryBean, basicCategory);
         addLibraryItem(googleMapLibraryBean, basicCategory, false);
