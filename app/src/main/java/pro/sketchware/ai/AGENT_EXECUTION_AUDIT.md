@@ -191,3 +191,14 @@ Scope: execution semantics only; no UI redesign and no replacement of the existi
 - Added the add-string FAB to the shared resource editor layout and set list bottom padding so the FAB does not obscure rows.
 - Restored source compatibility for the task-level agent refresh by passing a null target layout to the existing full-refresh path.
 - CI and device validation are still required; do not treat the feature as build-verified until the Debug APK workflow succeeds and add/edit/delete plus AI-driven value-resource refresh are exercised.
+
+## Include widget integration (2026-10-23)
+
+- Compared the Design palette definitions in `FabioSilva11/Sketchware-IA` against TAJ Studio's `ViewEditorFragment`, `ViewEditor`, `ViewPane`, `ViewBeans`, `ViewBeanParser`, and `Ox`.
+- Added `include` to the Layouts palette and registered a dedicated type (`VIEW_TYPE_LAYOUT_INCLUDE`) so palette creation, XML parsing, and code generation do not treat it as an unknown widget.
+- Added the include placeholder/preview item, layout picker for project screen/custom-view layouts, live preview refresh, cycle/missing-layout messaging, and XML generation that omits an incomplete include until a target is chosen.
+- Expanded type-index arrays to safely cover the dedicated include type and preserved unique include IDs instead of incorrectly replacing them with the referenced layout name.
+- Added `IncludedViews` helper for parsing the include target and enumerating project layouts.
+- Reference comparison also surfaced separate additions outside the requested base Layouts list (for example the reference's extra AndroidX layout presets and UnityBanner palette item). Those need their own compatibility checks because TAJ Studio does not currently share all of the reference's preset/rendering/runtime infrastructure; they are not represented as completed in this change.
+- Validation status: source edits are committed to `TAJ-STUDIO-AI`; GitHub Actions/build result must be checked before treating this as build-verified. Device acceptance should cover adding an include, selecting a target, rendering nested content, editing the included layout, reopening the project, cancellation/no-target handling, and recursive include protection.
+
