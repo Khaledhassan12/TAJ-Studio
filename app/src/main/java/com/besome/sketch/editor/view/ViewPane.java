@@ -330,6 +330,11 @@ public class ViewPane extends RelativeLayout {
         return item;
     }
 
+    public void refreshIncludePreview(ViewBean bean) {
+        View item = findViewWithTag(bean.id);
+        if (item instanceof ItemInclude include) updateIncludePreview(include, bean);
+    }
+
     private void updateIncludePreview(ItemInclude include, ViewBean bean) {
         String layout = pro.sketchware.utility.IncludedViews.includedLayout(bean);
         if (layout.equals(include.getPreviewLayout())) return;
