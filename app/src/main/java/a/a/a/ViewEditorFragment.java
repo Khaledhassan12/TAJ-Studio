@@ -232,6 +232,7 @@ public class ViewEditorFragment extends qA implements LiveRegistry.DomainListene
         viewEditor.addWidgetLayout(PaletteWidget.a.d, "");
         viewEditor.extraWidgetLayout("", "RadioGroup");
         viewEditor.extraWidgetLayout("", "RelativeLayout");
+        viewEditor.extraWidgetLayout("", "include");
         widgetsCreatorManager.addWidgetsByTitle("Layouts");
 
         viewEditor.paletteWidget.extraTitle("AndroidX", 0);
