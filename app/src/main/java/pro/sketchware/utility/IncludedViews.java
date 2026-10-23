@@ -372,16 +372,24 @@ public final class IncludedViews {
     /** The layout an include points to, without {@code @layout/}, or "" when none was chosen. */
     @NonNull
     public static String includedLayout(@NonNull ViewBean include) {
-        String layout = include.inject == null ? null : InjectAttributes.get(include, "layout");
+        String layout = include.inject == null ? null : readInjectedAttribute(include.inject, "layout");
         if (layout == null) return "";
         layout = layout.trim();
         return layout.startsWith("@layout/") ? layout.substring("@layout/".length()) : layout;
     }
 
+    private static String readInjectedAttribute(@NonNull String inject, @NonNull String attribute) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("(?m)(?:^|\\\\s)" + java.util.regex.Pattern.quote(attribute)
+                        + "\\\\s*=\\\\s*[\\\"']([^\\\"']*)[\\\"']")
+                .matcher(inject);
+        return matcher.find() ? matcher.group(1) : null;
+    }
+
     /** Whether the widget keeps its {@code android:id} in the XML ({@code tools:replace="android:id"} drops it). */
     public static boolean hasXmlId(@NonNull ViewBean bean) {
         if (bean.inject == null || bean.inject.isEmpty()) return true;
-        String replaced = InjectAttributes.get(bean, "tools:replace");
+        String replaced = readInjectedAttribute(bean.inject, "tools:replace");
         if (replaced == null) return true;
         for (String attribute : replaced.split(",")) {
             if (attribute.trim().equals("android:id")) return false;
