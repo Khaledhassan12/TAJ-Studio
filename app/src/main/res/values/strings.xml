@@ -2635,4 +2635,18 @@ Please try again later"</string>
     <string name="taj_backups_subtitle">Review, restore, share and manage verified TAJ Agent snapshots for this project.</string>
     <string name="design_include_choose_layout">Choose a layout to include</string>
     <string name="design_include_no_layouts">This project has no other layout files to include.</string>
+
+    <!-- Unity Ads configuration -->
+    <string name="unity_ads_library_description">Show Unity Ads in this project. The Android game ID is in the Unity dashboard, under Monetization, Ad units (or in the project\'s settings). Apps run from Sketchware always show test ads.</string>
+    <string name="unity_ads_library_game_id_hint">Android game ID</string>
+    <string name="unity_ads_library_game_id_helper">Digits only, e.g. 5512345</string>
+    <string name="unity_ads_library_test_mode">Test ads in exported apps too</string>
+    <string name="unity_ads_library_test_mode_helper">Turn it off before publishing: exported apps then show real ads. Showing real ads to yourself breaks Unity\'s terms.</string>
+    <string name="unity_ads_library_docs">Open the Unity Ads documentation</string>
+    <string name="unity_ads_library_clear">Remove the Unity Ads settings</string>
+    <string name="unity_ads_library_components_hint">Then add the Unity Interstitial and Rewarded components to a screen and the UnityBanner widget (Google, next to AdView) to a layout; their blocks are in the Component and View palettes of the logic editor. The first load starts the SDK, so set the privacy blocks before it.</string>
+    <string name="unity_ads_library_title">Unity Ads</string>
+    <string name="unity_ads_library_no_browser">No browser to open the documentation</string>
+    <string name="unity_ads_library_cleared">Cleared. Leave this screen to turn Unity Ads off.</string>
+    <string name="unity_ads_error_game_id">The game ID is the number the dashboard shows</string>
 </resources>
