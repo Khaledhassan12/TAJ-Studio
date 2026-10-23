@@ -295,7 +295,6 @@ public class Gx {
                 classInfos = "View.Clickable.TextView.Button.CompoundButton.Switch";
                 break;
 
-            case "View":
             case "Space":
                 classInfos = "View";
                 break;
