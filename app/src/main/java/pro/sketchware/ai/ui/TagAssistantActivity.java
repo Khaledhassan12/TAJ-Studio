@@ -279,6 +279,9 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
 
         applyingProfileValues = true;
         binding.editApiKey.setText(store.getKeyFor(profile.id));
+        // Providers without API-key authentication should not reserve any screen space
+        // for credentials. Restore the field automatically for key-based providers.
+        binding.tilApiKey.setVisibility(profile.requiresKey ? View.VISIBLE : View.GONE);
         binding.tilApiKey.setEnabled(profile.requiresKey);
         if (!profile.requiresKey) {
             binding.tilApiKey.setError(null);
@@ -288,6 +291,11 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         binding.editBaseUrl.setText(!savedUrl.isEmpty() ? savedUrl : profile.defaultBaseUrl);
         binding.tilBaseUrl.setEnabled(profile.baseUrlEditable);
         binding.tilBaseUrl.setError(null);
+        // Ollama can run on a different device on the same LAN. Its URL remains
+        // editable; use that device's LAN IP instead of localhost when remote.
+        binding.tilBaseUrl.setHelperText("ollama".equals(profile.id)
+                ? "Remote Ollama: http://<device-IP>:11434/v1"
+                : null);
 
         String savedModel = store.getModelFor(profile.id);
         if (!savedModel.isEmpty()) {
