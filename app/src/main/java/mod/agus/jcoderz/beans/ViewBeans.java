@@ -98,7 +98,7 @@ public class ViewBeans {
                  VIEW_TYPE_LAYOUT_TEXTINPUTLAYOUT -> R.drawable.ic_mtrl_edittext;
             case VIEW_TYPE_WIDGET_GRIDVIEW -> R.drawable.ic_mtrl_grid;
             case VIEW_TYPE_WIDGET_RECYCLERVIEW -> R.drawable.ic_mtrl_list;
-            case VIEW_TYPE_LAYOUT_INCLUDE -> R.drawable.ic_mtrl_frame_source;
+            case VIEW_TYPE_LAYOUT_INCLUDE -> R.drawable.ic_mtrl_rectangle;
             case VIEW_TYPE_WIDGET_ANALOGCLOCK, VIEW_TYPE_WIDGET_TIMEPICKER,
                  VIEW_TYPE_WIDGET_DIGITALCLOCK -> R.drawable.ic_mtrl_time;
             case VIEW_TYPE_WIDGET_DATEPICKER -> R.drawable.ic_mtrl_calendar;
