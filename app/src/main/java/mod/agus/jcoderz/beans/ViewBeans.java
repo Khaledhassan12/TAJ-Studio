@@ -38,6 +38,11 @@ public class ViewBeans {
     public static final int VIEW_TYPE_WIDGET_CODEVIEW = 47;
     public static final int VIEW_TYPE_WIDGET_RECYCLERVIEW = 48;
     public static final int VIEW_TYPE_LAYOUT_INCLUDE = 191;
+    // Dedicated editor types: keep AndroidX layouts distinct from legacy ScrollView/CardView.
+    public static final int VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT = 192;
+    public static final int VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW = 193;
+    public static final int VIEW_TYPE_WIDGET_UNITY_BANNER = 194;
+    public static final int VIEW_TYPE_WIDGET_VIEW = 195;
 
     /**
      * Map that stores both a view's type and type name.
@@ -74,6 +79,10 @@ public class ViewBeans {
             .put(VIEW_TYPE_WIDGET_CODEVIEW, "CodeView")
             .put(VIEW_TYPE_WIDGET_RECYCLERVIEW, "RecyclerView")
             .put(VIEW_TYPE_LAYOUT_INCLUDE, "include")
+            .put(VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT, "ConstraintLayout")
+            .put(VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW, "NestedScrollView")
+            .put(VIEW_TYPE_WIDGET_UNITY_BANNER, "UnityBannerView")
+            .put(VIEW_TYPE_WIDGET_VIEW, "View")
             .build();
 
     public static String buildClassInfo(int id) {
@@ -99,6 +108,10 @@ public class ViewBeans {
             case VIEW_TYPE_WIDGET_GRIDVIEW -> R.drawable.ic_mtrl_grid;
             case VIEW_TYPE_WIDGET_RECYCLERVIEW -> R.drawable.ic_mtrl_list;
             case VIEW_TYPE_LAYOUT_INCLUDE -> R.drawable.ic_mtrl_rectangle;
+            case VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT -> R.drawable.ic_mtrl_view_relative;
+            case VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW -> R.drawable.ic_mtrl_swap_vertical;
+            case VIEW_TYPE_WIDGET_UNITY_BANNER -> R.drawable.ic_mtrl_unity_ads;
+            case VIEW_TYPE_WIDGET_VIEW -> R.drawable.ic_mtrl_rectangle;
             case VIEW_TYPE_WIDGET_ANALOGCLOCK, VIEW_TYPE_WIDGET_TIMEPICKER,
                  VIEW_TYPE_WIDGET_DIGITALCLOCK -> R.drawable.ic_mtrl_time;
             case VIEW_TYPE_WIDGET_DATEPICKER -> R.drawable.ic_mtrl_calendar;
