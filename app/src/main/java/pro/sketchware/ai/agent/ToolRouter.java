@@ -36,12 +36,20 @@ public final class ToolRouter {
                 "manifest_read", "libs_list");
 
         boolean code = hasAny(task, "kotlin", "java", "class", "source", "function", "method",
-                "login screen", "screen", "activity", "fragment", "compose", ".kt", ".java",
-                "edit code", "modify code", "create file");
-        boolean resources = hasAny(task, "layout", "xml", "string resource", "color resource",
+                "activity", "fragment", "compose", ".kt", ".java",
+                "edit code", "modify code", "create file", "source code");
+        // Visual intent must expose the native layout tools even when the user describes a screen
+        // by its purpose (for example, a music player) rather than saying "XML" or "layout".
+        boolean visualDesign = hasAny(task, "ui", "visual", "design", "interface", "screen", "layout",
+                "widget", "button", "textview", "imageview", "music player", "media player",
+                "player screen", "dialog", "toolbar", "app bar", "navigation", "cardview",
+                "recyclerview", "constraintlayout", "linear layout", "relative layout", "view designer");
+        boolean resources = visualDesign || hasAny(task, "layout", "xml", "string resource", "color resource",
                 "drawable", "resource", "view", "widget", "button", "textview");
         boolean assets = hasAny(task, "image", "asset", "font", "icon", "svg", "png", "jpg");
-        boolean blocks = hasAny(task, "block", "logic block", "event", "component");
+        boolean blocks = hasAny(task, "block", "logic block", "event", "component", "oncreate", "on create",
+                "onclick", "on click", "onlongclick", "on long click", "event handler", "event listener",
+                "more block", "custom block", "block graph", "logic editor");
         boolean manifest = hasAny(task, "manifest", "permission", "application id", "package name");
         boolean libraries = hasAny(task, "library", "libraries", "dependency", "maven", "gradle dependency");
         boolean filesystem = hasAny(task, "file", "folder", "directory", "path", "copy", "move",
