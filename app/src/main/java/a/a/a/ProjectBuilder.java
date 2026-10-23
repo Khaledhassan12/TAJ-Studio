@@ -679,6 +679,16 @@ public class ProjectBuilder {
             builtInLibraryManager.addLibrary(BuiltInLibraries.ANDROIDX_COORDINATORLAYOUT);
             builtInLibraryManager.addLibrary(BuiltInLibraries.MATERIAL);
         }
+        if (yq.N.isConstraintLayoutUsed) {
+            builtInLibraryManager.addLibrary(BuiltInLibraries.ANDROIDX_CONSTRAINTLAYOUT);
+        }
+        if (yq.N.isNestedScrollViewUsed) {
+            builtInLibraryManager.addLibrary(BuiltInLibraries.ANDROIDX_CORE);
+        }
+        if (yq.N.isMaterialCardViewUsed) {
+            builtInLibraryManager.addLibrary(BuiltInLibraries.MATERIAL);
+        }
+
         if (yq.N.isFirebaseEnabled) {
             builtInLibraryManager.addLibrary(BuiltInLibraries.FIREBASE_COMMON);
         }
