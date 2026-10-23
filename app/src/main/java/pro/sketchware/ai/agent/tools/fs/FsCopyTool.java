@@ -53,8 +53,12 @@ public final class FsCopyTool implements Tool {
                 return ToolResult.structured("fs_copy", "VERIFICATION_FAILED", dst,
                         "Destination fingerprint does not match the source; inspect both paths before retrying.", null, true);
             }
-            notifyLive(src);
-            notifyLive(dst);
+            if (sameLiveDomain(src, dst)) {
+                notifyLive(dst);
+            } else {
+                notifyLive(src);
+                notifyLive(dst);
+            }
             return ToolResult.structured("fs_copy", "SUCCESS", dst,
                     "Destination tree matches source fingerprint " + sourceHash + "; source was preserved.", null, false);
         } catch (Exception e) {
@@ -71,5 +75,22 @@ public final class FsCopyTool implements Tool {
         else if (normalized.contains("/drawable")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("drawable", path);
         else if (normalized.contains("/anim/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("anim", path);
         else if (normalized.contains("/menu/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("menu", path);
+    }
+
+    private static boolean sameLiveDomain(String first, String second) {
+        String a = liveDomain(first);
+        String b = liveDomain(second);
+        return a != null && a.equals(b);
+    }
+
+    private static String liveDomain(String path) {
+        if (path == null) return null;
+        String normalized = path.replace('\\', '/').toLowerCase(java.util.Locale.ROOT);
+        if (normalized.contains("/layout/")) return "layout";
+        if (normalized.contains("/values/") || normalized.contains("/values-night/")) return "values";
+        if (normalized.contains("/drawable")) return "drawable";
+        if (normalized.contains("/anim/")) return "anim";
+        if (normalized.contains("/menu/")) return "menu";
+        return null;
     }
 }
