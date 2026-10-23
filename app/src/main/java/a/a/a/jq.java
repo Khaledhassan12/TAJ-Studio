@@ -122,6 +122,7 @@ public class jq {
     public boolean isConstraintLayoutUsed = false;
     public boolean isNestedScrollViewUsed = false;
     public boolean isMaterialCardViewUsed = false;
+    public boolean isUnityAdsUsed = false;
 
     /**
      * If the built-in library AppCompat (contains the Jetpack AppCompat artefacts and

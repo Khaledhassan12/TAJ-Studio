@@ -49,6 +49,14 @@ public class Fx {
         this.isViewBindingEnabled = isViewBindingEnabled;
     }
 
+    /** Included widgets are addressed through their own include instance. */
+    private IncludedViews.Result includes;
+
+    public Fx withIncludes(IncludedViews.Result includes) {
+        this.includes = includes;
+        return this;
+    }
+
     public String a() {
         blockMap = new HashMap<>();
         ArrayList<BlockBean> beans = eventBlocks;
@@ -204,6 +212,8 @@ public class Fx {
         if (isWidgetParam) {
             String bindingStart = "binding.";
             if (isViewBindingEnabled && !param.isEmpty() && !param.startsWith("@") && !param.startsWith(bindingStart)) {
+                String included = includes == null ? null : includes.reference(param, true);
+                if (included != null) return included;
                 return bindingStart + ViewBindingBuilder.generateParameterFromId(param);
             }
         } else if (isColorParam) {
@@ -770,7 +780,10 @@ public class Fx {
                     break;
                 }
                 var paramAdapter = param;
-                if (isViewBindingEnabled && paramAdapter.startsWith("binding.")) {
+                IncludedViews.Entry includedList = includes == null ? null : includes.findByReference(param, isViewBindingEnabled);
+                if (includedList != null) {
+                    paramAdapter = includedList.id;
+                } else if (isViewBindingEnabled && paramAdapter.startsWith("binding.")) {
                     paramAdapter = paramAdapter.substring("binding.".length());
                 }
                 opcode = String.format("%s.setAdapter(new %s(%s));", param, Lx.a(paramAdapter, isViewBindingEnabled), params.get(1));

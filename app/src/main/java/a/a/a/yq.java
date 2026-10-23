@@ -520,6 +520,11 @@ public class yq {
                 if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT) N.isConstraintLayoutUsed = true;
                 if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW) N.isNestedScrollViewUsed = true;
                 if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW && "com.google.android.material.card.MaterialCardView".equals(viewBean.convert)) N.isMaterialCardViewUsed = true;
+                if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_WIDGET_UNITY_BANNER) {
+                    N.isUnityAdsUsed = true;
+                    N.addPermission(jq.PERMISSION_INTERNET);
+                    N.addPermission(jq.PERMISSION_ACCESS_NETWORK_STATE);
+                }
                 var classNameParts = viewBean.convert.split("\\.");
                 var className = classNameParts[classNameParts.length - 1];
                 switch (className) {
@@ -535,6 +540,16 @@ public class yq {
             }
         }
         for (ProjectFileBean activity : projectFileManager.b()) {
+            for (ViewBean viewBean : eC.a(projectDataManager.d(activity.getXmlName()))) {
+                if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT) N.isConstraintLayoutUsed = true;
+                if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW) N.isNestedScrollViewUsed = true;
+                if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW && "com.google.android.material.card.MaterialCardView".equals(viewBean.convert)) N.isMaterialCardViewUsed = true;
+                if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_WIDGET_UNITY_BANNER) {
+                    N.isUnityAdsUsed = true;
+                    N.addPermission(jq.PERMISSION_INTERNET);
+                    N.addPermission(jq.PERMISSION_ACCESS_NETWORK_STATE);
+                }
+            }
             if (activity.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_DRAWER)) {
                 N.a(activity.getActivityName()).hasDrawer = true;
             }
@@ -837,6 +852,17 @@ public class yq {
         if (!javaFiles.contains(new File(javaDir + "FileUtil.java"))) {
             srcCodeBeans.add(new SrcCodeBean("FileUtil.java",
                     Lx.e(packageName)));
+        }
+
+        if (!javaFiles.contains(new File(javaDir + "UnityAdsClient.java")) && N.isUnityAdsUsed) {
+            srcCodeBeans.add(new SrcCodeBean("UnityAdsClient.java",
+                    pro.sketchware.unityads.UnityAdsClientSource.generate(packageName,
+                            pro.sketchware.unityads.UnityAdsSettings.getGameId(sc_id),
+                            N.isDebugBuild || pro.sketchware.unityads.UnityAdsSettings.isTestMode(sc_id))));
+        }
+        if (!javaFiles.contains(new File(javaDir + "UnityBannerView.java")) && N.isUnityAdsUsed) {
+            srcCodeBeans.add(new SrcCodeBean("UnityBannerView.java",
+                    pro.sketchware.unityads.UnityAdsClientSource.generateBannerView(packageName)));
         }
 
         if (!javaFiles.contains(new File(javaDir + "RequestNetwork.java")) && N.isHttp3Used) {

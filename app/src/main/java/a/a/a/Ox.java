@@ -34,7 +34,9 @@ import dev.aldi.sayuti.editor.injection.AppCompatInjection;
 import mod.agus.jcoderz.beans.ViewBeans;
 import mod.jbk.util.LogUtil;
 import pro.sketchware.managers.inject.InjectRootLayoutManager;
+import pro.sketchware.utility.IncludedViews;
 import pro.sketchware.utility.InjectAttributeHandler;
+import pro.sketchware.unityads.UnityAdsClientSource;
 import pro.sketchware.xml.XmlBuilder;
 
 @SuppressLint("RtlHardcoded")
@@ -49,6 +51,7 @@ public class Ox {
     private XmlBuilder rootLayout = null;
     private XmlBuilder collapsingToolbarLayout = null;
     private boolean excludeAppCompat;
+    private Boolean includedOnly;
 
     public Ox(jq jq, ProjectFileBean projectFileBean) {
         buildConfig = jq;
@@ -284,25 +287,51 @@ public class Ox {
         return rootLayout.toCode();
     }
 
+    private boolean isIncludedOnly() {
+        if (includedOnly == null) {
+            String scId = buildConfig.sc_id;
+            includedOnly = scId != null && !scId.isEmpty()
+                    && IncludedViews.isIncludedOnly(jC.a(scId), scId, projectFile.fileName);
+        }
+        return includedOnly;
+    }
+
     private void writeWidget(XmlBuilder nx, ViewBean viewBean) {
         viewBean.getClassInfo().getClassName();
         String convert = viewBean.convert;
         var injectHandler = new InjectAttributeHandler(viewBean);
         Set<String> toNotAdd = readAttributesToReplace(viewBean);
 
-        XmlBuilder widgetTag = convert.isEmpty() ? new XmlBuilder(viewBean.getClassInfo().getClassName()) :
-                new XmlBuilder(convert.replaceAll(" ", ""));
-        if (convert.equals("include") || viewBean.type == ViewBeans.VIEW_TYPE_LAYOUT_INCLUDE) {
-            if (!injectHandler.contains("layout")) return;
-            if (!toNotAdd.contains("android:id")) {
-                widgetTag.addAttribute("android", "id", "@+id/" + viewBean.id);
+        boolean modernInclude = viewBean.type == ViewBeans.VIEW_TYPE_LAYOUT_INCLUDE;
+        if (modernInclude && !injectHandler.contains("layout")) return;
+        boolean unityBanner = viewBean.type == ViewBeans.VIEW_TYPE_WIDGET_UNITY_BANNER;
+        XmlBuilder widgetTag = unityBanner
+                ? new XmlBuilder(UnityAdsClientSource.bannerViewClass(buildConfig.packageName == null ? "" : buildConfig.packageName))
+                : convert.isEmpty() ? new XmlBuilder(viewBean.getClassInfo().getClassName())
+                : new XmlBuilder(convert.replaceAll(" ", ""));
+        if (unityBanner && !toNotAdd.contains("android:tag") && !injectHandler.contains("tag")) {
+            widgetTag.addAttribute("android", "tag", viewBean.adUnitId == null ? "" : viewBean.adUnitId);
+        }
+        if (modernInclude) {
+            if (!toNotAdd.contains("android:id")) widgetTag.addAttribute("android", "id", "@+id/" + viewBean.id);
+            if (!toNotAdd.contains("android:layout_width") && !injectHandler.contains("layout_width")) {
+                int width = viewBean.layout.width;
+                widgetTag.addAttribute("android", "layout_width", width == -1 ? "match_parent" : width == -2 ? "wrap_content" : width + "dp");
             }
+            if (!toNotAdd.contains("android:layout_height") && !injectHandler.contains("layout_height")) {
+                int height = viewBean.layout.height;
+                widgetTag.addAttribute("android", "layout_height", height == -1 ? "match_parent" : height == -2 ? "wrap_content" : height + "dp");
+            }
+            writeLayoutMargin(widgetTag, viewBean);
+        } else if (convert.equals("include")) {
+            if (!injectHandler.contains("layout")) return;
+            if (!toNotAdd.contains("android:id")) widgetTag.addAttribute("android", "id", "@+id/" + viewBean.id);
         } else {
             if (!toNotAdd.contains("android:id")) {
                 widgetTag.addAttribute("android", "id", "@+id/" + viewBean.id);
             }
             int type = viewBean.type;
-            if (projectFile.fileType == ProjectFileBean.PROJECT_FILE_TYPE_CUSTOM_VIEW) {
+            if (projectFile.fileType == ProjectFileBean.PROJECT_FILE_TYPE_CUSTOM_VIEW && !isIncludedOnly()) {
                 switch (type) {
                     case ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW:
                     case ViewBean.VIEW_TYPE_WIDGET_EDITTEXT:

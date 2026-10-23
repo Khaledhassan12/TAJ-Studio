@@ -115,6 +115,7 @@ public class BuiltInLibraries {
     public static String JSPECIFY = "jspecify-1.0.0";
     public static String LOTTIE = "lottie-6.6.10";
     public static String MATERIAL = "material-1.13.0";
+    public static String UNITY_ADS = "unity-ads-4.21.0";
     public static String OKHTTP_ANDROID = "okhttp-android-5.1.0";
     public static String OKIO_JVM = "okio-jvm-3.15.0";
     public static String OTPVIEW = "OTPView-0.1.0";

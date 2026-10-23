@@ -104,6 +104,10 @@ public class Lx {
             content.append("implementation 'com.google.android.material:material:1.12.0'\\r\\n");
         }
 
+        if (metadata.isUnityAdsUsed) {
+            content.append("implementation 'com.unity3d.ads:unity-ads:4.21.0'\r\n");
+        }
+
         if (metadata.isFirebaseEnabled) {
             content.append("implementation platform('com.google.firebase:firebase-bom:34.1.0')\r\n");
         }
