@@ -94,6 +94,16 @@ public class Lx {
                     """);
         }
 
+        if (metadata.isConstraintLayoutUsed && isLibraryNotExcluded(BuiltInLibraries.ANDROIDX_CONSTRAINTLAYOUT, excludedLibraries)) {
+            content.append("implementation 'androidx.constraintlayout:constraintlayout:2.2.1'\\r\\n");
+        }
+        if (metadata.isNestedScrollViewUsed && isLibraryNotExcluded(BuiltInLibraries.ANDROIDX_CORE, excludedLibraries)) {
+            content.append("implementation 'androidx.core:core:1.17.0'\\r\\n");
+        }
+        if (metadata.isMaterialCardViewUsed && isLibraryNotExcluded(BuiltInLibraries.MATERIAL, excludedLibraries)) {
+            content.append("implementation 'com.google.android.material:material:1.12.0'\\r\\n");
+        }
+
         if (metadata.isFirebaseEnabled) {
             content.append("implementation platform('com.google.firebase:firebase-bom:34.1.0')\r\n");
         }
