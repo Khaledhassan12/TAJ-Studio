@@ -30,6 +30,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.besome.sketch.beans.ImageBean;
 import com.besome.sketch.beans.LayoutBean;
@@ -42,6 +43,9 @@ import com.besome.sketch.editor.view.item.ItemBottomNavigationView;
 import com.besome.sketch.editor.view.item.ItemButton;
 import com.besome.sketch.editor.view.item.ItemCalendarView;
 import com.besome.sketch.editor.view.item.ItemCardView;
+import com.besome.sketch.editor.view.item.ItemConstraintLayout;
+import com.besome.sketch.editor.view.item.ItemNestedScrollView;
+import com.besome.sketch.editor.view.item.ItemUnityBanner;
 import com.besome.sketch.editor.view.item.ItemCheckBox;
 import com.besome.sketch.editor.view.item.ItemEditText;
 import com.besome.sketch.editor.view.item.ItemFloatingActionButton;
@@ -276,6 +280,9 @@ public class ViewPane extends RelativeLayout {
                  ViewBeans.VIEW_TYPE_LAYOUT_RADIOGROUP -> new ItemLinearLayout(context);
             case ViewBean.VIEW_TYPE_LAYOUT_RELATIVE -> new ItemRelativeLayout(context);
             case ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW -> new ItemCardView(context);
+            case ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT -> new ItemConstraintLayout(context);
+            case ViewBeans.VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW -> new ItemNestedScrollView(context);
+            case ViewBeans.VIEW_TYPE_WIDGET_UNITY_BANNER -> new ItemUnityBanner(context);
             case ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW -> new ItemHorizontalScrollView(context);
             case ViewBean.VIEW_TYPE_WIDGET_BUTTON -> new ItemButton(context);
             case ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW -> new ItemTextView(context);
@@ -1112,6 +1119,12 @@ public class ViewPane extends RelativeLayout {
             LayoutBean layoutBean3 = viewBean.layout;
             view.setPadding(layoutBean3.paddingLeft, layoutBean3.paddingTop, layoutBean3.paddingRight, layoutBean3.paddingBottom);
             view.setLayoutParams(layoutParams2);
+        } else if (viewBean.parentType == ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT && view.getParent() instanceof ConstraintLayout) {
+            ConstraintLayout.LayoutParams constraintParams = new ConstraintLayout.LayoutParams(width, height);
+            constraintParams.setMargins(leftMargin, topMargin, rightMargin, bottomMargin);
+            view.setPadding(viewBean.layout.paddingLeft, viewBean.layout.paddingTop, viewBean.layout.paddingRight, viewBean.layout.paddingBottom);
+            applyConstraintLayoutParams(constraintParams, viewBean.inject);
+            view.setLayoutParams(constraintParams);
         } else {
             FrameLayout.LayoutParams layoutParams3 = new FrameLayout.LayoutParams(width, height);
             layoutParams3.setMargins(leftMargin, topMargin, rightMargin, bottomMargin);
@@ -1123,6 +1136,54 @@ public class ViewPane extends RelativeLayout {
             }
             view.setLayoutParams(layoutParams3);
         }
+    }
+
+    /** Applies supported app:layout_constraint* attributes to the visual preview. The original
+     * inject string remains untouched and is emitted verbatim by the XML generator. */
+    private void applyConstraintLayoutParams(ConstraintLayout.LayoutParams params, String inject) {
+        if (inject == null || inject.isEmpty()) return;
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(?:app:)?layout_constraint([A-Za-z]+)=\\\"([^\\\"]+)\\\"").matcher(inject);
+        while (matcher.find()) {
+            String key = matcher.group(1);
+            String value = matcher.group(2);
+            try {
+                switch (key) {
+                    case "Horizontal_bias" -> params.horizontalBias = Float.parseFloat(value);
+                    case "Vertical_bias" -> params.verticalBias = Float.parseFloat(value);
+                    case "DimensionRatio" -> params.dimensionRatio = value;
+                    case "Horizontal_weight" -> params.horizontalWeight = Float.parseFloat(value);
+                    case "Vertical_weight" -> params.verticalWeight = Float.parseFloat(value);
+                    case "CircleRadius" -> params.circleRadius = (int) wB.a(getContext(), Float.parseFloat(value.replace("dp", "")));
+                    case "Left_toLeftOf" -> params.leftToLeft = constraintTargetId(value);
+                    case "Left_toRightOf" -> params.leftToRight = constraintTargetId(value);
+                    case "Right_toLeftOf" -> params.rightToLeft = constraintTargetId(value);
+                    case "Right_toRightOf" -> params.rightToRight = constraintTargetId(value);
+                    case "Start_toStartOf" -> params.startToStart = constraintTargetId(value);
+                    case "Start_toEndOf" -> params.startToEnd = constraintTargetId(value);
+                    case "End_toStartOf" -> params.endToStart = constraintTargetId(value);
+                    case "End_toEndOf" -> params.endToEnd = constraintTargetId(value);
+                    case "Top_toTopOf" -> params.topToTop = constraintTargetId(value);
+                    case "Top_toBottomOf" -> params.topToBottom = constraintTargetId(value);
+                    case "Bottom_toTopOf" -> params.bottomToTop = constraintTargetId(value);
+                    case "Bottom_toBottomOf" -> params.bottomToBottom = constraintTargetId(value);
+                    case "Baseline_toBaselineOf" -> params.baselineToBaseline = constraintTargetId(value);
+                    case "Baseline_toTopOf" -> params.baselineToTop = constraintTargetId(value);
+                    case "Baseline_toBottomOf" -> params.baselineToBottom = constraintTargetId(value);
+                    case "Circle" -> params.circleConstraint = constraintTargetId(value);
+                    case "CircleAngle" -> params.circleAngle = Float.parseFloat(value);
+                    default -> { }
+                }
+            } catch (RuntimeException ignored) { /* Keep preview resilient to incomplete XML edits. */ }
+        }
+    }
+
+    private int constraintTargetId(String value) {
+        if ("parent".equals(value)) return 0;
+        String id = value;
+        if (id.startsWith("@id/")) id = id.substring(4);
+        else if (id.startsWith("@+id/")) id = id.substring(5);
+        View target = rootLayout == null ? null : rootLayout.findViewWithTag(id);
+        return target == null ? 0 : target.getId();
     }
 
     private void updateRelativeParentViews(View view, InjectAttributeHandler handler) {
