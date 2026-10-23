@@ -9,7 +9,6 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 
 import com.besome.sketch.beans.ViewBean;
-import com.besome.sketch.editor.view.EditorChildren;
 import com.besome.sketch.editor.view.ItemView;
 import com.besome.sketch.editor.view.ScrollContainer;
 
@@ -21,9 +20,9 @@ public final class ItemFrameLayout extends FrameLayout implements ItemView, Scro
     private ViewBean bean;
     private boolean selected;
     private boolean fixed;
-    public ItemFrameLayout(Context context) { super(context); setWillNotDraw(false); setMinimumWidth((int)wB.a(context,32)); setMinimumHeight((int)wB.a(context,32)); paint.setStrokeWidth(wB.a(context,2)); }
-    @Override public void reindexChildren() { EditorChildren.reindex(this); }
-    @Override public void addView(View child, int index) { super.addView(child, EditorChildren.insertionIndex(this,index)); }
+    public ItemFrameLayout(Context context) { super(context); setWillNotDraw(false); setMinimumWidth((int)wB.a(context,32.0F)); setMinimumHeight((int)wB.a(context,32.0F)); paint.setStrokeWidth(wB.a(context,2.0F)); }
+    @Override public void reindexChildren() { for(int i=0,index=0;i<getChildCount();i++){View child=getChildAt(i);if(child instanceof ItemView item&&item.getBean()!=null)item.getBean().index=index++;} }
+    @Override public void addView(View child, int index) { ItemView.addViewWithGoneOffset(this, child, index, super::addView); }
     @Override public ViewBean getBean() { return bean; }
     @Override public void setBean(ViewBean value) { bean=value; }
     @Override public boolean getFixed() { return fixed; }
