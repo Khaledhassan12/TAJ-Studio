@@ -55,11 +55,23 @@ public final class FsMoveTool implements Tool {
                 return ToolResult.structured("fs_move", "VERIFICATION_FAILED", dst,
                         "Move was not fully verified. Inspect both source and destination before retrying.", null, true);
             }
+            notifyLive(src);
+            notifyLive(dst);
             return ToolResult.structured("fs_move", "SUCCESS", dst,
                     "Destination fingerprint matches " + sourceHash + "; original source path is absent.", null, false);
         } catch (Exception e) {
             String message = e.getMessage() == null ? "Move failed; inspect both source and destination before retrying." : e.getMessage();
             return ToolResult.structured("fs_move", "ERROR", dst, message, null, true);
         }
+    }
+
+    private static void notifyLive(String path) {
+        if (path == null) return;
+        String normalized = path.replace('\\', '/').toLowerCase(java.util.Locale.ROOT);
+        if (normalized.contains("/layout/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("layout", path);
+        else if (normalized.contains("/values/") || normalized.contains("/values-night/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("values", path);
+        else if (normalized.contains("/drawable")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("drawable", path);
+        else if (normalized.contains("/anim/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("anim", path);
+        else if (normalized.contains("/menu/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("menu", path);
     }
 }
