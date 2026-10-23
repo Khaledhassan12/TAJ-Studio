@@ -348,57 +348,113 @@ public final class DomainToolHelper {
         }
     }
 
-    public static void refreshEditor(Tool.ToolContext ctx) {
-        DesignActivity activity = ctx.activity.get();
-        if (activity != null) {
-            UiPoster.post(activity::onProjectUpdated);
+    /**
+     * Marshals Sketchware's mutable designer model onto the main thread and waits
+     * for completion. The legacy model and ViewEditor are UI-owned state; mutating
+     * them from the agent executor can race drawing, selection, undo, and save.
+     */
+    private static <T> T callOnMainAndWait(java.util.concurrent.Callable<T> action) throws Exception {
+        if (action == null) throw new IOException("Designer operation is required.");
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            return action.call();
         }
+
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        final java.util.concurrent.atomic.AtomicBoolean abandoned = new java.util.concurrent.atomic.AtomicBoolean(false);
+        final java.util.concurrent.atomic.AtomicReference<T> value = new java.util.concurrent.atomic.AtomicReference<>();
+        final java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+
+        UiPoster.post(() -> {
+            if (abandoned.get()) {
+                latch.countDown();
+                return;
+            }
+            try {
+                value.set(action.call());
+            } catch (Throwable error) {
+                failure.set(error);
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        if (!latch.await(15, java.util.concurrent.TimeUnit.SECONDS)) {
+            abandoned.set(true);
+            throw new IOException("Timed out waiting for the Sketchware designer thread; live synchronization is not verified.");
+        }
+        Throwable error = failure.get();
+        if (error != null) {
+            if (error instanceof Exception) throw (Exception) error;
+            if (error instanceof Error) throw (Error) error;
+            throw new IOException("Designer synchronization failed.", error);
+        }
+        return value.get();
+    }
+
+    public static void refreshEditor(Tool.ToolContext ctx) throws Exception {
+        if (ctx == null) throw new IOException("Agent project context is missing.");
+        DesignActivity activity = ctx.activity.get();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            throw new IOException("The active Sketchware editor is no longer available; visual refresh was not verified.");
+        }
+        callOnMainAndWait(() -> {
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                throw new IOException("The Sketchware editor closed before refresh completed.");
+            }
+            activity.onProjectUpdated();
+            return null;
+        });
     }
 
     public static void syncLayoutToDesigner(String scId, String xmlName, String content) throws Exception {
+        if (scId == null || scId.trim().isEmpty() || xmlName == null || xmlName.trim().isEmpty() || content == null) {
+            throw new IOException("Project ID, layout filename, and XML content are required for live designer synchronization.");
+        }
+
         ViewBeanParser parser = new ViewBeanParser(content);
         parser.setSkipRoot(true);
         ArrayList<ViewBean> parsedLayout = parser.parse();
+        if (parsedLayout == null) throw new IOException("The layout could not be parsed into Sketchware ViewBeans.");
         Pair<String, Map<String, String>> root = parser.getRootAttributes();
 
-        // 1. Update Root
-        new InjectRootLayoutManager(scId).set(xmlName, InjectRootLayoutManager.toRoot(root));
-
-        // 2. Update Widgets in Memory
-        jC.a(scId).c.put(xmlName, parsedLayout);
-
-        // 3. Save to disk (Persistent truth for Designer)
-        jC.a(scId).i();
+        callOnMainAndWait(() -> {
+            // Update the root metadata and widget model as one UI-thread transaction.
+            new InjectRootLayoutManager(scId).set(xmlName, InjectRootLayoutManager.toRoot(root));
+            jC.a(scId).c.put(xmlName, parsedLayout);
+            jC.a(scId).i();
+            return null;
+        });
     }
 
-    public static boolean verifyLiveModel(String scId, String xmlName, String expectedId) {
-        if (expectedId == null || expectedId.isEmpty()) return false;
-        ArrayList<ViewBean> liveBeans = jC.a(scId).c.get(xmlName);
-        if (liveBeans != null) {
-            for (ViewBean b : liveBeans) {
-                if (expectedId.equals(b.id)) return true;
+    public static boolean verifyLiveModel(String scId, String xmlName, String expectedId) throws Exception {
+        if (scId == null || xmlName == null || expectedId == null || expectedId.isEmpty()) return false;
+        return callOnMainAndWait(() -> {
+            ArrayList<ViewBean> liveBeans = jC.a(scId).c.get(xmlName);
+            if (liveBeans != null) {
+                for (ViewBean bean : liveBeans) {
+                    if (bean != null && expectedId.equals(bean.id)) return true;
+                }
             }
-        }
-        return false;
+            return false;
+        });
     }
 
-    /** Verifies that the persisted layout reparses to the same ordered widget identities as the live Sketchware model. */
+    /** Verifies ordered widget identities and full bean properties against the UI-owned live model. */
     public static boolean verifyLiveLayout(String scId, String xmlName, String persistedXml) throws Exception {
         if (scId == null || xmlName == null || persistedXml == null) return false;
         ViewBeanParser parser = new ViewBeanParser(persistedXml);
         parser.setSkipRoot(true);
         ArrayList<ViewBean> expected = parser.parse();
-        ArrayList<ViewBean> actual = jC.a(scId).c.get(xmlName);
-        if (expected == null || actual == null || expected.size() != actual.size()) return false;
-        for (int i = 0; i < expected.size(); i++) {
-            ViewBean expectedBean = expected.get(i);
-            ViewBean actualBean = actual.get(i);
-            if (expectedBean == null || actualBean == null) return false;
-            // Includes type, IDs/parents, text/layout/image attributes and widget settings,
-            // rather than accepting matching IDs when properties failed to synchronize.
-            if (!expectedBean.isEqual(actualBean)) return false;
-        }
-        return true;
+        return callOnMainAndWait(() -> {
+            ArrayList<ViewBean> actual = jC.a(scId).c.get(xmlName);
+            if (expected == null || actual == null || expected.size() != actual.size()) return false;
+            for (int i = 0; i < expected.size(); i++) {
+                ViewBean expectedBean = expected.get(i);
+                ViewBean actualBean = actual.get(i);
+                if (expectedBean == null || actualBean == null || !expectedBean.isEqual(actualBean)) return false;
+            }
+            return true;
+        });
     }
 
     private DomainToolHelper() {}
