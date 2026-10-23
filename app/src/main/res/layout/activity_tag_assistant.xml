@@ -205,6 +205,26 @@
                             android:inputType="textUri" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_scan_ollama"
+                        style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Scan Devices"
+                        android:visibility="gone"
+                        app:icon="@drawable/ic_mtrl_sync" />
+
+                    <TextView
+                        android:id="@+id/tv_ollama_help"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="1. Replace 192.168.1.20 with the real IP address of the computer or other device running Ollama.\n2. Put both devices on the same Wi-Fi, and configure Ollama on the host to accept LAN connections; allow port 11434 through its firewall.\n3. If Ollama runs on this phone, use http://127.0.0.1:11434/v1 instead.\nTip: tap Scan Devices to search the local Wi-Fi network and choose a detected Ollama server."
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:visibility="gone" />
+
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/til_model"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
