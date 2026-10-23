@@ -181,3 +181,13 @@ Scope: execution semantics only; no UI redesign and no replacement of the existi
 - `LiveRegistry` normalizes resource-domain variants such as `layout-land`, `values-night`, and `drawable-xhdpi` to the corresponding live editor domain.
 - Filesystem copy/move invalidations are coalesced when both paths belong to the same live domain, avoiding redundant full-project refreshes for a single operation.
 - These changes are committed and source-read-back verified. They have not yet been proven by a successful CI build or a device-level visual acceptance test.
+
+
+## Strings tab integration (2026-10-23)
+
+- Added the project Strings editor as tab index 3, immediately before the optional Assistant tab (index 4).
+- Uses the existing `StringsEditorManager`, resource XML persistence, add/edit/delete flow, and project `values/strings.xml`; app-name handling and string comments/notes are preserved from the reference behavior.
+- Routed value-resource invalidation through TAJ Studio's `LiveRegistry`, unregistering the listener when the fragment view is destroyed.
+- Added the add-string FAB to the shared resource editor layout and set list bottom padding so the FAB does not obscure rows.
+- Restored source compatibility for the task-level agent refresh by passing a null target layout to the existing full-refresh path.
+- CI and device validation are still required; do not treat the feature as build-verified until the Debug APK workflow succeeds and add/edit/delete plus AI-driven value-resource refresh are exercised.
