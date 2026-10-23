@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.besome.sketch.lib.ui.CustomScrollView;
+import com.besome.sketch.editor.view.palette.IconBuiltInWidget;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 
@@ -206,6 +207,8 @@ public class PaletteWidget extends LinearLayout {
             case "OTPView" -> new IconOTPView(context);
             case "CodeView" -> new IconCodeView(context);
             case "RecyclerView" -> new IconRecyclerView(context);
+            case "UnityBanner" -> new IconUnityBanner(context);
+            case "ImageButton", "View", "Divider", "Space", "TextInputEditText", "MaterialSwitch" -> new IconBuiltInWidget(context, name);
             default -> new IconBase(context);
         };
         if (tag != null && !tag.isEmpty()) {
@@ -230,6 +233,8 @@ public class PaletteWidget extends LinearLayout {
             case "CardView" -> new IconCardView(context);
             case "TextInputLayout" -> new IconTextInputLayout(context);
             case "RelativeLayout" -> new IconRelativeLayout(context);
+            case "FrameLayout", "ConstraintLayout", "NestedScrollView", "MaterialCardView" -> new IconBuiltInWidget(context, name);
+            case "include", "Include" -> new IconBuiltInWidget(context, "Include");
             default -> new IconBase(context);
         };
         if (tag != null && !tag.isEmpty()) {
