@@ -381,7 +381,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         final int ownIpNetworkOrder = Integer.reverseBytes(dhcp.ipAddress);
         final int netmaskNetworkOrder = dhcp.netmask != 0
                 ? Integer.reverseBytes(dhcp.netmask) : 0xFFFFFF00;
-        final long networkAddress = ownIpNetworkOrder & netmaskNetworkOrder;
+        final long networkAddress = ((long) (ownIpNetworkOrder & netmaskNetworkOrder)) & 0xFFFFFFFFL;
         final long broadcastAddress = networkAddress | (~netmaskNetworkOrder & 0xFFFFFFFFL);
         final long hostCountLong = broadcastAddress - networkAddress - 1L;
         // Keep discovery bounded: do not accidentally probe thousands of hosts on
