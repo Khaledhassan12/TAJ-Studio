@@ -34,7 +34,9 @@ public final class ResDeleteTool implements Tool {
             if (target.exists() || !new File(trash).isFile()) {
                 return ToolResult.structured("res_delete", "VERIFICATION_FAILED", path, "Original path or trash verification failed.", null, true);
             }
-            LiveRegistry.notifyChanged(args.getString("folder"), path);
+            String changedFolder = args.getString("folder");
+            LiveRegistry.notifyChanged(changedFolder, path);
+            if ("layout".equals(changedFolder)) LiveRegistry.notifyChanged("layout", path);
             return ToolResult.structured("res_delete", "SUCCESS", path, "Original path is absent; verified recoverable trash: " + trash, null, false);
         } catch (Exception e) {
             return ToolResult.structured("res_delete", "ERROR", path, e.getMessage() == null ? "Resource deletion failed." : e.getMessage(), null, true);
