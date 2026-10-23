@@ -2651,4 +2651,5 @@ Please try again later"</string>
     <string name="unity_ads_error_game_id">The game ID is the number the dashboard shows</string>
     <string name="unity_ads_library_item_game_id">Game ID: %1$s</string>
     <string name="unity_ads_library_item_description">Set up Unity Ads for this project.</string>
+    <string name="event_widget_missing">Widget missing from layout</string>
 </resources>

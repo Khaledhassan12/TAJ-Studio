@@ -379,11 +379,20 @@ public final class IncludedViews {
     }
 
     private static String readInjectedAttribute(@NonNull String inject, @NonNull String attribute) {
-        java.util.regex.Matcher matcher = java.util.regex.Pattern
-                .compile("(?m)(?:^|\\\\s)" + java.util.regex.Pattern.quote(attribute)
-                        + "\\\\s*=\\\\s*[\\\"']([^\\\"']*)[\\\"']")
-                .matcher(inject);
-        return matcher.find() ? matcher.group(1) : null;
+        for (String line : inject.split("\\n")) {
+            int equals = line.indexOf('=');
+            if (equals <= 0 || !line.substring(0, equals).trim().equals(attribute)) continue;
+            String value = line.substring(equals + 1).trim();
+            if (value.length() >= 2) {
+                char first = value.charAt(0);
+                char last = value.charAt(value.length() - 1);
+                if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+                    value = value.substring(1, value.length() - 1);
+                }
+            }
+            return value;
+        }
+        return null;
     }
 
     /** Whether the widget keeps its {@code android:id} in the XML ({@code tools:replace="android:id"} drops it). */

@@ -510,6 +510,11 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
                 holder.icon.setImageResource(EventBean.getEventIconResource(eventBean.eventType, eventBean.targetType));
                 if (eventBean.eventType == EventBean.EVENT_TYPE_VIEW) {
                     holder.targetType.setText(ViewBean.getViewTypeName(eventBean.targetType));
+                    holder.targetType.setTextColor(com.google.android.material.color.MaterialColors.getColor(holder.targetType, R.attr.colorOnSurfaceVariant));
+                    if (!targetExists(eventBean)) {
+                        holder.targetType.setText(R.string.event_widget_missing);
+                        holder.targetType.setTextColor(com.google.android.material.color.MaterialColors.getColor(holder.targetType, R.attr.colorError));
+                    }
                 } else if (eventBean.eventType == EventBean.EVENT_TYPE_DRAWER_VIEW) {
                     holder.targetType.setText(ViewBean.getViewTypeName(eventBean.targetType));
                 } else if (eventBean.eventType == EventBean.EVENT_TYPE_COMPONENT) {
