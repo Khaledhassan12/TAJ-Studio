@@ -53,11 +53,23 @@ public final class FsCopyTool implements Tool {
                 return ToolResult.structured("fs_copy", "VERIFICATION_FAILED", dst,
                         "Destination fingerprint does not match the source; inspect both paths before retrying.", null, true);
             }
+            notifyLive(src);
+            notifyLive(dst);
             return ToolResult.structured("fs_copy", "SUCCESS", dst,
                     "Destination tree matches source fingerprint " + sourceHash + "; source was preserved.", null, false);
         } catch (Exception e) {
             String message = e.getMessage() == null ? "Copy failed; inspect the source and destination before retrying." : e.getMessage();
             return ToolResult.structured("fs_copy", "ERROR", dst, message, null, true);
         }
+    }
+
+    private static void notifyLive(String path) {
+        if (path == null) return;
+        String normalized = path.replace('\\', '/').toLowerCase(java.util.Locale.ROOT);
+        if (normalized.contains("/layout/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("layout", path);
+        else if (normalized.contains("/values/") || normalized.contains("/values-night/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("values", path);
+        else if (normalized.contains("/drawable")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("drawable", path);
+        else if (normalized.contains("/anim/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("anim", path);
+        else if (normalized.contains("/menu/")) pro.sketchware.ai.live.LiveRegistry.notifyChanged("menu", path);
     }
 }
