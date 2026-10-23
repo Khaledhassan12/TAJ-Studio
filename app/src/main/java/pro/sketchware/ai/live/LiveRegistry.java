@@ -20,8 +20,20 @@ public final class LiveRegistry {
 
     private static final Map<String, List<DomainListener>> listeners = new HashMap<>();
 
+    private static String normalizeDomain(String domain) {
+        if (domain == null) return null;
+        String value = domain.trim().toLowerCase(java.util.Locale.ROOT);
+        if (value.startsWith("layout")) return "layout";
+        if (value.startsWith("values")) return "values";
+        if (value.startsWith("drawable")) return "drawable";
+        if (value.startsWith("anim")) return "anim";
+        if (value.startsWith("menu")) return "menu";
+        return value;
+    }
+
     public static synchronized void register(String domain, DomainListener listener) {
-        if (domain == null || domain.trim().isEmpty() || listener == null) {
+        domain = normalizeDomain(domain);
+        if (domain == null || domain.isEmpty() || listener == null) {
             return;
         }
         List<DomainListener> list = listeners.computeIfAbsent(domain, key -> new ArrayList<>());
@@ -31,6 +43,7 @@ public final class LiveRegistry {
     }
 
     public static synchronized void unregister(String domain, DomainListener listener) {
+        domain = normalizeDomain(domain);
         if (domain == null || listener == null) {
             return;
         }
@@ -44,13 +57,15 @@ public final class LiveRegistry {
     }
 
     public static void notifyChanged(String domain, String path) {
-        if (domain == null || domain.trim().isEmpty()) {
+        domain = normalizeDomain(domain);
+        if (domain == null || domain.isEmpty()) {
             return;
         }
 
+        final String changedDomain = domain;
         final List<DomainListener> snapshot;
         synchronized (LiveRegistry.class) {
-            List<DomainListener> current = listeners.get(domain);
+            List<DomainListener> current = listeners.get(changedDomain);
             snapshot = current == null ? new ArrayList<>() : new ArrayList<>(current);
         }
 
@@ -59,7 +74,7 @@ public final class LiveRegistry {
         for (DomainListener listener : snapshot) {
             UiPoster.post(() -> {
                 try {
-                    listener.onDomainChanged(domain, changedPath);
+                    listener.onDomainChanged(changedDomain, changedPath);
                 } catch (RuntimeException ignored) {
                     // One broken/tearing-down listener must not block other editor listeners.
                 }
