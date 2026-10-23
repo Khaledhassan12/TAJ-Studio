@@ -2633,4 +2633,6 @@ Please try again later"</string>
     <string name="taj_maintainer_credit_note">This independent maintainer profile is separate from the upstream Sketchware Pro team and its official contributor data.</string>
     <string name="taj_backups_title">TAJ Backups</string>
     <string name="taj_backups_subtitle">Review, restore, share and manage verified TAJ Agent snapshots for this project.</string>
+    <string name="design_include_choose_layout">Choose a layout to include</string>
+    <string name="design_include_no_layouts">This project has no other layout files to include.</string>
 </resources>
