@@ -220,7 +220,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="1. Replace 192.168.1.20 with the real IP address of the computer or other device running Ollama.\n2. Put both devices on the same Wi-Fi, and configure Ollama on the host to accept LAN connections; allow port 11434 through its firewall.\n3. If Ollama runs on this phone, use http://127.0.0.1:11434/v1 instead.\nTip: tap Scan Devices to search the local Wi-Fi network and choose a detected Ollama server."
+                        android:text="1. Replace 192.168.1.20 with the real IP address of the computer or other device running Ollama.\n2. Put both devices on the same private Wi-Fi. Ollama binds to localhost by default; configure OLLAMA_HOST on the host to accept LAN connections and allow TCP port 11434 in its firewall.\n3. Local Ollama does not require an API key. If it runs on this phone, use http://127.0.0.1:11434/v1 instead.\n4. Ollama's local server does not provide API-key protection by default. Use only a trusted private network and never expose port 11434 directly to the public internet.\nTip: tap Scan Devices to search the local subnet; guest Wi-Fi, client isolation, VPNs, or different subnets can prevent discovery."
                         android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant"
                         android:visibility="gone" />
