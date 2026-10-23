@@ -110,7 +110,7 @@ public final class FsWriteTool implements Tool {
 
             String hash = DomainToolHelper.sha256(target);
             // A successful layout write must refresh the active visual designer, not only emit a status.
-            if (layoutXml) DomainToolHelper.refreshEditor(ctx);
+            if (layoutXml) DomainToolHelper.refreshEditor(ctx, target.getName());
             notifyLive(path);
             return ToolResult.structured("fs_write", "SUCCESS", path,
                     "Exact UTF-8 read-back verified; SHA-256=" + hash
