@@ -25,6 +25,7 @@ import com.besome.sketch.editor.view.ViewEditor;
 import com.besome.sketch.editor.view.ViewProperty;
 import com.besome.sketch.editor.view.palette.PaletteWidget;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import mod.hey.studios.util.Helper;
@@ -451,8 +452,30 @@ public class ViewEditorFragment extends qA implements LiveRegistry.DomainListene
 
     @Override
     public void onDomainChanged(String domain, String path) {
-        if (projectFileBean != null && path.contains(projectFileBean.getXmlName())) {
+        if (!"layout".equals(domain) || projectFileBean == null || viewEditor == null
+                || sc_id == null || sc_id.trim().isEmpty()) {
+            return;
+        }
+
+        // An empty path is the documented wildcard used by refresh_ui. Do not
+        // silently ignore it, or the View tab remains stale after a full refresh.
+        if (path == null || path.trim().isEmpty()) {
             i();
+            n();
+            return;
+        }
+
+        String expectedName = projectFileBean.getXmlName();
+        String normalizedPath = path.replace('\\\\', '/');
+        int slash = normalizedPath.lastIndexOf('/');
+        String changedName = slash >= 0 ? normalizedPath.substring(slash + 1) : normalizedPath;
+
+        // Match the actual layout filename, not an arbitrary substring of the path
+        // (e.g. main.xml.backup must not refresh main.xml, and similarly named
+        // layouts must not trigger one another).
+        if (expectedName != null && expectedName.equals(changedName)) {
+            i();
+            n();
         }
     }
 
