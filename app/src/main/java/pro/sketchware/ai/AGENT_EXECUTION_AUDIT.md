@@ -140,3 +140,11 @@ Do not declare production readiness until:
 - Read-only entries are marked with MCP tool annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`). The allowlist remains fail-closed: a missing registry entry is not advertised and an attempted non-allowlisted call is rejected.
 - This is a discovery/contract correction, not full project control. The bridge still does not expose writes, does not have a transport, and is not wired to an external MCP client. Read operations are not yet coordinated through a shared project-wide lock with AgentOrchestrator. Do not describe this as complete MCP support.
 - Required next implementation: create one shared tool execution gate used by both AgentOrchestrator and MCP, with active-project revalidation, argument validation, risk classification, per-call consent for destructive/overwrite operations, project-scoped mutual exclusion, cancellation/deadline handling, read-back/hash verification, and task-scoped undo evidence. Only after this shared gate is in place should MCP expose write-capable tools. Add protocol and concurrency tests before enabling the write surface.
+
+
+## Native source-map-aware visual and logic routing update
+
+- Updated `AgentSystemPrompt` with a source-map contract for `DesignActivity`, `ViewEditor`, `ViewPane`, `ViewEditorFragment`, `ViewBean`, `LogicEditorActivity`, `BlockBean`, `EventBean`, `Fx`, `Jx`, `Lx`, `Ox`, `Ix`, and `ProjectBuilder`.
+- Explicitly requires native designer synchronization plus XML/live-model read-back for visual changes, and distinguishes shared custom-block registry operations from event-handler block graphs.
+- Updated `ToolRouter` so visual-design requests described by intent (including screen/UI/design and music/media-player UI) expose resource/layout executors, and event lifecycle phrases expose block tools even when the user does not literally say “block”.
+- This is prompt/routing integration only. It does not add the missing native event-graph mutation executor and does not prove visible designer behavior. Android compilation, router tests, live designer tests, and event graph reload/code-generation acceptance tests remain required.
