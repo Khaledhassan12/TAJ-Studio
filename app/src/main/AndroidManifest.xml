@@ -370,6 +370,7 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+            <activity android:name="pro.sketchware.unityads.UnityAdsLibraryActivity" android:exported="false" />
     </application>
 
 </manifest>
