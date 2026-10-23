@@ -30,6 +30,7 @@ import com.besome.sketch.beans.EventBean;
 import com.besome.sketch.beans.MoreBlockCollectionBean;
 import com.besome.sketch.beans.ProjectFileBean;
 import com.besome.sketch.beans.ViewBean;
+import pro.sketchware.utility.IncludedViews;
 import com.besome.sketch.editor.LogicEditorActivity;
 import com.besome.sketch.editor.event.AddEventActivity;
 import com.besome.sketch.editor.event.CollapsibleEventLayout;
@@ -148,6 +149,19 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
         super.onSaveInstanceState(outState);
     }
 
+    private IncludedViews.Result includes;
+
+    private boolean targetExists(EventBean eventBean) {
+        if (currentActivity == null || "_fab".equals(eventBean.targetId)) return true;
+        boolean drawer = eventBean.eventType == EventBean.EVENT_TYPE_DRAWER_VIEW;
+        String xml = drawer ? currentActivity.getDrawerXmlName() : currentActivity.getXmlName();
+        ArrayList<ViewBean> views = jC.a(sc_id).d(xml);
+        if (views != null) for (ViewBean view : views) if (eventBean.targetId.equals(view.id)) return true;
+        if (drawer) return false;
+        if (includes == null) includes = IncludedViews.resolve(jC.a(sc_id), xml);
+        return includes.find(eventBean.targetId) != null;
+    }
+
     public ProjectFileBean getCurrentActivity() {
         return currentActivity;
     }
@@ -157,6 +171,7 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
     }
 
     public void refreshEvents() {
+        includes = null;
         if (currentActivity != null) {
             moreBlocks.clear();
             viewEvents.clear();
