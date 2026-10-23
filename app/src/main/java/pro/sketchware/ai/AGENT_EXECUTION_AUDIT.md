@@ -171,3 +171,13 @@ Scope: execution semantics only; no UI redesign and no replacement of the existi
 - The repository connector reported no CI status checks or pull-request workflow runs for the latest commit at inspection time. This is **not** a successful build result.
 - Android compilation, unit/instrumentation tests, and physical-device checks have not run in this environment. In particular, the following still require a real build/device acceptance run: create/edit/insert layout while View is open; edit a non-selected layout; delete/move/copy layout resources; refresh after switching away from and back to View; cancellation/activity destruction during the bounded main-thread handoff; and ensuring no unrelated unsaved editor state is lost.
 - Do not mark the visual integration complete solely from source inspection. A successful tool result must continue to require persisted-file verification and live-model parity; device acceptance must verify the rendered View tab as well.
+
+
+### Follow-up — targeted refresh and resource-domain routing
+
+- Added `DesignActivity.refreshAgentLayout(projectId, xmlName)`: it validates the bound project and refreshes the currently selected layout directly, avoiding a whole-project reload for the common active-layout edit path. Structural changes or edits to another layout retain the established reload path.
+- Updated resource create/edit, widget insertion, and generic layout writes to use the targeted refresh API after live-model verification.
+- The DesignActivity listener now refreshes the selected layout directly for matching layout events and wildcard refreshes. `ViewEditorFragment` also rebinds on resume so changes made while the View fragment is paused appear when the user returns.
+- `LiveRegistry` normalizes resource-domain variants such as `layout-land`, `values-night`, and `drawable-xhdpi` to the corresponding live editor domain.
+- Filesystem copy/move invalidations are coalesced when both paths belong to the same live domain, avoiding redundant full-project refreshes for a single operation.
+- These changes are committed and source-read-back verified. They have not yet been proven by a successful CI build or a device-level visual acceptance test.
