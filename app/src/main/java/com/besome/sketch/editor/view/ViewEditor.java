@@ -95,7 +95,7 @@ public class ViewEditor extends RelativeLayout implements View.OnClickListener, 
     private String b;
     private int screenType;
     private boolean da = true;
-    private int[] countItems = new int[20];
+    private int[] countItems = new int[256];
     private float dip = 0;
     private int displayWidth;
     private int displayHeight;
@@ -213,7 +213,7 @@ public class ViewEditor extends RelativeLayout implements View.OnClickListener, 
     }
 
     public void l() {
-        countItems = new int[99];
+        countItems = new int[256];
     }
 
     private void showMoreProperties() {
@@ -426,6 +426,7 @@ public class ViewEditor extends RelativeLayout implements View.OnClickListener, 
                         jC.a(a).a(projectFileBean.getJavaName(), 1, bean.type, bean.id, "onClick");
                     }
                     a(a(bean, true), true);
+                    if (bean.type == ViewBeans.VIEW_TYPE_LAYOUT_INCLUDE) showIncludeLayoutPicker(bean);
                 } else if (currentTouchedView instanceof ItemView sy) {
                     ViewBean bean = sy.getBean();
                     viewPane.updateViewBeanProperties(bean, (int) motionEvent.getRawX(), (int) motionEvent.getRawY());
@@ -962,6 +963,37 @@ public class ViewEditor extends RelativeLayout implements View.OnClickListener, 
         View a2 = paletteFavorite.a(str, arrayList);
         a2.setClickable(true);
         a2.setOnTouchListener(this);
+    }
+
+    /** Select a target layout for a newly placed include widget. */
+    private void showIncludeLayoutPicker(ViewBean bean) {
+        ArrayList<String> layouts = new ArrayList<>();
+        for (ProjectFileBean file : jC.b(a).b()) {
+            if (!file.getXmlName().equals(b)) layouts.add(file.getXmlName().replace(".xml", ""));
+        }
+        for (ProjectFileBean file : jC.b(a).c()) {
+            if (!file.getXmlName().equals(b)) layouts.add(file.getXmlName().replace(".xml", ""));
+        }
+        if (layouts.isEmpty()) {
+            new MaterialAlertDialogBuilder(getContext())
+                    .setMessage(R.string.design_include_no_layouts)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+            return;
+        }
+        String[] choices = layouts.toArray(new String[0]);
+        new MaterialAlertDialogBuilder(getContext())
+                .setTitle(R.string.design_include_choose_layout)
+                .setItems(choices, (dialog, which) -> {
+                    ViewBean before = bean.clone();
+                    bean.inject = "layout=\"@layout/" + choices[which] + "\"";
+                    cC.c(a).a(b, before, bean.clone());
+                    if (historyChangeListener != null) historyChangeListener.a();
+                    viewPane.invalidate();
+                    invalidate();
+                })
+                .setNegativeButton(R.string.common_word_cancel, null)
+                .show();
     }
 
     private String generateWidgetId(ViewBean bean) {
