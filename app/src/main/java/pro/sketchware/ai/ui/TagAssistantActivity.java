@@ -379,7 +379,7 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         final int ownIp = dhcp.ipAddress;
         final int subnet = ownIp & 0x00FFFFFF;
         final AtomicBoolean cancelled = new AtomicBoolean(false);
-        final android.app.AlertDialog progressDialog = new MaterialAlertDialogBuilder(this)
+        final androidx.appcompat.app.AlertDialog progressDialog = new MaterialAlertDialogBuilder(this)
                 .setTitle("Scan Devices")
                 .setMessage("Searching this Wi-Fi network for Ollama servers…\nKeep both devices connected to the same Wi-Fi.")
                 .setNegativeButton("Cancel", (dialog, which) -> cancelled.set(true))
