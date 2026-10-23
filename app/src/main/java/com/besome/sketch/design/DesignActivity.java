@@ -160,6 +160,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     private TextView fileName;
     private String currentJavaFileName;
     private ViewEditorFragment viewTabAdapter;
+    private StringsTabFragment stringsTabAdapter;
     private final ActivityResultLauncher<Intent> openCollectionManager = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
         if (result.getResultCode() == RESULT_OK) {
             if (viewTabAdapter != null) {
@@ -347,6 +348,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                 xmlFileName = ProjectFileBean.DEFAULT_XML_NAME;
             }
             fileName.setText(xmlFileName);
+        } else if (viewPager.getCurrentItem() == 3) {
+            fileName.setText("strings.xml");
         } else {
             if (!ProjectFileBean.DEFAULT_JAVA_NAME.equals(currentJavaFileName) && jC.b(sc_id).a(currentJavaFileName) == null) {
                 projectFile = getDefaultProjectFile();
@@ -386,11 +389,15 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
     private void refresh() {
         refreshFileSelector();
-        if (viewPager.getCurrentItem() == 0) {
+        int position = viewPager.getCurrentItem();
+        if (position == 0) {
             refreshViewTabAdapter();
-        } else {
+        } else if (position == 1) {
             refreshEventTabAdapter();
+        } else if (position == 2) {
             refreshComponentTabAdapter();
+        } else if (position == 3 && stringsTabAdapter != null) {
+            stringsTabAdapter.refreshList();
         }
     }
 
@@ -1700,7 +1707,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
     private void updateChromeForTab(int p) {
         View bar = (View) btnRun.getParent();
-        if (p == 3) {
+        if (p == 4) {
             bar.animate().translationY(bar.getHeight()).alpha(0f).setDuration(200)
                     .withEndAction(() -> bar.setVisibility(View.GONE)).start();
         } else {
@@ -1753,8 +1760,17 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                             componentTabAdapter.refreshData();
                         }
                     }
+                } else if (position == 3) {
+                    bottomMenu.findItem(7).setVisible(false);
+                    if (viewTabAdapter != null) {
+                        xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_code);
+                        viewTabAdapter.showHidePropertyView(false);
+                    }
+                    if (stringsTabAdapter != null) {
+                        stringsTabAdapter.refreshList();
+                    }
                 } else {
-                    // Assistant tab
+                    // Assistant tab remains the final tab after Strings.
                     if (viewTabAdapter != null) {
                         viewTabAdapter.showHidePropertyView(false);
                     }
@@ -1776,6 +1792,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             l.add(Helper.getResString(R.string.design_tab_title_view));
             l.add(Helper.getResString(R.string.design_tab_title_event));
             l.add(Helper.getResString(R.string.design_tab_title_component));
+            l.add(Helper.getResString(R.string.design_tab_title_strings));
             if (aiTabEnabled) {
                 l.add(Helper.getResString(R.string.design_tab_title_assistant));
             }
@@ -1803,6 +1820,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             } else if (position == 2) {
                 componentTabAdapter = (br) fragment;
             } else if (position == 3) {
+                stringsTabAdapter = (StringsTabFragment) fragment;
+            } else if (position == 4) {
                 assistantFragment = fragment;
             }
 
@@ -1818,6 +1837,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                 return new rs();
             } else if (position == 2) {
                 return new br();
+            } else if (position == 3) {
+                return new StringsTabFragment();
             } else {
                 return new AssistantFragment();
             }
