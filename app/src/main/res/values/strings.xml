@@ -1336,6 +1336,7 @@ You must enter the API key to operate the map normally."</string>
     <string name="design_cancel_build_btn_stop">Stop building</string>
     <string name="design_cancel_build_btn_continue">Continue building</string>
     <string name="design_tab_title_component">Component</string>
+    <string name="design_tab_title_strings">Strings</string>
     <string name="design_tab_title_event">Event</string>
     <string name="design_tab_title_view">View</string>
     <string name="developer_tools_component_add_var">Additional Variables</string>
