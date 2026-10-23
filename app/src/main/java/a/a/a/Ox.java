@@ -292,9 +292,10 @@ public class Ox {
 
         XmlBuilder widgetTag = convert.isEmpty() ? new XmlBuilder(viewBean.getClassInfo().getClassName()) :
                 new XmlBuilder(convert.replaceAll(" ", ""));
-        if (convert.equals("include")) {
-            if (!toNotAdd.contains("layout") && !injectHandler.contains("layout")) {
-                widgetTag.addAttribute("", "layout", "@layout/" + viewBean.id);
+        if (convert.equals("include") || viewBean.type == ViewBeans.VIEW_TYPE_LAYOUT_INCLUDE) {
+            if (!injectHandler.contains("layout")) return;
+            if (!toNotAdd.contains("android:id")) {
+                widgetTag.addAttribute("android", "id", "@+id/" + viewBean.id);
             }
         } else {
             if (!toNotAdd.contains("android:id")) {
