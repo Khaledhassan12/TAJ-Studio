@@ -429,7 +429,9 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                 });
             }
             try {
-                finished.await(14, TimeUnit.SECONDS);
+                long scanTimeoutMs = Math.max(14_000L,
+                        ((hostCount + 31L) / 32L) * 1_500L + 3_000L);
+                finished.await(scanTimeoutMs, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 cancelled.set(true);
