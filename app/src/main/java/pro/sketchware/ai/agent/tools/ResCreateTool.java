@@ -67,7 +67,7 @@ public final class ResCreateTool implements Tool {
             // Rebind the active visual editor after the layout model has been synchronized
             // and verified. Resource creation must not leave the View tab displaying stale beans.
             if ("layout".equals(folder)) {
-                DomainToolHelper.refreshEditor(ctx);
+                DomainToolHelper.refreshEditor(ctx, name);
             }
             LiveRegistry.notifyChanged(folder, path);
             return ToolResult.structured("res_create", "SUCCESS", path,
