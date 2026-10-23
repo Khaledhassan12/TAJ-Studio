@@ -16,11 +16,26 @@ public final class IncludedViews {
     public static String includedLayout(@NonNull ViewBean bean) {
         String inject = bean.inject;
         if (inject == null) return "";
-        int key = inject.indexOf("layout");
+        int key = -1;
+        int searchFrom = 0;
+        while (searchFrom < inject.length()) {
+            int candidate = inject.indexOf("layout", searchFrom);
+            if (candidate < 0) return "";
+            int after = candidate + 6;
+            if (after < inject.length() && inject.charAt(after) == '_') {
+                searchFrom = after;
+                continue;
+            }
+            int equals = after;
+            while (equals < inject.length() && Character.isWhitespace(inject.charAt(equals))) equals++;
+            if (equals < inject.length() && inject.charAt(equals) == '=') {
+                key = equals;
+                break;
+            }
+            searchFrom = after;
+        }
         if (key < 0) return "";
-        int equals = inject.indexOf('=', key + 6);
-        if (equals < 0) return "";
-        int start = equals + 1;
+        int start = key + 1;
         while (start < inject.length() && Character.isWhitespace(inject.charAt(start))) start++;
         if (start >= inject.length()) return "";
         char quote = inject.charAt(start);
