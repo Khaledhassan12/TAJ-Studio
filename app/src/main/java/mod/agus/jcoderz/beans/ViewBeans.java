@@ -92,6 +92,10 @@ public class ViewBeans {
     }
 
     public static int getViewTypeByTypeName(String typeName) {
+        // MaterialCardView shares the editor's card container implementation but keeps its full XML class name.
+        if ("MaterialCardView".equals(typeName) || "com.google.android.material.card.MaterialCardView".equals(typeName)) {
+            return VIEW_TYPE_LAYOUT_CARDVIEW;
+        }
         return views.inverse().containsKey(typeName) ? views.inverse().get(typeName) : 0;
     }
 
