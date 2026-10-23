@@ -47,6 +47,7 @@ import com.besome.sketch.editor.view.item.ItemEditText;
 import com.besome.sketch.editor.view.item.ItemFloatingActionButton;
 import com.besome.sketch.editor.view.item.ItemHorizontalScrollView;
 import com.besome.sketch.editor.view.item.ItemImageView;
+import com.besome.sketch.editor.view.item.ItemInclude;
 import com.besome.sketch.editor.view.item.ItemLinearLayout;
 import com.besome.sketch.editor.view.item.ItemListView;
 import com.besome.sketch.editor.view.item.ItemMapView;
@@ -278,6 +279,7 @@ public class ViewPane extends RelativeLayout {
             case ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW -> new ItemTextView(context);
             case ViewBean.VIEW_TYPE_WIDGET_EDITTEXT -> new ItemEditText(context);
             case ViewBean.VIEW_TYPE_WIDGET_IMAGEVIEW -> new ItemImageView(context);
+            case ViewBeans.VIEW_TYPE_LAYOUT_INCLUDE -> new ItemInclude(context);
             case ViewBean.VIEW_TYPE_WIDGET_WEBVIEW -> new ItemWebView(context);
             case ViewBean.VIEW_TYPE_WIDGET_PROGRESSBAR -> new ItemProgressBar(context);
             case ViewBean.VIEW_TYPE_WIDGET_LISTVIEW -> new ItemListView(context);
