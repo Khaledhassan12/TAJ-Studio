@@ -132,7 +132,7 @@ public final class InsertWidgetTool implements Tool {
             }
 
             // Rebind the active View tab to the updated persisted model immediately.
-            DomainToolHelper.refreshEditor(ctx);
+            DomainToolHelper.refreshEditor(ctx, f.getName());
             LiveRegistry.notifyChanged("layout", path);
             return ToolResult.structured("insert_widget", "SUCCESS", path,
                     "Exact XML read-back, live layout model parity, and requested widget identity verified.", null, false);
