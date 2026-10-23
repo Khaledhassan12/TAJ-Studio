@@ -989,6 +989,7 @@ public class ViewEditor extends RelativeLayout implements View.OnClickListener, 
                     bean.inject = "layout=\"@layout/" + choices[which] + "\"";
                     cC.c(a).a(b, before, bean.clone());
                     if (historyChangeListener != null) historyChangeListener.a();
+                    viewPane.refreshIncludePreview(bean);
                     viewPane.invalidate();
                     invalidate();
                 })
