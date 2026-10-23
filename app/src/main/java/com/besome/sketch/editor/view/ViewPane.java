@@ -49,6 +49,8 @@ import com.besome.sketch.editor.view.item.ItemUnityBanner;
 import com.besome.sketch.editor.view.item.ItemCheckBox;
 import com.besome.sketch.editor.view.item.ItemEditText;
 import com.besome.sketch.editor.view.item.ItemFloatingActionButton;
+import com.besome.sketch.editor.view.item.ItemFrameLayout;
+import com.besome.sketch.editor.view.item.ItemPlainView;
 import com.besome.sketch.editor.view.item.ItemHorizontalScrollView;
 import com.besome.sketch.editor.view.item.ItemImageView;
 import com.besome.sketch.editor.view.item.ItemInclude;
@@ -279,6 +281,8 @@ public class ViewPane extends RelativeLayout {
                  ViewBeans.VIEW_TYPE_LAYOUT_SWIPEREFRESHLAYOUT,
                  ViewBeans.VIEW_TYPE_LAYOUT_RADIOGROUP -> new ItemLinearLayout(context);
             case ViewBean.VIEW_TYPE_LAYOUT_RELATIVE -> new ItemRelativeLayout(context);
+            case ViewBeans.VIEW_TYPE_LAYOUT_FRAMELAYOUT -> new ItemFrameLayout(context);
+            case ViewBeans.VIEW_TYPE_WIDGET_VIEW -> new ItemPlainView(context);
             case ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW -> new ItemCardView(context);
             case ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT -> new ItemConstraintLayout(context);
             case ViewBeans.VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW -> new ItemNestedScrollView(context);
