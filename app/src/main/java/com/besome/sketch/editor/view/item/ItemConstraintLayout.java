@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.besome.sketch.beans.ViewBean;
+import com.besome.sketch.editor.view.EditorChildren;
 import com.besome.sketch.editor.view.ItemView;
 import com.besome.sketch.editor.view.ScrollContainer;
 
@@ -32,13 +33,13 @@ public class ItemConstraintLayout extends ConstraintLayout implements ItemView, 
 
     @Override
     public void reindexChildren() {
-        for (int i = 0, index = 0; i < getChildCount(); i++) { View child = getChildAt(i); if (child instanceof ItemView item && item.getBean() != null) item.getBean().index = index++; }
+        EditorChildren.reindex(this);
     }
 
     @Override
     public void addView(View child, int index) {
         // index counts editor widgets, not raw children (see EditorChildren).
-        ItemView.addViewWithGoneOffset(this, child, index, super::addView);
+        super.addView(child, EditorChildren.insertionIndex(this, index));
     }
 
     @Override
