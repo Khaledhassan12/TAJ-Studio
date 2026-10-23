@@ -259,6 +259,31 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         });
     }
 
+    /**
+     * Refreshes the selected layout from the already-synchronized live ViewBean model.
+     * Unlike onProjectUpdated(), this path does not reload the entire project and
+     * therefore avoids discarding unrelated in-memory editor state during an AI edit.
+     * Must be called on the main thread.
+     */
+    public boolean refreshAgentLayout(String projectId, String xmlName) {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            return false;
+        }
+        if (isFinishing() || isDestroyed() || projectId == null || !projectId.equals(sc_id)) {
+            return false;
+        }
+        if (xmlName != null && projectFile != null && xmlName.equals(projectFile.getXmlName())
+                && viewTabAdapter != null) {
+            refreshViewTabAdapter();
+            refreshFileSelector();
+            return true;
+        }
+        // A different layout or a structural resource operation can affect the file
+        // selector/project catalog; use the established full reload path in that case.
+        onProjectUpdated();
+        return true;
+    }
+
     private com.google.android.material.dialog.MaterialAlertDialogBuilder saveDialogBuilder;
     private android.content.DialogInterface activeDialog;
 
@@ -753,6 +778,26 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
     @Override
     public void onDomainChanged(String domain, String path) {
+        if ("layout".equals(domain)) {
+            if (path == null || path.trim().isEmpty()) {
+                // refresh_ui uses an empty path as a wildcard. Refresh only the active
+                // layout model instead of reloading every project domain.
+                if (projectFile != null && viewTabAdapter != null) {
+                    refreshViewTabAdapter();
+                    refreshFileSelector();
+                    return;
+                }
+            } else if (projectFile != null && viewTabAdapter != null) {
+                String normalized = path.replace('\\', '/');
+                int slash = normalized.lastIndexOf('/');
+                String changedName = slash >= 0 ? normalized.substring(slash + 1) : normalized;
+                if (changedName.equals(projectFile.getXmlName()) && new File(path).isFile()) {
+                    refreshViewTabAdapter();
+                    refreshFileSelector();
+                    return;
+                }
+            }
+        }
         onProjectUpdated();
     }
 
