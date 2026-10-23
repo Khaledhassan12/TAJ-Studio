@@ -118,6 +118,11 @@ public class jq {
      */
     public boolean isDebugBuild = false;
 
+    /** AndroidX layout dependencies used by project screens. */
+    public boolean isConstraintLayoutUsed = false;
+    public boolean isNestedScrollViewUsed = false;
+    public boolean isMaterialCardViewUsed = false;
+
     /**
      * If the built-in library AppCompat (contains the Jetpack AppCompat artefacts and
      * Material Design Components) is enabled.
