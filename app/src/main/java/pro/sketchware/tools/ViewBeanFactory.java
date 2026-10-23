@@ -27,6 +27,10 @@ public class ViewBeanFactory {
             //Add more here
             case "MaterialSwitch" -> ViewBean.VIEW_TYPE_WIDGET_SWITCH;
             case "MaterialCardView", "CardView" -> ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW;
+            case "ConstraintLayout" -> ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT;
+            case "NestedScrollView" -> ViewBeans.VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW;
+            case "UnityBanner", "UnityBannerView" -> ViewBeans.VIEW_TYPE_WIDGET_UNITY_BANNER;
+            case "View", "Space" -> ViewBeans.VIEW_TYPE_WIDGET_VIEW;
             case "TextInputEditText" -> ViewBean.VIEW_TYPE_WIDGET_EDITTEXT;
             //idk should I use ImageView(ViewBean.VIEW_TYPE_WIDGET_IMAGEVIEW) or Button(ViewBean.VIEW_TYPE_WIDGET_BUTTON)?
             case "ImageButton" -> ViewBean.VIEW_TYPE_WIDGET_IMAGEVIEW;
