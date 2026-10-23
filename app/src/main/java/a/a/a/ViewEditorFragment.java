@@ -25,7 +25,6 @@ import com.besome.sketch.editor.view.ViewEditor;
 import com.besome.sketch.editor.view.ViewProperty;
 import com.besome.sketch.editor.view.palette.PaletteWidget;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import mod.hey.studios.util.Helper;
@@ -442,6 +441,13 @@ public class ViewEditorFragment extends qA implements LiveRegistry.DomainListene
     public void onResume() {
         super.onResume();
         LiveRegistry.register("layout", this);
+        // The ViewPager may keep this fragment paused while the assistant edits a layout.
+        // Rebind from the authoritative in-memory Sketchware model when the View tab returns.
+        if (projectFileBean != null && viewEditor != null
+                && sc_id != null && !sc_id.trim().isEmpty()) {
+            i();
+            n();
+        }
     }
 
     @Override
