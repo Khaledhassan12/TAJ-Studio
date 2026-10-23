@@ -466,7 +466,7 @@ public class ViewEditorFragment extends qA implements LiveRegistry.DomainListene
         }
 
         String expectedName = projectFileBean.getXmlName();
-        String normalizedPath = path.replace('\\\\', '/');
+        String normalizedPath = path.replace('\\', '/');
         int slash = normalizedPath.lastIndexOf('/');
         String changedName = slash >= 0 ? normalizedPath.substring(slash + 1) : normalizedPath;
 
