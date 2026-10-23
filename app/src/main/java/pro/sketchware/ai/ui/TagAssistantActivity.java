@@ -376,8 +376,25 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
             return;
         }
 
-        final int ownIp = dhcp.ipAddress;
-        final int subnet = ownIp & 0x00FFFFFF;
+        // DhcpInfo stores IPv4 integers in little-endian byte order. Convert
+        // both values before calculating the actual subnet instead of assuming /24.
+        final int ownIpNetworkOrder = Integer.reverseBytes(dhcp.ipAddress);
+        final int netmaskNetworkOrder = dhcp.netmask != 0
+                ? Integer.reverseBytes(dhcp.netmask) : 0xFFFFFF00;
+        final long networkAddress = ownIpNetworkOrder & netmaskNetworkOrder;
+        final long broadcastAddress = networkAddress | (~netmaskNetworkOrder & 0xFFFFFFFFL);
+        final long hostCountLong = broadcastAddress - networkAddress - 1L;
+        // Keep discovery bounded: do not accidentally probe thousands of hosts on
+        // a broad corporate or campus subnet.
+        if (hostCountLong < 1L || hostCountLong > 1022L) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Network Too Large to Scan")
+                    .setMessage("Automatic discovery is limited to subnets with up to 1,022 usable addresses. Enter the Ollama computer's IP address manually, or connect to a smaller private Wi-Fi subnet.")
+                    .setPositiveButton(R.string.common_word_ok, null)
+                    .show();
+            return;
+        }
+        final int hostCount = (int) hostCountLong;
         final AtomicBoolean cancelled = new AtomicBoolean(false);
         final androidx.appcompat.app.AlertDialog progressDialog = new MaterialAlertDialogBuilder(this)
                 .setTitle("Scan Devices")
@@ -391,20 +408,18 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
         ollamaScanCoordinator.execute(() -> {
             List<OllamaDevice> found = Collections.synchronizedList(new ArrayList<>());
             ExecutorService workers = Executors.newFixedThreadPool(32);
-            CountDownLatch finished = new CountDownLatch(254);
-            for (int host = 1; host <= 254; host++) {
-                final int candidate = subnet | (host << 24);
-                if (candidate == ownIp) {
+            CountDownLatch finished = new CountDownLatch(hostCount);
+            for (long offset = 1L; offset <= hostCount; offset++) {
+                final int candidateNetworkOrder = (int) (networkAddress + offset);
+                if (candidateNetworkOrder == ownIpNetworkOrder) {
                     finished.countDown();
                     continue;
                 }
+                final String ip = intToIp(Integer.reverseBytes(candidateNetworkOrder));
                 workers.execute(() -> {
                     try {
-                        if (!cancelled.get()) {
-                            String ip = intToIp(candidate);
-                            if (isOllamaAt(ip)) {
-                                found.add(new OllamaDevice(ip, "http://" + ip + ":11434/v1"));
-                            }
+                        if (!cancelled.get() && isOllamaAt(ip)) {
+                            found.add(new OllamaDevice(ip, "http://" + ip + ":11434/v1"));
                         }
                     } catch (Exception ignored) {
                         // An offline device or a blocked port is an expected scan result.
@@ -472,7 +487,13 @@ public final class TagAssistantActivity extends BaseAppCompatActivity {
                 .get()
                 .build();
         try (Response response = OLLAMA_SCAN_CLIENT.newCall(request).execute()) {
-            return response.isSuccessful();
+            if (!response.isSuccessful() || response.body() == null) {
+                return false;
+            }
+            // A successful HTTP response alone is not enough: confirm that this is
+            // Ollama's documented model-list endpoint and not an unrelated web server.
+            org.json.JSONObject payload = new org.json.JSONObject(response.body().string());
+            return payload.optJSONArray("models") != null;
         } catch (Exception ignored) {
             return false;
         }
