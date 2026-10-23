@@ -284,7 +284,7 @@ public final class AgentOrchestrator {
                     // Final editor rebind is the task-level safety net: successful resource tools
                     // synchronize their domain models, and the editor refresh runs after all tool
                     // calls have completed so the user sees the final project state, not an interim one.
-                    DomainToolHelper.refreshEditor(context);
+                    DomainToolHelper.refreshEditor(context, null);
                     UiPoster.post(() -> callbacks.onComplete(deliver));
                 }
             } finally {
