@@ -228,14 +228,22 @@ public class ViewEditorFragment extends qA implements LiveRegistry.DomainListene
         viewEditor.addWidgetLayout(PaletteWidget.a.a, "");
         viewEditor.addWidgetLayout(PaletteWidget.a.b, "");
         viewEditor.addWidget(PaletteWidget.b.b, "", "TextView", "TextView");
+        viewEditor.extraWidget("", "ImageButton", "ImageButton");
+        viewEditor.extraWidget("", "View", "View");
+        viewEditor.extraWidget("", "Divider", "Divider");
+        viewEditor.extraWidget("", "Space", "Space");
         viewEditor.addWidgetLayout(PaletteWidget.a.c, "");
         viewEditor.addWidgetLayout(PaletteWidget.a.d, "");
         viewEditor.extraWidgetLayout("", "RadioGroup");
         viewEditor.extraWidgetLayout("", "RelativeLayout");
+        viewEditor.extraWidgetLayout("", "FrameLayout");
         viewEditor.extraWidgetLayout("", "include");
         widgetsCreatorManager.addWidgetsByTitle("Layouts");
 
         viewEditor.paletteWidget.extraTitle("AndroidX", 0);
+        viewEditor.extraWidgetLayout("", "ConstraintLayout");
+        viewEditor.extraWidgetLayout("", "NestedScrollView");
+        viewEditor.extraWidgetLayout("", "MaterialCardView");
         viewEditor.extraWidgetLayout("", "TabLayout");
         viewEditor.extraWidgetLayout("", "BottomNavigationView");
         viewEditor.extraWidgetLayout("", "CollapsingToolbarLayout");
@@ -249,6 +257,8 @@ public class ViewEditorFragment extends qA implements LiveRegistry.DomainListene
         viewEditor.extraWidget("", "MultiAutoCompleteTextView", "MultiAutoCompleteTextView");
         viewEditor.addWidget(PaletteWidget.b.a, "", "Button", "Button");
         viewEditor.extraWidget("", "MaterialButton", "MaterialButton");
+        viewEditor.extraWidget("", "TextInputEditText", "TextInputEditText");
+        viewEditor.extraWidget("", "MaterialSwitch", "MaterialSwitch");
         viewEditor.addWidget(PaletteWidget.b.d, "", "ImageView", "default_image");
         viewEditor.extraWidget("", "CircleImageView", "default_image");
         viewEditor.addWidget(PaletteWidget.b.g, "", "CheckBox", "CheckBox");
@@ -282,6 +292,7 @@ public class ViewEditorFragment extends qA implements LiveRegistry.DomainListene
         viewEditor.addWidget(PaletteWidget.b.l, "", "AdView", "AdView");
         viewEditor.addWidget(PaletteWidget.b.n, "", "MapView", "MapView");
         viewEditor.extraWidget("", "SignInButton", "SignInButton");
+        viewEditor.extraWidget("", "UnityBanner", "UnityBanner");
         viewEditor.extraWidget("", "YoutubePlayer", "YoutubePlayer");
         widgetsCreatorManager.addWidgetsByTitle("Google");
 
