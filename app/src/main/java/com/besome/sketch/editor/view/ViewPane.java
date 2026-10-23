@@ -132,6 +132,8 @@ public class ViewPane extends RelativeLayout {
     private int defaultTextColor = 0; // need to save the original color before changes, cause using getDefaultColor() returns the current text color
     private int defaultHintColor = 0;
     private Material3LibraryManager material3LibraryManager;
+    private String screenXml;
+    private java.util.List<String> includeChain = java.util.Collections.emptyList();
 
     public ViewPane(Context context) {
         super(context);
@@ -328,12 +330,50 @@ public class ViewPane extends RelativeLayout {
         return item;
     }
 
+    private void updateIncludePreview(ItemInclude include, ViewBean bean) {
+        String layout = pro.sketchware.utility.IncludedViews.includedLayout(bean);
+        if (layout.equals(include.getPreviewLayout())) return;
+        if (layout.isEmpty() || sc_id == null || resourcesManager == null) {
+            include.setPreview(null, layout, null);
+            return;
+        }
+        String xml = layout + ".xml";
+        if (xml.equals(screenXml) || includeChain.contains(xml)) {
+            include.setPreview(null, layout, "@layout/" + layout + " includes itself");
+        } else if (!pro.sketchware.utility.IncludedViews.layouts(sc_id).contains(xml)) {
+            include.setPreview(null, layout, "@layout/" + layout + " doesn't exist");
+        } else {
+            include.setPreview(buildIncludedLayout(xml), layout, null);
+        }
+    }
+
+    private View buildIncludedLayout(String xml) {
+        ViewPane pane = new ViewPane(getContext());
+        pane.sc_id = sc_id;
+        pane.context = context;
+        pane.svgUtils = svgUtils;
+        pane.colorsEditorManager = colorsEditorManager;
+        pane.material3LibraryManager = material3LibraryManager;
+        pane.resourcesManager = resourcesManager;
+        java.util.List<String> chain = new ArrayList<>(includeChain);
+        if (screenXml != null) chain.add(screenXml);
+        pane.includeChain = chain;
+        pane.updateRootLayout(sc_id, xml);
+        for (ViewBean bean : pro.sketchware.utility.ViewHierarchy.sorted(jC.a(sc_id).d(xml))) {
+            pane.addViewAndUpdateIndex(pane.createItemView(bean.clone()));
+        }
+        View root = pane.rootLayout;
+        if (root != null) pane.removeView(root);
+        return root;
+    }
+
     private View getUnknownItemView(ViewBean bean) {
         bean.type = ViewBean.VIEW_TYPE_LAYOUT_LINEAR;
         return new ItemLinearLayout(context);
     }
 
     public void updateRootLayout(String sc_id, String fileName) {
+        this.screenXml = fileName;
         InjectRootLayoutManager manager = new InjectRootLayoutManager(sc_id);
         var currentBean = manager.toBean(fileName);
         View rootView = createItemView(currentBean);
@@ -628,6 +668,7 @@ public class ViewPane extends RelativeLayout {
             view.setElevation(PropertiesUtil.resolveSize(elevation, 0));
         }
         view.setVisibility(VISIBLE);
+        if (view instanceof ItemInclude include) updateIncludePreview(include, viewBean);
         if (view instanceof EditorListItem listItem) {
             String listitem = injectHandler.getAttributeValueOf("listitem");
             String itemCount = injectHandler.getAttributeValueOf("itemCount");
