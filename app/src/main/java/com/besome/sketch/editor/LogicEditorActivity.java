@@ -122,6 +122,7 @@ import mod.jbk.editor.manage.MoreblockImporter;
 import mod.jbk.util.BlockUtil;
 import mod.jbk.util.LogUtil;
 import mod.pranav.viewbinding.ViewBindingBuilder;
+import pro.sketchware.utility.IncludedViews;
 import pro.sketchware.R;
 import pro.sketchware.activities.editor.view.CodeViewerActivity;
 import pro.sketchware.activities.resourceseditor.ResourcesEditorActivity;
@@ -841,13 +842,8 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                             String javaName = M.getJavaName();
                             String xmlName = M.getXmlName();
                             if (eventName.equals("onBindCustomView")) {
-                                var eC = jC.a(scId);
-                                var view = eC.c(xmlName, id);
-                                if (view == null) {
-                                    // Event is of a Drawer View
-                                    view = eC.c("_drawer_" + xmlName, id);
-                                }
-                                String customView = view.customView;
+                                var view = IncludedViews.eventTarget(jC.a(scId), xmlName, id);
+                                String customView = view == null ? null : view.customView;
                                 if (customView != null) {
                                     xmlName = ProjectFileBean.getXmlName(customView);
                                 }
@@ -1538,11 +1534,7 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
         String xmlName = M.getXmlName();
 
         if (eventName.equals("onBindCustomView")) {
-            var eC = jC.a(scId);
-            var view = eC.c(xmlName, id);
-            if (view == null) {
-                view = eC.c("_drawer_" + xmlName, id);
-            }
+            var view = IncludedViews.eventTarget(jC.a(scId), xmlName, id);
             if (view != null && view.customView != null) {
                 xmlName = ProjectFileBean.getXmlName(view.customView);
             }
@@ -1562,6 +1554,17 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                     }
                 }
                 ExtraMenuBean.setupSearchView(customView, viewGroup);
+            }
+        }
+
+        IncludedViews.Result includedViews = IncludedViews.resolve(jC.a(scId), xmlName);
+        for (IncludedViews.Entry entry : includedViews.entries) {
+            ViewBean viewBean = entry.view;
+            String typeName = viewBean.convert.isEmpty() ? ViewBean.getViewTypeName(viewBean.type) : IdGenerator.getLastPath(viewBean.convert);
+            String classInfo = ss.getClassInfo().getClassName();
+            if ((classInfo.equals("CheckBox") && viewBean.getClassInfo().a("CompoundButton")) || viewBean.getClassInfo().a(classInfo)) {
+                String reference = includedViews.reference(entry.id, isViewBindingEnabled);
+                viewGroup.addView(d(typeName, reference));
             }
         }
 
@@ -2455,7 +2458,7 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
     public void showSourceCode() {
         yq yq = new yq(this, scId);
         yq.a(jC.c(scId), jC.b(scId), jC.a(scId));
-        String code = new Fx(M.getActivityName(), yq.N, o.getBlocks(), isViewBindingEnabled).a();
+        String code = new Fx(M.getActivityName(), yq.N, o.getBlocks(), isViewBindingEnabled).withIncludes(IncludedViews.resolve(jC.a(scId), M.getXmlName())).a();
         var intent = new Intent(this, CodeViewerActivity.class);
         intent.putExtra("code", code);
         intent.putExtra("sc_id", scId);

@@ -104,7 +104,7 @@ public class Lx {
             content.append("implementation 'com.google.android.material:material:1.12.0'\\r\\n");
         }
 
-        if (metadata.isUnityAdsUsed) {
+        if (metadata.isUnityAdsUsed && isLibraryNotExcluded(BuiltInLibraries.UNITY_ADS, excludedLibraries)) {
             content.append("implementation 'com.unity3d.ads:unity-ads:4.21.0'\r\n");
         }
 
