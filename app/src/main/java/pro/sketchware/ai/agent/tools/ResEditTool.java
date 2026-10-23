@@ -108,7 +108,7 @@ public final class ResEditTool implements Tool {
             // The in-memory ViewBean model is already synchronized and verified above;
             // now refresh the active editor so its View tab rebinds to that model immediately.
             if ("layout".equals(folder)) {
-                DomainToolHelper.refreshEditor(ctx);
+                DomainToolHelper.refreshEditor(ctx, name);
             }
             LiveRegistry.notifyChanged(folder, path);
             return ToolResult.structured("res_edit", "SUCCESS", path,
