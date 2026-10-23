@@ -80,6 +80,7 @@ dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar", "*.aar"])
 
     implementation libs.bundles.ui
+    implementation libs.androidx.constraintlayout
 
     implementation libs.bundles.image
 
