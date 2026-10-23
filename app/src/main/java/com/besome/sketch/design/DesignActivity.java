@@ -1766,9 +1766,6 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                         xmlLayoutOrientation.setImageResource(R.drawable.ic_mtrl_code);
                         viewTabAdapter.showHidePropertyView(false);
                     }
-                    if (stringsTabAdapter != null) {
-                        stringsTabAdapter.refreshList();
-                    }
                 } else {
                     // Assistant tab remains the final tab after Strings.
                     if (viewTabAdapter != null) {
