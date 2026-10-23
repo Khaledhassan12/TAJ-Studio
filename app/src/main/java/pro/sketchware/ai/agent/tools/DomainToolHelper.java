@@ -391,7 +391,7 @@ public final class DomainToolHelper {
         return value.get();
     }
 
-    public static void refreshEditor(Tool.ToolContext ctx) throws Exception {
+    public static void refreshEditor(Tool.ToolContext ctx, String xmlName) throws Exception {
         if (ctx == null) throw new IOException("Agent project context is missing.");
         DesignActivity activity = ctx.activity.get();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
@@ -401,7 +401,9 @@ public final class DomainToolHelper {
             if (activity.isFinishing() || activity.isDestroyed()) {
                 throw new IOException("The Sketchware editor closed before refresh completed.");
             }
-            activity.onProjectUpdated();
+            if (!activity.refreshAgentLayout(ctx.sc_id, xmlName)) {
+                throw new IOException("The active editor could not apply the live layout refresh.");
+            }
             return null;
         });
     }
