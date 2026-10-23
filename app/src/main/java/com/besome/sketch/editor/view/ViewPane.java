@@ -1123,7 +1123,7 @@ public class ViewPane extends RelativeLayout {
             LayoutBean layoutBean3 = viewBean.layout;
             view.setPadding(layoutBean3.paddingLeft, layoutBean3.paddingTop, layoutBean3.paddingRight, layoutBean3.paddingBottom);
             view.setLayoutParams(layoutParams2);
-        } else if (viewBean.parentType == ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT && view.getParent() instanceof ConstraintLayout) {
+        } else if (viewBean.parentType == ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT) {
             ConstraintLayout.LayoutParams constraintParams = new ConstraintLayout.LayoutParams(width, height);
             constraintParams.setMargins(leftMargin, topMargin, rightMargin, bottomMargin);
             view.setPadding(viewBean.layout.paddingLeft, viewBean.layout.paddingTop, viewBean.layout.paddingRight, viewBean.layout.paddingBottom);
