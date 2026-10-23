@@ -8,6 +8,7 @@ securityCrypto = "1.1.0"
 sora-editor = "0.23.5"
 bundletool = "1.18.2"
 cardview = "1.0.0"
+constraintlayout = "2.2.1"
 circleimageview = "3.1.0"
 coil = "2.0.0"
 coilSvg = "2.0.0"
@@ -47,6 +48,7 @@ zipalignJava = "1.2.2"
 androidx-activity = { module = "androidx.activity:activity", version.ref = "activity" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 androidx-preference = { module = "androidx.preference:preference", version.ref = "preference" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
