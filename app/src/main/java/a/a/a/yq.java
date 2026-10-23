@@ -517,6 +517,9 @@ public class yq {
         }
         for (ProjectFileBean customView : projectFileManager.c()) {
             for (ViewBean viewBean : eC.a(projectDataManager.d(customView.getXmlName()))) {
+                if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT) N.isConstraintLayoutUsed = true;
+                if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW) N.isNestedScrollViewUsed = true;
+                if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW && "com.google.android.material.card.MaterialCardView".equals(viewBean.convert)) N.isMaterialCardViewUsed = true;
                 var classNameParts = viewBean.convert.split("\\.");
                 var className = classNameParts[classNameParts.length - 1];
                 switch (className) {
