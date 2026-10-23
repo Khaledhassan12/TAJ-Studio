@@ -154,6 +154,18 @@ public class Gx {
                 classInfos = "View.Clickable.ViewGroup.RelativeLayout";
                 break;
 
+            case "FrameLayout":
+                classInfos = "View.Clickable.ViewGroup.FrameLayout";
+                break;
+
+            case "ConstraintLayout":
+                classInfos = "View.Clickable.ViewGroup.ConstraintLayout";
+                break;
+
+            case "NestedScrollView":
+                classInfos = "View.ViewGroup.FrameLayout.NestedScrollView";
+                break;
+
             case "ScrollView":
                 classInfos = "View.ViewGroup.FrameLayout.ScrollView";
                 break;
@@ -263,7 +275,29 @@ public class Gx {
                 break;
 
             case "CardView":
+            case "MaterialCardView":
                 classInfos = "View.Clickable.ViewGroup.FrameLayout.CardView";
+                break;
+
+            case "UnityBannerView":
+                classInfos = "View.UnityBannerView";
+                break;
+
+            case "ImageButton":
+                classInfos = "View.Clickable.ImageView";
+                break;
+
+            case "TextInputEditText":
+                classInfos = "View.Clickable.TextView.EditText";
+                break;
+
+            case "MaterialSwitch":
+                classInfos = "View.Clickable.TextView.Button.CompoundButton.Switch";
+                break;
+
+            case "View":
+            case "Space":
+                classInfos = "View";
                 break;
 
             case "LottieAnimationView":
