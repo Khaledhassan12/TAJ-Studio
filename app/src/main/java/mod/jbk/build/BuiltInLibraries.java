@@ -414,6 +414,8 @@ public class BuiltInLibraries {
 
             new BuiltInLibrary(LOTTIE, List.of(ANDROIDX_APPCOMPAT, OKIO_JVM), "com.airbnb.lottie"),
 
+            new BuiltInLibrary(UNITY_ADS),
+
             new BuiltInLibrary(MATERIAL, List.of(ANDROIDX_ACTIVITY, ANDROIDX_ANNOTATION_EXPERIMENTAL, ANDROIDX_ANNOTATION_JVM,
                     ANDROIDX_APPCOMPAT, ANDROIDX_CARDVIEW, ANDROIDX_CONSTRAINTLAYOUT,
                     ANDROIDX_COORDINATORLAYOUT, ANDROIDX_CORE, ANDROIDX_DRAWERLAYOUT,

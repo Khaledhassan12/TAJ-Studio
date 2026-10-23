@@ -862,7 +862,13 @@ public class Jx {
     }
 
     private void addAdapterCode() {
-        for (ViewBean viewBean : projectDataManager.f(projectFileBean.getXmlName())) {
+        ArrayList<ViewBean> lists = new ArrayList<>(projectDataManager.f(projectFileBean.getXmlName()));
+        for (IncludedViews.Entry entry : includes().entries) {
+            if (projectDataManager.f(entry.layouts.get(entry.layouts.size() - 1)).contains(entry.source)) {
+                lists.add(entry.view);
+            }
+        }
+        for (ViewBean viewBean : lists) {
             String xmlName = ProjectFileBean.getXmlName(viewBean.customView);
             projectFileBean.getJavaName();
             String eventName = viewBean.id + "_onBindCustomView";

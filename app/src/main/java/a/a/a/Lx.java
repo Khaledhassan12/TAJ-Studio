@@ -90,7 +90,7 @@ public class Lx {
         if (isLibraryNotExcluded(BuiltInLibraries.ANDROIDX_APPCOMPAT, excludedLibraries) && metadata.g) {
             content.append("""
                     implementation 'androidx.appcompat:appcompat:1.7.1'\r
-                    implementation 'com.google.android.material:material:1.12.0'\r
+                    implementation 'com.google.android.material:material:1.12.0'\r\n
                     """);
         }
 
@@ -101,7 +101,7 @@ public class Lx {
             content.append("implementation 'androidx.core:core:1.17.0'\r\n");
         }
         if (metadata.isMaterialCardViewUsed && isLibraryNotExcluded(BuiltInLibraries.MATERIAL, excludedLibraries)) {
-            content.append("implementation 'com.google.android.material:material:1.12.0'\\r\\n");
+            content.append("implementation 'com.google.android.material:material:1.12.0'\r\n");
         }
 
         if (metadata.isUnityAdsUsed && isLibraryNotExcluded(BuiltInLibraries.UNITY_ADS, excludedLibraries)) {
