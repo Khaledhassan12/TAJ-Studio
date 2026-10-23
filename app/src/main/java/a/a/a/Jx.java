@@ -529,7 +529,8 @@ public class Jx {
             eventManager.addLifecycleEvent("onBackPressed", "DrawerLayout", "_drawer");
         }
 
-        ArrayList<ViewBean> beans = projectDataManager.d(projectFileBean.getXmlName());
+        ArrayList<ViewBean> beans = new ArrayList<>(projectDataManager.d(projectFileBean.getXmlName()));
+        for (IncludedViews.Entry entry : includes().entries) beans.add(entry.view);
         for (ViewBean next : beans) {
             if (next.type == ViewBean.VIEW_TYPE_WIDGET_MAPVIEW) {
                 eventManager.addLifecycleEvent("onStart", "MapView", next.id);
@@ -907,6 +908,14 @@ public class Jx {
         }
     }
 
+    private String getIncludedViewInitializer(IncludedViews.Entry entry) {
+        String type = WIDGET_NAME_PATTERN.matcher(entry.view.convert).replaceAll("");
+        if (type.isEmpty()) type = entry.view.getClassInfo().getClassName();
+        boolean isInFragment = projectFileBean.fileName.contains("_fragment");
+        String lookup = isViewBindingEnabled ? null : entry.lookupExpression(isInFragment ? "_view" : "");
+        return Lx.getViewInitializer(type, entry.id, includes().reference(entry.id, isViewBindingEnabled), lookup, isInFragment);
+    }
+
     private void initializeEventsCodeGenerator() {
         eventManager = new Hx(buildConfig, projectFileBean, projectDataManager);
         addImports(eventManager.getImports());
@@ -997,6 +1006,9 @@ public class Jx {
                 }
             }
         }
+        for (IncludedViews.Entry entry : includes().entries) {
+            initializeMethodCode.add(getIncludedViewInitializer(entry));
+        }
         if (!isViewBindingEnabled) {
             if (projectFileBean.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_DRAWER)) {
                 ArrayList<ViewBean> drawerBeans = projectDataManager.d(projectFileBean.getDrawerXmlName());
@@ -1060,6 +1072,10 @@ public class Jx {
                     }
                 }
             }
+        }
+        for (IncludedViews.Entry entry : includes().entries) {
+            String viewDeclarations = getViewDeclarationAndAddImports(entry.view);
+            if (!viewDeclarations.isEmpty()) views.add(viewDeclarations);
         }
 
         if (projectFileBean.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_DRAWER)) {

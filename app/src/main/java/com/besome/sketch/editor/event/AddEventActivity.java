@@ -23,6 +23,7 @@ import com.besome.sketch.beans.ComponentBean;
 import com.besome.sketch.beans.EventBean;
 import com.besome.sketch.beans.ProjectFileBean;
 import com.besome.sketch.beans.ViewBean;
+import pro.sketchware.utility.IncludedViews;
 import com.besome.sketch.editor.makeblock.MoreBlockBuilderView;
 import com.besome.sketch.lib.base.BaseAppCompatActivity;
 import com.google.android.material.color.MaterialColors;
@@ -144,6 +145,24 @@ public class AddEventActivity extends BaseAppCompatActivity implements View.OnCl
                     if (!exists && !toNotAdd.contains("android:id")) {
                         addableViewEvents.add(new EventBean(EventBean.EVENT_TYPE_VIEW, view.type, view.id, viewEvent));
                     }
+                }
+            }
+        }
+        for (IncludedViews.Entry entry : IncludedViews.resolve(jC.a(sc_id), projectFile.getXmlName()).entries) {
+            ViewBean view = entry.view;
+            Set<String> toNotAdd = new Ox(new jq(), projectFile).readAttributesToReplace(view);
+            for (String viewEvent : oq.getEventsForClass(view.getClassInfo())) {
+                boolean exists = false;
+                for (var existingEvent : jC.a(sc_id).g(projectFile.getJavaName())) {
+                    if (existingEvent.eventType == EventBean.EVENT_TYPE_VIEW
+                            && view.id.equals(existingEvent.targetId)
+                            && viewEvent.equals(existingEvent.eventName)) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists && !toNotAdd.contains("android:id")) {
+                    addableViewEvents.add(new EventBean(EventBean.EVENT_TYPE_VIEW, view.type, view.id, viewEvent));
                 }
             }
         }

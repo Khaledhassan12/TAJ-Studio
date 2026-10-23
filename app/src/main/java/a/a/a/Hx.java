@@ -13,6 +13,7 @@ import java.util.Map;
 import mod.hey.studios.project.ProjectSettings;
 import mod.hilal.saif.components.ComponentExtraCode;
 import mod.pranav.viewbinding.ViewBindingBuilder;
+import pro.sketchware.utility.IncludedViews;
 
 public class Hx {
 
@@ -27,6 +28,7 @@ public class Hx {
     private final ArrayList<String> imports = new ArrayList<>();
     private final HashMap<String, String> activityLifecycleEvents = new HashMap<>();
     private final Boolean isViewBindingEnabled;
+    private final IncludedViews.Result includes;
     public String k = "";
     public String l = "";
 
@@ -36,14 +38,16 @@ public class Hx {
 
         ProjectSettings projectSettings = new ProjectSettings(logicHolder.sc_id);
         isViewBindingEnabled = projectSettings.getValue(ProjectSettings.SETTING_ENABLE_VIEWBINDING, "false").equals("true");
+        includes = IncludedViews.resolve(eC, projectFileBean.getXmlName());
 
         ArrayList<ViewBean> views = new ArrayList<>(eC.d(projectFileBean.getXmlName()));
         if (projectFileBean.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_FAB)) {
             ViewBean fab = eC.h(projectFileBean.getXmlName());
             views.add(fab);
         }
+        for (IncludedViews.Entry entry : includes.entries) views.add(entry.view);
         for (ViewBean view : views) {
-            viewEvents.add(new Event(this, isViewBindingEnabled ? "binding." + ViewBindingBuilder.generateParameterFromId(view.id) : view.id, view.getClassInfo(), isViewBindingEnabled));
+            viewEvents.add(new Event(this, viewReference(view.id), view.getClassInfo(), isViewBindingEnabled));
         }
 
         ArrayList<ComponentBean> components = eC.e(projectFileBean.getJavaName());
@@ -64,6 +68,12 @@ public class Hx {
         }
 
         a(eC.g(projectFileBean.getJavaName()), eC.b(projectFileBean.getJavaName()));
+    }
+
+    private String viewReference(String id) {
+        String included = includes.reference(id, isViewBindingEnabled);
+        if (included != null) return included;
+        return isViewBindingEnabled ? "binding." + ViewBindingBuilder.generateParameterFromId(id) : id;
     }
 
     public String getOnActivityResultSwitchCases() {
@@ -135,7 +145,7 @@ public class Hx {
         for (EventBean eventBean : events) {
             ArrayList<BlockBean> eventLogicBlocks = logicBlocks.get(eventBean.targetId + "_" + eventBean.eventName);
             String eventLogic = (eventLogicBlocks == null || eventLogicBlocks.isEmpty()) ? "" :
-                    new Fx(projectFileBean.getActivityName(), jq, eventLogicBlocks, isViewBindingEnabled).a();
+                    new Fx(projectFileBean.getActivityName(), jq, eventLogicBlocks, isViewBindingEnabled).withIncludes(includes).a();
 
             switch (eventBean.eventType) {
                 case EventBean.EVENT_TYPE_VIEW:
