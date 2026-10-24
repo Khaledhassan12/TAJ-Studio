@@ -144,7 +144,9 @@ public class ViewBeanFactory {
             if ("app:srcCompat".equals(attrName)
                     && attrValue != null
                     && attrValue.startsWith("@drawable/")
-                    && bean.getClassInfo().a("ImageView")) {
+                    && bean.getClassInfo().a("ImageView")
+                    && (attributes.get("android:src") == null
+                        || attrValue.equals(attributes.get("android:src")))) {
                 continue;
             }
             var reference = parseReferName(attrName, ":");
