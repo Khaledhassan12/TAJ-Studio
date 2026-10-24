@@ -206,6 +206,13 @@ public final class AgentOrchestrator {
                                                         "The task was cancelled before the operation started.", null, true)
                                                 : tool.run(call.arguments, context);
                                     }
+                                    // Reconcile filesystem operations that can add, move, or remove layout XML.
+                                    // The specialized layout writers already perform checked model sync; this
+                                    // per-tool safety net covers generic copy/move/delete paths before the model
+                                    // receives the next tool result and before another action begins.
+                                    if (!result.error && touchesLayoutXml(call.name, call.arguments, context)) {
+                                        DomainToolHelper.refreshEditor(context);
+                                    }
                                     conversation.add(AIMessage.toolResult(call.id, boundToolResult(result.content)));
                                     success = !result.error;
                                     toolSummary = summarizeToolResult(call.name, result.content, success);
@@ -310,6 +317,51 @@ public final class AgentOrchestrator {
             UiPoster.post(() -> callbacks.onError(new IllegalStateException(
                     "Agent task could not be scheduled: " + e.getClass().getSimpleName(), e)));
         }
+    }
+
+
+    /**
+     * Detect filesystem operations that may change layout XML without going through
+     * the specialized layout tools. Paths are resolved through the active project's
+     * resolver; user-supplied absolute paths are never trusted as layout evidence.
+     */
+    private static boolean touchesLayoutXml(String toolName, JSONObject args, Tool.ToolContext ctx) {
+        if (toolName == null || args == null || ctx == null || ctx.sc_id == null) return false;
+        try {
+            String layoutRoot = new java.io.File(pro.sketchware.ai.agent.ProjectPaths.layoutDir(ctx.sc_id))
+                    .getCanonicalPath();
+            java.util.List<String> candidates = new java.util.ArrayList<>();
+            if ("res_delete".equals(toolName)) {
+                if ("layout".equals(args.optString("folder", ""))) {
+                    candidates.add("res/" + args.optString("folder") + "/" + args.optString("name"));
+                }
+            } else if ("res_move_copy".equals(toolName)) {
+                if ("layout".equals(args.optString("fromFolder", ""))) {
+                    candidates.add("res/layout/" + args.optString("fromName"));
+                }
+                if ("layout".equals(args.optString("toFolder", ""))) {
+                    candidates.add("res/layout/" + args.optString("toName"));
+                }
+            } else if ("fs_delete".equals(toolName)) {
+                candidates.add(args.optString("path", ""));
+            } else if ("fs_copy".equals(toolName) || "fs_move".equals(toolName)) {
+                candidates.add(args.optString("src", ""));
+                candidates.add(args.optString("dst", ""));
+            } else {
+                return false;
+            }
+            for (String candidate : candidates) {
+                if (candidate == null || candidate.trim().isEmpty()) continue;
+                java.io.File resolved = pro.sketchware.ai.agent.PathResolver.resolve(ctx.sc_id, candidate);
+                String canonical = resolved.getCanonicalPath();
+                if (resolved.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".xml")
+                        && canonical.startsWith(layoutRoot + java.io.File.separator)) return true;
+            }
+        } catch (Exception ignored) {
+            // The executor remains responsible for reporting path errors. A failed
+            // detection must never broaden filesystem access or change the target project.
+        }
+        return false;
     }
 
     /**
