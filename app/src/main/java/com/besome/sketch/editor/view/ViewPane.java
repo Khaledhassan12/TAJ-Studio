@@ -376,7 +376,7 @@ public class ViewPane extends RelativeLayout {
         if (screenXml != null) chain.add(screenXml);
         pane.includeChain = chain;
         pane.updateRootLayout(sc_id, xml);
-        for (ViewBean bean : jC.a(sc_id).d(xml)) {
+        for (ViewBean bean : pro.sketchware.utility.SketchwareViewTree.ordered(jC.a(sc_id).d(xml))) {
             pane.addViewAndUpdateIndex(pane.createItemView(bean.clone()));
         }
         View root = pane.rootLayout;
