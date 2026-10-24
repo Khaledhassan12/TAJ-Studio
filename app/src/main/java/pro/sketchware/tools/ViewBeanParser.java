@@ -167,7 +167,10 @@ public class ViewBeanParser {
         ArrayList<ViewBean> beans = new ArrayList<>();
         Map<String, Map<String, String>> beansAttributes = new HashMap<>();
         Stack<ViewBean> viewStack = new Stack<>();
-        int index = 0;
+        // Child positions are scoped to each parent. A global preorder index gives nested
+        // children invalid positions and can make Sketchware's ViewEditor fail to rebuild
+        // the hierarchy from the ViewBean model.
+        Map<String, Integer> childCounts = new HashMap<>();
         // IDs for views lacking android:id are deterministic for each layout parse.
         // A parser-local counter also prevents concurrent projects/layouts from
         // influencing one another through the old static counter array.
@@ -195,7 +198,11 @@ public class ViewBeanParser {
                         break;
                     }
                     var className = getNameFromTag(name);
-                    int type = getViewTypeByClassName(name);
+                    // "include" is a Sketchware layout node, not an ordinary Android View.
+                    // Keep its dedicated type so the designer can represent included layouts.
+                    int type = className.equals("include")
+                            ? ViewBeans.VIEW_TYPE_LAYOUT_INCLUDE
+                            : getViewTypeByClassName(name);
 
                     // Get view ID, either from attributes or generate a unique ID
                     String attrId = parser.getAttributeValue(null, "android:id");
@@ -216,7 +223,9 @@ public class ViewBeanParser {
                             bean.parent.equals("root")
                                     ? parentType
                                     : parent.type;
-                    bean.index = index;
+                    int position = childCounts.getOrDefault(bean.parent, 0);
+                    childCounts.put(bean.parent, position + 1);
+                    bean.index = position;
                     Map<String, String> attributes = new LinkedHashMap<>();
                     for (int i = 0; i < parser.getAttributeCount(); i++) {
                         if (!parser.getAttributeName(i).startsWith("xmlns")) {
@@ -227,7 +236,6 @@ public class ViewBeanParser {
                     beans.add(bean);
                     ids.add(id);
                     viewStack.push(bean);
-                    index++;
                     break;
                 }
 
