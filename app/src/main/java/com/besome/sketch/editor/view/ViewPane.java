@@ -1053,39 +1053,125 @@ public class ViewPane extends RelativeLayout {
         viewInfos.add(new ViewInfo(rect, view, i, i2));
     }
 
+    /** Resolve a widget's logical parent to the real editor container. */
+    private ViewGroup findContainer(String id) {
+        if (rootLayout == null || id == null) return null;
+        View candidate = "root".equals(id) ? rootLayout : rootLayout.findViewWithTag(id);
+        return candidate instanceof ViewGroup group ? group : null;
+    }
+
+    /** True when the requested container is the widget itself or one of its descendants. */
+    private static boolean containsOrIs(View widget, ViewGroup possibleDescendant) {
+        for (View current = possibleDescendant; current != null; ) {
+            if (current == widget) return true;
+            ViewParent parent = current.getParent();
+            current = parent instanceof View parentView ? parentView : null;
+        }
+        return false;
+    }
+
+    private static boolean hasLayoutParamsFor(ViewGroup.LayoutParams params, ViewGroup parent) {
+        if (params == null || parent == null) return false;
+        if (parent instanceof ConstraintLayout) return params instanceof ConstraintLayout.LayoutParams;
+        if (parent instanceof RelativeLayout) return params instanceof RelativeLayout.LayoutParams;
+        if (parent instanceof LinearLayout) return params instanceof LinearLayout.LayoutParams;
+        if (parent instanceof FrameLayout) return params instanceof FrameLayout.LayoutParams;
+        return params instanceof ViewGroup.MarginLayoutParams;
+    }
+
+    private static int typeOfContainer(ViewGroup parent, int fallback) {
+        if (parent instanceof ItemView item && item.getBean() != null) {
+            return item.getBean().type;
+        }
+        if (parent instanceof ConstraintLayout) return ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT;
+        if (parent instanceof RelativeLayout) return ViewBean.VIEW_TYPE_LAYOUT_RELATIVE;
+        if (parent instanceof LinearLayout) return ViewBean.VIEW_TYPE_LAYOUT_LINEAR;
+        if (parent instanceof FrameLayout) return ViewBeans.VIEW_TYPE_LAYOUT_FRAMELAYOUT;
+        return fallback;
+    }
+
     public void addViewAndUpdateIndex(View view) {
-        ViewBean bean = ((ItemView) view).getBean();
-        if (rootLayout != null) {
-            ViewGroup viewGroup = rootLayout.findViewWithTag(bean.parent);
-            viewGroup.addView(view, bean.index);
-            if (bean.parentType == ViewBean.VIEW_TYPE_LAYOUT_RELATIVE) {
-                updateRelativeParentViews(view, new InjectAttributeHandler(bean));
-            }
-            if (viewGroup instanceof ScrollContainer scrollContainer) {
+        if (rootLayout == null || !(view instanceof ItemView item) || view == rootLayout) return;
+        ViewBean bean = item.getBean();
+        if (bean == null) return;
+
+        ViewGroup parent = findContainer(bean.parent);
+        if (parent == null || containsOrIs(view, parent)) {
+            Log.w("ViewPane", "Widget " + bean.id + " has no valid parent '" + bean.parent + "'; using the root layout");
+            parent = rootLayout;
+            bean.parent = "root";
+        }
+
+        if (view.getParent() instanceof ViewGroup current) {
+            current.removeView(view);
+            if (current instanceof ScrollContainer scrollContainer) {
                 scrollContainer.reindexChildren();
             }
+        }
+
+        bean.parentType = typeOfContainer(parent, bean.parentType);
+        if (!hasLayoutParamsFor(view.getLayoutParams(), parent)) {
+            // LayoutParams are container-specific. Rebuild them from the bean when a widget
+            // moves between LinearLayout, RelativeLayout, ConstraintLayout, or FrameLayout.
+            updateLayout(view, bean, parent);
+        }
+
+        int childPosition = EditorChildren.insertionIndex(parent, bean.index);
+        parent.addView(view, childPosition);
+        if (parent instanceof ScrollContainer scrollContainer) {
+            scrollContainer.reindexChildren();
+        }
+
+        if (parent instanceof RelativeLayout) {
+            updateRelativeParentViews(view, new InjectAttributeHandler(bean));
+        } else if (parent instanceof ConstraintLayout) {
+            // Resolve constraints that referred to siblings inserted later in the same pass.
+            for (int i = 0; i < parent.getChildCount(); i++) {
+                View child = parent.getChildAt(i);
+                if (child instanceof ItemView childItem && childItem.getBean() != null) {
+                    ViewGroup.LayoutParams params = childItem.getLayoutParams();
+                    if (params instanceof ConstraintLayout.LayoutParams constraintParams) {
+                        applyConstraintLayoutParams(constraintParams, childItem.getBean().inject);
+                    }
+                }
+            }
+            parent.requestLayout();
         }
     }
 
     private int getActualParentType(View view, int defaultValue) {
-        var parent = (ViewGroup) view.getParent();
-        if (parent != null) {
-            if (parent instanceof ItemLinearLayout) {
-                return ViewBean.VIEW_TYPE_LAYOUT_LINEAR;
-            } else if (parent instanceof ItemRelativeLayout) {
-                return ViewBean.VIEW_TYPE_LAYOUT_RELATIVE;
-            } else if (parent instanceof ItemCardView) {
-                return ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW;
-            } else if (parent instanceof ItemHorizontalScrollView) {
-                return ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW;
-            } else if (parent instanceof ItemVerticalScrollView) {
-                return ViewBean.VIEW_TYPE_LAYOUT_VSCROLLVIEW;
-            }
+        ViewParent rawParent = view.getParent();
+        if (rawParent instanceof ItemConstraintLayout) {
+            return ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT;
         }
+        if (rawParent instanceof ItemFrameLayout) {
+            return ViewBeans.VIEW_TYPE_LAYOUT_FRAMELAYOUT;
+        }
+        if (rawParent instanceof ItemLinearLayout) {
+            ViewGroup parent = (ViewGroup) rawParent;
+            if (parent instanceof ItemView item && item.getBean() != null) return item.getBean().type;
+            return ViewBean.VIEW_TYPE_LAYOUT_LINEAR;
+        }
+        if (rawParent instanceof ItemRelativeLayout) return ViewBean.VIEW_TYPE_LAYOUT_RELATIVE;
+        if (rawParent instanceof ItemCardView) return ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW;
+        if (rawParent instanceof ItemHorizontalScrollView) return ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW;
+        if (rawParent instanceof ItemVerticalScrollView) return ViewBean.VIEW_TYPE_LAYOUT_VSCROLLVIEW;
         return defaultValue;
     }
 
     private void updateLayout(View view, ViewBean viewBean) {
+        updateLayout(view, viewBean, findContainer(viewBean.parent));
+    }
+
+    private static boolean isLinearLayoutType(int type) {
+        return type == ViewBean.VIEW_TYPE_LAYOUT_LINEAR
+                || type == ViewBeans.VIEW_TYPE_LAYOUT_RADIOGROUP
+                || type == ViewBeans.VIEW_TYPE_LAYOUT_TEXTINPUTLAYOUT
+                || type == ViewBeans.VIEW_TYPE_LAYOUT_COLLAPSINGTOOLBARLAYOUT
+                || type == ViewBeans.VIEW_TYPE_LAYOUT_SWIPEREFRESHLAYOUT;
+    }
+
+    private void updateLayout(View view, ViewBean viewBean, ViewGroup actualParent) {
         crashlytics.log("ViewPane: Updating layout");
         LayoutBean layoutBean = viewBean.layout;
         int width = layoutBean.width;
@@ -1107,7 +1193,8 @@ public class ViewPane extends RelativeLayout {
         } else {
             view.setBackgroundColor(PropertiesUtil.parseColor(colorsEditorManager.getColorValue(context, viewBean.layout.backgroundResColor, 3, material3LibraryManager.canUseNightVariantColors())));
         }
-        if (viewBean.parentType == ViewBean.VIEW_TYPE_LAYOUT_LINEAR) {
+        if (actualParent instanceof LinearLayout
+                || actualParent == null && isLinearLayoutType(viewBean.parentType)) {
             LinearLayout.LayoutParams layoutParams2 = new LinearLayout.LayoutParams(width, height);
             layoutParams2.setMargins(leftMargin, topMargin, rightMargin, bottomMargin);
             LayoutBean layoutBean3 = viewBean.layout;
@@ -1118,13 +1205,13 @@ public class ViewPane extends RelativeLayout {
             }
             layoutParams2.weight = viewBean.layout.weight;
             view.setLayoutParams(layoutParams2);
-        } else if (viewBean.parentType == ViewBean.VIEW_TYPE_LAYOUT_RELATIVE) {
+        } else if (actualParent instanceof RelativeLayout || actualParent == null && viewBean.parentType == ViewBean.VIEW_TYPE_LAYOUT_RELATIVE) {
             RelativeLayout.LayoutParams layoutParams2 = new RelativeLayout.LayoutParams(width, height);
             layoutParams2.setMargins(leftMargin, topMargin, rightMargin, bottomMargin);
             LayoutBean layoutBean3 = viewBean.layout;
             view.setPadding(layoutBean3.paddingLeft, layoutBean3.paddingTop, layoutBean3.paddingRight, layoutBean3.paddingBottom);
             view.setLayoutParams(layoutParams2);
-        } else if (viewBean.parentType == ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT) {
+        } else if (actualParent instanceof ConstraintLayout || actualParent == null && viewBean.parentType == ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT) {
             ConstraintLayout.LayoutParams constraintParams = new ConstraintLayout.LayoutParams(width, height);
             constraintParams.setMargins(leftMargin, topMargin, rightMargin, bottomMargin);
             view.setPadding(viewBean.layout.paddingLeft, viewBean.layout.paddingTop, viewBean.layout.paddingRight, viewBean.layout.paddingBottom);
