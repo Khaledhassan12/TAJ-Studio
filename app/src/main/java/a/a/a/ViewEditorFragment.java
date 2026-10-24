@@ -174,7 +174,7 @@ public class ViewEditorFragment extends qA implements LiveRegistry.DomainListene
 
     public void a(ArrayList<ViewBean> viewBeans) {
         viewEditor.h();
-        viewEditor.a(eC.a(viewBeans));
+        viewEditor.a(pro.sketchware.utility.SketchwareViewTree.ordered(viewBeans));
     }
 
     public void a(boolean var1) {
@@ -439,7 +439,7 @@ public class ViewEditorFragment extends qA implements LiveRegistry.DomainListene
     }
 
     public void n() {
-        ArrayList<ViewBean> viewBeanArrayList = eC.a(jC.a(sc_id).d(projectFileBean.getXmlName()));
+        ArrayList<ViewBean> viewBeanArrayList = pro.sketchware.utility.SketchwareViewTree.ordered(jC.a(sc_id).d(projectFileBean.getXmlName()));
         ViewBean viewBean;
         if (projectFileBean.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_FAB)) {
             viewBean = jC.a(sc_id).h(projectFileBean.getXmlName());
