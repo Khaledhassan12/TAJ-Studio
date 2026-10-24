@@ -268,3 +268,13 @@ No production Java/Kotlin implementation was changed for this check because the 
 - **Implemented:** after a targeted layout refresh fails verification, `res_create` and `res_edit` now attempt the existing full-project reload path and independently re-check the persisted layout against the live model. `res_create` can report success after an incremental-sync exception only when full reload and the live-model check both succeed.
 - **Restoration correctness:** the `res_edit` rollback path now treats any designer-sync/refresh/verification exception as an unverified restoration. It no longer leaves `restored=true` merely because the disk bytes were restored before a later editor step failed. The rollback attempts a full reload before declaring restoration unsuccessful.
 - **Status:** patch committed after read-back review. GitHub Actions for the exact new head and APK artifact remain to be checked; live behavior still requires testing in the Android app/project.
+
+
+## 2026-10-24 — nested ViewBean reconstruction regression
+
+- **Confirmed from live source comparison:** TAJ's `ViewBeanParser.parse()` assigned every widget a single global preorder `index`. Sketchware's editor expects a position within each parent. For nested layouts, a child could therefore carry an index larger than its parent's child count, preventing the designer hierarchy from being reconstructed correctly even though the XML write and flat bean list succeeded.
+- **Confirmed from reference source:** `FabioSilva11/Sketchware-IA` scopes indexes by parent with `childCounts`, and gives the `include` tag `ViewBeans.VIEW_TYPE_LAYOUT_INCLUDE`. TAJ had lost both behaviors in its parser while adding parser-local generated-ID counters.
+- **Changed:** `app/src/main/java/pro/sketchware/tools/ViewBeanParser.java` now preserves TAJ's deterministic parser-local ID counters while restoring per-parent child indexes and the dedicated `include` node type.
+- **Verification performed:** fetched and compared both live parser implementations; confirmed TAJ already imports `mod.agus.jcoderz.beans.ViewBeans`; GitHub accepted the source update. This is source-level verification only.
+- **Not yet verified:** Android compilation, actual Sketchware View-tab rendering on device, and runtime handling of nested `include` layouts. CI for the resulting commit must be checked before claiming build success.
+- **Next steps:** inspect the exact commit's CI result/artifact; test a layout with at least two nesting levels and siblings under different parents, plus `include`; verify persisted XML, live `ViewBean` parent/index/type fields, and visible View-tab hierarchy.
