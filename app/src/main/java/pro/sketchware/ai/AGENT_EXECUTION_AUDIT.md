@@ -236,3 +236,11 @@ No production Java/Kotlin implementation was changed for this check because the 
 - The refresh is requested after the executor returns success and before the tool result is passed to the next model turn, so multi-step agent work does not wait for the task-level final refresh. Existing layout create/edit/insert tools retain their own checked XML-to-`ViewBean` synchronization and read-back verification.
 - The new safety-net uses the existing best-effort `DomainToolHelper.refreshEditor(ctx)`; it is a refresh request, not independent proof that a deleted/moved layout was removed from every in-memory model. No claim is made that this closes the full designer-sync gap.
 - **Verification:** source change committed to `TAJ-STUDIO-AI`; repository read-back and Android CI/build status still need checking for this exact commit. Device-visible step-by-step behavior and model removal after delete/move remain unverified.
+
+
+## Incremental designer refresh failure reporting — 2026-10-24
+
+- **Confirmed defect:** the per-tool refresh added for generic layout XML copy/move/delete called the best-effort `DomainToolHelper.refreshEditor(ctx)`. That wrapper intentionally catches refresh exceptions, so the orchestrator could continue with an executor-success result even when the editor refresh was not verified.
+- **Change committed:** `AgentOrchestrator` now calls the checked `refreshEditor(ctx, null)` overload for matching successful filesystem mutations. If refresh fails, the tool result becomes `DESIGNER_SYNC_FAILED` with an explicit partial-state warning: the on-disk mutation may already have happened, and the user must inspect the project before retrying. It does not falsely claim the editor is synchronized and does not attempt an unsafe automatic rollback.
+- **Scope:** this closes the swallowed-refresh-error path for the covered generic operations. It does not prove that every tool in the registry refreshes incrementally, nor that delete/move updates every in-memory model correctly.
+- **Verification:** source change commit: [`db0cfc4f7e12d89cf1cf10336d3b4aa9195d8d54`](https://github.com/Khaledhassan12/TAJ-Studio/commit/db0cfc4f7e12d89cf1cf10336d3b4aa9195d8d54). Android compilation and live-designer behavior remain pending until the CI run and device acceptance evidence are inspected.
