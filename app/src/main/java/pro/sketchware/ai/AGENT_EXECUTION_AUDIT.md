@@ -51,8 +51,8 @@ These are code-level changes only until CI compiles this exact commit and the ac
 ### Designer identity integrity — 2026-10-24
 
 - **Confirmed defect:** `ViewBeanParser.parse()` previously replaced a duplicate explicit `android:id` with an automatically generated ID. That made the in-memory Sketchware model disagree with the persisted XML and could break references to existing widgets. Invalid duplicate IDs must be rejected, not silently rewritten.
-- **Changed:** `app/src/main/java/pro/sketchware/tools/ViewBeanParser.java` now preserves each explicit ID verbatim and throws an actionable `IOException` when the ID is empty or already used/reserved. The operation therefore fails closed instead of silently changing widget identity.
-- **Commit:** `6a593b15acd9cb37b5b9a84c95da8e044c08e9da`.
+- **Changed:** `app/src/main/java/pro/sketchware/tools/ViewBeanParser.java` now preserves each explicit ID verbatim and throws an actionable `IOException` when the ID is empty or already used/reserved. `app/src/main/java/pro/sketchware/ai/agent/tools/InsertWidgetTool.java` now parses the candidate layout into the Sketchware model before backing up or writing it, so duplicate/invalid IDs are rejected before disk mutation.
+- **Commits:** parser guard `6a593b15acd9cb37b5b9a84c95da8e044c08e9da`; insert preflight `0a472ac3ce4eca200570dce7b5d147cb3db0f514`.
 - **Existing features confirmed in source:** `BuiltInWidgets`, `ViewBeanFactory`, and `ViewPane` already contain registration/model/editor paths for `Include`, `ConstraintLayout`, `NestedScrollView`, and `MaterialCardView`; these were not duplicated in this change.
 - **Verification status:** Source-level replacement and branch commit confirmed. Android compilation, malformed/duplicate-ID regression tests, active-designer visibility, and navigation/reopen persistence are **not yet verified**. No claim of device-level success is made.
 
