@@ -101,14 +101,12 @@ public final class ResEditTool implements Tool {
             if (!next.equals(actual)) throw new java.io.IOException("Read-back differs from the intended resource content.");
             if ("layout".equals(folder)) {
                 DomainToolHelper.syncLayoutToDesigner(sc_id, name, next);
-                if (!DomainToolHelper.verifyLiveLayout(sc_id, name, next)) {
-                    throw new java.io.IOException("Persisted layout differs from the live Sketchware designer model.");
-                }
-            }
-            // The in-memory ViewBean model is already synchronized and verified above;
-            // now refresh the active editor so its View tab rebinds to that model immediately.
-            if ("layout".equals(folder)) {
+                // Refresh before asserting the final model so a mismatch cannot skip the
+                // adapter rebind and leave the View tab showing stale widgets.
                 DomainToolHelper.refreshEditor(ctx, name);
+                if (!DomainToolHelper.verifyLiveLayout(sc_id, name, next)) {
+                    throw new java.io.IOException("Persisted layout differs from the live Sketchware designer model after the editor refresh.");
+                }
             }
             LiveRegistry.notifyChanged(folder, path);
             return ToolResult.structured("res_edit", "SUCCESS", path,
@@ -120,6 +118,7 @@ public final class ResEditTool implements Tool {
                     restored = DomainToolHelper.restoreIfUnchanged(path, DomainToolHelper.contentSha256(next));
                     if (restored && "layout".equals(folder)) {
                         DomainToolHelper.syncLayoutToDesigner(sc_id, name, original);
+                        DomainToolHelper.refreshEditor(ctx, name);
                         if (!DomainToolHelper.verifyLiveLayout(sc_id, name, original)) restored = false;
                     }
                 }

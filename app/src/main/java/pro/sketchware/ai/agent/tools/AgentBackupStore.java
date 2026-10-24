@@ -55,7 +55,7 @@ public final class AgentBackupStore {
         String stamp = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US).format(new Date());
         String safeName = sanitize(source.getName());
         String unique = UUID.randomUUID().toString().substring(0, 8);
-        File destination = new File(categoryDir, safeName + " - " + stamp + " | TAJ STUDIO - " + unique + ".json");
+        File destination = new File(categoryDir, safeName + " - " + stamp + " - TAJ STUDIO - " + unique + ".json");
         JSONObject record = new JSONObject();
         try {
             record.put("format", SCHEMA);
@@ -206,10 +206,21 @@ public final class AgentBackupStore {
             byte[] payload = Base64.decode(check.getString("content"), Base64.DEFAULT);
             if (!expectedHash.equals(sha256(payload))) throw new IOException("Backup integrity verification failed.");
             if (destination.exists()) throw new IOException("Backup name collision; original data was not replaced.");
+            // Keep generated filenames portable on Android's emulated external storage.
+            // The destination is unique and must not replace an existing snapshot.
+            Files.move(temp.toPath(), destination.toPath());
             try {
-                Files.move(temp.toPath(), destination.toPath());
-            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
-                Files.move(temp.toPath(), destination.toPath());
+                byte[] verifiedPayload = readAndValidate(destination);
+                if (!expectedHash.equals(sha256(verifiedPayload))) {
+                    throw new IOException("Backup destination read-back hash mismatch.");
+                }
+            } catch (IOException verificationError) {
+                try {
+                    Files.deleteIfExists(destination.toPath());
+                } catch (IOException cleanupError) {
+                    verificationError.addSuppressed(cleanupError);
+                }
+                throw verificationError;
             }
             moved = true;
         } catch (org.json.JSONException e) {

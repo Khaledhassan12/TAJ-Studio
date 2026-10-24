@@ -39,43 +39,100 @@ public final class ResCreateTool implements Tool {
         String name = args.getString("name");
         String content = args.getString("content");
         String sc_id = ctx.sc_id;
-        
+
         File f = PathResolver.resolve(sc_id, "res/" + folder + "/" + name);
         String path = f.getAbsolutePath();
 
-        if (f.exists()) return new ToolResult("Resource already exists: " + path, true);
         if (!ctx.checkPermission(path, false)) return new ToolResult("Denied.", true);
 
-        // Validation for XML
         if (name.endsWith(".xml") && !DomainToolHelper.verifyXml(content)) {
-            return new ToolResult("Malformed XML content.", true);
+            return ToolResult.structured("res_create", "INVALID_XML", path,
+                    "Malformed XML content; no resource file was created or changed.", null, true);
+        }
+
+        boolean created = !f.exists();
+        if (!created) {
+            // A previous attempt may have written the XML but failed before the View tab
+            // refreshed. Permit an idempotent layout reconciliation, never an overwrite.
+            if (!"layout".equals(folder) || !f.isFile()) {
+                return ToolResult.structured("res_create", "RESOURCE_EXISTS", path,
+                        "Resource already exists; it was not overwritten.", null, true);
+            }
+            String existing;
+            try {
+                existing = DomainToolHelper.readUtf8(f);
+            } catch (Exception readError) {
+                return ToolResult.structured("res_create", "READ_FAILED", path,
+                        "The existing layout could not be read safely; no change was made.", null, true);
+            }
+            if (!content.equals(existing)) {
+                return ToolResult.structured("res_create", "RESOURCE_EXISTS", path,
+                        "A layout already exists with different contents. It was not overwritten. Use res_edit for an approved change; this call can only reconcile an identical existing layout.",
+                        null, true);
+            }
         }
 
         try {
-            DomainToolHelper.atomicWrite(f, content, null);
-            if (!f.isFile() || !content.equals(DomainToolHelper.readUtf8(f))) {
+            if (created) DomainToolHelper.atomicWrite(f, content, null);
+            String persisted = DomainToolHelper.readUtf8(f);
+            if (!f.isFile() || !content.equals(persisted)) {
                 return ToolResult.structured("res_create", "VERIFICATION_FAILED", path,
-                        "The new resource did not match the requested content after read-back.", null, true);
+                        "The resource did not match the requested content after read-back.", null, true);
             }
+
             if ("layout".equals(folder)) {
-                DomainToolHelper.syncLayoutToDesigner(sc_id, name, content);
-                if (!DomainToolHelper.verifyLiveLayout(sc_id, name, content)) {
+                try {
+                    DomainToolHelper.syncLayoutToDesigner(sc_id, name, persisted);
+                } catch (Exception syncError) {
+                    String detail = syncError.getMessage();
+                    if (detail == null || detail.trim().isEmpty()) detail = syncError.getClass().getSimpleName();
+                    if (detail.length() > 220) detail = detail.substring(0, 220) + "…";
+                    // If model synchronization stopped part-way, force the editor's normal
+                    // project reload path as a recovery attempt; still report failure.
+                    try {
+                        DomainToolHelper.refreshEditor(ctx, null);
+                    } catch (Exception refreshError) {
+                        String refreshDetail = refreshError.getMessage();
+                        if (refreshDetail != null && !refreshDetail.trim().isEmpty()) {
+                            detail += "; fallback refresh failed: " + refreshDetail;
+                        }
+                    }
                     return ToolResult.structured("res_create", "DESIGNER_SYNC_FAILED", path,
-                            "The resource file was created and read-back verified, but the live Sketchware designer model could not be verified. The file was preserved for inspection; this is not a full success.", null, true);
+                            "The XML is present and read-back verified, but Sketchware could not synchronize it to the live designer model. The file was preserved; inspect the project before retrying. " + detail,
+                            null, true);
+                }
+
+                // Refresh BEFORE the final model assertion. Previously a false assertion
+                // returned early and left the View tab bound to stale adapter data.
+                try {
+                    DomainToolHelper.refreshEditor(ctx, name);
+                } catch (Exception refreshError) {
+                    String detail = refreshError.getMessage();
+                    if (detail == null || detail.trim().isEmpty()) detail = refreshError.getClass().getSimpleName();
+                    if (detail.length() > 220) detail = detail.substring(0, 220) + "…";
+                    return ToolResult.structured("res_create", "DESIGNER_SYNC_FAILED", path,
+                            "The XML is present and the model update was attempted, but the active View editor refresh failed. The file was preserved; visual synchronization is not verified. " + detail,
+                            null, true);
+                }
+
+                if (!DomainToolHelper.verifyLiveLayout(sc_id, name, persisted)) {
+                    return ToolResult.structured("res_create", "DESIGNER_SYNC_FAILED", path,
+                            "The XML is present and the View editor refresh was requested, but the live Sketchware model still differs from the persisted layout. The file was preserved; visual synchronization is not verified.",
+                            null, true);
                 }
             }
-            // Rebind the active visual editor after the layout model has been synchronized
-            // and verified. Resource creation must not leave the View tab displaying stale beans.
-            if ("layout".equals(folder)) {
-                DomainToolHelper.refreshEditor(ctx, name);
-            }
+
             LiveRegistry.notifyChanged(folder, path);
             return ToolResult.structured("res_create", "SUCCESS", path,
-                    "Exact resource read-back verified" + ("layout".equals(folder) ? "; live designer model also verified." : "."), null, false);
+                    created
+                            ? "Exact resource read-back verified" + ("layout".equals(folder) ? "; designer model verified and View editor refreshed." : ".")
+                            : "Existing layout content matched exactly; designer model was reconciled and View editor refreshed.",
+                    null, false);
         } catch (Exception e) {
+            String detail = e.getMessage() == null ? "Resource creation failed." : e.getMessage();
+            if (detail.length() > 240) detail = detail.substring(0, 240) + "…";
             return ToolResult.structured("res_create", "ERROR", path,
-                    (e.getMessage() == null ? "Resource creation failed." : e.getMessage())
-                            + " Inspect the target before retrying because a partial create may have occurred.", null, true);
+                    detail + " Inspect the target before retrying because a partial create may have occurred.", null, true);
         }
     }
 }
