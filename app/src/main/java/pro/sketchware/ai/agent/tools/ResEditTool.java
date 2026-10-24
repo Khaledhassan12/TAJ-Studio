@@ -104,8 +104,13 @@ public final class ResEditTool implements Tool {
                 // Refresh before asserting the final model so a mismatch cannot skip the
                 // adapter rebind and leave the View tab showing stale widgets.
                 DomainToolHelper.refreshEditor(ctx, name);
-                if (!DomainToolHelper.verifyLiveLayout(sc_id, name, next)) {
-                    throw new java.io.IOException("Persisted layout differs from the live Sketchware designer model after the editor refresh.");
+                boolean verified = DomainToolHelper.verifyLiveLayout(sc_id, name, next);
+                if (!verified) {
+                    DomainToolHelper.refreshEditor(ctx, null);
+                    verified = DomainToolHelper.verifyLiveLayout(sc_id, name, next);
+                }
+                if (!verified) {
+                    throw new java.io.IOException("Persisted layout still differs from the live Sketchware designer model after targeted refresh and full project reload.");
                 }
             }
             LiveRegistry.notifyChanged(folder, path);
@@ -117,12 +122,24 @@ public final class ResEditTool implements Tool {
                 if (f.isFile() && DomainToolHelper.contentSha256(next).equals(DomainToolHelper.sha256(f))) {
                     restored = DomainToolHelper.restoreIfUnchanged(path, DomainToolHelper.contentSha256(next));
                     if (restored && "layout".equals(folder)) {
-                        DomainToolHelper.syncLayoutToDesigner(sc_id, name, original);
-                        DomainToolHelper.refreshEditor(ctx, name);
-                        if (!DomainToolHelper.verifyLiveLayout(sc_id, name, original)) restored = false;
+                        try {
+                            DomainToolHelper.syncLayoutToDesigner(sc_id, name, original);
+                            DomainToolHelper.refreshEditor(ctx, name);
+                            boolean originalVerified = DomainToolHelper.verifyLiveLayout(sc_id, name, original);
+                            if (!originalVerified) {
+                                DomainToolHelper.refreshEditor(ctx, null);
+                                originalVerified = DomainToolHelper.verifyLiveLayout(sc_id, name, original);
+                            }
+                            restored = originalVerified;
+                        } catch (Exception restorationError) {
+                            // Disk restoration alone is not proof that the designer was restored.
+                            restored = false;
+                        }
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                restored = false;
+            }
             String message = e.getMessage() == null ? "Edit failed." : e.getMessage();
             if (restored) message += " Original file/designer state restoration was verified.";
             else message += " Any partial disk/designer effect was not fully verified; inspect the project before retrying.";

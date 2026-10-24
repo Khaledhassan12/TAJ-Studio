@@ -90,15 +90,27 @@ public final class ResCreateTool implements Tool {
                     // If model synchronization stopped part-way, force the editor's normal
                     // project reload path as a recovery attempt; still report failure.
                     try {
+                        // A full project reload can recover when an incremental ViewBean
+                        // update failed after the disk write. Accept it only if read-back
+                        // and the reloaded live model agree.
                         DomainToolHelper.refreshEditor(ctx, null);
-                    } catch (Exception refreshError) {
-                        String refreshDetail = refreshError.getMessage();
-                        if (refreshDetail != null && !refreshDetail.trim().isEmpty()) {
-                            detail += "; fallback refresh failed: " + refreshDetail;
+                        if (DomainToolHelper.verifyLiveLayout(sc_id, name, persisted)) {
+                            LiveRegistry.notifyChanged(folder, path);
+                            return ToolResult.structured("res_create", "SUCCESS", path,
+                                    "Exact resource read-back verified; a full project reload restored and verified the live layout model after incremental synchronization failed.",
+                                    null, false);
                         }
+                        detail += "; full reload completed but the live model still differs";
+                    } catch (Exception recoveryError) {
+                        String recoveryDetail = recoveryError.getMessage();
+                        if (recoveryDetail == null || recoveryDetail.trim().isEmpty()) {
+                            recoveryDetail = recoveryError.getClass().getSimpleName();
+                        }
+                        if (recoveryDetail.length() > 180) recoveryDetail = recoveryDetail.substring(0, 180) + "…";
+                        detail += "; full-reload recovery failed: " + recoveryDetail;
                     }
                     return ToolResult.structured("res_create", "DESIGNER_SYNC_FAILED", path,
-                            "The XML is present and read-back verified, but Sketchware could not synchronize it to the live designer model. The file was preserved; inspect the project before retrying. " + detail,
+                            "The XML is present and read-back verified, but neither incremental synchronization nor full-reload verification established the live designer state. The file was preserved; inspect the project before retrying. " + detail,
                             null, true);
                 }
 
@@ -115,9 +127,16 @@ public final class ResCreateTool implements Tool {
                             null, true);
                 }
 
-                if (!DomainToolHelper.verifyLiveLayout(sc_id, name, persisted)) {
+                boolean verified = DomainToolHelper.verifyLiveLayout(sc_id, name, persisted);
+                if (!verified) {
+                    // If a cached editor/model remained stale, retry through Sketchware's
+                    // normal project reload path, then independently verify the result.
+                    DomainToolHelper.refreshEditor(ctx, null);
+                    verified = DomainToolHelper.verifyLiveLayout(sc_id, name, persisted);
+                }
+                if (!verified) {
                     return ToolResult.structured("res_create", "DESIGNER_SYNC_FAILED", path,
-                            "The XML is present and the View editor refresh was requested, but the live Sketchware model still differs from the persisted layout. The file was preserved; visual synchronization is not verified.",
+                            "The XML is present, but the live Sketchware model still differs after both the targeted View refresh and a full project reload. The file was preserved; visual synchronization is not verified.",
                             null, true);
                 }
             }

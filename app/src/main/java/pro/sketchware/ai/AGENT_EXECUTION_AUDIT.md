@@ -261,3 +261,10 @@ No production Java/Kotlin implementation was changed for this check because the 
 - **Confirmed backup portability defect in code:** managed backup filenames appended a literal `|` character to the destination name. The reported failure occurs while moving the verified temporary backup to that generated destination. The generator now uses a portable separator; the completed archive is read back and its payload SHA-256 is checked before the backup operation is accepted.
 - **Safety:** existing files with different requested contents are not overwritten by `res_create`; existing layout files can be re-synchronized only when contents match. Failed designer verification remains visible as a failure, and an unverified disk edit is not described as complete.
 - **Validation status:** source replacements were reviewed for exact-match application. GitHub Actions build and APK artifact must be checked for the resulting commit. Live on-device View-tab behavior, restoration behavior, and actual Android shared-storage rename behavior remain unverified in this environment.
+
+
+## Full-reload recovery and restoration truthfulness — 2026-10-24
+
+- **Implemented:** after a targeted layout refresh fails verification, `res_create` and `res_edit` now attempt the existing full-project reload path and independently re-check the persisted layout against the live model. `res_create` can report success after an incremental-sync exception only when full reload and the live-model check both succeed.
+- **Restoration correctness:** the `res_edit` rollback path now treats any designer-sync/refresh/verification exception as an unverified restoration. It no longer leaves `restored=true` merely because the disk bytes were restored before a later editor step failed. The rollback attempts a full reload before declaring restoration unsuccessful.
+- **Status:** patch committed after read-back review. GitHub Actions for the exact new head and APK artifact remain to be checked; live behavior still requires testing in the Android app/project.
