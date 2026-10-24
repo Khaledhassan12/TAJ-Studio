@@ -9,6 +9,7 @@ import pro.sketchware.ai.agent.Tool;
 import pro.sketchware.ai.agent.PathResolver;
 import pro.sketchware.utility.FileUtil;
 import pro.sketchware.ai.live.LiveRegistry;
+import pro.sketchware.tools.ViewBeanParser;
 import android.util.Log;
 
 public final class InsertWidgetTool implements Tool {
@@ -115,6 +116,21 @@ public final class InsertWidgetTool implements Tool {
         }
 
         if (!DomainToolHelper.verifyXml(next)) return new ToolResult("Insertion resulted in malformed XML.", true);
+
+        // Validate the Sketchware model before touching disk. XML well-formedness alone
+        // cannot catch duplicate explicit IDs; the parser must never silently replace IDs
+        // that may already be referenced by events or blocks.
+        try {
+            ViewBeanParser modelParser = new ViewBeanParser(next);
+            modelParser.setSkipRoot(true);
+            modelParser.parse();
+        } catch (Exception invalidLayout) {
+            String detail = invalidLayout.getMessage();
+            if (detail == null || detail.trim().isEmpty()) detail = invalidLayout.getClass().getSimpleName();
+            return ToolResult.structured("insert_widget", "INVALID_LAYOUT", path,
+                    "Insertion rejected before writing because the layout cannot be represented safely in Sketchware: "
+                            + detail, null, true);
+        }
 
         DomainToolHelper.backup(path, sc_id);
         try {
