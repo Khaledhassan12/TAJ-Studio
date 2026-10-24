@@ -516,7 +516,7 @@ public class yq {
             N.setupGoogleMap(googleMaps);
         }
         for (ProjectFileBean customView : projectFileManager.c()) {
-            for (ViewBean viewBean : eC.a(projectDataManager.d(customView.getXmlName()))) {
+            for (ViewBean viewBean : pro.sketchware.utility.SketchwareViewTree.ordered(projectDataManager.d(customView.getXmlName()))) {
                 if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT) N.isConstraintLayoutUsed = true;
                 if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW) N.isNestedScrollViewUsed = true;
                 if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW && "com.google.android.material.card.MaterialCardView".equals(viewBean.convert)) N.isMaterialCardViewUsed = true;
@@ -540,7 +540,7 @@ public class yq {
             }
         }
         for (ProjectFileBean activity : projectFileManager.b()) {
-            for (ViewBean viewBean : eC.a(projectDataManager.d(activity.getXmlName()))) {
+            for (ViewBean viewBean : pro.sketchware.utility.SketchwareViewTree.ordered(projectDataManager.d(activity.getXmlName()))) {
                 if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_CONSTRAINTLAYOUT) N.isConstraintLayoutUsed = true;
                 if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_NESTEDSCROLLVIEW) N.isNestedScrollViewUsed = true;
                 if (viewBean.type == mod.agus.jcoderz.beans.ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW && "com.google.android.material.card.MaterialCardView".equals(viewBean.convert)) N.isMaterialCardViewUsed = true;
@@ -607,7 +607,7 @@ public class yq {
                 }
             }
 
-            for (ViewBean view : eC.a(projectDataManager.d(activity.getXmlName()))) {
+            for (ViewBean view : pro.sketchware.utility.SketchwareViewTree.ordered(projectDataManager.d(activity.getXmlName()))) {
                 var classNameParts = view.convert.split("\\.");
                 var className = classNameParts[classNameParts.length - 1];
                 switch (className) {
@@ -796,7 +796,7 @@ public class yq {
         for (ProjectFileBean layout : regularLayouts) {
             String xmlName = layout.getXmlName();
             Ox ox = new Ox(N, layout);
-            ox.a(eC.a(projectDataManager.d(xmlName)), projectDataManager.h(xmlName));
+            ox.a(pro.sketchware.utility.SketchwareViewTree.ordered(projectDataManager.d(xmlName)), projectDataManager.h(xmlName));
             var ogFile = new File(layoutDir + xmlName);
             if (layoutFiles.contains(ogFile)) {
                 srcCodeBeans.add(new SrcCodeBean(xmlName, FileUtil.readFile(ogFile.getAbsolutePath())));
@@ -820,7 +820,7 @@ public class yq {
         for (ProjectFileBean customViewFile : customViewFiles) {
             String xmlName = customViewFile.getXmlName();
             Ox ox = new Ox(N, customViewFile);
-            ox.a(eC.a(projectDataManager.d(xmlName)));
+            ox.a(pro.sketchware.utility.SketchwareViewTree.ordered(projectDataManager.d(xmlName)));
             var ogFile = new File(layoutDir + xmlName);
             if (layoutFiles.contains(ogFile)) {
                 srcCodeBeans.add(new SrcCodeBean(xmlName, FileUtil.readFile(ogFile.getAbsolutePath())));
@@ -958,7 +958,7 @@ public class yq {
                     return new Jx(N, file, projectDataManager).generateCode(isAndroidStudioExport, sc_id);
                 } else if (isXmlFile) {
                     Ox xmlGenerator = new Ox(N, file);
-                    xmlGenerator.a(eC.a(projectDataManager.d(filename)), projectDataManager.h(filename));
+                    xmlGenerator.a(pro.sketchware.utility.SketchwareViewTree.ordered(projectDataManager.d(filename)), projectDataManager.h(filename));
                     return CommandBlock.applyCommands(filename, xmlGenerator.b());
                 }
             }
