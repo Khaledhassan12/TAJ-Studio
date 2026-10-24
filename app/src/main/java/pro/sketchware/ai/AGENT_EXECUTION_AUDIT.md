@@ -228,3 +228,11 @@ Scope: static source verification of the previously open reference-compatibility
 - **OPEN — Unity integration at runtime.** Source generation is present, but SDK resolution, generated Java compilation, configured game/ad-unit IDs, consent behavior, banner loading, and actual ad display have not been runtime-verified.
 
 No production Java/Kotlin implementation was changed for this check because the four requested source-level items are present. Do not mark the feature set fully tested or production-ready based on this static verification.
+
+## Incremental layout mutation refresh — 2026-10-24
+
+- Extended `AgentOrchestrator` with a narrow safety-net refresh for successful filesystem operations that can add, move, or remove layout XML: `res_delete`, `res_move_copy`, `fs_delete`, `fs_copy`, and `fs_move`.
+- Detection resolves candidate paths through the existing `PathResolver` for the bound `ctx.sc_id` and requires the canonical target to remain inside that project's layout directory with an `.xml` filename. Failed path detection does not broaden access or change the selected project.
+- The refresh is requested after the executor returns success and before the tool result is passed to the next model turn, so multi-step agent work does not wait for the task-level final refresh. Existing layout create/edit/insert tools retain their own checked XML-to-`ViewBean` synchronization and read-back verification.
+- The new safety-net uses the existing best-effort `DomainToolHelper.refreshEditor(ctx)`; it is a refresh request, not independent proof that a deleted/moved layout was removed from every in-memory model. No claim is made that this closes the full designer-sync gap.
+- **Verification:** source change committed to `TAJ-STUDIO-AI`; repository read-back and Android CI/build status still need checking for this exact commit. Device-visible step-by-step behavior and model removal after delete/move remain unverified.
