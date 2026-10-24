@@ -190,7 +190,7 @@ public class ViewProperty extends LinearLayout implements Kw {
         dialog.setPositiveButton(Helper.getResString(R.string.common_word_save), (v, which) -> {
             if (!mB.a() && validator.b()) {
                 String widgetName = Helper.getText(editText);
-                ArrayList<ViewBean> viewBeans = jC.a(sc_id).b(projectFile.getXmlName(), projectActivityViews.get(idsAdapter.getSelectedItemPosition()));
+                ArrayList<ViewBean> viewBeans = pro.sketchware.utility.SketchwareViewTree.withDescendants(jC.a(sc_id).d(projectFile.getXmlName()), projectActivityViews.get(idsAdapter.getSelectedItemPosition()));
                 for (ViewBean viewBean : viewBeans) {
                     String backgroundResource = viewBean.layout.backgroundResource;
                     String resName = viewBean.image.resName;
