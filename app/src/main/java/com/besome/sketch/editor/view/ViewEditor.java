@@ -453,7 +453,7 @@ public class ViewEditor extends RelativeLayout implements View.OnClickListener, 
     }
 
     public void deleteWidget(ViewBean viewBean) {
-        ArrayList<ViewBean> b2 = jC.a(a).b(b, viewBean);
+        ArrayList<ViewBean> b2 = pro.sketchware.utility.SketchwareViewTree.withDescendants(jC.a(a).d(b), viewBean);
         for (int size = b2.size() - 1; size >= 0; size--) {
             jC.a(a).a(projectFileBean, b2.get(size));
         }
