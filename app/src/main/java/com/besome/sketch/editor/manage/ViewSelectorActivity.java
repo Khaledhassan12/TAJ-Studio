@@ -244,7 +244,7 @@ public class ViewSelectorActivity extends BaseAppCompatActivity {
 
     private void a(ProjectFileBean projectFile, ArrayList<ViewBean> presetViews) {
         jC.a(sc_id);
-        for (ViewBean view : eC.a(presetViews)) {
+        for (ViewBean view : pro.sketchware.utility.SketchwareViewTree.ordered(presetViews)) {
             view.id = a(view.type, projectFile.getXmlName());
             jC.a(sc_id).a(projectFile.getXmlName(), view);
             if (view.type == ViewBean.VIEW_TYPE_WIDGET_BUTTON
@@ -261,7 +261,7 @@ public class ViewSelectorActivity extends BaseAppCompatActivity {
         }
         ArrayList<ViewBean> a = a(presetData.presetName, requestCode);
         jC.a(sc_id);
-        for (ViewBean view : eC.a(a)) {
+        for (ViewBean view : pro.sketchware.utility.SketchwareViewTree.ordered(a)) {
             view.id = a(view.type, projectFile.getXmlName());
             jC.a(sc_id).a(projectFile.getXmlName(), view);
             if (view.type == ViewBean.VIEW_TYPE_WIDGET_BUTTON
