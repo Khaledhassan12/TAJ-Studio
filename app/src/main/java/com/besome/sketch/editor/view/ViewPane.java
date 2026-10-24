@@ -1129,7 +1129,7 @@ public class ViewPane extends RelativeLayout {
             for (int i = 0; i < parent.getChildCount(); i++) {
                 View child = parent.getChildAt(i);
                 if (child instanceof ItemView childItem && childItem.getBean() != null) {
-                    ViewGroup.LayoutParams params = childItem.getLayoutParams();
+                    ViewGroup.LayoutParams params = child.getLayoutParams();
                     if (params instanceof ConstraintLayout.LayoutParams constraintParams) {
                         applyConstraintLayoutParams(constraintParams, childItem.getBean().inject);
                     }
