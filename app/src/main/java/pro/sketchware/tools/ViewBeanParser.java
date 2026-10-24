@@ -204,12 +204,23 @@ public class ViewBeanParser {
                             ? ViewBeans.VIEW_TYPE_LAYOUT_INCLUDE
                             : getViewTypeByClassName(name);
 
-                    // Get view ID, either from attributes or generate a unique ID
+                    // Preserve explicit IDs exactly. A duplicate explicit ID is invalid input:
+                    // silently generating a replacement here makes the designer model disagree
+                    // with the XML, and can break existing event/block references.
                     String attrId = parser.getAttributeValue(null, "android:id");
-                    String id =
-                            attrId != null && !ids.contains(parseReferName(attrId, "/"))
-                                    ? parseReferName(attrId, "/")
-                                    : generateUniqueId(ids, type, className, parseViewCounts);
+                    String id;
+                    if (attrId != null) {
+                        id = parseReferName(attrId, "/");
+                        if (id == null || id.trim().isEmpty()) {
+                            throw new IOException("Invalid android:id on <" + name + ">.");
+                        }
+                        if (ids.contains(id)) {
+                            throw new IOException("Duplicate android:id '" + id
+                                    + "' on <" + name + ">. Layout parsing was stopped to preserve existing widget identities.");
+                        }
+                    } else {
+                        id = generateUniqueId(ids, type, className, parseViewCounts);
+                    }
 
                     ViewBean bean = new ViewBean(id, type);
 
