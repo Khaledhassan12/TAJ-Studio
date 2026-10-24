@@ -211,7 +211,23 @@ public final class AgentOrchestrator {
                                     // per-tool safety net covers generic copy/move/delete paths before the model
                                     // receives the next tool result and before another action begins.
                                     if (!result.error && touchesLayoutXml(call.name, call.arguments, context)) {
-                                        DomainToolHelper.refreshEditor(context);
+                                        // Do not hide designer-refresh failure behind the best-effort task-level
+                                        // refresh. The disk mutation already happened, so report a partial failure
+                                        // rather than claiming the visible editor is synchronized.
+                                        try {
+                                            DomainToolHelper.refreshEditor(context, null);
+                                        } catch (Exception refreshError) {
+                                            String detail = refreshError.getMessage();
+                                            if (detail == null || detail.trim().isEmpty()) {
+                                                detail = refreshError.getClass().getSimpleName();
+                                            }
+                                            if (detail.length() > 220) detail = detail.substring(0, 220) + "…";
+                                            result = Tool.ToolResult.structured(call.name, "DESIGNER_SYNC_FAILED", null,
+                                                    "The filesystem operation completed, but the Sketchware designer refresh was not verified. "
+                                                            + "The on-disk change may already exist; inspect the project before retrying. "
+                                                            + detail,
+                                                    null, true);
+                                        }
                                     }
                                     conversation.add(AIMessage.toolResult(call.id, boundToolResult(result.content)));
                                     success = !result.error;
