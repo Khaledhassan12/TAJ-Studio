@@ -138,6 +138,15 @@ public class ViewBeanFactory {
         for (Map.Entry<String, String> entry : attributes.entrySet()) {
             var attrName = entry.getKey();
             var attrValue = entry.getValue();
+            // srcCompat has already been normalized into the native Sketchware image
+            // model above when it points at a drawable. Do not re-emit a duplicate
+            // AppCompat attribute for a resource already represented by bean.image.
+            if ("app:srcCompat".equals(attrName)
+                    && attrValue != null
+                    && attrValue.startsWith("@drawable/")
+                    && bean.getClassInfo().a("ImageView")) {
+                continue;
+            }
             var reference = parseReferName(attrName, ":");
             if (!AttributeConstants.BUILT_IN_ATTRIBUTES.contains(reference)) {
                 // This attribute wasn't included in built-in attributes intentionally
@@ -619,13 +628,21 @@ public class ViewBeanFactory {
 
     private void applyImage(Map<String, String> attributes, Map<String, String> injectAttributes) {
         var bean = this.bean.image;
+        // AppCompat ImageView layouts commonly use app:srcCompat for vector drawables.
+        // The Sketchware designer stores the image resource in ViewBean.image.resName,
+        // so recognize srcCompat as a source instead of silently showing default_image.
         var src = attributes.getOrDefault("android:src", null);
+        boolean fromSrcCompat = false;
+        if (src == null) {
+            src = attributes.getOrDefault("app:srcCompat", null);
+            fromSrcCompat = src != null;
+        }
         if (src != null) {
             if (src.startsWith("@drawable/")) {
                 bean.resName = parseReferName(src, "/");
             } else {
                 bean.resName = "default_image";
-                injectAttributes.put("android:src", src);
+                injectAttributes.put(fromSrcCompat ? "app:srcCompat" : "android:src", src);
             }
         } else {
             bean.resName = "default_image";
