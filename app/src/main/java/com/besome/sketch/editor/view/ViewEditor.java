@@ -454,6 +454,8 @@ public class ViewEditor extends RelativeLayout implements View.OnClickListener, 
 
     public void deleteWidget(ViewBean viewBean) {
         ArrayList<ViewBean> b2 = pro.sketchware.utility.SketchwareViewTree.withDescendants(jC.a(a).d(b), viewBean);
+        // Remove event/block references reached through nested includes before their widgets leave the model.
+        pro.sketchware.utility.IncludedViews.forgetLogicReachedThrough(jC.a(a), a, b, b2);
         for (int size = b2.size() - 1; size >= 0; size--) {
             jC.a(a).a(projectFileBean, b2.get(size));
         }
