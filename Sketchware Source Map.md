@@ -617,7 +617,26 @@ Choose tests by layer. A green APK build alone is insufficient for project-syste
 
 ---
 
-## 16. AI agent task contract
+## 16. Cross-version and fork adaptation protocol
+
+Use this protocol for every target that is old, modified, partially merged, or different from the official upstream repository.
+
+1. Identify the exact target commit, version markers, and known upstream base, if available.
+2. Establish the shared Sketchware programming concepts used by the feature: project, screen, view, event, block, component, resource, or build stage.
+3. Inspect the target implementation and trace actual callers, writers, readers, serializers, validators, and generators.
+4. Compare only the relevant files and behavior with the official upstream source. Do not assume that matching class names guarantee matching behavior.
+5. Record differences in package paths, data schemas, opcode names, numeric IDs, encryption, storage paths, APIs, dependencies, and build steps.
+6. Determine whether the target feature is present, renamed, partially implemented, disabled, or replaced by another abstraction.
+7. Adapt the implementation to the target's existing architecture instead of forcing an upstream implementation onto it.
+8. Preserve unknown fields and project data when safe. Add explicit migrations for incompatible schema changes.
+9. Add tests or fixtures that verify the target behavior and, where applicable, compatibility with projects from earlier versions.
+10. Document important verified divergence with the target version/commit so future agents do not mistake it for universal behavior.
+
+**Important distinction:** The core visual programming model may be shared across Sketchware versions, but this does not make every internal file format or implementation detail identical. Reuse concepts broadly; reuse implementation details only after verification.
+
+---
+
+## 17. AI agent task contract
 
 For every implementation task, produce this internal work plan before editing:
 
@@ -642,11 +661,11 @@ Never claim “error-free,” “fully tested,” “build successful,” or “
 
 ### Prompt for an agent starting a new task
 
-> Read `Sketchware Source Map.md` completely before modifying this repository. Treat it as an architectural index and operational contract, not a substitute for source inspection. Work on the explicitly requested branch. Verify every class, method, path, and behavior against the current checkout. Preserve Sketchware project-model compatibility and native visual-block fidelity. Trace changes through persistence, code/resource generation, and build/runtime behavior. Make the smallest safe change, add regression coverage, run relevant tests/builds, inspect the diff, and report evidence without inventing results. Use the linked SWX_Skill for deeper project-file grammar and SWB format details, and the upstream Sketchware Pro repository for original source responsibilities. If this document conflicts with the checked-out code, the current code and tests are authoritative; update this map after confirming the new behavior.
+> Read `SKILL.md` and `Sketchware Source Map.md` completely before modifying a Sketchware repository. Treat it as an architectural index and operational contract, not a substitute for source inspection. Work on the explicitly requested branch. Verify every class, method, path, and behavior against the current checkout. Preserve Sketchware project-model compatibility and native visual-block fidelity. Trace changes through persistence, code/resource generation, and build/runtime behavior. Make the smallest safe change, add regression coverage, run relevant tests/builds, inspect the diff, and report evidence without inventing results. Use the linked SWX_Skill for deeper project-file grammar and SWB format details, and the upstream Sketchware Pro repository for original source responsibilities. If this document conflicts with the checked-out code, the current code and tests are authoritative; update this map after confirming the new behavior.
 
 ---
 
-## 17. Reference sources and precedence
+## 18. Reference sources and precedence
 
 1. **Official Sketchware Pro source repository:** original source, upstream architecture, published generator map, build/contribution conventions, and history.  
    https://github.com/Sketchware-Pro/Sketchware-Pro
@@ -665,7 +684,7 @@ Do not copy behavior, IDs, paths, or schemas from another fork merely because th
 
 ---
 
-## 18. Maintenance policy
+## 19. Maintenance policy
 
 Update this document whenever a change materially alters:
 - module/package structure or major architectural boundaries;
