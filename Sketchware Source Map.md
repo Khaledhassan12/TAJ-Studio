@@ -1,110 +1,105 @@
-# Sketchware Source Map & AI Engineering Skill
+# Sketchware Source Map & Universal AI Engineering Skill
 
-> **Purpose:** Give a local or cloud coding agent enough verified context to inspect, understand, build, test, and safely modify this Sketchware-derived codebase without spending every task rediscovering the platform.
+> **Purpose:** A portable engineering reference for developers and AI agents working with the original Sketchware Pro source, any version of Sketchware Pro, or a modified/community fork derived from it.
 >
-> **Repository:** [Khaledhassan12/TAJ-Studio](https://github.com/Khaledhassan12/TAJ-Studio)  
-> **Working branch:** `TAJ-STUDIO-AI`  
-> **Stable/base branch:** `Master`  
-> **Upstream reference:** [Sketchware-Pro/Sketchware-Pro](https://github.com/Sketchware-Pro/Sketchware-Pro)  
-> **Project-system reference:** [saqib-cipher/SWX_Skill](https://github.com/saqib-cipher/SWX_Skill)
+> **Primary source of truth:** [Official Sketchware Pro repository](https://github.com/Sketchware-Pro/Sketchware-Pro)  
+> **Supplementary project-format reference:** [SWX_Skill — Sketchware Project System Reference & AI Skill](https://github.com/saqib-cipher/SWX_Skill)
 
-**Status and accuracy contract:** This is a living engineering map, not a claim that every upstream implementation detail is identical in every fork. Repository-specific facts below were checked against the TAJ Studio `TAJ-STUDIO-AI` branch and its README/build configuration on 2026-11-14. Upstream class responsibilities and Sketchware project-format details are attributed to their respective references. Before editing, an agent MUST verify the current implementation in the checked-out branch. Never invent a source path, method, resource name, API, or build task.
+This document is not tied to a particular repository, branch, package name, fork, user, device, Android SDK, build system version, or AI vendor. The shared Sketchware programming model is the conceptual foundation; every implementation-specific detail must be verified in the version being inspected.
+
+**Compatibility rule:** Original and modified versions share core concepts—projects, screens, views, events, blocks, components, resources, code generation, and builds—but they may differ in classes, paths, schemas, opcode registries, encryption, dependencies, APIs, and build stages. Do not assume that internal implementation details are identical across versions.
 
 ---
 
 ## 0. Agent entry point — read this first
 
-You are working on a mature Android IDE, not a conventional CRUD application. Sketchware is a visual Android application development environment. Its editor stores a structured project model (screens, view trees, logic blocks, components, resources and configuration), then transforms that model into Android source/resources and compiles an APK.
+Sketchware Pro is a visual Android application development environment. A project is a structured programming model containing screens, view trees, logic blocks, variables, events, components, resources, and configuration. The application persists this model, transforms it into Android build inputs, and compiles an APK.
 
 The most important engineering rule is:
 
-**Preserve the complete project-model → code-generation → Android-build contract.** A change that looks correct in one screen can still corrupt saved projects, generated Java/XML, resource linking, manifest merging, or the final APK.
+**Preserve the complete project-model → persistence → generation → build/runtime contract.**
+
+A change that looks correct in one editor screen can still corrupt saved projects, visual logic, generated Java/XML, resource linking, manifest entries, or the final APK.
 
 ### Required operating sequence
 
-1. Confirm repository root, current branch, working-tree status, and HEAD commit. Do not assume the branch from a previous session.
-2. Read this document, the repository README, relevant module Gradle files, and any feature-specific documentation.
-3. Trace the actual call path from UI entry point through model/state/persistence to code generation and build output. Search usages and callers; do not rely on class names alone.
-4. Identify compatibility constraints: existing projects, SWB imports/exports, Android API levels, generated code, dependencies, and old serialized data.
-5. Make the smallest coherent change. Preserve public APIs and serialized formats unless a migration is explicitly designed.
-6. Add or update tests. For generator/model changes, test both the model output and the generated artifact.
-7. Run the narrowest relevant test first, then the required Gradle build. Report exactly what ran and what did not.
-8. Inspect the final diff for accidental changes, generated files, secrets, resource collisions, and unrelated formatting.
-9. Commit only when explicitly requested or when the active task's workflow authorizes it. Never force-push or rewrite shared history without explicit authorization.
+1. Identify the actual repository/project, current version, commit, branch, and working-tree state. Never assume these from a previous task.
+2. Read the repository README, local agent instructions, relevant build files, and feature-specific documentation.
+3. Trace the actual call path from UI entry point through model/state/persistence to code generation and build output.
+4. Identify compatibility constraints: existing projects, SWB imports/exports, Android API levels, generated code, dependencies, and serialized data.
+5. Make the smallest coherent change. Preserve APIs and serialized formats unless a migration is explicitly designed.
+6. Add or update tests. For model/generator changes, test both the model output and generated artifact.
+7. Run the narrowest relevant test first, then the build tasks supported by the checked-out repository.
+8. Inspect the final diff for accidental changes, generated files, secrets, resource collisions, and unrelated edits.
+9. Report exactly what ran and what did not. Never claim a successful build or generated artifact without evidence.
 
 ### Non-negotiable rules
 
 - Do not replace native visual blocks with raw Java/source-text blocks merely because generating Java is easier. Native blocks must remain editable in the visual editor.
-- Never create block ID `0`; maintain unique, valid IDs and valid graph references.
-- Never write directly to encrypted project files as if they were plaintext. Use the repository's own serializers/crypto adapters or a verified compatible implementation.
-- Do not silently change the SWB archive layout, project metadata types, event section naming, view hierarchy semantics, resource IDs, or generated-code conventions.
-- Never assume upstream Sketchware Pro, DayGreen, SketchwareX, and TAJ Studio are interchangeable. Verify fork-specific behavior.
-- Do not remove existing functionality to make a build pass. Diagnose the failing layer.
+- Never use a reserved/sentinel block ID as a real block. In common Sketchware formats, block ID `0` is invalid; verify the target validator and allocator.
+- Never write directly to encrypted project files as if they were plaintext. Use the target implementation's serializers/crypto adapters or a verified compatible implementation.
+- Do not silently change SWB archive layout, project metadata types, event section naming, view hierarchy semantics, resource IDs, or generated-code conventions.
+- Do not assume upstream and modified forks are interchangeable internally. Shared programming concepts do not guarantee identical implementation details.
+- Do not remove functionality merely to make a build pass. Diagnose the failing layer.
 - Do not commit API keys, OAuth tokens, Firebase production configuration, signing credentials, local SDK paths, or user project data.
 - Avoid broad refactors while fixing a targeted defect. Keep the diff reviewable.
 - Treat imported projects and custom code as untrusted input. Validate paths, archive entries, identifiers, XML, JSON, and generated source boundaries.
 
 ---
 
-## 1. Repository identity and verified build profile
+## 1. Repository and version discovery
 
-TAJ Studio is a community-developed Android application development environment derived from Sketchware Pro. It is independent and is not affiliated with or endorsed by the upstream maintainers.
+This reference intentionally defines no fixed repository, working branch, package name, Android SDK, language level, or build configuration. Those facts belong to the checkout being worked on and must be discovered before implementation.
 
-| Property | Verified value |
-|---|---|
-| Repository | `Khaledhassan12/TAJ-Studio` |
-| Development branch | `TAJ-STUDIO-AI` |
-| Stable/base branch | `Master` |
-| Gradle root project name | `Sketchware Pro` |
-| Android application module | `:app` |
-| Application ID / namespace | `pro.sketchware` |
-| Minimum SDK | 26 (Android 8.0) |
-| Compile SDK | 36 |
-| Target SDK | 28 |
-| Java source/target | Java 17 |
-| Kotlin JVM target | 17 |
-| Build configuration | Gradle, Android Gradle Plugin; Kotlin Android plugin |
-| View binding | Enabled |
-| BuildConfig | Enabled |
-| Current checked configuration | versionCode 150; versionName `v7.0.0` |
-| Primary language | Primarily Java; Kotlin is supported |
+### Repository identity
 
-The values above come from the checked-in README, `settings.gradle`, and `app/build.gradle` on the working branch. They can change. Re-read the files before changing toolchain or publishing instructions.
+Record:
+
+- Repository root and remote URL(s).
+- Current branch and HEAD commit.
+- Whether the source is official upstream, a fork, or a source export.
+- Upstream base commit or tag, where known.
+- Local modifications and untracked files.
+- App/module names, package/namespace, and application ID.
+- Toolchain and build configuration.
+
+Useful Git commands:
+
+```bash
+git rev-parse --show-toplevel
+git status --short --branch
+git rev-parse HEAD
+git remote -v
+git log -5 --oneline --decorate
+```
+
+Do not switch branches, reset, clean, or discard user changes unless explicitly authorized.
+
+### Discover the actual build environment
+
+Read the checked-out repository's README, contribution guide, Gradle wrapper, settings files, module build files, version catalog, build logic, and CI workflows.
+
+Record the actual:
+
+- Gradle and Android Gradle Plugin versions.
+- Java/Kotlin versions and language targets.
+- compileSdk, minSdk, and targetSdk.
+- Application module(s), namespace, and application ID.
+- Debug/release variants and signing configuration.
+- Available unit, instrumentation, lint, and build tasks.
+- Required environment variables and external services.
+
+Do not copy toolchain values or build commands from another Sketchware version.
 
 ### Build commands
 
-Windows:
+Discover available tasks first. For a Gradle-based checkout, `./gradlew tasks` can help enumerate them; use `gradlew.bat` on Windows. Execute only tasks actually provided by the repository, and report the exact commands and results.
 
-```powershell
-.\gradlew.bat --no-daemon assembleDebug
-.\gradlew.bat --no-daemon test
-```
+A successful compile is not proof of runtime correctness. For editor, project import/export, generator, or build-system changes, perform focused fixture-based or runtime verification whenever possible.
 
-Linux/macOS:
+### Secrets and signing
 
-```bash
-./gradlew --no-daemon assembleDebug
-./gradlew --no-daemon test
-```
-
-Release validation:
-
-```bash
-./gradlew --no-daemon assembleRelease
-```
-
-Expected APK output directories:
-
-- Debug: `app/build/outputs/apk/debug/`
-- Release: `app/build/outputs/apk/release/`
-
-A successful Gradle task is not proof of runtime correctness. For editor, project import/export, generator, or build-system changes, perform a focused runtime or fixture-based verification whenever possible.
-
-### Build secrets and signing
-
-The app Gradle file reads environment variables including `GOOGLE_SERVICES_JSON` and `SKETCHUB_API_KEY`. The build currently has a mock Google Services configuration path for CI/local validation when the production secret is absent. Do not mistake mock Firebase configuration for a functioning production backend.
-
-The checked-in release signing configuration uses a test/debug keystore. It is for CI/testing, **not a production release signing identity**. Never publish a release signed with test credentials as an official production build. Keep production signing material external to the repository and CI logs.
+Keep API keys, OAuth tokens, production Firebase configuration, signing keys, and passwords outside source control. Inspect signing configuration before producing a release build. A test/debug keystore is not a production release identity. Never report a production-ready release unless signing and release validation have actually been verified.
 
 ---
 
@@ -162,7 +157,7 @@ This is a conceptual dependency map, not a guarantee of exact runtime class boun
 
 ## 3. Upstream source map — known generator entry points
 
-The upstream Sketchware Pro README publishes this concise source map. These responsibilities are useful navigation anchors, but confirm each class and its current implementation in TAJ Studio before changing it.
+The upstream Sketchware Pro README publishes this concise source map. These responsibilities are useful navigation anchors, but confirm each class and its current implementation in the target checkout before changing it.
 
 | Upstream class | Published responsibility | Investigate when |
 |---|---|---|
@@ -399,7 +394,7 @@ Do not blindly inject raw XML attributes. Validate attribute names, values, name
 
 ### Responsive qualifiers
 
-The SWX reference describes qualifier-aware layouts in SketchwareX/DayGreen variants (for example default, landscape, and sw-qualified layouts). Do not assume this feature exists in TAJ Studio. Check the actual parser, storage format, and generator before implementing or relying on responsive qualifiers.
+The SWX reference describes qualifier-aware layouts in SketchwareX/DayGreen variants (for example default, landscape, and sw-qualified layouts). Do not assume this feature exists in the target version or fork. Check the actual parser, storage format, and generator before implementing or relying on responsive qualifiers.
 
 ---
 
@@ -653,24 +648,20 @@ Never claim “error-free,” “fully tested,” “build successful,” or “
 
 ## 17. Reference sources and precedence
 
-1. **This repository — TAJ Studio, branch `TAJ-STUDIO-AI`:** actual implementation and current build configuration.  
-   https://github.com/Khaledhassan12/TAJ-Studio/tree/TAJ-STUDIO-AI
-2. **Sketchware Pro upstream:** original project source and published generator source map.  
+1. **Official Sketchware Pro source repository:** original source, upstream architecture, published generator map, build/contribution conventions, and history.  
    https://github.com/Sketchware-Pro/Sketchware-Pro
-3. **SWX_Skill — Sketchware Project System Reference & AI Skill:** detailed project storage, encryption compatibility, block grammar, view/component/resource models, build pipeline, and SWB reference.  
+2. **SWX_Skill — Sketchware Project System Reference & AI Skill:** supplementary documentation for project storage, common encryption behavior, logic/block grammar, view/component/resource models, build pipeline, and SWB format.  
    https://github.com/saqib-cipher/SWX_Skill
-4. **TAJ Studio README:** repository identity, build commands, CI artifact behavior, and contribution guidance.  
-   https://github.com/Khaledhassan12/TAJ-Studio/blob/TAJ-STUDIO-AI/README.md
 
 ### Source precedence when references disagree
 
-1. Current TAJ Studio implementation and tests.
-2. Current TAJ Studio project fixtures and generated build artifacts.
-3. Upstream Sketchware Pro implementation for inherited behavior.
-4. SWX_Skill for documented project-system formats, checked against the target fork.
-5. This map's conceptual explanations.
+1. The exact implementation in the target checkout determines what that checkout does.
+2. Tests, fixtures, generated artifacts, and runtime observations establish what the implementation actually supports.
+3. The official Sketchware Pro source establishes upstream behavior and inherited design intent.
+4. Other forks and external skills provide supplementary investigative leads; verify their assumptions before reuse.
+5. This map provides portable concepts and safe operating procedures.
 
-Do not copy a behavior from DayGreen/SketchwareX into TAJ solely because the format looks similar. Confirm that the target branch implements it.
+Do not copy behavior, IDs, paths, or schemas from another fork merely because the programming model looks similar. Inspect the target, compare relevant implementation with upstream, and document verified differences.
 
 ---
 
