@@ -13,6 +13,12 @@ The objective is to help an AI coding agent understand the actual implementation
 
 Sketchware-derived tools share a recognizable programming model: a visual project is represented as structured data, edited through an IDE, transformed by generators into Android source and resources, and then built into an installable application. That shared model is the stable conceptual foundation. It does **not** mean every version has identical source code, class names, serialization details, encryption, archive layout, APIs, or build pipeline. Discover those details from the actual target before making assumptions.
 
+## Portable loading
+
+This is a self-contained Agent Skills-style entry point. Keep this file in a directory named for the skill when using an agent that supports the Agent Skills convention. For an agent that does not implement that convention, provide this complete file as project instructions or attach it as task context and ask the agent to follow it. No vendor-specific tool, extension, model, account, or repository is required.
+
+The companion [Sketchware Source Map.md](Sketchware%20Source%20Map.md) adds a deeper functional map and investigation reference. It is useful context, but this SKILL.md contains the core operating rules and can be used on its own.
+
 ## Core operating rules
 
 1. Inspect first. Never assume which fork, version, branch, module, source path, schema, or build task is present.
